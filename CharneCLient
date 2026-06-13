@@ -1,310 +1,490 @@
 import { useState, useEffect } from "react";
-import { Heart, Phone, Mail, MessageCircle, MapPin, Bed, Bath, Car, ArrowLeft, X, Check, Shield, Search, Home, Bookmark, ChevronRight, ExternalLink, Trash2, Star, Building2, TreePine, Maximize2 } from "lucide-react";
+import { Heart, Phone, Mail, MessageCircle, MapPin, Bed, Bath, Car, ArrowLeft, X, Check, Shield, Search, Home, Bookmark, ExternalLink, Star, ChevronRight, Trash2, Info, Building2, TreePine, Maximize2 } from "lucide-react";
 
+// ─── POPIA Compliance Module (SA Standard v1.0-ZA) ────────────────────────────
+// Implements Protection of Personal Information Act (Act 4 of 2013)
+// Amendment Regulations effective 17 April 2025
 const POPIA = {
-  version:"1.0-ZA-2026", controller:"Charné Snyman",
-  purposes:[{id:"listings",label:"Property listings & alerts"},{id:"watchlist",label:"Saving your watchlist"},{id:"market",label:"Market insights"},{id:"contact",label:"Property inquiry responses"}],
-  rights:["Access your data","Correct inaccurate data","Delete your data","Withdraw consent anytime"],
-  async getConsent(){try{const r=await window.storage.get("cs_popia_v1");return r?JSON.parse(r.value):null;}catch{return null;}},
-  async record(granted){const rec={granted,ts:new Date().toISOString(),version:this.version};try{await window.storage.set("cs_popia_v1",JSON.stringify(rec));}catch{}return rec;},
-  async revoke(){try{await window.storage.delete("cs_popia_v1");await window.storage.delete("cs_wl_v1");}catch{}},
-  async getWL(){try{const r=await window.storage.get("cs_wl_v1");return r?JSON.parse(r.value):[];}catch{return[];}},
-  async saveWL(ids){try{await window.storage.set("cs_wl_v1",JSON.stringify(ids));}catch{}}
+  version: "1.0-ZA-2026",
+  controller: "Charné Snyman",
+  registrationNo: "RB Brand Real Estate",
+  purposes: [
+    { id: "listings", label: "Property listings & new listing alerts" },
+    { id: "watchlist", label: "Saving and managing your watchlist" },
+    { id: "market", label: "Market insights & area trends" },
+    { id: "contact", label: "Responding to your property inquiries" },
+  ],
+  retention: "12 months from last activity, then deleted",
+  rights: ["Access your data", "Correct inaccurate data", "Delete your data", "Withdraw consent at any time"],
+  async getConsent() {
+    try { const r = await window.storage.get("cs_popia_v1"); return r ? JSON.parse(r.value) : null; }
+    catch { return null; }
+  },
+  async record(granted) {
+    const rec = { granted, ts: new Date().toISOString(), version: this.version, controller: this.controller, purposes: this.purposes.map(p => p.id) };
+    try { await window.storage.set("cs_popia_v1", JSON.stringify(rec)); } catch {}
+    return rec;
+  },
+  async revoke() {
+    try { await window.storage.delete("cs_popia_v1"); await window.storage.delete("cs_watchlist_v1"); } catch {}
+  },
+  async getWatchlist() {
+    try { const r = await window.storage.get("cs_watchlist_v1"); return r ? JSON.parse(r.value) : []; }
+    catch { return []; }
+  },
+  async saveWatchlist(ids) {
+    try { await window.storage.set("cs_watchlist_v1", JSON.stringify(ids)); } catch {}
+  },
 };
 
-const C={nav:"#0F2040",gold:"#C49A2F",bg:"#F8F6F2",surface:"#FFFFFF",text:"#1A1A2E",muted:"#78716C",border:"#E8E4DD"};
-const fmt=p=>`R ${p.toLocaleString("en-ZA")}`;
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const C = { nav:"#0F2040", gold:"#C49A2F", bg:"#F8F6F2", surface:"#FFFFFF", text:"#1A1A2E", muted:"#78716C", border:"#E8E4DD", tag:"#E8F4EE", tagText:"#1A6B3A" };
 
-const PROPS=[
-  {id:1,title:"Modern 3-Bed Townhouse",area:"Equestria",city:"Pretoria East",price:2099900,type:"Townhouse",beds:3,baths:2,garages:2,floor:148,erf:null,status:"Just Listed",sc:"#0F2040",desc:"Covered patio, built-in braai, communal pool, easy access to schools and shopping. Double garage, tiled throughout.",hi:["Covered patio & braai","Communal pool","Double garage","Near schools"],bg:"linear-gradient(145deg,#6B4F0A,#C49A2F)",url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2502487"},
-  {id:2,title:"Heron Hill Family Home",area:"Olympus AH",city:"Pretoria East",price:2990000,type:"House",beds:3,baths:2,garages:2,floor:170,erf:481,status:"Just Listed",sc:"#0F2040",desc:"Secure living with built-in braai, solar system, three bedrooms and double automated garage on 481m² stand.",hi:["481m² erf","Solar system","Built-in braai","Double automated garage"],bg:"linear-gradient(145deg,#0F3D1F,#2E8B57)",url:"https://www.rbbrandrealestate.co.za/olympus-ah-house-for-sale-2501216"},
-  {id:3,title:"2-Bed with Private Garden",area:"Equestria",city:"Pretoria East",price:1220000,type:"Townhouse",beds:2,baths:1,garages:1,floor:91,erf:null,status:"Just Listed",sc:"#0F2040",desc:"Relaxed, secure living with covered patio and established garden. Ideal for families or first-time investors.",hi:["Private garden","Covered patio","Indoor-outdoor flow","Investment potential"],bg:"linear-gradient(145deg,#5A2D0C,#B86830)",url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500406"},
-  {id:4,title:"Ground-Floor Corner Unit",area:"Equestria",city:"Pretoria East",price:860000,type:"Townhouse",beds:2,baths:1,garages:1,floor:81,erf:null,status:"Just Listed",sc:"#0F2040",desc:"Wrap-around private garden, tiled living areas, two bedrooms, one bathroom and single garage.",hi:["Wrap-around garden","Ground floor","Tiled throughout","Affordable entry"],bg:"linear-gradient(145deg,#1A2E5A,#3A5A9A)",url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500347"},
-  {id:5,title:"Pet-Friendly Townhouse",area:"Equestria",city:"Pretoria East",price:1450000,type:"Townhouse",beds:2,baths:2,garages:0,floor:96,erf:null,status:"For Sale",sc:"#1A6B3A",desc:"Modern living in a peaceful enclave. Abundant natural light, private pet-friendly garden, paved courtyard.",hi:["Pet-friendly","Private garden","Paved courtyard","Secure estate"],bg:"linear-gradient(145deg,#3A1035,#7B3068)",url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2496042"},
-  {id:6,title:"Wierda Crest Estate Home",area:"Rooihuiskraal North",city:"Centurion",price:1295000,type:"Townhouse",beds:2,baths:1,garages:2,floor:119,erf:null,status:"Price Reduced",sc:"#8B1A1A",desc:"Prestigious Wierda Crest estate. Open-plan living flows to a sunny patio. Low maintenance, double garage.",hi:["Price reduced","Prestigious estate","Double garage","Open-plan"],bg:"linear-gradient(145deg,#0A2E2B,#1A6B64)",url:"https://www.rbbrandrealestate.co.za/rooihuiskraal-north-townhouse-for-sale-2495173"},
-  {id:7,title:"Charming 2-Bed Gated Home",area:"Equestria",city:"Pretoria East",price:1250000,type:"Townhouse",beds:2,baths:2,garages:2,floor:125,erf:null,status:"For Sale",sc:"#1A6B3A",desc:"Secure, pet-friendly complex. Wooden-plank ceiling, face-brick accent wall, double garage.",hi:["Wooden-plank ceiling","Face-brick feature","Pet-friendly","Double garage"],bg:"linear-gradient(145deg,#2E1A10,#6B4028)",url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2489107"},
-  {id:8,title:"Off-Grid Oasis – Kosmos",area:"Kosmos",city:"Hartbeespoort",price:3690000,type:"House",beds:4,baths:2,garages:2,floor:451,erf:1085,status:"For Sale",sc:"#1A6B3A",desc:"Panoramic Hartbeespoort Dam and mountain views. Rustic-chic estate on 1085m², expansive terrace, off-grid capable.",hi:["Dam & mountain views","Off-grid capable","1085m² erf","Expansive terrace"],bg:"linear-gradient(145deg,#1F3A5F,#2E6DA4)",url:"https://www.rbbrandrealestate.co.za/kosmos-house-for-sale-2487416"},
-  {id:9,title:"Glevera Retirement Apartment",area:"Rietvalleirand",city:"Pretoria East",price:1150000,type:"Apartment",beds:1,baths:1,garages:0,floor:55,erf:null,status:"For Sale",sc:"#1A6B3A",desc:"Worry-free retirement at Glevera Estate. Private balcony, tranquil gardens, daily services included.",hi:["Retirement estate","Daily services","Private balcony","Tranquil gardens"],bg:"linear-gradient(145deg,#1A3530,#3A7060)",url:"https://www.rbbrandrealestate.co.za/rietvalleirand-apartment-for-sale-2487360"},
-  {id:10,title:"Spacious 3-Bath Family Home",area:"Equestria",city:"Pretoria East",price:2800000,type:"House",beds:3,baths:3,garages:2,floor:294,erf:null,status:"For Sale",sc:"#1A6B3A",desc:"Modern kitchen, upstairs balcony and expansive yard. Three bedrooms, three bathrooms, double garage.",hi:["Upstairs balcony","Modern kitchen","3 bathrooms","Near shopping"],bg:"linear-gradient(145deg,#3A1E05,#7A4515)",url:"https://www.rbbrandrealestate.co.za/equestria-house-for-sale-2479682"},
-  {id:11,title:"940m² Stand – The Hills",area:"The Hills Estate",city:"Pretoria East",price:2000000,type:"Vacant Land",beds:0,baths:0,garages:0,floor:null,erf:940,status:"For Sale",sc:"#1A6B3A",desc:"Hilltop position with sweeping panoramic views in The Hills Game Reserve Estate. 940m² build-ready stand.",hi:["940m² stand","Panoramic views","Game reserve","Build-ready"],bg:"linear-gradient(145deg,#1C4A20,#2E7A35)",url:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475568"},
-  {id:12,title:"863m² Game Reserve Stand",area:"The Hills Estate",city:"Pretoria East",price:2200000,type:"Vacant Land",beds:0,baths:0,garages:0,floor:null,erf:863,status:"For Sale",sc:"#1A6B3A",desc:"863m² lot with panoramic views. Space for lush gardens and entertainment areas in The Hills Game Reserve Estate.",hi:["863m² stand","Panoramic views","Exclusive estate","Entertainment-ready"],bg:"linear-gradient(145deg,#2A3A1C,#4A6A2E)",url:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475037"},
+const PROPERTIES = [
+  { id:1, title:"Modern 3-Bed Townhouse", area:"Equestria", city:"Pretoria East", price:2099900, type:"Townhouse", beds:3, baths:2, garages:2, floor:148, erf:null, status:"Just Listed", statusColor:"#0F2040", desc:"Entertain effortlessly with a covered patio, built-in braai, communal pool, and easy access to schools and shopping. Double garage, tiled throughout.", highlights:["Covered patio & braai","Communal pool","Double garage","Near schools & shops","Sectional title"], bg:"linear-gradient(145deg,#6B4F0A,#C49A2F)", url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2502487" },
+  { id:2, title:"Heron Hill Family Home", area:"Olympus AH", city:"Pretoria East", price:2990000, type:"House", beds:3, baths:2, garages:2, floor:170, erf:481, status:"Just Listed", statusColor:"#0F2040", desc:"Secure Pretoria East living with built-in braai entertainment area. Solar system, three bedrooms, double automated garage on 481m² stand.", highlights:["481m² erf","Solar system","Built-in braai","Double automated garage","Secure complex"], bg:"linear-gradient(145deg,#0F3D1F,#2E8B57)", url:"https://www.rbbrandrealestate.co.za/olympus-ah-house-for-sale-2501216" },
+  { id:3, title:"2-Bed with Private Garden", area:"Equestria", city:"Pretoria East", price:1220000, type:"Townhouse", beds:2, baths:1, garages:1, floor:91, erf:null, status:"Just Listed", statusColor:"#0F2040", desc:"Relaxed, secure living with covered patio and established garden. Seamless indoor-outdoor flow, ideal for families or first-time investors.", highlights:["Private garden","Covered patio","Indoor-outdoor flow","Investment potential","Single garage"], bg:"linear-gradient(145deg,#5A2D0C,#B86830)", url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500406" },
+  { id:4, title:"Ground-Floor Corner Unit", area:"Equestria", city:"Pretoria East", price:860000, type:"Townhouse", beds:2, baths:1, garages:1, floor:81, erf:null, status:"Just Listed", statusColor:"#0F2040", desc:"Spacious wrap-around private garden, tiled living areas, two bedrooms, one bathroom and single garage. Affordable entry into Equestria.", highlights:["Wrap-around garden","Ground floor","Tiled throughout","Affordable entry","Family-friendly"], bg:"linear-gradient(145deg,#1A2E5A,#3A5A9A)", url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500347" },
+  { id:5, title:"Pet-Friendly Modern Townhouse", area:"Equestria", city:"Pretoria East", price:1450000, type:"Townhouse", beds:2, baths:2, garages:0, floor:96, erf:null, status:"For Sale", statusColor:"#1A6B3A", desc:"Modern living in a peaceful secure enclave. Abundant natural light, private pet-friendly garden and paved courtyard. Two beds, two baths.", highlights:["Pet-friendly","Private garden","Paved courtyard","Abundant light","2 covered parking"], bg:"linear-gradient(145deg,#3A1035,#7B3068)", url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2496042" },
+  { id:6, title:"Wierda Crest Estate Home", area:"Rooihuiskraal North", city:"Centurion", price:1295000, type:"Townhouse", beds:2, baths:1, garages:2, floor:119, erf:null, status:"Price Reduced", statusColor:"#8B1A1A", desc:"Prestigious Wierda Crest living. Open-plan design flows to a sunny patio. Low maintenance, double garage — perfectly positioned in Centurion.", highlights:["Price reduced","Prestigious estate","Double garage","Low maintenance","Open-plan"], bg:"linear-gradient(145deg,#0A2E2B,#1A6B64)", url:"https://www.rbbrandrealestate.co.za/rooihuiskraal-north-townhouse-for-sale-2495173" },
+  { id:7, title:"Charming 2-Bed Gated Home", area:"Equestria", city:"Pretoria East", price:1250000, type:"Townhouse", beds:2, baths:2, garages:2, floor:125, erf:null, status:"For Sale", statusColor:"#1A6B3A", desc:"Secure, pet-friendly living in quiet complex. Wooden-plank ceiling feature, face-brick accent wall, two beds, two baths, double garage.", highlights:["Wooden-plank ceiling","Face-brick feature","Pet-friendly","Quiet gated complex","Double garage"], bg:"linear-gradient(145deg,#2E1A10,#6B4028)", url:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2489107" },
+  { id:8, title:"Off-Grid Oasis with Dam Views", area:"Kosmos", city:"Hartbeespoort", price:3690000, type:"House", beds:4, baths:2, garages:2, floor:451, erf:1085, status:"For Sale", statusColor:"#1A6B3A", desc:"Panoramic Hartbeespoort Dam and mountain views. Rustic-chic estate home on 1085m². Expansive terrace, off-grid capable. A true escape.", highlights:["Hartbeespoort Dam views","Mountain panorama","Off-grid capable","1085m² erf","Expansive terrace"], bg:"linear-gradient(145deg,#0F2840,#1E5080)", url:"https://www.rbbrandrealestate.co.za/kosmos-house-for-sale-2487416" },
+  { id:9, title:"Glevera Retirement Apartment", area:"Rietvalleirand", city:"Pretoria East", price:1150000, type:"Apartment", beds:1, baths:1, garages:0, floor:55, erf:null, status:"For Sale", statusColor:"#1A6B3A", desc:"Worry-free retirement living. Private balcony, tranquil gardens, daily services included. One bedroom, one bathroom, covered parking.", highlights:["Retirement estate","Daily services","Private balcony","Tranquil gardens","Covered parking"], bg:"linear-gradient(145deg,#1A3530,#3A7060)", url:"https://www.rbbrandrealestate.co.za/rietvalleirand-apartment-for-sale-2487360" },
+  { id:10, title:"Spacious 3-Bath Family Home", area:"Equestria", city:"Pretoria East", price:2800000, type:"House", beds:3, baths:3, garages:2, floor:294, erf:null, status:"For Sale", statusColor:"#1A6B3A", desc:"Modern kitchen, upstairs balcony and expansive yard. Three bedrooms, three bathrooms, double garage. Moments from Simon Vermooten Road.", highlights:["Upstairs balcony","Modern kitchen","Expansive yard","3 bathrooms","Near shopping"], bg:"linear-gradient(145deg,#3A1E05,#7A4515)", url:"https://www.rbbrandrealestate.co.za/equestria-house-for-sale-2479682" },
+  { id:11, title:"940m² Stand – The Hills", area:"The Hills Estate", city:"Pretoria East", price:2000000, type:"Vacant Land", beds:0, baths:0, garages:0, floor:null, erf:940, status:"For Sale", statusColor:"#1A6B3A", desc:"Hilltop position with sweeping panoramic views in The Hills Game Reserve Estate. 940m² build-ready stand for your dream home.", highlights:["940m² stand","Panoramic views","Game reserve estate","Build-ready","Prime hilltop"], bg:"linear-gradient(145deg,#0F3018,#1A6030)", url:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475568" },
+  { id:12, title:"863m² Game Reserve Stand", area:"The Hills Estate", city:"Pretoria East", price:2200000, type:"Vacant Land", beds:0, baths:0, garages:0, floor:null, erf:863, status:"For Sale", statusColor:"#1A6B3A", desc:"863m² lot with panoramic views, space for lush gardens and entertainment areas in The Hills Game Reserve Estate. Exclusive lifestyle.", highlights:["863m² stand","Panoramic views","Rolling greenery","Exclusive estate","Entertainment-ready"], bg:"linear-gradient(145deg,#1A2A10,#3A5A20)", url:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475037" },
 ];
-const AREAS=["All",...new Set(PROPS.map(p=>p.area))];
-const TYPES=["All","Townhouse","House","Apartment","Vacant Land"];
 
-function POPIAGate({onDecide}){
-  return(
-    <div style={{position:"fixed",inset:0,background:"#0F2040",zIndex:100,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 22px",overflowY:"auto"}}>
-      <div style={{width:60,height:60,borderRadius:"50%",background:"rgba(196,154,47,.15)",border:"2px solid #C49A2F",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
-        <Shield size={26} color="#C49A2F"/>
-      </div>
-      <p style={{color:"#C49A2F",fontSize:11,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>Privacy Notice · POPIA</p>
-      <h1 style={{color:"#fff",fontSize:22,fontWeight:700,textAlign:"center",marginBottom:8}}>Your data, your choice</h1>
-      <p style={{color:"rgba(255,255,255,.55)",fontSize:13,textAlign:"center",maxWidth:320,lineHeight:1.6,marginBottom:22}}>Under South Africa's POPIA (Act 4 of 2013, amended April 2025), Charné Snyman needs your consent before collecting personal information.</p>
-      <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.1)",borderRadius:12,padding:"14px 18px",marginBottom:12,width:"100%",maxWidth:380}}>
-        <p style={{color:"rgba(255,255,255,.45)",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10}}>What we collect & why</p>
-        {POPIA.purposes.map(p=>(
-          <div key={p.id} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
-            <div style={{width:17,height:17,borderRadius:"50%",background:"rgba(196,154,47,.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}><Check size={9} color="#C49A2F"/></div>
-            <span style={{color:"rgba(255,255,255,.8)",fontSize:13}}>{p.label}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.1)",borderRadius:12,padding:"14px 18px",marginBottom:22,width:"100%",maxWidth:380}}>
-        <p style={{color:"rgba(255,255,255,.45)",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>Your rights under POPIA</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-          {POPIA.rights.map(r=>(
-            <div key={r} style={{display:"flex",alignItems:"center",gap:5}}>
-              <div style={{width:5,height:5,borderRadius:"50%",background:"#C49A2F",flexShrink:0}}/>
-              <span style={{color:"rgba(255,255,255,.65)",fontSize:12}}>{r}</span>
+const AREAS = ["All", ...new Set(PROPERTIES.map(p => p.area))];
+const TYPES = ["All", "Townhouse", "House", "Apartment", "Vacant Land"];
+const fmtPrice = p => `R ${p.toLocaleString("en-ZA")}`;
+const TypeIcon = ({ type, size = 18 }) => {
+  if (type === "House") return <Home size={size} />;
+  if (type === "Apartment") return <Building2 size={size} />;
+  if (type === "Vacant Land") return <TreePine size={size} />;
+  return <Building2 size={size} />;
+};
+
+// ─── POPIA Consent Gate ───────────────────────────────────────────────────────
+function POPIAGate({ onDecide }) {
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#0F2040", zIndex:100, display:"flex", flexDirection:"column", overflowY:"auto" }}>
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"32px 24px", minHeight:"100vh" }}>
+        <div style={{ width:64, height:64, borderRadius:"50%", background:"rgba(196,154,47,0.15)", border:"2px solid #C49A2F", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+          <Shield size={30} color="#C49A2F" />
+        </div>
+        <p style={{ color:"#C49A2F", fontSize:12, letterSpacing:3, textTransform:"uppercase", marginBottom:8 }}>Privacy Notice</p>
+        <h1 style={{ color:"#FFFFFF", fontSize:24, fontWeight:700, textAlign:"center", marginBottom:6 }}>Your data, your choice</h1>
+        <p style={{ color:"rgba(255,255,255,0.6)", fontSize:13, textAlign:"center", marginBottom:28, maxWidth:340 }}>
+          In line with South Africa's POPIA (Act 4 of 2013 — as amended April 2025), Charné Snyman needs your consent before collecting any personal information.
+        </p>
+
+        <div style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"16px 20px", marginBottom:16, width:"100%", maxWidth:380 }}>
+          <p style={{ color:"rgba(255,255,255,0.7)", fontSize:12, marginBottom:12, fontWeight:600, textTransform:"uppercase", letterSpacing:1 }}>What we collect & why</p>
+          {POPIA.purposes.map(p => (
+            <div key={p.id} style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:10 }}>
+              <div style={{ width:20, height:20, borderRadius:"50%", background:"rgba(196,154,47,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
+                <Check size={11} color="#C49A2F" />
+              </div>
+              <span style={{ color:"rgba(255,255,255,0.8)", fontSize:13 }}>{p.label}</span>
             </div>
           ))}
         </div>
-        <p style={{color:"rgba(255,255,255,.3)",fontSize:10,marginTop:10}}>Controller: {POPIA.controller} · Retained up to 12 months</p>
+
+        <div style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"14px 20px", marginBottom:24, width:"100%", maxWidth:380 }}>
+          <p style={{ color:"rgba(255,255,255,0.7)", fontSize:12, marginBottom:10, fontWeight:600, textTransform:"uppercase", letterSpacing:1 }}>Your rights under POPIA</p>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+            {POPIA.rights.map(r => (
+              <div key={r} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <div style={{ width:6, height:6, borderRadius:"50%", background:"#C49A2F", flexShrink:0 }} />
+                <span style={{ color:"rgba(255,255,255,0.7)", fontSize:12 }}>{r}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginTop:10 }}>Data retained for {POPIA.retention}. Controller: {POPIA.controller}.</p>
+        </div>
+
+        <div style={{ width:"100%", maxWidth:380 }}>
+          <button onClick={() => onDecide(true)} style={{ width:"100%", padding:"15px", background:"#C49A2F", border:"none", borderRadius:10, color:"#0F2040", fontWeight:700, fontSize:16, cursor:"pointer", marginBottom:10 }}>
+            I Agree — Continue to App
+          </button>
+          <button onClick={() => onDecide(false)} style={{ width:"100%", padding:"13px", background:"transparent", border:"1px solid rgba(255,255,255,0.2)", borderRadius:10, color:"rgba(255,255,255,0.5)", fontSize:14, cursor:"pointer" }}>
+            No Thanks
+          </button>
+        </div>
+        <p style={{ color:"rgba(255,255,255,0.3)", fontSize:11, textAlign:"center", marginTop:16, maxWidth:300 }}>
+          POPIA v{POPIA.version} · {new Date().toLocaleDateString("en-ZA")}
+        </p>
       </div>
-      <div style={{width:"100%",maxWidth:380}}>
-        <button onClick={()=>onDecide(true)} style={{width:"100%",padding:"14px",background:"#C49A2F",borderRadius:10,color:"#0F2040",fontWeight:700,fontSize:15,border:"none",cursor:"pointer",marginBottom:10}}>I Agree — Continue to App</button>
-        <button onClick={()=>onDecide(false)} style={{width:"100%",padding:"12px",background:"transparent",border:"1px solid rgba(255,255,255,.2)",borderRadius:10,color:"rgba(255,255,255,.4)",fontSize:13,cursor:"pointer"}}>No Thanks</button>
-      </div>
-      <p style={{color:"rgba(255,255,255,.2)",fontSize:10,textAlign:"center",marginTop:12}}>POPIA {POPIA.version} · {new Date().toLocaleDateString("en-ZA")}</p>
     </div>
   );
 }
 
-function PropCard({p,watched,onWatch,onSelect}){
-  return(
-    <div onClick={()=>onSelect(p)} style={{background:C.surface,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)",cursor:"pointer",marginBottom:14}}>
-      <div style={{height:130,background:p.bg,position:"relative",display:"flex",alignItems:"flex-end",padding:10}}>
-        <span style={{background:p.sc,color:"#fff",fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:5}}>{p.status}</span>
-        <button onClick={e=>{e.stopPropagation();onWatch(p.id);}} style={{position:"absolute",top:10,right:10,width:32,height:32,borderRadius:"50%",background:watched?"#C49A2F":"rgba(255,255,255,.2)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Heart size={14} fill={watched?"#fff":"none"} color="#fff"/>
+// ─── Declined Screen ──────────────────────────────────────────────────────────
+function DeclinedScreen({ onReset }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100vh", padding:32, background:C.bg, textAlign:"center" }}>
+      <div style={{ width:56, height:56, borderRadius:"50%", background:"#FEF2F2", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
+        <X size={24} color="#DC2626" />
+      </div>
+      <h2 style={{ color:C.text, fontSize:20, fontWeight:700, marginBottom:8 }}>Access Not Available</h2>
+      <p style={{ color:C.muted, fontSize:14, marginBottom:24, maxWidth:280, lineHeight:1.6 }}>
+        To use this app, Charné needs your consent to process your data as required by POPIA. No personal data is collected without your agreement.
+      </p>
+      <button onClick={onReset} style={{ padding:"12px 28px", background:C.nav, borderRadius:8, border:"none", color:"#fff", fontWeight:600, cursor:"pointer" }}>
+        Review Privacy Notice
+      </button>
+    </div>
+  );
+}
+
+// ─── Property Card ────────────────────────────────────────────────────────────
+function PropertyCard({ prop, isWatched, onToggleWatch, onSelect }) {
+  return (
+    <div onClick={() => onSelect(prop)} style={{ background:C.surface, borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(0,0,0,0.08)", cursor:"pointer", marginBottom:16 }}>
+      <div style={{ height:140, background:prop.bg, position:"relative", display:"flex", alignItems:"flex-end", padding:12 }}>
+        <span style={{ background:prop.statusColor, color:"#fff", fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:5, letterSpacing:0.5 }}>{prop.status}</span>
+        <button onClick={e => { e.stopPropagation(); onToggleWatch(prop.id); }}
+          style={{ position:"absolute", top:10, right:10, width:34, height:34, borderRadius:"50%", background:isWatched ? "#C49A2F" : "rgba(255,255,255,0.2)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(4px)" }}>
+          <Heart size={16} fill={isWatched ? "#fff" : "none"} color={isWatched ? "#fff" : "#fff"} />
         </button>
+        <div style={{ position:"absolute", bottom:10, right:12, background:"rgba(255,255,255,0.15)", borderRadius:8, padding:"4px 8px", backdropFilter:"blur(4px)" }}>
+          <TypeIcon type={prop.type} size={14} color="#fff" />
+        </div>
       </div>
-      <div style={{padding:"12px 13px 11px"}}>
-        <p style={{color:C.nav,fontSize:17,fontWeight:800,marginBottom:2}}>{fmt(p.price)}</p>
-        <p style={{color:C.text,fontWeight:600,fontSize:14,marginBottom:3}}>{p.title}</p>
-        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:8}}><MapPin size={11} color={C.muted}/><span style={{color:C.muted,fontSize:12}}>{p.area}, {p.city}</span></div>
-        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-          {p.beds>0&&<span style={{display:"flex",alignItems:"center",gap:3,color:C.muted,fontSize:12}}><Bed size={12}/>{p.beds}</span>}
-          {p.baths>0&&<span style={{display:"flex",alignItems:"center",gap:3,color:C.muted,fontSize:12}}><Bath size={12}/>{p.baths}</span>}
-          {p.garages>0&&<span style={{display:"flex",alignItems:"center",gap:3,color:C.muted,fontSize:12}}><Car size={12}/>{p.garages}</span>}
-          {p.floor&&<span style={{display:"flex",alignItems:"center",gap:3,color:C.muted,fontSize:12}}><Maximize2 size={11}/>{p.floor}m²</span>}
-          {p.erf&&<span style={{display:"flex",alignItems:"center",gap:3,color:C.muted,fontSize:12}}><Maximize2 size={11}/>Erf {p.erf}m²</span>}
+      <div style={{ padding:"14px 14px 12px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4 }}>
+          <p style={{ color:C.nav, fontSize:18, fontWeight:800, margin:0 }}>{fmtPrice(prop.price)}</p>
+        </div>
+        <p style={{ color:C.text, fontWeight:600, fontSize:14, margin:"0 0 3px" }}>{prop.title}</p>
+        <div style={{ display:"flex", alignItems:"center", gap:4, marginBottom:10 }}>
+          <MapPin size={12} color={C.muted} />
+          <span style={{ color:C.muted, fontSize:12 }}>{prop.area}, {prop.city}</span>
+        </div>
+        <div style={{ display:"flex", gap:12 }}>
+          {prop.beds > 0 && <span style={{ display:"flex", alignItems:"center", gap:4, color:C.muted, fontSize:12 }}><Bed size={13} />{prop.beds}</span>}
+          {prop.baths > 0 && <span style={{ display:"flex", alignItems:"center", gap:4, color:C.muted, fontSize:12 }}><Bath size={13} />{prop.baths}</span>}
+          {prop.garages > 0 && <span style={{ display:"flex", alignItems:"center", gap:4, color:C.muted, fontSize:12 }}><Car size={13} />{prop.garages}</span>}
+          {prop.floor && <span style={{ display:"flex", alignItems:"center", gap:4, color:C.muted, fontSize:12 }}><Maximize2 size={13} />{prop.floor}m²</span>}
+          {prop.erf && <span style={{ display:"flex", alignItems:"center", gap:4, color:C.muted, fontSize:12 }}><Maximize2 size={13} />Erf {prop.erf}m²</span>}
         </div>
       </div>
     </div>
   );
 }
 
-function HomeScreen({nav,onSelect,wl,onWatch}){
-  return(
-    <div style={{paddingBottom:72}}>
-      <div style={{background:C.nav,padding:"36px 18px 20px"}}>
-        <p style={{color:"rgba(255,255,255,.45)",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>RB Brand Real Estate</p>
-        <h1 style={{color:"#fff",fontSize:23,fontWeight:800,marginBottom:2}}>Charné Snyman</h1>
-        <p style={{color:C.gold,fontSize:13,marginBottom:16}}>Property Sales · Pretoria East & Surrounds</p>
-        <div style={{display:"flex",gap:8}}>
-          {[{href:"tel:+27000000000",bg:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",icon:<Phone size={14}/>,label:"Call"},
-            {href:"https://wa.me/27000000000",bg:"#25D366",border:"none",icon:<MessageCircle size={14}/>,label:"WhatsApp"},
-            {href:"mailto:charne@rbbrand.co.za",bg:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",icon:<Mail size={14}/>,label:"Email"}
-          ].map(b=>(
-            <a key={b.label} href={b.href} target="_blank" style={{flex:1,background:b.bg,border:b.border,borderRadius:8,padding:"10px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:5,color:"#fff",fontSize:12,fontWeight:600,textDecoration:"none"}}>
-              {b.icon}{b.label}
-            </a>
-          ))}
+// ─── Home Screen ──────────────────────────────────────────────────────────────
+function HomeScreen({ onNavigate, onSelectProp, watchlist, onToggleWatch }) {
+  const featured = PROPERTIES.slice(0, 3);
+  return (
+    <div style={{ paddingBottom:80 }}>
+      {/* Header */}
+      <div style={{ background:C.nav, padding:"48px 20px 24px" }}>
+        <p style={{ color:"rgba(255,255,255,0.5)", fontSize:12, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>RB Brand Real Estate</p>
+        <h1 style={{ color:"#FFFFFF", fontSize:26, fontWeight:800, margin:"0 0 2px" }}>Charné Snyman</h1>
+        <p style={{ color:C.gold, fontSize:13, margin:"0 0 20px" }}>Property Sales Specialist · Pretoria East & Surrounds</p>
+        <div style={{ display:"flex", gap:10 }}>
+          <a href="tel:+27000000000" style={{ flex:1, background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:8, padding:"10px", display:"flex", alignItems:"center", justifyContent:"center", gap:6, color:"#fff", textDecoration:"none", fontSize:13, fontWeight:600 }}>
+            <Phone size={15} /> Call
+          </a>
+          <a href="https://wa.me/27000000000" target="_blank" style={{ flex:1, background:"#25D366", border:"none", borderRadius:8, padding:"10px", display:"flex", alignItems:"center", justifyContent:"center", gap:6, color:"#fff", textDecoration:"none", fontSize:13, fontWeight:600 }}>
+            <MessageCircle size={15} /> WhatsApp
+          </a>
+          <a href="mailto:charne@rbbrand.co.za" style={{ flex:1, background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:8, padding:"10px", display:"flex", alignItems:"center", justifyContent:"center", gap:6, color:"#fff", textDecoration:"none", fontSize:13, fontWeight:600 }}>
+            <Mail size={15} /> Email
+          </a>
         </div>
       </div>
-      <div style={{background:C.gold,padding:"9px 18px",display:"flex",justifyContent:"space-around"}}>
-        {[["12","Active Listings"],["Equestria","Top Area"],["R 860K+","From"]].map(([v,l])=>(
-          <div key={l} style={{textAlign:"center"}}>
-            <p style={{color:"#0F2040",fontWeight:800,fontSize:14}}>{v}</p>
-            <p style={{color:"rgba(15,32,64,.55)",fontSize:10}}>{l}</p>
+      {/* Stats band */}
+      <div style={{ background:C.gold, padding:"10px 20px", display:"flex", justifyContent:"space-around" }}>
+        {[["12", "Active Listings"], ["Equestria", "Top Area"], ["R 860K+", "From"]].map(([v, l]) => (
+          <div key={l} style={{ textAlign:"center" }}>
+            <p style={{ color:"#0F2040", fontWeight:800, fontSize:14, margin:0 }}>{v}</p>
+            <p style={{ color:"rgba(15,32,64,0.6)", fontSize:10, margin:0 }}>{l}</p>
           </div>
         ))}
       </div>
-      <div style={{padding:"16px 14px 0"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <h2 style={{color:C.text,fontSize:16,fontWeight:700}}>Featured Listings</h2>
-          <button onClick={()=>nav("properties")} style={{background:"none",border:"none",color:C.gold,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:3}}>View all<ChevronRight size={13}/></button>
+      {/* Featured */}
+      <div style={{ padding:"20px 16px 0" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+          <h2 style={{ color:C.text, fontSize:17, fontWeight:700, margin:0 }}>Featured Listings</h2>
+          <button onClick={() => onNavigate("properties")} style={{ background:"none", border:"none", color:C.gold, fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", gap:3 }}>
+            View all <ChevronRight size={14} />
+          </button>
         </div>
-        {PROPS.slice(0,3).map(p=><PropCard key={p.id} p={p} watched={wl.includes(p.id)} onWatch={onWatch} onSelect={onSelect}/>)}
+        {featured.map(p => (
+          <PropertyCard key={p.id} prop={p} isWatched={watchlist.includes(p.id)} onToggleWatch={onToggleWatch} onSelect={onSelectProp} />
+        ))}
       </div>
-      <div style={{margin:"4px 14px 16px",background:C.nav,borderRadius:14,padding:"16px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><Star size={13} color={C.gold} fill={C.gold}/><p style={{color:C.gold,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Market Insight</p></div>
-        <p style={{color:"#fff",fontSize:14,fontWeight:600,marginBottom:5}}>Pretoria East remains in demand</p>
-        <p style={{color:"rgba(255,255,255,.55)",fontSize:13,lineHeight:1.5,marginBottom:12}}>Equestria and Olympus AH see strong buyer activity. Sectional title townhouses R800K–R1.5M are moving quickly.</p>
-        <a href="https://wa.me/27000000000?text=Hi Charné, I'd like the latest Pretoria East market report." target="_blank"
-          style={{display:"inline-flex",alignItems:"center",gap:6,background:C.gold,color:C.nav,fontSize:12,fontWeight:700,padding:"8px 13px",borderRadius:7,textDecoration:"none"}}>
-          <MessageCircle size={13}/> Request Market Report
+      {/* Market Insight */}
+      <div style={{ margin:"4px 16px 16px", background:C.nav, borderRadius:14, padding:"18px 18px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8 }}>
+          <Star size={14} color={C.gold} fill={C.gold} />
+          <p style={{ color:C.gold, fontSize:11, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", margin:0 }}>Market Insight</p>
+        </div>
+        <p style={{ color:"#fff", fontSize:14, fontWeight:600, margin:"0 0 6px" }}>Pretoria East remains in demand</p>
+        <p style={{ color:"rgba(255,255,255,0.6)", fontSize:13, margin:"0 0 12px", lineHeight:1.5 }}>
+          Equestria and Olympus AH continue to see strong buyer activity. Sectional title townhouses between R800K–R1.5M are moving quickly. Contact Charné for the latest area report.
+        </p>
+        <a href="https://wa.me/27000000000?text=Hi Charné, I'd like the latest Pretoria East market report." target="_blank" style={{ display:"inline-flex", alignItems:"center", gap:6, background:C.gold, color:C.nav, fontSize:12, fontWeight:700, padding:"8px 14px", borderRadius:7, textDecoration:"none" }}>
+          <MessageCircle size={13} /> Request Market Report
         </a>
       </div>
     </div>
   );
 }
 
-function PropsScreen({onSelect,wl,onWatch}){
-  const [q,setQ]=useState(""); const [area,setArea]=useState("All"); const [type,setType]=useState("All");
-  const filtered=PROPS.filter(p=>{
-    if(q&&!p.title.toLowerCase().includes(q.toLowerCase())&&!p.area.toLowerCase().includes(q.toLowerCase()))return false;
-    if(area!=="All"&&p.area!==area)return false;
-    if(type!=="All"&&p.type!==type)return false;
+// ─── Properties Screen ────────────────────────────────────────────────────────
+function PropertiesScreen({ onSelectProp, watchlist, onToggleWatch }) {
+  const [search, setSearch] = useState("");
+  const [area, setArea] = useState("All");
+  const [type, setType] = useState("All");
+  const [maxPrice, setMaxPrice] = useState(5000000);
+
+  const filtered = PROPERTIES.filter(p => {
+    const q = search.toLowerCase();
+    if (search && !p.title.toLowerCase().includes(q) && !p.area.toLowerCase().includes(q)) return false;
+    if (area !== "All" && p.area !== area) return false;
+    if (type !== "All" && p.type !== type) return false;
+    if (p.price > maxPrice) return false;
     return true;
   });
-  return(
-    <div style={{paddingBottom:72}}>
-      <div style={{background:C.nav,padding:"36px 14px 14px"}}>
-        <h2 style={{color:"#fff",fontSize:20,fontWeight:700,marginBottom:12}}>All Properties</h2>
-        <div style={{position:"relative"}}>
-          <Search size={14} color="rgba(255,255,255,.35)" style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)"}}/>
-          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search area or property…"
-            style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:8,padding:"9px 12px 9px 34px",color:"#fff",fontSize:14,outline:"none"}}/>
-        </div>
-      </div>
-      <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"10px 14px"}}>
-        <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:6}}>
-          {AREAS.map(a=><button key={a} onClick={()=>setArea(a)} style={{flexShrink:0,padding:"5px 11px",borderRadius:20,border:"none",background:a===area?C.nav:C.bg,color:a===area?"#fff":C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>{a}</button>)}
-        </div>
-        <div style={{display:"flex",gap:7,overflowX:"auto",paddingTop:4}}>
-          {TYPES.map(t=><button key={t} onClick={()=>setType(t)} style={{flexShrink:0,padding:"5px 11px",borderRadius:20,border:`1px solid ${t===type?C.gold:C.border}`,background:t===type?"rgba(196,154,47,.1)":"transparent",color:t===type?C.gold:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>{t}</button>)}
-        </div>
-      </div>
-      <div style={{padding:"10px 14px 0"}}>
-        <p style={{color:C.muted,fontSize:12,marginBottom:10}}>{filtered.length} {filtered.length===1?"property":"properties"} found</p>
-        {filtered.length===0?<div style={{textAlign:"center",padding:"40px 20px"}}><Search size={32} color={C.border}/><p style={{color:C.muted,marginTop:10}}>No properties match.</p></div>
-          :filtered.map(p=><PropCard key={p.id} p={p} watched={wl.includes(p.id)} onWatch={onWatch} onSelect={onSelect}/>)}
-      </div>
-    </div>
-  );
-}
 
-function PropDetail({p,watched,onWatch,onBack}){
-  const wa=encodeURIComponent(`Hi Charné, I'm interested in ${p.title} in ${p.area} at ${fmt(p.price)}. Could you share more details?`);
-  return(
-    <div style={{paddingBottom:80}}>
-      <div style={{height:200,background:p.bg,position:"relative"}}>
-        <button onClick={onBack} style={{position:"absolute",top:36,left:14,width:34,height:34,borderRadius:"50%",background:"rgba(0,0,0,.3)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><ArrowLeft size={16} color="#fff"/></button>
-        <button onClick={()=>onWatch(p.id)} style={{position:"absolute",top:36,right:14,width:34,height:34,borderRadius:"50%",background:watched?"#C49A2F":"rgba(0,0,0,.3)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Heart size={15} fill={watched?"#fff":"none"} color="#fff"/></button>
-        <div style={{position:"absolute",bottom:14,left:14}}><span style={{background:p.sc,color:"#fff",fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:5}}>{p.status}</span></div>
-      </div>
-      <div style={{padding:"16px 14px"}}>
-        <p style={{color:C.nav,fontSize:24,fontWeight:800,marginBottom:3}}>{fmt(p.price)}</p>
-        <h1 style={{color:C.text,fontSize:17,fontWeight:700,marginBottom:5}}>{p.title}</h1>
-        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:14}}><MapPin size={12} color={C.muted}/><span style={{color:C.muted,fontSize:13}}>{p.area}, {p.city}</span></div>
-        <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-          {p.beds>0&&<div style={{background:C.bg,borderRadius:8,padding:"7px 11px",display:"flex",alignItems:"center",gap:5}}><Bed size={13} color={C.nav}/><span style={{color:C.text,fontSize:13,fontWeight:600}}>{p.beds} Beds</span></div>}
-          {p.baths>0&&<div style={{background:C.bg,borderRadius:8,padding:"7px 11px",display:"flex",alignItems:"center",gap:5}}><Bath size={13} color={C.nav}/><span style={{color:C.text,fontSize:13,fontWeight:600}}>{p.baths} Baths</span></div>}
-          {p.garages>0&&<div style={{background:C.bg,borderRadius:8,padding:"7px 11px",display:"flex",alignItems:"center",gap:5}}><Car size={13} color={C.nav}/><span style={{color:C.text,fontSize:13,fontWeight:600}}>{p.garages} Garage{p.garages>1?"s":""}</span></div>}
-          {p.floor&&<div style={{background:C.bg,borderRadius:8,padding:"7px 11px",display:"flex",alignItems:"center",gap:5}}><Maximize2 size={12} color={C.nav}/><span style={{color:C.text,fontSize:13,fontWeight:600}}>{p.floor}m²</span></div>}
-          {p.erf&&<div style={{background:C.bg,borderRadius:8,padding:"7px 11px",display:"flex",alignItems:"center",gap:5}}><Maximize2 size={12} color={C.nav}/><span style={{color:C.text,fontSize:13,fontWeight:600}}>{p.erf}m² Erf</span></div>}
+  return (
+    <div style={{ paddingBottom:80 }}>
+      <div style={{ background:C.nav, padding:"48px 16px 16px" }}>
+        <h2 style={{ color:"#fff", fontSize:20, fontWeight:700, margin:"0 0 14px" }}>All Properties</h2>
+        <div style={{ position:"relative" }}>
+          <Search size={16} color="rgba(255,255,255,0.4)" style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)" }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search area or property..."
+            style={{ width:"100%", background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:8, padding:"10px 12px 10px 36px", color:"#fff", fontSize:14, boxSizing:"border-box" }} />
         </div>
-        <h3 style={{color:C.text,fontSize:14,fontWeight:700,marginBottom:7}}>About This Property</h3>
-        <p style={{color:C.muted,fontSize:14,lineHeight:1.7,marginBottom:16}}>{p.desc}</p>
-        <h3 style={{color:C.text,fontSize:14,fontWeight:700,marginBottom:10}}>Highlights</h3>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
-          {p.hi.map(h=>(
-            <div key={h} style={{display:"flex",alignItems:"center",gap:7}}>
-              <div style={{width:18,height:18,borderRadius:"50%",background:"rgba(196,154,47,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Check size={9} color={C.gold}/></div>
-              <span style={{color:C.text,fontSize:12}}>{h}</span>
-            </div>
+      </div>
+      {/* Filters */}
+      <div style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:"12px 16px" }}>
+        <div style={{ display:"flex", gap:8, marginBottom:8, overflowX:"auto", paddingBottom:2 }}>
+          {AREAS.map(a => (
+            <button key={a} onClick={() => setArea(a)}
+              style={{ flexShrink:0, padding:"6px 12px", borderRadius:20, border:"none", background: a===area ? C.nav : C.bg, color: a===area ? "#fff" : C.muted, fontSize:12, fontWeight:600, cursor:"pointer" }}>
+              {a}
+            </button>
           ))}
         </div>
-        <a href={p.url} target="_blank" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"11px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,color:C.muted,fontSize:13,fontWeight:600,textDecoration:"none"}}>
-          <ExternalLink size={13}/> View Full Listing on RB Brand
+        <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:2 }}>
+          {TYPES.map(t => (
+            <button key={t} onClick={() => setType(t)}
+              style={{ flexShrink:0, padding:"5px 11px", borderRadius:20, border:`1px solid ${t===type ? C.gold : C.border}`, background: t===type ? "rgba(196,154,47,0.1)" : "transparent", color: t===type ? C.gold : C.muted, fontSize:12, fontWeight:600, cursor:"pointer" }}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{ padding:"12px 16px 0" }}>
+        <p style={{ color:C.muted, fontSize:12, marginBottom:12 }}>{filtered.length} {filtered.length===1?"property":"properties"} found</p>
+        {filtered.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"40px 20px" }}>
+            <Search size={32} color={C.border} style={{ marginBottom:12 }} />
+            <p style={{ color:C.muted }}>No properties match your search. Try adjusting your filters.</p>
+          </div>
+        ) : filtered.map(p => (
+          <PropertyCard key={p.id} prop={p} isWatched={watchlist.includes(p.id)} onToggleWatch={onToggleWatch} onSelect={onSelectProp} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Property Detail ──────────────────────────────────────────────────────────
+function PropertyDetail({ prop, isWatched, onToggleWatch, onBack }) {
+  const waMsg = encodeURIComponent(`Hi Charné, I'm interested in the ${prop.title} in ${prop.area} listed at ${fmtPrice(prop.price)}. Could you provide more information?`);
+  return (
+    <div style={{ paddingBottom:100 }}>
+      <div style={{ height:220, background:prop.bg, position:"relative" }}>
+        <button onClick={onBack} style={{ position:"absolute", top:48, left:16, width:36, height:36, borderRadius:"50%", background:"rgba(0,0,0,0.3)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(4px)" }}>
+          <ArrowLeft size={18} color="#fff" />
+        </button>
+        <button onClick={() => onToggleWatch(prop.id)} style={{ position:"absolute", top:48, right:16, width:36, height:36, borderRadius:"50%", background: isWatched ? C.gold : "rgba(0,0,0,0.3)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(4px)" }}>
+          <Heart size={18} fill={isWatched ? "#fff" : "none"} color="#fff" />
+        </button>
+        <div style={{ position:"absolute", bottom:16, left:16 }}>
+          <span style={{ background:prop.statusColor, color:"#fff", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:5 }}>{prop.status}</span>
+        </div>
+      </div>
+      <div style={{ padding:"20px 16px" }}>
+        <p style={{ color:C.nav, fontSize:26, fontWeight:800, margin:"0 0 4px" }}>{fmtPrice(prop.price)}</p>
+        <h1 style={{ color:C.text, fontSize:18, fontWeight:700, margin:"0 0 6px" }}>{prop.title}</h1>
+        <div style={{ display:"flex", alignItems:"center", gap:4, marginBottom:16 }}>
+          <MapPin size={13} color={C.muted} />
+          <span style={{ color:C.muted, fontSize:13 }}>{prop.area}, {prop.city}</span>
+        </div>
+        {/* Specs */}
+        <div style={{ display:"flex", gap:10, marginBottom:20, flexWrap:"wrap" }}>
+          {prop.beds > 0 && <div style={{ background:C.bg, borderRadius:8, padding:"8px 12px", display:"flex", alignItems:"center", gap:6 }}><Bed size={14} color={C.nav} /><span style={{ color:C.text, fontSize:13, fontWeight:600 }}>{prop.beds} Beds</span></div>}
+          {prop.baths > 0 && <div style={{ background:C.bg, borderRadius:8, padding:"8px 12px", display:"flex", alignItems:"center", gap:6 }}><Bath size={14} color={C.nav} /><span style={{ color:C.text, fontSize:13, fontWeight:600 }}>{prop.baths} Baths</span></div>}
+          {prop.garages > 0 && <div style={{ background:C.bg, borderRadius:8, padding:"8px 12px", display:"flex", alignItems:"center", gap:6 }}><Car size={14} color={C.nav} /><span style={{ color:C.text, fontSize:13, fontWeight:600 }}>{prop.garages} Garage{prop.garages>1?"s":""}</span></div>}
+          {prop.floor && <div style={{ background:C.bg, borderRadius:8, padding:"8px 12px", display:"flex", alignItems:"center", gap:6 }}><Maximize2 size={14} color={C.nav} /><span style={{ color:C.text, fontSize:13, fontWeight:600 }}>{prop.floor}m² Floor</span></div>}
+          {prop.erf && <div style={{ background:C.bg, borderRadius:8, padding:"8px 12px", display:"flex", alignItems:"center", gap:6 }}><Maximize2 size={14} color={C.nav} /><span style={{ color:C.text, fontSize:13, fontWeight:600 }}>{prop.erf}m² Erf</span></div>}
+        </div>
+        <div style={{ marginBottom:20 }}>
+          <h3 style={{ color:C.text, fontSize:15, fontWeight:700, marginBottom:8 }}>About This Property</h3>
+          <p style={{ color:C.muted, fontSize:14, lineHeight:1.7 }}>{prop.desc}</p>
+        </div>
+        <div style={{ marginBottom:24 }}>
+          <h3 style={{ color:C.text, fontSize:15, fontWeight:700, marginBottom:10 }}>Highlights</h3>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            {prop.highlights.map(h => (
+              <div key={h} style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:20, height:20, borderRadius:"50%", background:"rgba(196,154,47,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <Check size={11} color={C.gold} />
+                </div>
+                <span style={{ color:C.text, fontSize:12 }}>{h}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <a href={prop.url} target="_blank" style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"12px", background:C.bg, border:`1px solid ${C.border}`, borderRadius:10, color:C.muted, textDecoration:"none", fontSize:13, fontWeight:600, marginBottom:8 }}>
+          <ExternalLink size={14} /> View Full Listing on RB Brand
         </a>
       </div>
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:C.surface,borderTop:`1px solid ${C.border}`,padding:"10px 14px",display:"flex",gap:8}}>
-        <a href={`https://wa.me/27000000000?text=${wa}`} target="_blank" style={{flex:2,background:"#25D366",borderRadius:10,padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:7,color:"#fff",fontWeight:700,fontSize:14,textDecoration:"none"}}>
-          <MessageCircle size={16}/> WhatsApp Charné
+      {/* CTA bar */}
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.surface, borderTop:`1px solid ${C.border}`, padding:"12px 16px", display:"flex", gap:10 }}>
+        <a href={`https://wa.me/27000000000?text=${waMsg}`} target="_blank" style={{ flex:2, background:"#25D366", borderRadius:10, padding:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:8, color:"#fff", textDecoration:"none", fontWeight:700, fontSize:14 }}>
+          <MessageCircle size={16} /> WhatsApp Charné
         </a>
-        <a href="tel:+27000000000" style={{flex:1,background:C.nav,borderRadius:10,padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:7,color:"#fff",fontWeight:700,fontSize:14,textDecoration:"none"}}>
-          <Phone size={15}/> Call
+        <a href="tel:+27000000000" style={{ flex:1, background:C.nav, borderRadius:10, padding:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:8, color:"#fff", textDecoration:"none", fontWeight:700, fontSize:14 }}>
+          <Phone size={16} /> Call
         </a>
       </div>
     </div>
   );
 }
 
-function WLScreen({wl,onWatch,onSelect,nav,onRevoke}){
-  const saved=PROPS.filter(p=>wl.includes(p.id));
-  return(
-    <div style={{paddingBottom:72}}>
-      <div style={{background:C.nav,padding:"36px 14px 18px"}}>
-        <h2 style={{color:"#fff",fontSize:20,fontWeight:700,marginBottom:2}}>My Watchlist</h2>
-        <p style={{color:"rgba(255,255,255,.4)",fontSize:12}}>{saved.length} saved {saved.length===1?"property":"properties"}</p>
+// ─── Watchlist Screen ─────────────────────────────────────────────────────────
+function WatchlistScreen({ watchlist, onToggleWatch, onSelectProp, onNavigate, onRevoke }) {
+  const saved = PROPERTIES.filter(p => watchlist.includes(p.id));
+  return (
+    <div style={{ paddingBottom:80 }}>
+      <div style={{ background:C.nav, padding:"48px 16px 20px" }}>
+        <h2 style={{ color:"#fff", fontSize:20, fontWeight:700, margin:"0 0 4px" }}>My Watchlist</h2>
+        <p style={{ color:"rgba(255,255,255,0.5)", fontSize:13, margin:0 }}>{saved.length} saved {saved.length===1?"property":"properties"}</p>
       </div>
-      <div style={{padding:"14px 14px 0"}}>
-        {saved.length===0?(
-          <div style={{textAlign:"center",padding:"48px 18px"}}>
-            <Heart size={38} color={C.border}/>
-            <h3 style={{color:C.text,marginTop:12,marginBottom:7,fontSize:16}}>No saved properties yet</h3>
-            <p style={{color:C.muted,marginBottom:18,fontSize:14}}>Tap the heart on any property to save it here.</p>
-            <button onClick={()=>nav("properties")} style={{background:C.nav,border:"none",borderRadius:8,padding:"11px 22px",color:"#fff",fontWeight:600,fontSize:14,cursor:"pointer"}}>Browse Properties</button>
+      <div style={{ padding:"16px 16px 0" }}>
+        {saved.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"48px 20px" }}>
+            <Heart size={40} color={C.border} style={{ marginBottom:12 }} />
+            <h3 style={{ color:C.text, marginBottom:8 }}>No saved properties yet</h3>
+            <p style={{ color:C.muted, marginBottom:20, fontSize:14 }}>Tap the heart icon on any property to save it here.</p>
+            <button onClick={() => onNavigate("properties")} style={{ background:C.nav, border:"none", borderRadius:8, padding:"12px 24px", color:"#fff", fontWeight:600, cursor:"pointer" }}>Browse Properties</button>
           </div>
-        ):saved.map(p=><PropCard key={p.id} p={p} watched onWatch={onWatch} onSelect={onSelect}/>)}
+        ) : saved.map(p => (
+          <PropertyCard key={p.id} prop={p} isWatched onToggleWatch={onToggleWatch} onSelect={onSelectProp} />
+        ))}
       </div>
-      <div style={{margin:"6px 14px 22px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:12,padding:"13px 15px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><Shield size={12} color={C.muted}/><span style={{color:C.muted,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2}}>Your POPIA Rights</span></div>
-        <p style={{color:C.muted,fontSize:12,lineHeight:1.55,marginBottom:9}}>Your watchlist is stored only on this device. Charné Snyman is the data controller. You may withdraw consent and delete all data at any time.</p>
-        <button onClick={()=>{if(window.confirm("Delete your watchlist and consent record?"))onRevoke();}}
-          style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"1px solid #DC2626",borderRadius:7,padding:"7px 11px",color:"#DC2626",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-          <Trash2 size={12}/> Withdraw Consent & Delete My Data
+      {/* Privacy controls */}
+      <div style={{ margin:"8px 16px 24px", background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:"14px 16px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8 }}>
+          <Shield size={14} color={C.muted} />
+          <span style={{ color:C.muted, fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:1 }}>Your POPIA Rights</span>
+        </div>
+        <p style={{ color:C.muted, fontSize:12, lineHeight:1.5, marginBottom:10 }}>
+          Your watchlist and data is stored only on this device. Charné Snyman is the data controller. You may withdraw consent and delete all data at any time.
+        </p>
+        <button onClick={async () => { if (confirm("This will delete your watchlist and consent record. Continue?")) { await onRevoke(); } }}
+          style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:`1px solid #DC2626`, borderRadius:7, padding:"7px 12px", color:"#DC2626", fontSize:12, fontWeight:600, cursor:"pointer" }}>
+          <Trash2 size={13} /> Withdraw Consent & Delete My Data
         </button>
       </div>
     </div>
   );
 }
 
-function NavBar({screen,nav,wlCount}){
-  const tabs=[{id:"home",label:"Home",icon:Home},{id:"properties",label:"Properties",icon:Building2},{id:"watchlist",label:"Watchlist",icon:Bookmark,badge:wlCount}];
-  return(
-    <div style={{position:"fixed",bottom:0,left:0,right:0,background:C.surface,borderTop:`1px solid ${C.border}`,display:"flex",zIndex:50}}>
-      {tabs.map(({id,label,icon:Icon,badge})=>(
-        <button key={id} onClick={()=>nav(id)} style={{flex:1,padding:"10px 6px 8px",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
-          <div style={{position:"relative"}}>
-            <Icon size={20} color={screen===id?C.nav:C.muted} fill={screen===id?"rgba(15,32,64,.1)":"none"}/>
-            {badge>0&&<span style={{position:"absolute",top:-4,right:-6,background:C.gold,color:"#fff",borderRadius:"50%",width:14,height:14,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge}</span>}
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function NavBar({ screen, onNavigate, watchlistCount }) {
+  const tabs = [
+    { id:"home", label:"Home", icon:Home },
+    { id:"properties", label:"Properties", icon:Building2 },
+    { id:"watchlist", label:"Watchlist", icon:Bookmark, badge: watchlistCount },
+  ];
+  return (
+    <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.surface, borderTop:`1px solid ${C.border}`, display:"flex", zIndex:50 }}>
+      {tabs.map(({ id, label, icon:Icon, badge }) => (
+        <button key={id} onClick={() => onNavigate(id)}
+          style={{ flex:1, padding:"10px 8px", background:"none", border:"none", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:3, position:"relative" }}>
+          <div style={{ position:"relative" }}>
+            <Icon size={20} color={screen===id ? C.nav : C.muted} fill={screen===id ? "rgba(15,32,64,0.1)" : "none"} />
+            {badge > 0 && <span style={{ position:"absolute", top:-4, right:-6, background:C.gold, color:"#fff", borderRadius:"50%", width:14, height:14, fontSize:9, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>{badge}</span>}
           </div>
-          <span style={{fontSize:10,fontWeight:600,color:screen===id?C.nav:C.muted}}>{label}</span>
-          {screen===id&&<div style={{position:"absolute",top:0,left:"25%",right:"25%",height:2,background:C.nav,borderRadius:"0 0 2px 2px"}}/>}
+          <span style={{ fontSize:10, fontWeight:600, color:screen===id ? C.nav : C.muted }}>{label}</span>
+          {screen===id && <div style={{ position:"absolute", top:0, left:"25%", right:"25%", height:2, background:C.nav, borderRadius:"0 0 2px 2px" }} />}
         </button>
       ))}
     </div>
   );
 }
 
-export default function App(){
-  const [loading,setLoading]=useState(true);
-  const [consent,setConsent]=useState(null);
-  const [screen,setScreen]=useState("home");
-  const [sel,setSel]=useState(null);
-  const [wl,setWl]=useState([]);
+// ─── Main App ─────────────────────────────────────────────────────────────────
+export default function CharneClientApp() {
+  const [loading, setLoading] = useState(true);
+  const [consent, setConsent] = useState(null);
+  const [screen, setScreen] = useState("home");
+  const [selectedProp, setSelectedProp] = useState(null);
+  const [watchlist, setWatchlist] = useState([]);
 
-  useEffect(()=>{
-    (async()=>{
-      const c=await POPIA.getConsent();
-      const w=await POPIA.getWL();
-      setConsent(c); setWl(w); setLoading(false);
+  useEffect(() => {
+    (async () => {
+      const c = await POPIA.getConsent();
+      const wl = await POPIA.getWatchlist();
+      setConsent(c);
+      setWatchlist(wl);
+      setLoading(false);
     })();
-  },[]);
+  }, []);
 
-  const handleConsent=async(granted)=>setConsent(await POPIA.record(granted));
-  const handleRevoke=async()=>{await POPIA.revoke();setConsent(null);setWl([]);setScreen("home");};
-  const toggleWl=async(id)=>{const u=wl.includes(id)?wl.filter(i=>i!==id):[...wl,id];setWl(u);await POPIA.saveWL(u);};
-  const nav=(s)=>{setSel(null);setScreen(s);};
+  const handleConsent = async (granted) => {
+    const rec = await POPIA.record(granted);
+    setConsent(rec);
+  };
 
-  if(loading)return<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0F2040"}}><div style={{textAlign:"center"}}><div style={{width:36,height:36,border:"3px solid rgba(196,154,47,.3)",borderTop:"3px solid #C49A2F",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 10px"}}/><p style={{color:"rgba(255,255,255,.4)",fontSize:13}}>Loading…</p><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div></div>;
-  if(!consent)return<POPIAGate onDecide={handleConsent}/>;
-  if(consent&&!consent.granted)return<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",padding:32,textAlign:"center",background:C.bg}}><div style={{width:52,height:52,borderRadius:"50%",background:"#FEE2E2",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14}}><X size={22} color="#DC2626"/></div><h2 style={{color:C.text,marginBottom:8}}>Access Not Available</h2><p style={{color:C.muted,maxWidth:280,lineHeight:1.6,marginBottom:22}}>Charné needs your consent under POPIA. No data is collected without your agreement.</p><button onClick={()=>setConsent(null)} style={{padding:"12px 24px",background:C.nav,border:"none",borderRadius:8,color:"#fff",fontWeight:600,cursor:"pointer"}}>Review Privacy Notice</button></div>;
+  const handleRevoke = async () => {
+    await POPIA.revoke();
+    setConsent(null);
+    setWatchlist([]);
+    setScreen("home");
+  };
 
-  return(
-    <div style={{background:C.bg,minHeight:"100vh",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",maxWidth:480,margin:"0 auto"}}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      {sel?<PropDetail p={sel} watched={wl.includes(sel.id)} onWatch={toggleWl} onBack={()=>setSel(null)}/>:<>
-        {screen==="home"&&<HomeScreen nav={nav} onSelect={setSel} wl={wl} onWatch={toggleWl}/>}
-        {screen==="properties"&&<PropsScreen onSelect={setSel} wl={wl} onWatch={toggleWl}/>}
-        {screen==="watchlist"&&<WLScreen wl={wl} onWatch={toggleWl} onSelect={setSel} nav={nav} onRevoke={handleRevoke}/>}
-        <NavBar screen={screen} nav={nav} wlCount={wl.length}/>
-      </>}
+  const toggleWatchlist = async (id) => {
+    const updated = watchlist.includes(id) ? watchlist.filter(i => i !== id) : [...watchlist, id];
+    setWatchlist(updated);
+    await POPIA.saveWatchlist(updated);
+  };
+
+  const navigateTo = (s) => { setSelectedProp(null); setScreen(s); };
+
+  if (loading) return (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", background:C.nav }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ width:40, height:40, border:"3px solid rgba(196,154,47,0.3)", borderTop:"3px solid #C49A2F", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 12px" }} />
+        <p style={{ color:"rgba(255,255,255,0.5)", fontSize:13 }}>Loading...</p>
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  if (!consent) return <POPIAGate onDecide={handleConsent} />;
+  if (consent && !consent.granted) return <DeclinedScreen onReset={() => setConsent(null)} />;
+
+  return (
+    <div style={{ background:C.bg, minHeight:"100vh", fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", maxWidth:480, margin:"0 auto", position:"relative" }}>
+      {selectedProp ? (
+        <PropertyDetail prop={selectedProp} isWatched={watchlist.includes(selectedProp.id)} onToggleWatch={toggleWatchlist} onBack={() => setSelectedProp(null)} />
+      ) : (
+        <>
+          {screen === "home" && <HomeScreen onNavigate={navigateTo} onSelectProp={setSelectedProp} watchlist={watchlist} onToggleWatch={toggleWatchlist} />}
+          {screen === "properties" && <PropertiesScreen onSelectProp={setSelectedProp} watchlist={watchlist} onToggleWatch={toggleWatchlist} />}
+          {screen === "watchlist" && <WatchlistScreen watchlist={watchlist} onToggleWatch={toggleWatchlist} onSelectProp={setSelectedProp} onNavigate={navigateTo} onRevoke={handleRevoke} />}
+          <NavBar screen={screen} onNavigate={navigateTo} watchlistCount={watchlist.length} />
+        </>
+      )}
     </div>
   );
 }

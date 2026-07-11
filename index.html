@@ -261,137 +261,142 @@
   <p class="subline" id="head-sub"></p>
 </header>
 
-<nav class="chips" id="chips" aria-label="Matches"></nav>
+<nav class="chips" id="chips" aria-label="Matches" hidden></nav>
 
 <main>
-  <section id="sec-install" hidden>
-    <div class="card install-card" id="install-inner"></div>
+  <section id="sec-loading">
+    <div class="card"><p class="hint" style="margin:0">🔄 Connecting to the live predictor…</p></div>
   </section>
 
-  <!-- ============ MATCH VIEW ============ -->
-  <div id="view-match">
-    <section id="sec-status" hidden>
-      <div id="status-pill"></div>
+  <div id="app-content" hidden>
+    <section id="sec-install" hidden>
+      <div class="card install-card" id="install-inner"></div>
     </section>
 
-    <section id="sec-add">
-      <h2>Add your prediction</h2>
-      <div class="card">
-        <div class="field">
-          <label for="inp-name">Your name</label>
-          <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30">
-        </div>
-        <div class="scores-row">
+    <!-- ============ MATCH VIEW ============ -->
+    <div id="view-match">
+      <section id="sec-status" hidden>
+        <div id="status-pill"></div>
+      </section>
+
+      <section id="sec-add">
+        <h2>Add your prediction</h2>
+        <div class="card">
           <div class="field">
-            <label for="inp-sa" id="lbl-home">Home</label>
-            <input id="inp-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+            <label for="inp-name">Your name</label>
+            <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30">
           </div>
-          <div class="field">
-            <label for="inp-sc" id="lbl-away">Away</label>
-            <input id="inp-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+          <div class="scores-row">
+            <div class="field">
+              <label for="inp-sa" id="lbl-home">Home</label>
+              <input id="inp-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+            </div>
+            <div class="field">
+              <label for="inp-sc" id="lbl-away">Away</label>
+              <input id="inp-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+            </div>
           </div>
+          <button class="btn" id="btn-add">Add my prediction</button>
+          <button class="btn quiet" id="btn-cancel-edit" hidden>Cancel — keep as it was</button>
+          <p class="hint">Predictions update live for the whole family — no need to send anything.</p>
         </div>
-        <button class="btn" id="btn-add">Add my prediction</button>
-        <button class="btn quiet" id="btn-cancel-edit" hidden>Cancel — keep as it was</button>
-        <button class="btn share" id="btn-send-mine" hidden>Share my prediction</button>
-        <p class="hint">Added your score? Tap Share so it reaches everyone else's list.</p>
-      </div>
-    </section>
+      </section>
 
-    <section>
-      <h2>Predictions<span class="count-pill" id="count">0</span></h2>
-      <div id="consensus"></div>
-      <div id="facts"></div>
-      <div class="thead" aria-hidden="true">
-        <span>Name</span><span class="col-num" id="th-home">H</span><span class="col-num" id="th-away">A</span><span></span><span></span>
-      </div>
-      <div class="rows" id="rows"></div>
-    </section>
-
-    <section>
-      <h2>Final result</h2>
-      <div id="final-display"></div>
-      <div class="card" id="final-form">
-        <p class="hint" style="margin:0 4px 10px">After the final whistle, enter the real score to crown the winner.</p>
-        <div class="scores-row" style="margin-top:0">
-          <div class="field">
-            <label for="fin-sa" id="lbl-fin-home">Home</label>
-            <input id="fin-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
-          </div>
-          <div class="field">
-            <label for="fin-sc" id="lbl-fin-away">Away</label>
-            <input id="fin-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
-          </div>
+      <section>
+        <h2>Predictions<span class="count-pill" id="count">0</span></h2>
+        <div id="consensus"></div>
+        <div id="facts"></div>
+        <div class="thead" aria-hidden="true">
+          <span>Name</span><span class="col-num" id="th-home">H</span><span class="col-num" id="th-away">A</span><span></span><span></span>
         </div>
-        <button class="btn" id="btn-final">Save final score</button>
-      </div>
-      <button class="btn share" id="btn-share-results" hidden>Share the results</button>
-      <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
-      <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong></p>
-    </section>
+        <div class="rows" id="rows"></div>
+      </section>
 
-    <section>
-      <h2>Family pot</h2>
-      <div class="card pot-card">
-        <span class="cur">R</span>
-        <input id="pot-amount" type="number" inputmode="numeric" min="0" max="10000" placeholder="0" aria-label="Rand per person">
-        <span style="font-size:13px;color:var(--ink-soft)">each</span>
-        <span class="pot-total" id="pot-total"></span>
-      </div>
-      <p class="hint">Optional — set an amount per person and the winner takes the pot.</p>
-    </section>
-
-    <section>
-      <button class="btn quiet" id="btn-match-settings">⚙️ Match settings</button>
-    </section>
-  </div>
-
-  <!-- ============ LEAGUE VIEW ============ -->
-  <div id="view-league" hidden>
-    <section>
-      <h2>League standings</h2>
-      <div class="lg-thead" aria-hidden="true">
-        <span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span>
-      </div>
-      <div class="rows" id="lg-rows"></div>
-      <p class="legend">Points per match: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong>. Add more matches to keep the league running all season!</p>
-    </section>
-  </div>
-
-  <!-- ============ NEW / EDIT MATCH VIEW ============ -->
-  <div id="view-newmatch" hidden>
-    <section>
-      <h2 id="nm-title">New match</h2>
-      <div class="card">
-        <div class="scores-row" style="margin-top:0">
-          <div class="field">
-            <label for="nm-home">Home team</label>
-            <select id="nm-home"></select>
+      <section>
+        <h2>Final result</h2>
+        <div id="final-display"></div>
+        <div class="card" id="final-form">
+          <p class="hint" style="margin:0 4px 10px">After the final whistle, enter the real score to crown the winner.</p>
+          <div class="scores-row" style="margin-top:0">
+            <div class="field">
+              <label for="fin-sa" id="lbl-fin-home">Home</label>
+              <input id="fin-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+            </div>
+            <div class="field">
+              <label for="fin-sc" id="lbl-fin-away">Away</label>
+              <input id="fin-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+            </div>
           </div>
-          <div class="field">
-            <label for="nm-away">Away team</label>
-            <select id="nm-away"></select>
-          </div>
+          <button class="btn" id="btn-final">Save final score</button>
         </div>
-        <div class="scores-row" id="nm-custom-row" hidden>
-          <div class="field" id="nm-custom-home-wrap" hidden>
-            <label for="nm-custom-home">Home team name</label>
-            <input id="nm-custom-home" type="text" maxlength="24" placeholder="e.g. The Neighbours XV">
-          </div>
-          <div class="field" id="nm-custom-away-wrap" hidden>
-            <label for="nm-custom-away">Away team name</label>
-            <input id="nm-custom-away" type="text" maxlength="24" placeholder="e.g. Uncle Piet's XV">
-          </div>
+        <button class="btn share" id="btn-share-results" hidden>Share the results</button>
+        <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
+        <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong></p>
+      </section>
+
+      <section>
+        <h2>Family pot</h2>
+        <div class="card pot-card">
+          <span class="cur">R</span>
+          <input id="pot-amount" type="number" inputmode="numeric" min="0" max="10000" placeholder="0" aria-label="Rand per person">
+          <span style="font-size:13px;color:var(--ink-soft)">each</span>
+          <span class="pot-total" id="pot-total"></span>
         </div>
-        <div class="field" style="margin-top:10px">
-          <label for="nm-ko">Kick-off (optional — locks predictions at kick-off)</label>
-          <input id="nm-ko" type="datetime-local">
+        <p class="hint">Optional — set an amount per person and the winner takes the pot.</p>
+      </section>
+
+      <section>
+        <button class="btn quiet" id="btn-match-settings">⚙️ Match settings</button>
+      </section>
+    </div>
+
+    <!-- ============ LEAGUE VIEW ============ -->
+    <div id="view-league" hidden>
+      <section>
+        <h2>League standings</h2>
+        <div class="lg-thead" aria-hidden="true">
+          <span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span>
         </div>
-        <button class="btn" id="btn-save-match">Save match</button>
-        <button class="btn quiet" id="btn-cancel-match">Cancel</button>
-        <button class="btn danger" id="btn-delete-match" hidden>Delete this match</button>
-      </div>
-    </section>
+        <div class="rows" id="lg-rows"></div>
+        <p class="legend">Points per match: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong>. Add more matches to keep the league running all season!</p>
+      </section>
+    </div>
+
+    <!-- ============ NEW / EDIT MATCH VIEW ============ -->
+    <div id="view-newmatch" hidden>
+      <section>
+        <h2 id="nm-title">New match</h2>
+        <div class="card">
+          <div class="scores-row" style="margin-top:0">
+            <div class="field">
+              <label for="nm-home">Home team</label>
+              <select id="nm-home"></select>
+            </div>
+            <div class="field">
+              <label for="nm-away">Away team</label>
+              <select id="nm-away"></select>
+            </div>
+          </div>
+          <div class="scores-row" id="nm-custom-row" hidden>
+            <div class="field" id="nm-custom-home-wrap" hidden>
+              <label for="nm-custom-home">Home team name</label>
+              <input id="nm-custom-home" type="text" maxlength="24" placeholder="e.g. The Neighbours XV">
+            </div>
+            <div class="field" id="nm-custom-away-wrap" hidden>
+              <label for="nm-custom-away">Away team name</label>
+              <input id="nm-custom-away" type="text" maxlength="24" placeholder="e.g. Uncle Piet's XV">
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label for="nm-ko">Kick-off (optional — locks predictions at kick-off)</label>
+            <input id="nm-ko" type="datetime-local">
+          </div>
+          <button class="btn" id="btn-save-match">Save match</button>
+          <button class="btn quiet" id="btn-cancel-match">Cancel</button>
+          <button class="btn danger" id="btn-delete-match" hidden>Delete this match</button>
+        </div>
+      </section>
+    </div>
   </div>
 </main>
 
@@ -403,860 +408,892 @@
 
 <div class="toast" id="toast" role="status"></div>
 
-<script>
-(function(){
-  "use strict";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import {
+  initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, getDocs, setDoc, updateDoc, deleteDoc, deleteField, onSnapshot, writeBatch
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-  /* ================= data ================= */
-  var TEAMS = [
-    ["South Africa","🇿🇦"],["New Zealand","🇳🇿"],["Australia","🇦🇺"],["Argentina","🇦🇷"],
-    ["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],["Scotland","🏴󠁧󠁢󠁳󠁣󠁴󠁿"],["Wales","🏴󠁧󠁢󠁷󠁬󠁳󠁿"],["Ireland","🇮🇪"],
-    ["France","🇫🇷"],["Italy","🇮🇹"],["Japan","🇯🇵"],["Fiji","🇫🇯"],
-    ["Georgia","🇬🇪"],["Portugal","🇵🇹"],["USA","🇺🇸"],["Uruguay","🇺🇾"]
-  ];
-  function flagFor(name){
-    for (var i=0;i<TEAMS.length;i++) if (TEAMS[i][0]===name) return TEAMS[i][1];
-    return "🏉";
+/* ================= Firebase ================= */
+var firebaseConfig = {
+  apiKey: "AIzaSyA2eY7QWAlVMg2zohWVHMWWBZSHK2lMtdE",
+  authDomain: "sa-predictions.firebaseapp.com",
+  projectId: "sa-predictions",
+  storageBucket: "sa-predictions.firebasestorage.app",
+  messagingSenderId: "198757663385",
+  appId: "1:198757663385:web:9cda195986f8a9bb532e08"
+};
+var fbApp = initializeApp(firebaseConfig);
+var db;
+try {
+  db = initializeFirestore(fbApp, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  db = getFirestore(fbApp);
+}
+var matchesCol = collection(db, "matches");
+var metaRef = doc(db, "meta", "app");
+
+/* ================= data ================= */
+var TEAMS = [
+  ["South Africa","🇿🇦"],["New Zealand","🇳🇿"],["Australia","🇦🇺"],["Argentina","🇦🇷"],
+  ["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],["Scotland","🏴󠁧󠁢󠁳󠁣󠁴󠁿"],["Wales","🏴󠁧󠁢󠁷󠁬󠁳󠁿"],["Ireland","🇮🇪"],
+  ["France","🇫🇷"],["Italy","🇮🇹"],["Japan","🇯🇵"],["Fiji","🇫🇯"],
+  ["Georgia","🇬🇪"],["Portugal","🇵🇹"],["USA","🇺🇸"],["Uruguay","🇺🇾"]
+];
+function flagFor(name){
+  for (var i=0;i<TEAMS.length;i++) if (TEAMS[i][0]===name) return TEAMS[i][1];
+  return "🏉";
+}
+
+// 2026 Springbok fixtures. ko is epoch ms (times below are SAST = UTC+2).
+// July times are confirmed; later ones are best-known and editable in match settings.
+var FIXTURES = [
+  {id:"sa-sco-2026", h:"South Africa", a:"Scotland",    ko:Date.UTC(2026,6,11,15,40), vn:"Loftus Versfeld, Pretoria"},
+  {id:"sa-wal-2026", h:"South Africa", a:"Wales",       ko:Date.UTC(2026,6,18,15,40), vn:"Kings Park, Durban"},
+  {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Buenos Aires · time TBC"},
+  {id:"sa-nz1-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,22,15,0),  vn:"Ellis Park, Johannesburg"},
+  {id:"sa-nz2-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,29,15,0),  vn:"Cape Town Stadium"},
+  {id:"sa-nz3-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,5,15,0),   vn:"FNB Stadium, Johannesburg"},
+  {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,16,0),  vn:"Baltimore, USA · time TBC"},
+  {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,14,0),  vn:"Italy · date & time TBC"},
+  {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,14,19,10),vn:"France · date & time TBC"},
+  {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,17,40),vn:"Aviva Stadium, Dublin · time TBC"}
+];
+
+var NAME_KEY = "bok-myname";
+var CUR_KEY = "bok-curmatch";
+
+var state = { m: [], pot: 0 };
+var curId = null;
+var ready = false;
+var myName = null;
+var editingName = null;
+var editingMatch = null;
+var view = "match";
+var tickTimer = null;
+
+function cm(){
+  var found = null;
+  for (var i=0;i<state.m.length;i++) if (state.m[i].id===curId) { found = state.m[i]; break; }
+  return found || state.m[0] || null;
+}
+
+/* ================= helpers ================= */
+function num(v){ v = parseInt(v,10); return isNaN(v) ? 0 : Math.max(0, Math.min(150, v)); }
+function keyFor(name){
+  return String(name).trim().toLowerCase().replace(/[.\/\[\]~*]/g, "_").replace(/\s+/g, " ");
+}
+function findIn(match, name){
+  var n = String(name).trim().toLowerCase();
+  for (var i=0;i<match.p.length;i++)
+    if (match.p[i][0].trim().toLowerCase() === n) return match.p[i];
+  return null;
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function toast(msg){
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+}
+function shareContent(text){
+  if (navigator.share) {
+    navigator.share({ text: text }).catch(function(){});
+    return;
   }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){
+      toast("Copied! Paste it into any chat app");
+    }).catch(function(){
+      toast("Couldn't copy automatically — copy the link manually");
+    });
+    return;
+  }
+  toast("Sharing isn't supported on this browser");
+}
+function avatarHtml(name){
+  var h = 0;
+  for (var i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) % 360;
+  var initials = name.trim().split(/\s+/).map(function(w){ return w.charAt(0); }).slice(0,2).join("").toUpperCase();
+  return '<span class="avatar" style="background:hsl(' + h + ',45%,86%);color:hsl(' + h + ',55%,28%)" aria-hidden="true">' + esc(initials) + '</span>';
+}
+function isLocked(m){ return !!(m.ko && Date.now() > m.ko); }
+function fmtKo(ms){
+  try {
+    return new Date(ms).toLocaleString([], {weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
+  } catch(e){ return new Date(ms).toString().slice(0,21); }
+}
+function countdownText(ms){
+  var s = Math.max(0, Math.floor((ms - Date.now())/1000));
+  var d = Math.floor(s/86400), h = Math.floor(s%86400/3600), mi = Math.floor(s%3600/60), se = s%60;
+  if (d > 0) return d + "d " + h + "h " + mi + "m";
+  if (h > 0) return h + "h " + mi + "m " + se + "s";
+  return mi + "m " + se + "s";
+}
+function joinNames(names){
+  return names.length === 1 ? names[0]
+    : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+}
+function medalFor(rank){
+  return rank === 1 ? "🏆" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
+}
+function appUrl(matchId){
+  return location.origin + location.pathname + (matchId ? ("#m=" + encodeURIComponent(matchId)) : "");
+}
+function saveName(){
+  try { if (myName) localStorage.setItem(NAME_KEY, myName); } catch(e){}
+}
+function saveCur(){
+  try { if (curId) localStorage.setItem(CUR_KEY, curId); } catch(e){}
+}
 
-  var SEED_MATCH = {
-    id:"sa-sco-2026", h:"South Africa", hf:"🇿🇦", a:"Scotland", af:"🏴󠁧󠁢󠁳󠁣󠁴󠁿", ko:null, f:null,
-    p:[["Doug",38,18],["Caroline",30,20],["Jaco",52,12],["Charné",45,20],
-       ["Tanay",38,0],["Reinhardt",37,0],["Noelene",42,21],["Stan",40,22],
-       ["Clive",38,19],["Alan W",38,15],["Fred D",39,16],["Fred C",44,22],
-       ["Tess",36,28],["Nowell",18,18],["Sean",21,17]]
+/* ================= scoring ================= */
+function diffTo(f, e){ return Math.abs(e[1]-f[0]) + Math.abs(e[2]-f[1]); }
+function pickedWinner(f, e){ return Math.sign(e[1]-e[2]) === Math.sign(f[0]-f[1]); }
+// 🎯 exact 10 · 📏 winner + margin within 3 = 7 · ✅ winner = 5 · 🎖 closest of match +2
+function basePoints(f, e){
+  if (e[1]===f[0] && e[2]===f[1]) return 10;
+  var w = pickedWinner(f, e);
+  if (w && Math.abs((e[1]-e[2]) - (f[0]-f[1])) <= 3) return 7;
+  if (w) return 5;
+  return 0;
+}
+function standings(m){
+  var f = m.f;
+  var list = m.p.map(function(e){
+    return { e:e, d:diffTo(f,e), w:pickedWinner(f,e), pts:basePoints(f,e), closest:false };
+  });
+  if (list.length) {
+    var minD = Infinity;
+    list.forEach(function(s){ if (s.d < minD) minD = s.d; });
+    list.forEach(function(s){ if (s.d === minD) { s.pts += 2; s.closest = true; } });
+  }
+  list.sort(function(a,b){
+    if (a.pts !== b.pts) return b.pts - a.pts;
+    if (a.d !== b.d) return a.d - b.d;
+    return a.e[0].localeCompare(b.e[0]);
+  });
+  var rank = 0;
+  for (var i=0;i<list.length;i++) {
+    if (i===0 || list[i].pts!==list[i-1].pts || list[i].d!==list[i-1].d) rank = i+1;
+    list[i].rank = rank;
+  }
+  return list;
+}
+function leagueTable(){
+  var totals = {};
+  state.m.forEach(function(m){
+    m.p.forEach(function(e){
+      var k = e[0].trim().toLowerCase();
+      if (!totals[k]) totals[k] = { name:e[0], pts:0, played:0 };
+    });
+    if (!m.f) return;
+    standings(m).forEach(function(s){
+      var k = s.e[0].trim().toLowerCase();
+      totals[k].pts += s.pts;
+      totals[k].played += 1;
+    });
+  });
+  var list = Object.keys(totals).map(function(k){ return totals[k]; });
+  list.sort(function(a,b){
+    if (a.pts !== b.pts) return b.pts - a.pts;
+    if (a.played !== b.played) return a.played - b.played;
+    return a.name.localeCompare(b.name);
+  });
+  var rank = 0;
+  for (var i=0;i<list.length;i++) {
+    if (i===0 || list[i].pts!==list[i-1].pts || list[i].played!==list[i-1].played) rank = i+1;
+    list[i].rank = rank;
+  }
+  return list;
+}
+
+/* ================= confetti ================= */
+function confetti(){
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var old = document.getElementById("confetti");
+  if (old) old.remove();
+  var c = document.createElement("canvas");
+  c.id = "confetti";
+  c.width = innerWidth; c.height = innerHeight;
+  document.body.appendChild(c);
+  var ctx = c.getContext("2d");
+  var colors = ["#FFB612","#0E5C3F","#FFFFFF","#D99400","#1B2A4A"];
+  var bits = [];
+  for (var i=0;i<130;i++) bits.push({
+    x: Math.random()*c.width, y: -20 - Math.random()*c.height*0.5,
+    vx: (Math.random()-0.5)*2.2, vy: 2.5 + Math.random()*3.5,
+    r: Math.random()*Math.PI, vr: (Math.random()-0.5)*0.25,
+    w: 6+Math.random()*6, h: 8+Math.random()*8,
+    col: colors[i % colors.length]
+  });
+  var start = Date.now();
+  (function frame(){
+    ctx.clearRect(0,0,c.width,c.height);
+    bits.forEach(function(b){
+      b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r);
+      ctx.fillStyle = b.col; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);
+      ctx.restore();
+    });
+    if (Date.now() - start < 2600) requestAnimationFrame(frame);
+    else c.remove();
+  })();
+}
+
+/* ================= Firestore data layer ================= */
+function matchFromDoc(d){
+  var data = d.data();
+  var pMap = data.p || {};
+  var arr = Object.keys(pMap).map(function(k){
+    var e = pMap[k] || {};
+    return [e.name, num(e.hs), num(e.as)];
+  });
+  return {
+    id: d.id, h:data.h, hf:data.hf, a:data.a, af:data.af,
+    ko: data.ko || null, vn: data.vn || null,
+    f: data.f || null,
+    p: arr
   };
-  // 2026 Springbok fixtures. ko is epoch ms (times below are SAST = UTC+2).
-  // July times are confirmed; later ones are best-known and editable in match settings.
-  var FIXTURES = [
-    {id:"sa-sco-2026", h:"South Africa", a:"Scotland",    ko:Date.UTC(2026,6,11,15,40), vn:"Loftus Versfeld, Pretoria"},
-    {id:"sa-wal-2026", h:"South Africa", a:"Wales",       ko:Date.UTC(2026,6,18,15,40), vn:"Kings Park, Durban"},
-    {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Buenos Aires · time TBC"},
-    {id:"sa-nz1-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,22,15,0),  vn:"Ellis Park, Johannesburg"},
-    {id:"sa-nz2-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,29,15,0),  vn:"Cape Town Stadium"},
-    {id:"sa-nz3-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,5,15,0),   vn:"FNB Stadium, Johannesburg"},
-    {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,16,0),  vn:"Baltimore, USA · time TBC"},
-    {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,14,0),  vn:"Italy · date & time TBC"},
-    {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,14,19,10),vn:"France · date & time TBC"},
-    {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,17,40),vn:"Aviva Stadium, Dublin · time TBC"}
-  ];
-
-  var KEY = "bok-predictor-v2";
-  var OLD_KEY = "sa-sco-predictions-v1";
-  var NAME_KEY = "bok-myname";
-
-  // state.m: matches; each {id,h,hf,a,af,ko,p:[[name,hs,as]],f:[hs,as]|null}
-  var state = { v:2, m:[], cur:0, pot:0 };
-  var myName = null;
-  var editingName = null;       // prediction being edited
-  var editingMatch = null;      // match id being edited in the match form
-  var view = "match";           // match | league | newmatch
-  var tickTimer = null;
-
-  function cm(){ return state.m[state.cur]; }
-
-  /* ================= storage & sharing ================= */
-  function freshSeed(){
-    return JSON.parse(JSON.stringify(SEED_MATCH));
-  }
-  function migrateV1(old){
-    var m = freshSeed();
-    if (old && Array.isArray(old.p)) {
-      old.p.forEach(function(e){
-        if (Array.isArray(e) && typeof e[0]==="string" && !findIn(m, e[0]))
-          m.p.push([String(e[0]).slice(0,30), num(e[1]), num(e[2])]);
-      });
-      // union with seed: old list wins for names it has
-      old.p.forEach(function(e){
-        var t = findIn(m, e[0]);
-        if (t) { t[1]=num(e[1]); t[2]=num(e[2]); }
-      });
-      if (old.f) m.f = [num(old.f[0]), num(old.f[1])];
+}
+function sortMatches(){
+  state.m.sort(function(a,b){ return (a.ko || 9e15) - (b.ko || 9e15); });
+}
+function applyHashMatch(){
+  var mh = location.hash.match(/#m=([^&]+)/);
+  if (!mh) return false;
+  var id = decodeURIComponent(mh[1]);
+  if (!state.m.some(function(m){ return m.id===id; })) return false;
+  curId = id;
+  history.replaceState(null, "", location.pathname + location.search);
+  return true;
+}
+function startLiveSync(){
+  onSnapshot(matchesCol, function(snap){
+    state.m = snap.docs.map(matchFromDoc);
+    sortMatches();
+    if (!ready) {
+      if (!applyHashMatch()) {
+        var saved = null;
+        try { saved = localStorage.getItem(CUR_KEY); } catch(e){}
+        curId = (saved && state.m.some(function(m){ return m.id===saved; })) ? saved : ((state.m[0] && state.m[0].id) || null);
+      }
+      ready = true;
+    } else if (!curId || !state.m.some(function(m){ return m.id===curId; })) {
+      curId = (state.m[0] && state.m[0].id) || null;
     }
-    return { v:2, m:[m], cur:0, pot:0 };
-  }
-  function load(){
-    var stored = null;
-    try { stored = JSON.parse(localStorage.getItem(KEY)); } catch(e){}
-    if (stored && stored.v===2 && Array.isArray(stored.m) && stored.m.length) {
-      state = stored;
-    } else {
-      var old = null;
-      try { old = JSON.parse(localStorage.getItem(OLD_KEY)); } catch(e){}
-      state = old ? migrateV1(old) : { v:2, m:[freshSeed()], cur:0, pot:0 };
-    }
-    try { myName = localStorage.getItem(NAME_KEY) || null; } catch(e){}
-
-    var mHash = location.hash.match(/#d=([^&]+)/);
-    if (mHash) {
-      try {
-        var inc = JSON.parse(decodeURIComponent(escape(atob(mHash[1]))));
-        if (inc && inc.v===2 && Array.isArray(inc.m)) mergeState(inc);
-        else if (inc && Array.isArray(inc.p)) mergeState(migrateV1(inc));   // old-format link
-      } catch(e){}
-      history.replaceState(null, "", location.pathname + location.search);
-    }
-    if (state.cur >= state.m.length) state.cur = 0;
-    ensureFixtures();
-    save();
-  }
-  function ensureFixtures(){
+    render();
+  }, function(){
+    ready = true;
+    toast("Connection problem — check your internet");
+    render();
+  });
+  onSnapshot(metaRef, function(snap){
+    state.pot = (snap.exists() && num(snap.data().pot)) || 0;
+    render();
+  }, function(){});
+}
+function ensureFixtures(){
+  return getDocs(matchesCol).then(function(snap){
+    var existingIds = {};
+    snap.forEach(function(d){ existingIds[d.id] = true; });
+    var batch = writeBatch(db);
+    var any = false;
     FIXTURES.forEach(function(fx){
-      var local = null;
-      for (var i=0;i<state.m.length;i++) if (state.m[i].id===fx.id) { local = state.m[i]; break; }
-      if (!local) {
-        state.m.push({ id:fx.id, h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
-                       ko:fx.ko, vn:fx.vn, p:[], f:null });
-      } else {
-        if (!local.ko) local.ko = fx.ko;
-        if (!local.vn) local.vn = fx.vn;
+      if (!existingIds[fx.id]) {
+        batch.set(doc(db,"matches",fx.id), {
+          h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
+          ko:fx.ko, vn:fx.vn, f:null, p:{}
+        });
+        any = true;
       }
     });
-    sortMatches();
-  }
-  function sortMatches(){
-    var curId = state.m[state.cur] && state.m[state.cur].id;
-    state.m.sort(function(a,b){ return (a.ko || 9e15) - (b.ko || 9e15); });
-    if (curId) for (var i=0;i<state.m.length;i++) if (state.m[i].id===curId) state.cur = i;
-  }
-  function mergeState(inc){
-    inc.m.forEach(function(im){
-      var local = null;
-      for (var i=0;i<state.m.length;i++) if (state.m[i].id===im.id) { local = state.m[i]; break; }
-      if (!local) { state.m.push(im); return; }
-      (im.p||[]).forEach(function(e){
-        if (Array.isArray(e) && typeof e[0]==="string" && !findIn(local, e[0]))
-          local.p.push([String(e[0]).slice(0,30), num(e[1]), num(e[2])]);
-      });
-      if (im.f && !local.f) local.f = [num(im.f[0]), num(im.f[1])];
-      if (im.ko && !local.ko) local.ko = im.ko;
-      if (im.vn && !local.vn) local.vn = im.vn;
-    });
-    if (inc.pot && !state.pot) state.pot = num(inc.pot);
-  }
-  function save(){
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-      if (myName) localStorage.setItem(NAME_KEY, myName);
-    } catch(e){}
-  }
-  function shareUrl(){
-    var payload = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-    return location.origin + location.pathname + location.search + "#d=" + payload;
-  }
+    if (any) return batch.commit();
+  });
+}
 
-  /* ================= helpers ================= */
-  function num(v){ v = parseInt(v,10); return isNaN(v) ? 0 : Math.max(0, Math.min(150, v)); }
-  function findIn(match, name){
-    var n = String(name).trim().toLowerCase();
-    for (var i=0;i<match.p.length;i++)
-      if (match.p[i][0].trim().toLowerCase() === n) return match.p[i];
-    return null;
-  }
-  function esc(s){
-    return String(s).replace(/[&<>"']/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
-    });
-  }
-  function toast(msg){
-    var t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(t._h);
-    t._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
-  }
-  function shareContent(text){
-    if (navigator.share) {
-      navigator.share({ text: text }).catch(function(){});
-      return;
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function(){
-        toast("Copied! Paste it into any chat app");
-      }).catch(function(){
-        toast("Couldn't copy automatically — copy the link manually");
-      });
-      return;
-    }
-    toast("Sharing isn't supported on this browser");
-  }
-  function avatarHtml(name){
-    var h = 0;
-    for (var i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) % 360;
-    var initials = name.trim().split(/\s+/).map(function(w){ return w.charAt(0); }).slice(0,2).join("").toUpperCase();
-    return '<span class="avatar" style="background:hsl(' + h + ',45%,86%);color:hsl(' + h + ',55%,28%)" aria-hidden="true">' + esc(initials) + '</span>';
-  }
-  function isLocked(m){ return !!(m.ko && Date.now() > m.ko); }
-  function fmtKo(ms){
-    try {
-      return new Date(ms).toLocaleString([], {weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
-    } catch(e){ return new Date(ms).toString().slice(0,21); }
-  }
-  function countdownText(ms){
-    var s = Math.max(0, Math.floor((ms - Date.now())/1000));
-    var d = Math.floor(s/86400), h = Math.floor(s%86400/3600), mi = Math.floor(s%3600/60), se = s%60;
-    if (d > 0) return d + "d " + h + "h " + mi + "m";
-    if (h > 0) return h + "h " + mi + "m " + se + "s";
-    return mi + "m " + se + "s";
-  }
-  function joinNames(names){
-    return names.length === 1 ? names[0]
-      : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-  }
-  function medalFor(rank){
-    return rank === 1 ? "🏆" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
-  }
+function fsUpsertPrediction(matchId, name, hs, as){
+  var patch = {};
+  patch["p." + keyFor(name)] = { name:name, hs:num(hs), as:num(as) };
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsRenamePrediction(matchId, oldName, newName, hs, as){
+  var patch = {};
+  patch["p." + keyFor(oldName)] = deleteField();
+  patch["p." + keyFor(newName)] = { name:newName, hs:num(hs), as:num(as) };
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsDeletePrediction(matchId, name){
+  var patch = {};
+  patch["p." + keyFor(name)] = deleteField();
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't remove — try again"); });
+}
+function fsSetFinal(matchId, f){
+  updateDoc(doc(db,"matches",matchId), { f: f }).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsSaveMatchMeta(matchId, patch){
+  setDoc(doc(db,"matches",matchId), patch, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsCreateMatch(data){
+  var ref = doc(matchesCol);
+  setDoc(ref, Object.assign({ p:{}, f:null }, data)).catch(function(){ toast("Couldn't create match — try again"); });
+  return ref.id;
+}
+function fsDeleteMatch(matchId){
+  deleteDoc(doc(db,"matches",matchId)).catch(function(){ toast("Couldn't delete — try again"); });
+}
+function fsSetPot(amount){
+  setDoc(metaRef, { pot: num(amount) }, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
+}
 
-  /* ================= scoring ================= */
-  function diffTo(f, e){ return Math.abs(e[1]-f[0]) + Math.abs(e[2]-f[1]); }
-  function pickedWinner(f, e){ return Math.sign(e[1]-e[2]) === Math.sign(f[0]-f[1]); }
-  // 🎯 exact 10 · 📏 winner + margin within 3 = 7 · ✅ winner = 5 · 🎖 closest of match +2
-  function basePoints(f, e){
-    if (e[1]===f[0] && e[2]===f[1]) return 10;
-    var w = pickedWinner(f, e);
-    if (w && Math.abs((e[1]-e[2]) - (f[0]-f[1])) <= 3) return 7;
-    if (w) return 5;
-    return 0;
-  }
-  function standings(m){
-    var f = m.f;
-    var list = m.p.map(function(e){
-      return { e:e, d:diffTo(f,e), w:pickedWinner(f,e), pts:basePoints(f,e), closest:false };
-    });
-    if (list.length) {
-      var minD = Infinity;
-      list.forEach(function(s){ if (s.d < minD) minD = s.d; });
-      list.forEach(function(s){ if (s.d === minD) { s.pts += 2; s.closest = true; } });
-    }
-    list.sort(function(a,b){
-      if (a.pts !== b.pts) return b.pts - a.pts;
-      if (a.d !== b.d) return a.d - b.d;
-      return a.e[0].localeCompare(b.e[0]);
-    });
-    var rank = 0;
-    for (var i=0;i<list.length;i++) {
-      if (i===0 || list[i].pts!==list[i-1].pts || list[i].d!==list[i-1].d) rank = i+1;
-      list[i].rank = rank;
-    }
-    return list;
-  }
-  function leagueTable(){
-    var totals = {};   // key: lowercased name
-    state.m.forEach(function(m){
-      m.p.forEach(function(e){
-        var k = e[0].trim().toLowerCase();
-        if (!totals[k]) totals[k] = { name:e[0], pts:0, played:0 };
-      });
-      if (!m.f) return;
-      standings(m).forEach(function(s){
-        var k = s.e[0].trim().toLowerCase();
-        totals[k].pts += s.pts;
-        totals[k].played += 1;
-      });
-    });
-    var list = Object.keys(totals).map(function(k){ return totals[k]; });
-    list.sort(function(a,b){
-      if (a.pts !== b.pts) return b.pts - a.pts;
-      if (a.played !== b.played) return a.played - b.played;   // fewer games, same pts = better
-      return a.name.localeCompare(b.name);
-    });
-    var rank = 0;
-    for (var i=0;i<list.length;i++) {
-      if (i===0 || list[i].pts!==list[i-1].pts || list[i].played!==list[i-1].played) rank = i+1;
-      list[i].rank = rank;
-    }
-    return list;
-  }
+/* ================= rendering ================= */
+function render(){
+  document.getElementById("chips").hidden = !ready;
+  document.getElementById("sec-loading").hidden = ready;
+  document.getElementById("app-content").hidden = !ready;
+  if (!ready) return;
+  renderChips();
+  renderHeader();
+  document.getElementById("view-match").hidden = view !== "match";
+  document.getElementById("view-league").hidden = view !== "league";
+  document.getElementById("view-newmatch").hidden = view !== "newmatch";
+  var shareBtn = document.getElementById("btn-share");
+  shareBtn.textContent = view === "league" ? "Share league standings" : "Invite family & friends";
+  if (view === "match") renderMatch();
+  if (view === "league") renderLeague();
+}
 
-  /* ================= confetti ================= */
-  function confetti(){
-    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    var old = document.getElementById("confetti");
-    if (old) old.remove();
-    var c = document.createElement("canvas");
-    c.id = "confetti";
-    c.width = innerWidth; c.height = innerHeight;
-    document.body.appendChild(c);
-    var ctx = c.getContext("2d");
-    var colors = ["#FFB612","#0E5C3F","#FFFFFF","#D99400","#1B2A4A"];
-    var bits = [];
-    for (var i=0;i<130;i++) bits.push({
-      x: Math.random()*c.width, y: -20 - Math.random()*c.height*0.5,
-      vx: (Math.random()-0.5)*2.2, vy: 2.5 + Math.random()*3.5,
-      r: Math.random()*Math.PI, vr: (Math.random()-0.5)*0.25,
-      w: 6+Math.random()*6, h: 8+Math.random()*8,
-      col: colors[i % colors.length]
-    });
-    var start = Date.now();
-    (function frame(){
-      ctx.clearRect(0,0,c.width,c.height);
-      bits.forEach(function(b){
-        b.x += b.vx; b.y += b.vy; b.r += b.vr;
-        ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r);
-        ctx.fillStyle = b.col; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);
-        ctx.restore();
-      });
-      if (Date.now() - start < 2600) requestAnimationFrame(frame);
-      else c.remove();
-    })();
-  }
+function renderChips(){
+  var nav = document.getElementById("chips");
+  var html = state.m.map(function(m, i){
+    var active = (view==="match" && m.id===curId) ? " active" : "";
+    var date = m.ko ? " " + new Date(m.ko).toLocaleDateString([], {day:"numeric", month:"short"}) : "";
+    var done = m.f ? "✓ " : "";
+    return '<button class="chip' + active + '" data-chip="m' + i + '">' + done + m.hf + " v " + m.af + esc(date) + "</button>";
+  }).join("");
+  html += '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 League</button>';
+  html += '<button class="chip gold" data-chip="new">＋ Match</button>';
+  nav.innerHTML = html;
+  var act = nav.querySelector(".chip.active");
+  if (act && act.scrollIntoView) act.scrollIntoView({ block:"nearest", inline:"center" });
+}
 
-  /* ================= rendering ================= */
-  function render(){
-    renderChips();
-    renderHeader();
-    document.getElementById("view-match").hidden = view !== "match";
-    document.getElementById("view-league").hidden = view !== "league";
-    document.getElementById("view-newmatch").hidden = view !== "newmatch";
-    var shareBtn = document.getElementById("btn-share");
-    shareBtn.textContent = view === "league" ? "Share league standings" : "Share";
-    if (view === "match") renderMatch();
-    if (view === "league") renderLeague();
+function renderHeader(){
+  var card = document.getElementById("head-card");
+  var sub = document.getElementById("head-sub");
+  if (view === "league") {
+    card.innerHTML = '<div class="league-head"><div class="big">🏆 Family League</div>' +
+      '<div class="sub">' + state.m.length + ' match' + (state.m.length===1?'':'es') + ' · points add up all season</div></div>';
+    sub.innerHTML = "";
+    sub.hidden = true;
+    return;
   }
-
-  function renderChips(){
-    var nav = document.getElementById("chips");
-    var html = state.m.map(function(m, i){
-      var active = (view==="match" && i===state.cur) ? " active" : "";
-      var date = m.ko ? " " + new Date(m.ko).toLocaleDateString([], {day:"numeric", month:"short"}) : "";
-      var done = m.f ? "✓ " : "";
-      return '<button class="chip' + active + '" data-chip="m' + i + '">' + done + m.hf + " v " + m.af + esc(date) + "</button>";
-    }).join("");
-    html += '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 League</button>';
-    html += '<button class="chip gold" data-chip="new">＋ Match</button>';
-    nav.innerHTML = html;
-    var act = nav.querySelector(".chip.active");
-    if (act && act.scrollIntoView) act.scrollIntoView({ block:"nearest", inline:"center" });
+  var m = view === "match" ? cm() : null;
+  if (!m) {
+    card.innerHTML = '<div class="league-head"><div class="big">🏉 New match</div></div>';
+    sub.hidden = true;
+    return;
   }
+  card.innerHTML =
+    '<div class="match" role="group" aria-label="' + esc(m.h) + ' versus ' + esc(m.a) + '">' +
+      '<div class="team"><span class="flag" aria-hidden="true">' + m.hf + '</span><span class="name">' + esc(m.h) + '</span></div>' +
+      '<span class="vs">VS</span>' +
+      '<div class="team"><span class="flag" aria-hidden="true">' + m.af + '</span><span class="name">' + esc(m.a) + '</span></div>' +
+    '</div>';
+  sub.hidden = false;
+  sub.innerHTML = m.ko
+    ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.vn ? ' · ' + esc(m.vn) : '')
+    : (m.vn ? esc(m.vn) : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>');
+}
 
-  function renderHeader(){
-    var card = document.getElementById("head-card");
-    var sub = document.getElementById("head-sub");
-    if (view === "league") {
-      card.innerHTML = '<div class="league-head"><div class="big">🏆 Family League</div>' +
-        '<div class="sub">' + state.m.length + ' match' + (state.m.length===1?'':'es') + ' · points add up all season</div></div>';
-      sub.innerHTML = "";
-      sub.hidden = true;
-      return;
-    }
-    var m = view === "match" ? cm() : null;
-    if (!m) {
-      card.innerHTML = '<div class="league-head"><div class="big">🏉 New match</div></div>';
-      sub.hidden = true;
-      return;
-    }
-    card.innerHTML =
-      '<div class="match" role="group" aria-label="' + esc(m.h) + ' versus ' + esc(m.a) + '">' +
-        '<div class="team"><span class="flag" aria-hidden="true">' + m.hf + '</span><span class="name">' + esc(m.h) + '</span></div>' +
-        '<span class="vs">VS</span>' +
-        '<div class="team"><span class="flag" aria-hidden="true">' + m.af + '</span><span class="name">' + esc(m.a) + '</span></div>' +
+function renderMatch(){
+  var m = cm();
+  if (!m) return;
+  var locked = isLocked(m);
+
+  document.getElementById("lbl-home").textContent = m.hf + " " + m.h;
+  document.getElementById("lbl-away").textContent = m.af + " " + m.a;
+  document.getElementById("lbl-fin-home").textContent = m.hf + " " + m.h;
+  document.getElementById("lbl-fin-away").textContent = m.af + " " + m.a;
+  document.getElementById("th-home").textContent = m.hf;
+  document.getElementById("th-away").textContent = m.af;
+
+  var st = document.getElementById("sec-status");
+  var pill = document.getElementById("status-pill");
+  if (m.f) { st.hidden = true; }
+  else if (m.ko && !locked) {
+    st.hidden = false;
+    pill.className = "status-pill count";
+    pill.innerHTML = '⏱ Kick-off in <span id="tick">' + countdownText(m.ko) + "</span>";
+  } else if (locked) {
+    st.hidden = false;
+    pill.className = "status-pill locked";
+    pill.textContent = "🔒 Predictions locked — the game has kicked off!";
+  } else { st.hidden = true; }
+
+  document.getElementById("sec-add").hidden = locked;
+
+  var rows = document.getElementById("rows");
+  document.getElementById("count").textContent = m.p.length;
+  var ranked = m.f ? standings(m) : null;
+
+  if (!m.p.length) {
+    rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
+  } else if (ranked) {
+    rows.innerHTML = ranked.map(function(s){
+      var e = s.e;
+      var medal = medalFor(s.rank);
+      var tags = s.d + " off" + (s.closest ? " · 🎖 closest" : "") + (s.w ? "" : " · wrong team");
+      return '<div class="row' + (s.rank===1 ? ' winner' : '') + '">' +
+        '<span class="who"><span class="rank">' + s.rank + '.</span>' + avatarHtml(e[0]) +
+          '<span class="txt">' + (medal ? medal + " " : "") + esc(e[0]) +
+          '<span class="diff">' + tags + '</span></span>' +
+          '<span class="pts-chip">+' + s.pts + '</span></span>' +
+        '<span class="num sa">' + e[1] + '</span>' +
+        '<span class="num sc">' + e[2] + '</span>' +
+        '<span></span>' +
+        '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
       '</div>';
-    sub.hidden = false;
-    sub.innerHTML = m.ko
-      ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.vn ? ' · ' + esc(m.vn) : '')
-      : (m.vn ? esc(m.vn) : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>');
-  }
-
-  function renderMatch(){
-    var m = cm();
-    var locked = isLocked(m);
-
-    // team labels
-    document.getElementById("lbl-home").textContent = m.hf + " " + m.h;
-    document.getElementById("lbl-away").textContent = m.af + " " + m.a;
-    document.getElementById("lbl-fin-home").textContent = m.hf + " " + m.h;
-    document.getElementById("lbl-fin-away").textContent = m.af + " " + m.a;
-    document.getElementById("th-home").textContent = m.hf;
-    document.getElementById("th-away").textContent = m.af;
-
-    // status pill / countdown
-    var st = document.getElementById("sec-status");
-    var pill = document.getElementById("status-pill");
-    if (m.f) { st.hidden = true; }
-    else if (m.ko && !locked) {
-      st.hidden = false;
-      pill.className = "status-pill count";
-      pill.innerHTML = '⏱ Kick-off in <span id="tick">' + countdownText(m.ko) + "</span>";
-    } else if (locked) {
-      st.hidden = false;
-      pill.className = "status-pill locked";
-      pill.textContent = "🔒 Predictions locked — the game has kicked off!";
-    } else { st.hidden = true; }
-
-    // add form hidden once locked
-    document.getElementById("sec-add").hidden = locked;
-
-    // rows
-    var rows = document.getElementById("rows");
-    document.getElementById("count").textContent = m.p.length;
-    var ranked = m.f ? standings(m) : null;
-
-    if (!m.p.length) {
-      rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
-    } else if (ranked) {
-      rows.innerHTML = ranked.map(function(s){
-        var e = s.e;
-        var medal = medalFor(s.rank);
-        var tags = s.d + " off" + (s.closest ? " · 🎖 closest" : "") + (s.w ? "" : " · wrong team");
-        return '<div class="row' + (s.rank===1 ? ' winner' : '') + '">' +
-          '<span class="who"><span class="rank">' + s.rank + '.</span>' + avatarHtml(e[0]) +
-            '<span class="txt">' + (medal ? medal + " " : "") + esc(e[0]) +
-            '<span class="diff">' + tags + '</span></span>' +
-            '<span class="pts-chip">+' + s.pts + '</span></span>' +
-          '<span class="num sa">' + e[1] + '</span>' +
-          '<span class="num sc">' + e[2] + '</span>' +
-          '<span></span>' +
-          '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
-        '</div>';
-      }).join("");
-    } else {
-      rows.innerHTML = m.p.map(function(e){
-        return '<div class="row">' +
-          '<span class="who">' + avatarHtml(e[0]) + '<span class="txt">' + esc(e[0]) + '</span></span>' +
-          '<span class="num sa">' + e[1] + '</span>' +
-          '<span class="num sc">' + e[2] + '</span>' +
-          (locked ? '<span></span>' :
-            '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>') +
-          '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
-        '</div>';
-      }).join("");
-    }
-
-    // consensus + fun facts (pre-final only)
-    var cons = document.getElementById("consensus");
-    var facts = document.getElementById("facts");
-    if (!m.f && m.p.length >= 3) {
-      var sumH=0, sumA=0;
-      m.p.forEach(function(e){ sumH+=e[1]; sumA+=e[2]; });
-      cons.innerHTML = '<div class="consensus"><span>The family reckons…</span>' +
-        '<span class="avg">' + m.hf + " " + Math.round(sumH/m.p.length) +
-        " — " + Math.round(sumA/m.p.length) + " " + m.af + "</span></div>";
-
-      var believer = null, bestMargin = -Infinity;
-      var rebels = [], fences = [];
-      m.p.forEach(function(e){
-        var margin = e[1]-e[2];
-        if (margin > bestMargin) { bestMargin = margin; believer = e; }
-        if (margin < 0) rebels.push(e[0]);
-        if (margin === 0) fences.push(e[0]);
-      });
-      var fh = "";
-      if (believer && bestMargin > 0)
-        fh += '<div class="fact">💪 Biggest ' + esc(m.h) + ' believer: <strong>' + esc(believer[0]) + '</strong> (by ' + bestMargin + ')</div>';
-      if (rebels.length)
-        fh += '<div class="fact">😈 Backing ' + esc(m.a) + ': <strong>' + esc(joinNames(rebels)) + '</strong> — brave!</div>';
-      if (fences.length)
-        fh += '<div class="fact">🤝 Sitting on the fence (draw): <strong>' + esc(joinNames(fences)) + '</strong></div>';
-      facts.innerHTML = fh ? '<div class="facts">' + fh + "</div>" : "";
-    } else { cons.innerHTML = ""; facts.innerHTML = ""; }
-
-    // final result area
-    var disp = document.getElementById("final-display");
-    var form = document.getElementById("final-form");
-    var clearBtn = document.getElementById("btn-clear-final");
-    if (m.f) {
-      var champHtml = "";
-      if (ranked && ranked.length) {
-        var winners = ranked.filter(function(s){ return s.rank === 1; });
-        var names = winners.map(function(s){ return esc(s.e[0]); });
-        var podium = ranked.filter(function(s){ return s.rank <= 3; }).slice(0, 5);
-        var potLine = "";
-        if (state.pot > 0) {
-          var total = state.pot * m.p.length;
-          potLine = winners.length > 1
-            ? " 💰 They split the R" + total + " pot!"
-            : " 💰 " + names[0] + " takes the R" + total + " pot!";
-        }
-        champHtml = '<div class="champ">🏆 <strong>' + joinNames(names) + '</strong> ' +
-          (winners.length > 1 ? "share the win" : "wins") +
-          " with " + winners[0].pts + " points!" + potLine +
-          '<ul class="podium">' +
-          podium.map(function(s){
-            return '<li><span>' + medalFor(s.rank) + " " + esc(s.e[0]) +
-              " (" + s.e[1] + "–" + s.e[2] + ")</span><span class=\"pts\">+" + s.pts + " pts · " + s.d + " off</span></li>";
-          }).join("") +
-          "</ul></div>";
-      }
-      disp.innerHTML =
-        '<div class="final-banner"><div><div class="label">Full-time score</div>' +
-        '<div class="score">' + m.hf + " " + m.f[0] + " — " + m.f[1] + " " + m.af + "</div></div></div>" +
-        champHtml;
-      form.hidden = true;
-      clearBtn.hidden = false;
-    } else {
-      disp.innerHTML = "";
-      form.hidden = false;
-      clearBtn.hidden = true;
-    }
-    document.getElementById("btn-share-results").hidden = !(m.f && m.p.length);
-    document.getElementById("btn-send-mine").hidden = !(myName && findIn(m, myName)) || locked;
-
-    // pot
-    var potInp = document.getElementById("pot-amount");
-    if (document.activeElement !== potInp) potInp.value = state.pot || "";
-    document.getElementById("pot-total").innerHTML = state.pot > 0
-      ? "winner takes<br><strong>R" + (state.pot * m.p.length) + "</strong>"
-      : "";
-
-    startTicker();
-  }
-
-  function renderLeague(){
-    var rows = document.getElementById("lg-rows");
-    var table = leagueTable();
-    if (!table.length) {
-      rows.innerHTML = '<div class="empty">No players yet — add predictions on a match first.</div>';
-      return;
-    }
-    rows.innerHTML = table.map(function(t){
-      var medal = medalFor(t.rank);
-      return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + '">' +
-        '<span class="pos">' + t.rank + '</span>' +
-        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + (medal && t.pts>0 ? medal + " " : "") + esc(t.name) + '</span></span>' +
-        '<span class="played">' + t.played + '</span>' +
-        '<span class="total">' + t.pts + '</span>' +
+    }).join("");
+  } else {
+    rows.innerHTML = m.p.map(function(e){
+      return '<div class="row">' +
+        '<span class="who">' + avatarHtml(e[0]) + '<span class="txt">' + esc(e[0]) + '</span></span>' +
+        '<span class="num sa">' + e[1] + '</span>' +
+        '<span class="num sc">' + e[2] + '</span>' +
+        (locked ? '<span></span>' :
+          '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>') +
+        '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
       '</div>';
     }).join("");
   }
 
-  /* ---------- countdown ticker ---------- */
-  function startTicker(){
-    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
-    var m = cm();
-    if (!(view==="match" && m && m.ko && !m.f && !isLocked(m))) return;
-    tickTimer = setInterval(function(){
-      var el = document.getElementById("tick");
-      if (!el || view!=="match") { clearInterval(tickTimer); tickTimer = null; return; }
-      if (isLocked(cm())) { clearInterval(tickTimer); tickTimer = null; render(); return; }
-      el.textContent = countdownText(cm().ko);
-    }, 1000);
-  }
+  var cons = document.getElementById("consensus");
+  var facts = document.getElementById("facts");
+  if (!m.f && m.p.length >= 3) {
+    var sumH=0, sumA=0;
+    m.p.forEach(function(e){ sumH+=e[1]; sumA+=e[2]; });
+    cons.innerHTML = '<div class="consensus"><span>The family reckons…</span>' +
+      '<span class="avg">' + m.hf + " " + Math.round(sumH/m.p.length) +
+      " — " + Math.round(sumA/m.p.length) + " " + m.af + "</span></div>";
 
-  /* ================= match form (new/edit) ================= */
-  function fillTeamSelects(selH, selA){
-    var opts = TEAMS.map(function(t){ return '<option value="' + esc(t[0]) + '">' + t[1] + " " + esc(t[0]) + "</option>"; }).join("") +
-      '<option value="__other">✏️ Other…</option>';
-    selH.innerHTML = opts; selA.innerHTML = opts;
-  }
-  function openMatchForm(editId){
-    editingMatch = editId || null;
-    view = "newmatch";
-    var selH = document.getElementById("nm-home");
-    var selA = document.getElementById("nm-away");
-    fillTeamSelects(selH, selA);
-    document.getElementById("nm-title").textContent = editingMatch ? "Match settings" : "New match";
-    document.getElementById("btn-delete-match").hidden = !editingMatch || state.m.length < 2;
-    document.getElementById("nm-custom-home").value = "";
-    document.getElementById("nm-custom-away").value = "";
-    if (editingMatch) {
-      var m = null;
-      for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
-      if (m) {
-        var isStdH = TEAMS.some(function(t){ return t[0]===m.h; });
-        var isStdA = TEAMS.some(function(t){ return t[0]===m.a; });
-        selH.value = isStdH ? m.h : "__other";
-        selA.value = isStdA ? m.a : "__other";
-        if (!isStdH) document.getElementById("nm-custom-home").value = m.h;
-        if (!isStdA) document.getElementById("nm-custom-away").value = m.a;
-        if (m.ko) {
-          var d = new Date(m.ko - new Date().getTimezoneOffset()*60000);
-          document.getElementById("nm-ko").value = d.toISOString().slice(0,16);
-        } else document.getElementById("nm-ko").value = "";
+    var believer = null, bestMargin = -Infinity;
+    var rebels = [], fences = [];
+    m.p.forEach(function(e){
+      var margin = e[1]-e[2];
+      if (margin > bestMargin) { bestMargin = margin; believer = e; }
+      if (margin < 0) rebels.push(e[0]);
+      if (margin === 0) fences.push(e[0]);
+    });
+    var fh = "";
+    if (believer && bestMargin > 0)
+      fh += '<div class="fact">💪 Biggest ' + esc(m.h) + ' believer: <strong>' + esc(believer[0]) + '</strong> (by ' + bestMargin + ')</div>';
+    if (rebels.length)
+      fh += '<div class="fact">😈 Backing ' + esc(m.a) + ': <strong>' + esc(joinNames(rebels)) + '</strong> — brave!</div>';
+    if (fences.length)
+      fh += '<div class="fact">🤝 Sitting on the fence (draw): <strong>' + esc(joinNames(fences)) + '</strong></div>';
+    facts.innerHTML = fh ? '<div class="facts">' + fh + "</div>" : "";
+  } else { cons.innerHTML = ""; facts.innerHTML = ""; }
+
+  var disp = document.getElementById("final-display");
+  var form = document.getElementById("final-form");
+  var clearBtn = document.getElementById("btn-clear-final");
+  if (m.f) {
+    var champHtml = "";
+    if (ranked && ranked.length) {
+      var winners = ranked.filter(function(s){ return s.rank === 1; });
+      var names = winners.map(function(s){ return esc(s.e[0]); });
+      var podium = ranked.filter(function(s){ return s.rank <= 3; }).slice(0, 5);
+      var potLine = "";
+      if (state.pot > 0) {
+        var total = state.pot * m.p.length;
+        potLine = winners.length > 1
+          ? " 💰 They split the R" + total + " pot!"
+          : " 💰 " + names[0] + " takes the R" + total + " pot!";
       }
-    } else {
-      selH.value = "South Africa";
-      selA.value = "New Zealand";
-      document.getElementById("nm-ko").value = "";
+      champHtml = '<div class="champ">🏆 <strong>' + joinNames(names) + '</strong> ' +
+        (winners.length > 1 ? "share the win" : "wins") +
+        " with " + winners[0].pts + " points!" + potLine +
+        '<ul class="podium">' +
+        podium.map(function(s){
+          return '<li><span>' + medalFor(s.rank) + " " + esc(s.e[0]) +
+            " (" + s.e[1] + "–" + s.e[2] + ")</span><span class=\"pts\">+" + s.pts + " pts · " + s.d + " off</span></li>";
+        }).join("") +
+        "</ul></div>";
     }
-    updateCustomRows();
-    render();
-    scrollTo(0,0);
+    disp.innerHTML =
+      '<div class="final-banner"><div><div class="label">Full-time score</div>' +
+      '<div class="score">' + m.hf + " " + m.f[0] + " — " + m.f[1] + " " + m.af + "</div></div></div>" +
+      champHtml;
+    form.hidden = true;
+    clearBtn.hidden = false;
+  } else {
+    disp.innerHTML = "";
+    form.hidden = false;
+    clearBtn.hidden = true;
   }
-  function updateCustomRows(){
-    var oh = document.getElementById("nm-home").value === "__other";
-    var oa = document.getElementById("nm-away").value === "__other";
-    document.getElementById("nm-custom-row").hidden = !(oh || oa);
-    document.getElementById("nm-custom-home-wrap").hidden = !oh;
-    document.getElementById("nm-custom-away-wrap").hidden = !oa;
+  document.getElementById("btn-share-results").hidden = !(m.f && m.p.length);
+
+  var potInp = document.getElementById("pot-amount");
+  if (document.activeElement !== potInp) potInp.value = state.pot || "";
+  document.getElementById("pot-total").innerHTML = state.pot > 0
+    ? "winner takes<br><strong>R" + (state.pot * m.p.length) + "</strong>"
+    : "";
+
+  startTicker();
+}
+
+function renderLeague(){
+  var rows = document.getElementById("lg-rows");
+  var table = leagueTable();
+  if (!table.length) {
+    rows.innerHTML = '<div class="empty">No players yet — add predictions on a match first.</div>';
+    return;
   }
+  rows.innerHTML = table.map(function(t){
+    var medal = medalFor(t.rank);
+    return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + '">' +
+      '<span class="pos">' + t.rank + '</span>' +
+      '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + (medal && t.pts>0 ? medal + " " : "") + esc(t.name) + '</span></span>' +
+      '<span class="played">' + t.played + '</span>' +
+      '<span class="total">' + t.pts + '</span>' +
+    '</div>';
+  }).join("");
+}
 
-  /* ================= events ================= */
-  document.getElementById("chips").addEventListener("click", function(ev){
-    var chip = ev.target.closest(".chip");
-    if (!chip) return;
-    var v = chip.getAttribute("data-chip");
-    if (v === "league") { view = "league"; render(); }
-    else if (v === "new") { openMatchForm(null); }
-    else {
-      state.cur = parseInt(v.slice(1), 10) || 0;
-      view = "match";
-      setEditMode(null); clearForm();
-      save(); render();
-    }
-  });
+function startTicker(){
+  if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+  var m = cm();
+  if (!(view==="match" && m && m.ko && !m.f && !isLocked(m))) return;
+  tickTimer = setInterval(function(){
+    var el = document.getElementById("tick");
+    if (!el || view!=="match") { clearInterval(tickTimer); tickTimer = null; return; }
+    if (isLocked(cm())) { clearInterval(tickTimer); tickTimer = null; render(); return; }
+    el.textContent = countdownText(cm().ko);
+  }, 1000);
+}
 
-  document.getElementById("nm-home").addEventListener("change", updateCustomRows);
-  document.getElementById("nm-away").addEventListener("change", updateCustomRows);
-
-  document.getElementById("btn-save-match").addEventListener("click", function(){
-    var hv = document.getElementById("nm-home").value;
-    var av = document.getElementById("nm-away").value;
-    var h = hv === "__other" ? document.getElementById("nm-custom-home").value.trim() : hv;
-    var a = av === "__other" ? document.getElementById("nm-custom-away").value.trim() : av;
-    if (!h || !a) { toast("Give both teams a name"); return; }
-    if (h.toLowerCase() === a.toLowerCase()) { toast("Pick two different teams"); return; }
-    var koVal = document.getElementById("nm-ko").value;
-    var ko = koVal ? new Date(koVal).getTime() : null;
-
-    if (editingMatch) {
-      for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) {
-        state.m[i].h = h; state.m[i].hf = flagFor(h);
-        state.m[i].a = a; state.m[i].af = flagFor(a);
-        state.m[i].ko = ko;
-        state.cur = i;
-      }
-      toast("Match updated");
-    } else {
-      state.m.push({
-        id: "m" + Date.now().toString(36), h:h, hf:flagFor(h), a:a, af:flagFor(a),
-        ko:ko, p:[], f:null
-      });
-      state.cur = state.m.length - 1;
-      toast("Match added — get predicting!");
-    }
-    editingMatch = null;
-    view = "match";
-    sortMatches();
-    save(); render();
-  });
-
-  document.getElementById("btn-cancel-match").addEventListener("click", function(){
-    editingMatch = null;
-    view = "match";
-    render();
-  });
-
-  document.getElementById("btn-delete-match").addEventListener("click", function(){
-    if (!editingMatch || state.m.length < 2) return;
+/* ================= match form (new/edit) ================= */
+function fillTeamSelects(selH, selA){
+  var opts = TEAMS.map(function(t){ return '<option value="' + esc(t[0]) + '">' + t[1] + " " + esc(t[0]) + "</option>"; }).join("") +
+    '<option value="__other">✏️ Other…</option>';
+  selH.innerHTML = opts; selA.innerHTML = opts;
+}
+function openMatchForm(editId){
+  editingMatch = editId || null;
+  view = "newmatch";
+  var selH = document.getElementById("nm-home");
+  var selA = document.getElementById("nm-away");
+  fillTeamSelects(selH, selA);
+  document.getElementById("nm-title").textContent = editingMatch ? "Match settings" : "New match";
+  document.getElementById("btn-delete-match").hidden = !editingMatch || state.m.length < 2;
+  document.getElementById("nm-custom-home").value = "";
+  document.getElementById("nm-custom-away").value = "";
+  if (editingMatch) {
     var m = null;
     for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
-    if (!confirm("Delete " + (m ? m.h + " vs " + m.a : "this match") + " and all its predictions?")) return;
-    state.m = state.m.filter(function(x){ return x.id !== editingMatch; });
-    state.cur = 0;
-    editingMatch = null;
-    view = "match";
-    save(); render();
-    toast("Match deleted");
-  });
-
-  document.getElementById("btn-match-settings").addEventListener("click", function(){
-    openMatchForm(cm().id);
-  });
-
-  /* ---------- predictions ---------- */
-  function setEditMode(name){
-    editingName = name;
-    document.getElementById("btn-add").textContent = name ? "Save changes" : "Add my prediction";
-    document.getElementById("btn-cancel-edit").hidden = !name;
+    if (m) {
+      var isStdH = TEAMS.some(function(t){ return t[0]===m.h; });
+      var isStdA = TEAMS.some(function(t){ return t[0]===m.a; });
+      selH.value = isStdH ? m.h : "__other";
+      selA.value = isStdA ? m.a : "__other";
+      if (!isStdH) document.getElementById("nm-custom-home").value = m.h;
+      if (!isStdA) document.getElementById("nm-custom-away").value = m.a;
+      if (m.ko) {
+        var d = new Date(m.ko - new Date().getTimezoneOffset()*60000);
+        document.getElementById("nm-ko").value = d.toISOString().slice(0,16);
+      } else document.getElementById("nm-ko").value = "";
+    }
+  } else {
+    selH.value = "South Africa";
+    selA.value = "New Zealand";
+    document.getElementById("nm-ko").value = "";
   }
-  function clearForm(){
-    document.getElementById("inp-name").value = "";
-    document.getElementById("inp-sa").value = "";
-    document.getElementById("inp-sc").value = "";
-  }
-
-  document.getElementById("btn-add").addEventListener("click", function(){
-    var m = cm();
-    if (isLocked(m)) { toast("Too late — kick-off has passed!"); return; }
-    var nameEl = document.getElementById("inp-name");
-    var saEl = document.getElementById("inp-sa");
-    var scEl = document.getElementById("inp-sc");
-    var name = nameEl.value.trim();
-    if (!name) { toast("Type your name first"); nameEl.focus(); return; }
-    if (saEl.value === "" || scEl.value === "") { toast("Fill in both scores"); return; }
-
-    if (editingName) {
-      var entry = findIn(m, editingName);
-      var clash = findIn(m, name);
-      if (clash && clash !== entry) { toast("There's already a " + clash[0] + " on the list"); return; }
-      if (entry) {
-        entry[0] = name; entry[1] = num(saEl.value); entry[2] = num(scEl.value);
-        if (myName && myName.trim().toLowerCase() === editingName.trim().toLowerCase()) myName = name;
-        toast("Saved " + name);
-      }
-      setEditMode(null);
-    } else {
-      var existing = findIn(m, name);
-      if (existing) { existing[1] = num(saEl.value); existing[2] = num(scEl.value); toast("Updated " + name + "'s prediction"); }
-      else { m.p.push([name, num(saEl.value), num(scEl.value)]); toast("Added — tap Share so it reaches everyone!"); }
-      myName = name;
-    }
-    save(); render();
-    clearForm();
-  });
-
-  document.getElementById("btn-cancel-edit").addEventListener("click", function(){
-    setEditMode(null);
-    clearForm();
-  });
-
-  document.getElementById("btn-send-mine").addEventListener("click", function(){
-    var m = cm();
-    var e = myName && findIn(m, myName);
-    if (!e) return;
-    shareContent(
-      "🏉 My " + m.h + " vs " + m.a + " prediction:\n" +
-      e[0] + ": " + m.hf + " " + m.h + " " + e[1] + " — " + e[2] + " " + m.a + " " + m.af + "\n\n" +
-      "Full list here: " + shareUrl()
-    );
-  });
-
-  document.getElementById("rows").addEventListener("click", function(ev){
-    var m = cm();
-    var editBtn = ev.target.closest(".edit");
-    if (editBtn) {
-      var entry = findIn(m, editBtn.getAttribute("data-name"));
-      if (!entry) return;
-      document.getElementById("inp-name").value = entry[0];
-      document.getElementById("inp-sa").value = entry[1];
-      document.getElementById("inp-sc").value = entry[2];
-      setEditMode(entry[0]);
-      document.getElementById("inp-name").scrollIntoView({ behavior: "smooth", block: "center" });
-      document.getElementById("inp-name").focus();
-      return;
-    }
-    var btn = ev.target.closest(".del");
-    if (!btn) return;
-    var name = btn.getAttribute("data-name");
-    if (!confirm("Remove " + name + "'s prediction?")) return;
-    m.p = m.p.filter(function(e){ return e[0] !== name; });
-    if (editingName === name) { setEditMode(null); clearForm(); }
-    save(); render();
-  });
-
-  /* ---------- final score ---------- */
-  document.getElementById("btn-final").addEventListener("click", function(){
-    var sa = document.getElementById("fin-sa").value;
-    var sc = document.getElementById("fin-sc").value;
-    if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
-    cm().f = [num(sa), num(sc)];
-    document.getElementById("fin-sa").value = "";
-    document.getElementById("fin-sc").value = "";
-    save(); render();
-    confetti();
-  });
-
-  document.getElementById("btn-clear-final").addEventListener("click", function(){
-    cm().f = null;
-    save(); render();
-  });
-
-  document.getElementById("btn-share-results").addEventListener("click", function(){
-    var m = cm();
-    if (!m.f || !m.p.length) return;
-    var ranked = standings(m);
-    var lines = [
-      "🏉 FULL TIME: " + m.h + " " + m.f[0] + " — " + m.f[1] + " " + m.a,
-      ""
-    ];
-    ranked.slice(0, 5).forEach(function(s){
-      var medal = medalFor(s.rank);
-      lines.push((medal ? medal + " " : "     ") + s.rank + ". " + s.e[0] +
-        " (" + s.e[1] + "–" + s.e[2] + ") — +" + s.pts + " pts, " + s.d + " off");
-    });
-    if (ranked.length > 5) lines.push("…and " + (ranked.length - 5) + " more");
-    if (state.pot > 0) {
-      var winners = ranked.filter(function(s){ return s.rank === 1; });
-      lines.push("");
-      lines.push("💰 Pot: R" + (state.pot * m.p.length) +
-        (winners.length > 1 ? " — shared!" : " to " + winners[0].e[0] + "!"));
-    }
-    lines.push("");
-    lines.push("Full standings: " + shareUrl());
-    shareContent(lines.join("\n"));
-  });
-
-  /* ---------- pot ---------- */
-  document.getElementById("pot-amount").addEventListener("change", function(){
-    state.pot = num(this.value);
-    save(); render();
-  });
-
-  /* ---------- main share ---------- */
-  document.getElementById("btn-share").addEventListener("click", function(){
-    if (view === "league") {
-      var table = leagueTable();
-      var lines = ["🏉 Family Rugby League standings:", ""];
-      table.slice(0, 10).forEach(function(t){
-        var medal = medalFor(t.rank);
-        lines.push((medal ? medal + " " : "     ") + t.rank + ". " + t.name + " — " + t.pts + " pts (" + t.played + " played)");
-      });
-      if (table.length > 10) lines.push("…and " + (table.length - 10) + " more");
-      lines.push("");
-      lines.push("Join in: " + shareUrl());
-      shareContent(lines.join("\n"));
-      return;
-    }
-    var m = cm();
-    shareContent(
-      "🏉 " + m.h + " vs " + m.a + " — score predictions!\n" +
-      "Open this link, add your score and send it back:\n" + shareUrl()
-    );
-  });
-
-  /* ================= install (PWA) ================= */
-  var deferredInstall = null;
-  function isStandalone(){
-    return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone;
-  }
-  function updateInstallUi(){
-    var sec = document.getElementById("sec-install");
-    var inner = document.getElementById("install-inner");
-    if (isStandalone()) { sec.hidden = true; return; }
-    if (deferredInstall) {
-      sec.hidden = false;
-      inner.innerHTML =
-        '<span class="txt"><strong>Get the app on your phone</strong> — one tap, works offline, no app store needed.</span>' +
-        '<button class="btn" id="btn-install">📲 Install</button>';
-      return;
-    }
-    var ua = navigator.userAgent || "";
-    if (/iphone|ipad|ipod/i.test(ua)) {
-      sec.hidden = false;
-      inner.innerHTML =
-        '<span class="txt"><strong>Add this app to your home screen:</strong> tap the Share button ' +
-        '<strong>⎋</strong> below, then <strong>“Add to Home Screen”</strong>. It works like a normal app after that.</span>';
-      return;
-    }
-    sec.hidden = true;
-  }
-  window.addEventListener("beforeinstallprompt", function(e){
-    e.preventDefault();
-    deferredInstall = e;
-    updateInstallUi();
-  });
-  window.addEventListener("appinstalled", function(){
-    deferredInstall = null;
-    updateInstallUi();
-    toast("Installed! Look for 🏉 on your home screen");
-  });
-  document.getElementById("sec-install").addEventListener("click", function(ev){
-    if (!ev.target.closest("#btn-install") || !deferredInstall) return;
-    deferredInstall.prompt();
-    deferredInstall.userChoice.then(function(){ deferredInstall = null; updateInstallUi(); });
-  });
-  if ("serviceWorker" in navigator && location.protocol === "https:") {
-    try {
-      navigator.serviceWorker.register("sw.js").catch(function(){});
-    } catch(e){}
-  }
-
-  /* ================= boot ================= */
-  window.addEventListener("hashchange", function(){
-    if (location.hash.indexOf("#d=") === 0) location.reload();
-  });
-  load();
+  updateCustomRows();
   render();
+  scrollTo(0,0);
+}
+function updateCustomRows(){
+  var oh = document.getElementById("nm-home").value === "__other";
+  var oa = document.getElementById("nm-away").value === "__other";
+  document.getElementById("nm-custom-row").hidden = !(oh || oa);
+  document.getElementById("nm-custom-home-wrap").hidden = !oh;
+  document.getElementById("nm-custom-away-wrap").hidden = !oa;
+}
+
+/* ================= events ================= */
+document.getElementById("chips").addEventListener("click", function(ev){
+  var chip = ev.target.closest(".chip");
+  if (!chip) return;
+  var v = chip.getAttribute("data-chip");
+  if (v === "league") { view = "league"; render(); }
+  else if (v === "new") { openMatchForm(null); }
+  else {
+    var idx = parseInt(v.slice(1), 10) || 0;
+    if (state.m[idx]) { curId = state.m[idx].id; saveCur(); }
+    view = "match";
+    setEditMode(null); clearForm();
+    render();
+  }
+});
+
+document.getElementById("nm-home").addEventListener("change", updateCustomRows);
+document.getElementById("nm-away").addEventListener("change", updateCustomRows);
+
+document.getElementById("btn-save-match").addEventListener("click", function(){
+  var hv = document.getElementById("nm-home").value;
+  var av = document.getElementById("nm-away").value;
+  var h = hv === "__other" ? document.getElementById("nm-custom-home").value.trim() : hv;
+  var a = av === "__other" ? document.getElementById("nm-custom-away").value.trim() : av;
+  if (!h || !a) { toast("Give both teams a name"); return; }
+  if (h.toLowerCase() === a.toLowerCase()) { toast("Pick two different teams"); return; }
+  var koVal = document.getElementById("nm-ko").value;
+  var ko = koVal ? new Date(koVal).getTime() : null;
+
+  if (editingMatch) {
+    fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
+    curId = editingMatch;
+    toast("Match updated");
+  } else {
+    var newId = fsCreateMatch({ h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
+    curId = newId;
+    toast("Match added — get predicting!");
+  }
+  editingMatch = null;
+  view = "match";
+  saveCur();
+  render();
+});
+
+document.getElementById("btn-cancel-match").addEventListener("click", function(){
+  editingMatch = null;
+  view = "match";
+  render();
+});
+
+document.getElementById("btn-delete-match").addEventListener("click", function(){
+  if (!editingMatch || state.m.length < 2) return;
+  var m = null;
+  for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
+  if (!confirm("Delete " + (m ? m.h + " vs " + m.a : "this match") + " and all its predictions?")) return;
+  var deletingId = editingMatch;
+  editingMatch = null;
+  view = "match";
+  fsDeleteMatch(deletingId);
+  if (curId === deletingId) curId = null;
+  render();
+  toast("Match deleted");
+});
+
+document.getElementById("btn-match-settings").addEventListener("click", function(){
+  var m = cm();
+  if (m) openMatchForm(m.id);
+});
+
+/* ---------- predictions ---------- */
+function setEditMode(name){
+  editingName = name;
+  document.getElementById("btn-add").textContent = name ? "Save changes" : "Add my prediction";
+  document.getElementById("btn-cancel-edit").hidden = !name;
+}
+function clearForm(){
+  document.getElementById("inp-name").value = myName || "";
+  document.getElementById("inp-sa").value = "";
+  document.getElementById("inp-sc").value = "";
+}
+
+document.getElementById("btn-add").addEventListener("click", function(){
+  var m = cm();
+  if (!m || isLocked(m)) { toast("Too late — kick-off has passed!"); return; }
+  var nameEl = document.getElementById("inp-name");
+  var saEl = document.getElementById("inp-sa");
+  var scEl = document.getElementById("inp-sc");
+  var name = nameEl.value.trim();
+  if (!name) { toast("Type your name first"); nameEl.focus(); return; }
+  if (saEl.value === "" || scEl.value === "") { toast("Fill in both scores"); return; }
+
+  if (editingName) {
+    var entry = findIn(m, editingName);
+    var clash = findIn(m, name);
+    if (clash && clash !== entry) { toast("There's already a " + clash[0] + " on the list"); return; }
+    fsRenamePrediction(m.id, editingName, name, saEl.value, scEl.value);
+    if (myName && keyFor(myName) === keyFor(editingName)) { myName = name; saveName(); }
+    toast("Saved " + name);
+    setEditMode(null);
+  } else {
+    var existing = findIn(m, name);
+    fsUpsertPrediction(m.id, name, saEl.value, scEl.value);
+    toast(existing ? "Updated " + name + "'s prediction" : "Added — everyone can see it now!");
+    myName = name; saveName();
+  }
+  clearForm();
+});
+
+document.getElementById("btn-cancel-edit").addEventListener("click", function(){
+  setEditMode(null);
+  clearForm();
+});
+
+document.getElementById("rows").addEventListener("click", function(ev){
+  var m = cm();
+  if (!m) return;
+  var editBtn = ev.target.closest(".edit");
+  if (editBtn) {
+    var entry = findIn(m, editBtn.getAttribute("data-name"));
+    if (!entry) return;
+    document.getElementById("inp-name").value = entry[0];
+    document.getElementById("inp-sa").value = entry[1];
+    document.getElementById("inp-sc").value = entry[2];
+    setEditMode(entry[0]);
+    document.getElementById("inp-name").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("inp-name").focus();
+    return;
+  }
+  var btn = ev.target.closest(".del");
+  if (!btn) return;
+  var name = btn.getAttribute("data-name");
+  if (!confirm("Remove " + name + "'s prediction?")) return;
+  fsDeletePrediction(m.id, name);
+  if (editingName === name) { setEditMode(null); clearForm(); }
+});
+
+/* ---------- final score ---------- */
+document.getElementById("btn-final").addEventListener("click", function(){
+  var m = cm();
+  if (!m) return;
+  var sa = document.getElementById("fin-sa").value;
+  var sc = document.getElementById("fin-sc").value;
+  if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
+  fsSetFinal(m.id, [num(sa), num(sc)]);
+  document.getElementById("fin-sa").value = "";
+  document.getElementById("fin-sc").value = "";
+  confetti();
+});
+
+document.getElementById("btn-clear-final").addEventListener("click", function(){
+  var m = cm();
+  if (!m) return;
+  fsSetFinal(m.id, null);
+});
+
+document.getElementById("btn-share-results").addEventListener("click", function(){
+  var m = cm();
+  if (!m || !m.f || !m.p.length) return;
+  var ranked = standings(m);
+  var lines = [
+    "🏉 FULL TIME: " + m.h + " " + m.f[0] + " — " + m.f[1] + " " + m.a,
+    ""
+  ];
+  ranked.slice(0, 5).forEach(function(s){
+    var medal = medalFor(s.rank);
+    lines.push((medal ? medal + " " : "     ") + s.rank + ". " + s.e[0] +
+      " (" + s.e[1] + "–" + s.e[2] + ") — +" + s.pts + " pts, " + s.d + " off");
+  });
+  if (ranked.length > 5) lines.push("…and " + (ranked.length - 5) + " more");
+  if (state.pot > 0) {
+    var winners = ranked.filter(function(s){ return s.rank === 1; });
+    lines.push("");
+    lines.push("💰 Pot: R" + (state.pot * m.p.length) +
+      (winners.length > 1 ? " — shared!" : " to " + winners[0].e[0] + "!"));
+  }
+  lines.push("");
+  lines.push("See it live: " + appUrl(m.id));
+  shareContent(lines.join("\n"));
+});
+
+/* ---------- pot ---------- */
+document.getElementById("pot-amount").addEventListener("change", function(){
+  fsSetPot(this.value);
+});
+
+/* ---------- main share ---------- */
+document.getElementById("btn-share").addEventListener("click", function(){
+  if (view === "league") {
+    var table = leagueTable();
+    var lines = ["🏉 Family Rugby League standings:", ""];
+    table.slice(0, 10).forEach(function(t){
+      var medal = medalFor(t.rank);
+      lines.push((medal ? medal + " " : "     ") + t.rank + ". " + t.name + " — " + t.pts + " pts (" + t.played + " played)");
+    });
+    if (table.length > 10) lines.push("…and " + (table.length - 10) + " more");
+    lines.push("");
+    lines.push("Join in: " + appUrl());
+    shareContent(lines.join("\n"));
+    return;
+  }
+  var m = cm();
+  if (!m) return;
+  shareContent(
+    "🏉 Join our Springbok prediction league! Add your score for " + m.h + " vs " + m.a + ":\n" + appUrl(m.id)
+  );
+});
+
+/* ================= install (PWA) ================= */
+var deferredInstall = null;
+function isStandalone(){
+  return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone;
+}
+function updateInstallUi(){
+  var sec = document.getElementById("sec-install");
+  var inner = document.getElementById("install-inner");
+  if (isStandalone()) { sec.hidden = true; return; }
+  if (deferredInstall) {
+    sec.hidden = false;
+    inner.innerHTML =
+      '<span class="txt"><strong>Get the app on your phone</strong> — one tap, works offline, no app store needed.</span>' +
+      '<button class="btn" id="btn-install">📲 Install</button>';
+    return;
+  }
+  var ua = navigator.userAgent || "";
+  if (/iphone|ipad|ipod/i.test(ua)) {
+    sec.hidden = false;
+    inner.innerHTML =
+      '<span class="txt"><strong>Add this app to your home screen:</strong> tap the Share button ' +
+      '<strong>⎋</strong> below, then <strong>“Add to Home Screen”</strong>. It works like a normal app after that.</span>';
+    return;
+  }
+  sec.hidden = true;
+}
+window.addEventListener("beforeinstallprompt", function(e){
+  e.preventDefault();
+  deferredInstall = e;
   updateInstallUi();
-})();
+});
+window.addEventListener("appinstalled", function(){
+  deferredInstall = null;
+  updateInstallUi();
+  toast("Installed! Look for 🏉 on your home screen");
+});
+document.getElementById("sec-install").addEventListener("click", function(ev){
+  if (!ev.target.closest("#btn-install") || !deferredInstall) return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(function(){ deferredInstall = null; updateInstallUi(); });
+});
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  try {
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  } catch(e){}
+}
+
+window.addEventListener("hashchange", function(){
+  if (applyHashMatch()) { view = "match"; saveCur(); render(); }
+});
+
+/* ================= boot ================= */
+try { myName = localStorage.getItem(NAME_KEY) || null; } catch(e){}
+if (myName) {
+  var inpNameEl = document.getElementById("inp-name");
+  if (inpNameEl) inpNameEl.value = myName;
+}
+startLiveSync();
+ensureFixtures().catch(function(){});
+updateInstallUi();
 </script>

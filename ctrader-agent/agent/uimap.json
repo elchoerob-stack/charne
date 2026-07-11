@@ -1,0 +1,147 @@
+{
+  "_comment": "Every UI Automation lookup the driver performs is defined here as a named element with an ordered list of strategies to try. Strategies are tried in order until one matches. If cTrader Automate changes its UI, fix lookups here first before touching code. Run `dotnet run -- --inspect` to dump the live UI tree and find correct Name/AutomationId/ClassName values for your installed version.",
+
+  "elements": {
+    "AutomateTab": {
+      "description": "The top-level 'Automate' tab in the main cTrader window ribbon/sidebar.",
+      "strategies": [
+        { "by": "Name", "value": "Automate" },
+        { "by": "AutomationId", "value": "AutomateTabItem" }
+      ]
+    },
+    "BotList": {
+      "description": "The list/tree of installed cBots in the Automate tab.",
+      "strategies": [
+        { "by": "AutomationId", "value": "cBotsList" },
+        { "by": "ClassName", "value": "cBotList" }
+      ]
+    },
+    "BotListItem": {
+      "description": "A single cBot row in BotList, matched by its display name (substituted at runtime).",
+      "strategies": [
+        { "by": "Name", "value": "{botName}" }
+      ]
+    },
+    "BacktestingSubTab": {
+      "description": "Sub-tab that opens the Backtesting panel for the selected cBot.",
+      "strategies": [
+        { "by": "Name", "value": "Backtesting" }
+      ]
+    },
+    "OptimizationSubTab": {
+      "description": "Sub-tab that opens the Optimization panel for the selected cBot.",
+      "strategies": [
+        { "by": "Name", "value": "Optimization" }
+      ]
+    },
+    "SymbolDropdown": {
+      "description": "Symbol selector within the Backtesting/Optimization settings panel.",
+      "strategies": [
+        { "by": "AutomationId", "value": "SymbolComboBox" },
+        { "by": "Name", "value": "Symbol" }
+      ]
+    },
+    "TimeframeDropdown": {
+      "description": "Timeframe/period selector.",
+      "strategies": [
+        { "by": "AutomationId", "value": "PeriodComboBox" },
+        { "by": "Name", "value": "Period" }
+      ]
+    },
+    "FromDatePicker": {
+      "description": "Backtest/optimization range start date.",
+      "strategies": [
+        { "by": "AutomationId", "value": "FromDatePicker" },
+        { "by": "Name", "value": "From" }
+      ]
+    },
+    "ToDatePicker": {
+      "description": "Backtest/optimization range end date.",
+      "strategies": [
+        { "by": "AutomationId", "value": "ToDatePicker" },
+        { "by": "Name", "value": "To" }
+      ]
+    },
+    "InitialBalanceField": {
+      "description": "Initial account balance input.",
+      "strategies": [
+        { "by": "AutomationId", "value": "InitialBalanceTextBox" },
+        { "by": "Name", "value": "Initial Balance" }
+      ]
+    },
+    "SpreadModeDropdown": {
+      "description": "Spread simulation model (Real / Fixed / Zero).",
+      "strategies": [
+        { "by": "AutomationId", "value": "SpreadComboBox" },
+        { "by": "Name", "value": "Spread" }
+      ]
+    },
+    "ParametersGrid": {
+      "description": "Grid listing the cBot's configurable parameters, with a Value column for backtests and Min/Max/Step + range-enabled checkbox columns for optimization.",
+      "strategies": [
+        { "by": "AutomationId", "value": "ParametersDataGrid" },
+        { "by": "ClassName", "value": "ParametersGrid" }
+      ]
+    },
+    "ParameterRow": {
+      "description": "A single parameter row in ParametersGrid, matched by parameter label (substituted at runtime).",
+      "strategies": [
+        { "by": "Name", "value": "{parameterName}" }
+      ]
+    },
+    "OptimizationCriteriaDropdown": {
+      "description": "The target metric the optimizer maximizes (Net Profit, Profit Factor, Sharpe Ratio, etc).",
+      "strategies": [
+        { "by": "AutomationId", "value": "OptimizationCriteriaComboBox" },
+        { "by": "Name", "value": "Optimization Criteria" }
+      ]
+    },
+    "StartButton": {
+      "description": "Starts the backtest or optimization run.",
+      "strategies": [
+        { "by": "Name", "value": "Start" },
+        { "by": "AutomationId", "value": "StartButton" }
+      ]
+    },
+    "StopButton": {
+      "description": "Stops a running backtest/optimization.",
+      "strategies": [
+        { "by": "Name", "value": "Stop" },
+        { "by": "AutomationId", "value": "StopButton" }
+      ]
+    },
+    "ProgressBar": {
+      "description": "Progress indicator polled to detect completion.",
+      "strategies": [
+        { "by": "AutomationId", "value": "RunProgressBar" },
+        { "by": "ClassName", "value": "ProgressBar" }
+      ]
+    },
+    "StatusText": {
+      "description": "Text element showing current run status (e.g. 'Running', 'Completed', 'Stopped').",
+      "strategies": [
+        { "by": "AutomationId", "value": "StatusTextBlock" }
+      ]
+    },
+    "ResultsPanel": {
+      "description": "Panel showing summary results after a backtest completes.",
+      "strategies": [
+        { "by": "Name", "value": "Results" },
+        { "by": "AutomationId", "value": "ResultsPanel" }
+      ]
+    },
+    "OptimizationResultsGrid": {
+      "description": "Grid of optimization run results (one row per parameter combination tried).",
+      "strategies": [
+        { "by": "AutomationId", "value": "OptimizationResultsDataGrid" }
+      ]
+    },
+    "ExportButton": {
+      "description": "Exports the current report/results grid to a file.",
+      "strategies": [
+        { "by": "Name", "value": "Export" },
+        { "by": "AutomationId", "value": "ExportButton" }
+      ]
+    }
+  }
+}

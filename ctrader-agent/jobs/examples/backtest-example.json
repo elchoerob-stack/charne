@@ -1,0 +1,18 @@
+{
+  "id": "backtest-example-01",
+  "type": "Backtest",
+  "botName": "MyScalperBot",
+  "symbol": "EURUSD",
+  "timeframe": "M15",
+  "fromDate": "2024-01-01",
+  "toDate": "2025-01-01",
+  "initialBalance": 10000,
+  "spreadModel": "Real",
+  "commission": 0,
+  "parameters": {
+    "StopLossPips": 20,
+    "TakeProfitPips": 40,
+    "RiskPercent": 1
+  },
+  "reportName": "myscalper-2024-baseline"
+}

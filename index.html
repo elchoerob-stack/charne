@@ -113,6 +113,12 @@
   .row:first-child{border-top:0}
   .row .who{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .row .medal{margin-right:4px}
+  .row .rank{
+    display:inline-block;min-width:22px;margin-right:6px;
+    font-size:12px;font-weight:800;color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .row.winner .rank{color:var(--gold-deep)}
   .row .num{
     text-align:center;font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;
   }
@@ -140,6 +146,15 @@
     padding:14px 16px;margin-bottom:12px;font-size:15px;line-height:1.5;
   }
   .champ strong{font-size:17px}
+  .podium{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
+  .podium li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-variant-numeric:tabular-nums}
+  .podium .pts{color:var(--ink-soft);font-weight:600;white-space:nowrap}
+  .consensus{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:#E4EFE7;border:1px solid #CFE0D4;border-radius:12px;
+    padding:10px 14px;margin-bottom:10px;font-size:13.5px;color:var(--ink);
+  }
+  .consensus .avg{font-weight:900;font-size:16px;font-variant-numeric:tabular-nums;color:var(--grass);white-space:nowrap}
 
   /* ---------- sticky share bar ---------- */
   .sharebar{
@@ -204,6 +219,7 @@
 
   <section>
     <h2>Predictions<span class="count-pill" id="count">0</span></h2>
+    <div id="consensus"></div>
     <div class="thead" aria-hidden="true">
       <span>Name</span><span class="col-num">🇿🇦 SA</span><span class="col-num">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Sco</span><span></span><span></span>
     </div>
@@ -227,6 +243,7 @@
       </div>
       <button class="btn" id="btn-final">Save final score</button>
     </div>
+    <button class="btn wa" id="btn-share-results" hidden>Share the results on WhatsApp</button>
     <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
   </section>
 </main>
@@ -301,6 +318,35 @@
     });
   }
   function diffTo(final, e){ return Math.abs(e[1]-final[0]) + Math.abs(e[2]-final[1]); }
+  function pickedWinner(final, e){
+    return Math.sign(e[1]-e[2]) === Math.sign(final[0]-final[1]);
+  }
+  // Sorted standings: closest total points first; ties go to whoever
+  // also picked the right winning team. Equal on both = shared rank.
+  function standings(){
+    var f = state.f;
+    var list = state.p.map(function(e){
+      return { e: e, d: diffTo(f, e), w: pickedWinner(f, e) };
+    });
+    list.sort(function(a, b){
+      if (a.d !== b.d) return a.d - b.d;
+      if (a.w !== b.w) return a.w ? -1 : 1;
+      return a.e[0].localeCompare(b.e[0]);
+    });
+    var rank = 0;
+    for (var i = 0; i < list.length; i++) {
+      if (i === 0 || list[i].d !== list[i-1].d || list[i].w !== list[i-1].w) rank = i + 1;
+      list[i].rank = rank;
+    }
+    return list;
+  }
+  function medalFor(rank){
+    return rank === 1 ? "🏆" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
+  }
+  function joinNames(names){
+    return names.length === 1 ? names[0]
+      : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  }
   function toast(msg){
     var t = document.getElementById("toast");
     t.textContent = msg;
@@ -323,29 +369,28 @@
     var rows = document.getElementById("rows");
     document.getElementById("count").textContent = state.p.length;
 
-    var list = state.p.slice();
-    var ranked = null;
-    if (state.f) {
-      ranked = list.slice().sort(function(a,b){ return diffTo(state.f,a) - diffTo(state.f,b); });
-      list = ranked;
-    }
+    var ranked = state.f ? standings() : null;
 
-    if (!list.length) {
+    if (!state.p.length) {
       rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
+    } else if (ranked) {
+      rows.innerHTML = ranked.map(function(s){
+        var e = s.e;
+        var medal = medalFor(s.rank);
+        return '<div class="row' + (s.rank === 1 ? ' winner' : '') + '">' +
+          '<span class="who"><span class="rank">' + s.rank + '.</span>' +
+            (medal ? '<span class="medal">' + medal + '</span>' : '') + esc(e[0]) +
+            '<span class="diff">' + s.d + ' off' + (s.w ? '' : ' · wrong team') + '</span></span>' +
+          '<span class="num sa">' + e[1] + '</span>' +
+          '<span class="num sc">' + e[2] + '</span>' +
+          '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
+          '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
+        '</div>';
+      }).join("");
     } else {
-      rows.innerHTML = list.map(function(e, i){
-        var medal = "";
-        var diffHtml = "";
-        var winner = "";
-        if (state.f) {
-          var d = diffTo(state.f, e);
-          diffHtml = '<span class="diff">' + d + ' off</span>';
-          if (i === 0) { medal = '<span class="medal">🏆</span>'; winner = " winner"; }
-          else if (i === 1) medal = '<span class="medal">🥈</span>';
-          else if (i === 2) medal = '<span class="medal">🥉</span>';
-        }
-        return '<div class="row' + winner + '">' +
-          '<span class="who">' + medal + esc(e[0]) + diffHtml + '</span>' +
+      rows.innerHTML = state.p.map(function(e){
+        return '<div class="row">' +
+          '<span class="who">' + esc(e[0]) + '</span>' +
           '<span class="num sa">' + e[1] + '</span>' +
           '<span class="num sc">' + e[2] + '</span>' +
           '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
@@ -354,19 +399,42 @@
       }).join("");
     }
 
+    // family consensus (average prediction, before the final score is in)
+    var cons = document.getElementById("consensus");
+    if (!state.f && state.p.length >= 3) {
+      var sumSa = 0, sumSc = 0;
+      state.p.forEach(function(e){ sumSa += e[1]; sumSc += e[2]; });
+      cons.innerHTML = '<div class="consensus"><span>The family reckons…</span>' +
+        '<span class="avg">🇿🇦 ' + Math.round(sumSa / state.p.length) +
+        ' — ' + Math.round(sumSc / state.p.length) + ' 🏴󠁧󠁢󠁳󠁣󠁴󠁿</span></div>';
+    } else {
+      cons.innerHTML = "";
+    }
+
     // final score area
     var disp = document.getElementById("final-display");
     var form = document.getElementById("final-form");
     var clearBtn = document.getElementById("btn-clear-final");
     if (state.f) {
-      var champ = ranked && ranked.length ? ranked[0] : null;
+      var champHtml = "";
+      if (ranked && ranked.length) {
+        var winners = ranked.filter(function(s){ return s.rank === 1; });
+        var names = winners.map(function(s){ return esc(s.e[0]); });
+        var podium = ranked.filter(function(s){ return s.rank <= 3; }).slice(0, 5);
+        champHtml = '<div class="champ">🏆 <strong>' + joinNames(names) + '</strong> ' +
+          (winners.length > 1 ? "share the win" : "wins") +
+          ' — only ' + winners[0].d + ' points off!' +
+          '<ul class="podium">' +
+          podium.map(function(s){
+            return '<li><span>' + medalFor(s.rank) + ' ' + esc(s.e[0]) +
+              ' (' + s.e[1] + '–' + s.e[2] + ')</span><span class="pts">' + s.d + ' off</span></li>';
+          }).join("") +
+          '</ul></div>';
+      }
       disp.innerHTML =
         '<div class="final-banner"><div><div class="label">Full-time score</div>' +
         '<div class="score">🇿🇦 ' + state.f[0] + ' — ' + state.f[1] + ' 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div></div></div>' +
-        (champ
-          ? '<div class="champ">🏆 <strong>' + esc(champ[0]) + '</strong> wins with ' +
-            champ[1] + '–' + champ[2] + ' (only ' + diffTo(state.f, champ) + ' points off)!</div>'
-          : "");
+        champHtml;
       form.hidden = true;
       clearBtn.hidden = false;
     } else {
@@ -374,6 +442,7 @@
       form.hidden = false;
       clearBtn.hidden = true;
     }
+    document.getElementById("btn-share-results").hidden = !(state.f && state.p.length);
 
     document.getElementById("btn-send-mine").hidden = !myName;
   }
@@ -471,6 +540,24 @@
     if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
     state.f = [num(sa), num(sc)];
     save(); render();
+  });
+
+  document.getElementById("btn-share-results").addEventListener("click", function(){
+    if (!state.f || !state.p.length) return;
+    var ranked = standings();
+    var lines = [
+      "🏉 FULL TIME: South Africa " + state.f[0] + " — " + state.f[1] + " Scotland",
+      ""
+    ];
+    ranked.slice(0, 5).forEach(function(s){
+      var medal = medalFor(s.rank);
+      lines.push((medal ? medal + " " : "     ") + s.rank + ". " + s.e[0] +
+        " (" + s.e[1] + "–" + s.e[2] + ") — " + s.d + " off");
+    });
+    if (ranked.length > 5) lines.push("…and " + (ranked.length - 5) + " more");
+    lines.push("");
+    lines.push("Full standings: " + shareUrl());
+    openWhatsApp(lines.join("\n"));
   });
 
   document.getElementById("btn-clear-final").addEventListener("click", function(){

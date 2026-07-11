@@ -62,6 +62,11 @@
     padding:0 0 8px;margin:0;cursor:pointer;display:block;text-align:left;font-family:inherit;
   }
   .back-link:active{color:#fff}
+  .tbc-tag{
+    display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;
+    text-transform:uppercase;background:rgba(255,182,18,.22);color:var(--gold);
+    border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:2px;
+  }
 
   /* ---------- match chips ---------- */
   nav.chips{
@@ -553,14 +558,14 @@ var FIXTURES = [
          ["Clive",38,19],["Alan W",38,15],["Fred D",39,16],["Fred C",44,22],
          ["Tess",36,28],["Nowell",18,18],["Sean",21,17]]},
   {id:"sa-wal-2026", h:"South Africa", a:"Wales",       ko:Date.UTC(2026,6,18,15,40), vn:"Kings Park, Durban"},
-  {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Estadio José Amalfitani, Buenos Aires · time TBC"},
+  {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Estadio José Amalfitani, Buenos Aires", tbc:true},
   {id:"sa-nz1-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,22,15,0),  vn:"Ellis Park, Johannesburg"},
   {id:"sa-nz2-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,29,15,0),  vn:"Cape Town Stadium"},
   {id:"sa-nz3-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,5,15,0),   vn:"FNB Stadium, Johannesburg"},
-  {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,21,0),  vn:"M&T Bank Stadium, Baltimore, USA · 5pm ET (unconfirmed)"},
-  {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,14,0),  vn:"Italy · date & time TBC"},
-  {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,14,19,10),vn:"France · date & time TBC"},
-  {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,17,40),vn:"Aviva Stadium, Dublin · time TBC"}
+  {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,21,0),  vn:"M&T Bank Stadium, Baltimore, USA", tbc:true},
+  {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,14,0),  vn:"Italy", tbc:true},
+  {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,14,19,10),vn:"France", tbc:true},
+  {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,17,40),vn:"Aviva Stadium, Dublin", tbc:true}
 ];
 
 var NAME_KEY = "bok-myname";
@@ -810,7 +815,7 @@ function matchFromDoc(d){
   });
   return {
     id: d.id, h:data.h, hf:data.hf, a:data.a, af:data.af,
-    ko: data.ko || null, vn: data.vn || null,
+    ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
     p: arr
   };
@@ -875,7 +880,7 @@ function ensureFixtures(){
       if (!cur) {
         batch.set(doc(db,"matches",fx.id), {
           h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
-          ko:fx.ko, vn:fx.vn, f:null, p: seedToMap(fx.seed)
+          ko:fx.ko, vn:fx.vn, tbc: !!fx.tbc, f:null, p: seedToMap(fx.seed)
         });
         any = true;
         return;
@@ -892,9 +897,10 @@ function ensureFixtures(){
       // keep kick-off/venue in sync with corrected fixture data, unless someone
       // has manually edited this match's settings in the app (koEdited) — a
       // human correction always wins over the built-in fixture data.
-      if (!cur.koEdited && (cur.ko !== fx.ko || cur.vn !== fx.vn)) {
+      if (!cur.koEdited && (cur.ko !== fx.ko || cur.vn !== fx.vn || !!cur.tbc !== !!fx.tbc)) {
         patch.ko = fx.ko;
         patch.vn = fx.vn;
+        patch.tbc = !!fx.tbc;
         needsWrite = true;
       }
       if (needsWrite) {
@@ -1041,7 +1047,7 @@ function renderHeader(){
     '</div>';
   sub.hidden = false;
   sub.innerHTML = m.ko
-    ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.vn ? ' · ' + esc(m.vn) : '')
+    ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.tbc ? ' <span class="tbc-tag">provisional</span>' : '') + (m.vn ? ' · ' + esc(m.vn) : '')
     : (m.vn ? esc(m.vn) : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>');
 }
 
@@ -1054,7 +1060,7 @@ function renderFixturesList(){
   }
   rows.innerHTML = list.map(function(m){
     var status = m.ko
-      ? (isLocked(m) ? "🔒 Locked — awaiting result" : esc(fmtKo(m.ko)))
+      ? (isLocked(m) ? "🔒 Locked — awaiting result" : esc(fmtKo(m.ko)) + (m.tbc ? " (provisional)" : ""))
       : "Kick-off TBC";
     return '<div class="list-row" data-match="' + esc(m.id) + '">' +
       '<div class="lr-teams">' +
@@ -1416,7 +1422,7 @@ document.getElementById("btn-save-match").addEventListener("click", function(){
 
   function finishSave(){
     if (editingMatch) {
-      fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko, koEdited:true });
+      fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko, koEdited:true, tbc:false });
       curId = editingMatch;
       toast("Match updated");
     } else {

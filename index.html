@@ -116,6 +116,14 @@
   input:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold-deep)}
   input[type=number]{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
   .scores-row{display:flex;gap:10px;margin-top:10px}
+  .name-row{display:flex;gap:8px;align-items:center}
+  .name-row input{flex:1}
+  .avatar-btn{
+    flex:0 0 auto;width:46px;height:46px;border-radius:10px;
+    border:1.5px solid var(--line);background:#FCFBF7;font-size:20px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .avatar-btn:active{background:#F0EDE3}
   .btn{
     display:flex;align-items:center;justify-content:center;gap:8px;
     width:100%;border:0;border-radius:12px;padding:14px;
@@ -202,6 +210,31 @@
     color:var(--grass);white-space:nowrap;flex:0 0 auto;
   }
   .list-row .lr-chev{color:var(--ink-soft);font-size:16px;flex:0 0 auto}
+
+  /* ---------- reminder banner ---------- */
+  .reminder{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:#FFF3D6;border:1px solid #F0D999;border-radius:12px;
+    padding:10px 14px;margin:10px 16px 0;font-size:13px;color:var(--ink);
+    max-width:528px;margin-left:auto;margin-right:auto;
+  }
+  .reminder strong{color:var(--forest)}
+  .reminder-btn{
+    margin-left:auto;border:0;background:var(--forest);color:#fff;
+    font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;
+  }
+
+  /* ---------- season awards ---------- */
+  .awards-row{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .award-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:10px 14px;
+  }
+  .award-card .ic{font-size:22px;flex:0 0 auto}
+  .award-card .txt{flex:1;min-width:0}
+  .award-card .lbl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+  .award-card .who{font-size:14.5px;font-weight:700;color:var(--ink)}
 
   /* ---------- consensus & fun facts ---------- */
   .consensus{
@@ -300,6 +333,8 @@
   </section>
 
   <div id="app-content" hidden>
+    <div id="reminder-banner"></div>
+
     <section id="sec-install" hidden>
       <div class="card install-card" id="install-inner"></div>
     </section>
@@ -315,7 +350,10 @@
         <div class="card">
           <div class="field">
             <label for="inp-name">Your name</label>
-            <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30">
+            <div class="name-row">
+              <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30">
+              <button type="button" class="avatar-btn" id="btn-avatar" aria-label="Choose your avatar emoji">🙂</button>
+            </div>
           </div>
           <div class="scores-row">
             <div class="field">
@@ -361,6 +399,7 @@
           <button class="btn" id="btn-final">Save final score</button>
         </div>
         <button class="btn share" id="btn-share-results" hidden>Share the results</button>
+        <button class="btn quiet" id="btn-share-image" hidden>📸 Share as image</button>
         <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
         <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong></p>
       </section>
@@ -383,6 +422,10 @@
 
     <!-- ============ LEAGUE VIEW ============ -->
     <div id="view-league" hidden>
+      <section id="sec-awards" hidden>
+        <h2>Season awards</h2>
+        <div id="awards-row"></div>
+      </section>
       <section>
         <h2>League standings</h2>
         <div class="lg-thead" aria-hidden="true">
@@ -482,6 +525,7 @@ try {
 }
 var matchesCol = collection(db, "matches");
 var metaRef = doc(db, "meta", "app");
+var avatarsRef = doc(db, "meta", "avatars");
 
 /* ================= data ================= */
 var TEAMS = [
@@ -521,7 +565,10 @@ var FIXTURES = [
 
 var NAME_KEY = "bok-myname";
 
-var state = { m: [], pot: 0 };
+var state = { m: [], pot: 0, avatars: {} };
+var PIN = "1111";
+var pinUnlocked = false;
+try { pinUnlocked = sessionStorage.getItem("bok-pin-ok") === "1"; } catch(e){}
 var curId = null;
 var ready = false;
 var myName = null;
@@ -577,10 +624,26 @@ function shareContent(text){
   toast("Sharing isn't supported on this browser");
 }
 function avatarHtml(name){
+  var custom = state.avatars && state.avatars[keyFor(name)];
+  if (custom) {
+    return '<span class="avatar" style="background:#F0EDE3;font-size:16px" aria-hidden="true">' + esc(custom) + '</span>';
+  }
   var h = 0;
   for (var i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) % 360;
   var initials = name.trim().split(/\s+/).map(function(w){ return w.charAt(0); }).slice(0,2).join("").toUpperCase();
   return '<span class="avatar" style="background:hsl(' + h + ',45%,86%);color:hsl(' + h + ',55%,28%)" aria-hidden="true">' + esc(initials) + '</span>';
+}
+function requirePin(action){
+  if (pinUnlocked) { action(); return; }
+  var entered = prompt("Enter the family PIN to make this change:");
+  if (entered === null) return;
+  if (entered.trim() === PIN) {
+    pinUnlocked = true;
+    try { sessionStorage.setItem("bok-pin-ok", "1"); } catch(e){}
+    action();
+  } else {
+    toast("Wrong PIN");
+  }
 }
 function isLocked(m){ return !!(m.ko && Date.now() > m.ko); }
 function scoresLocked(m){ return !!m && (isLocked(m) || !!m.f); }
@@ -670,6 +733,40 @@ function leagueTable(){
   return list;
 }
 
+function seasonAwards(){
+  var completed = state.m.filter(function(m){ return !!m.f; });
+  if (!completed.length) return null;
+  var totals = {};
+  function ensure(name){
+    var k = keyFor(name);
+    if (!totals[k]) totals[k] = { name:name, exact:0, closest:0, wrongTeam:0, streak:0, bestStreak:0 };
+    return totals[k];
+  }
+  completed.forEach(function(m){
+    standings(m).forEach(function(s){
+      var t = ensure(s.e[0]);
+      if (s.e[1] === m.f[0] && s.e[2] === m.f[1]) t.exact++;
+      if (s.closest) t.closest++;
+      if (!s.w) t.wrongTeam++;
+      if (s.w) { t.streak++; if (t.streak > t.bestStreak) t.bestStreak = t.streak; }
+      else { t.streak = 0; }
+    });
+  });
+  var list = Object.keys(totals).map(function(k){ return totals[k]; });
+  function top(field){
+    var max = 0;
+    list.forEach(function(t){ if (t[field] > max) max = t[field]; });
+    if (max === 0) return null;
+    return { winners: list.filter(function(t){ return t[field] === max; }), value: max };
+  }
+  return {
+    exact: top('exact'),
+    closest: top('closest'),
+    streak: top('bestStreak'),
+    wrongTeam: top('wrongTeam')
+  };
+}
+
 /* ================= confetti ================= */
 function confetti(){
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -755,6 +852,10 @@ function startLiveSync(){
     state.pot = (snap.exists() && num(snap.data().pot)) || 0;
     render();
   }, function(){});
+  onSnapshot(avatarsRef, function(snap){
+    state.avatars = (snap.exists() && snap.data()) || {};
+    render();
+  }, function(){});
 }
 function seedToMap(seedArr){
   var m = {};
@@ -821,6 +922,11 @@ function fsDeleteMatch(matchId){
 function fsSetPot(amount){
   setDoc(metaRef, { pot: num(amount) }, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
 }
+function fsSetAvatar(name, emoji){
+  var patch = {};
+  patch[keyFor(name)] = emoji || null;
+  setDoc(avatarsRef, patch, { merge:true }).catch(function(){ toast("Couldn't save avatar — try again"); });
+}
 
 /* ================= rendering ================= */
 function render(){
@@ -841,6 +947,23 @@ function render(){
   if (view === "league") renderLeague();
   if (view === "fixtures") renderFixturesList();
   if (view === "results") renderResultsList();
+  renderReminderBanner();
+}
+
+function nextUnpredictedSoon(){
+  if (!myName) return null;
+  var soon = state.m.filter(function(m){
+    return !m.f && m.ko && !isLocked(m) && (m.ko - Date.now()) < 24*3600*1000 && !findIn(m, myName);
+  }).sort(function(a,b){ return a.ko - b.ko; });
+  return soon[0] || null;
+}
+function renderReminderBanner(){
+  var el = document.getElementById("reminder-banner");
+  var m = nextUnpredictedSoon();
+  if (!m || (view === "match" && cm() && cm().id === m.id)) { el.innerHTML = ""; return; }
+  el.innerHTML = '<div class="reminder">⏰ <strong>' + esc(myName) + '</strong>, you haven\'t predicted ' +
+    esc(m.h) + ' vs ' + esc(m.a) + ' yet — kicks off in ' + countdownText(m.ko) + '!' +
+    '<button class="reminder-btn" data-match="' + esc(m.id) + '" type="button">Predict now</button></div>';
 }
 
 function renderChips(){
@@ -1077,6 +1200,7 @@ function renderMatch(){
     clearBtn.hidden = true;
   }
   document.getElementById("btn-share-results").hidden = !(m.f && m.p.length);
+  document.getElementById("btn-share-image").hidden = !(m.f && m.p.length);
 
   var potInp = document.getElementById("pot-amount");
   if (document.activeElement !== potInp) potInp.value = state.pot || "";
@@ -1109,17 +1233,46 @@ function renderLeague(){
   var table = leagueTable();
   if (!table.length) {
     rows.innerHTML = '<div class="empty">No players yet — add predictions on a match first.</div>';
-    return;
+  } else {
+    rows.innerHTML = table.map(function(t){
+      var medal = medalFor(t.rank);
+      return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + '">' +
+        '<span class="pos">' + t.rank + '</span>' +
+        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + (medal && t.pts>0 ? medal + " " : "") + esc(t.name) + '</span></span>' +
+        '<span class="played">' + t.played + '</span>' +
+        '<span class="total">' + t.pts + '</span>' +
+      '</div>';
+    }).join("");
   }
-  rows.innerHTML = table.map(function(t){
-    var medal = medalFor(t.rank);
-    return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + '">' +
-      '<span class="pos">' + t.rank + '</span>' +
-      '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + (medal && t.pts>0 ? medal + " " : "") + esc(t.name) + '</span></span>' +
-      '<span class="played">' + t.played + '</span>' +
-      '<span class="total">' + t.pts + '</span>' +
-    '</div>';
-  }).join("");
+  renderAwards();
+}
+
+function renderAwards(){
+  var sec = document.getElementById("sec-awards");
+  var row = document.getElementById("awards-row");
+  var a = seasonAwards();
+  if (!a) { sec.hidden = true; return; }
+  var cards = [];
+  function add(icon, label, badge, suffix){
+    if (!badge) return;
+    var names;
+    if (badge.winners.length > 3) {
+      names = joinNames(badge.winners.slice(0, 2).map(function(t){ return esc(t.name); })) +
+        " and " + (badge.winners.length - 2) + " others";
+    } else {
+      names = joinNames(badge.winners.map(function(t){ return esc(t.name); }));
+    }
+    cards.push('<div class="award-card"><span class="ic">' + icon + '</span>' +
+      '<span class="txt"><span class="lbl">' + label + '</span><br>' +
+      '<span class="who">' + names + '</span> — ' + badge.value + ' ' + suffix + '</span></div>');
+  }
+  add("🎯", "Bullseye", a.exact, a.exact && a.exact.value===1 ? "exact score" : "exact scores");
+  add("🎖", "Mr/Ms Consistent", a.closest, a.closest && a.closest.value===1 ? "closest call" : "closest calls");
+  if (a.streak && a.streak.value >= 2) add("🔥", "Hot Streak", a.streak, "correct picks in a row");
+  add("😅", "Brave Heart", a.wrongTeam, a.wrongTeam && a.wrongTeam.value===1 ? "underdog call" : "underdog calls");
+  if (!cards.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  row.innerHTML = '<div class="awards-row">' + cards.join("") + '</div>';
 }
 
 function startTicker(){
@@ -1216,6 +1369,21 @@ document.getElementById("head-card").addEventListener("click", function(ev){
   render();
 });
 
+document.getElementById("reminder-banner").addEventListener("click", function(ev){
+  var btn = ev.target.closest(".reminder-btn");
+  if (!btn) return;
+  openMatch(btn.getAttribute("data-match"), "fixtures");
+});
+
+document.getElementById("btn-avatar").addEventListener("click", function(){
+  var name = document.getElementById("inp-name").value.trim() || myName;
+  if (!name) { toast("Type your name first"); return; }
+  var current = (state.avatars && state.avatars[keyFor(name)]) || "";
+  var picked = prompt("Pick an emoji for " + name + " (leave blank to use initials instead):", current);
+  if (picked === null) return;
+  fsSetAvatar(name, picked.trim().slice(0, 4));
+});
+
 document.getElementById("nm-home").addEventListener("change", updateCustomRows);
 document.getElementById("nm-away").addEventListener("change", updateCustomRows);
 
@@ -1229,19 +1397,22 @@ document.getElementById("btn-save-match").addEventListener("click", function(){
   var koVal = document.getElementById("nm-ko").value;
   var ko = koVal ? new Date(koVal).getTime() : null;
 
-  if (editingMatch) {
-    fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
-    curId = editingMatch;
-    toast("Match updated");
-  } else {
-    var newId = fsCreateMatch({ h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
-    curId = newId;
-    cameFrom = "fixtures";
-    toast("Match added — get predicting!");
+  function finishSave(){
+    if (editingMatch) {
+      fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
+      curId = editingMatch;
+      toast("Match updated");
+    } else {
+      var newId = fsCreateMatch({ h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
+      curId = newId;
+      cameFrom = "fixtures";
+      toast("Match added — get predicting!");
+    }
+    editingMatch = null;
+    view = "match";
+    render();
   }
-  editingMatch = null;
-  view = "match";
-  render();
+  if (editingMatch) requirePin(finishSave); else finishSave();
 });
 
 document.getElementById("btn-cancel-match").addEventListener("click", function(){
@@ -1254,14 +1425,16 @@ document.getElementById("btn-delete-match").addEventListener("click", function()
   if (!editingMatch || state.m.length < 2) return;
   var m = null;
   for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
-  if (!confirm("Delete " + (m ? m.h + " vs " + m.a : "this match") + " and all its predictions?")) return;
-  var deletingId = editingMatch;
-  editingMatch = null;
-  view = cameFrom === "results" ? "results" : "fixtures";
-  fsDeleteMatch(deletingId);
-  if (curId === deletingId) curId = null;
-  render();
-  toast("Match deleted");
+  requirePin(function(){
+    if (!confirm("Delete " + (m ? m.h + " vs " + m.a : "this match") + " and all its predictions?")) return;
+    var deletingId = editingMatch;
+    editingMatch = null;
+    view = cameFrom === "results" ? "results" : "fixtures";
+    fsDeleteMatch(deletingId);
+    if (curId === deletingId) curId = null;
+    render();
+    toast("Match deleted");
+  });
 });
 
 document.getElementById("btn-match-settings").addEventListener("click", function(){
@@ -1300,17 +1473,22 @@ document.getElementById("btn-add").addEventListener("click", function(){
     if (clash && clash !== entry) { toast("There's already a " + clash[0] + " on the list"); return; }
     var hsVal = (locked && entry) ? entry[1] : saEl.value;
     var asVal = (locked && entry) ? entry[2] : scEl.value;
-    fsRenamePrediction(m.id, editingName, name, hsVal, asVal);
-    if (myName && keyFor(myName) === keyFor(editingName)) { myName = name; saveName(); }
-    toast("Saved " + name);
-    setEditMode(null);
+    var saveEdit = function(){
+      fsRenamePrediction(m.id, editingName, name, hsVal, asVal);
+      if (myName && keyFor(myName) === keyFor(editingName)) { myName = name; saveName(); }
+      toast("Saved " + name);
+      setEditMode(null);
+      clearForm();
+    };
+    var editingSomeoneElse = !myName || keyFor(myName) !== keyFor(editingName);
+    if (editingSomeoneElse) requirePin(saveEdit); else saveEdit();
   } else {
     var existing = findIn(m, name);
     fsUpsertPrediction(m.id, name, saEl.value, scEl.value);
     toast(existing ? "Updated " + name + "'s prediction" : "Added — everyone can see it now!");
     myName = name; saveName();
+    clearForm();
   }
-  clearForm();
 });
 
 document.getElementById("btn-cancel-edit").addEventListener("click", function(){
@@ -1336,9 +1514,11 @@ document.getElementById("rows").addEventListener("click", function(ev){
   var btn = ev.target.closest(".del");
   if (!btn) return;
   var name = btn.getAttribute("data-name");
-  if (!confirm("Remove " + name + "'s prediction?")) return;
-  fsDeletePrediction(m.id, name);
-  if (editingName === name) { setEditMode(null); clearForm(); }
+  requirePin(function(){
+    if (!confirm("Remove " + name + "'s prediction?")) return;
+    fsDeletePrediction(m.id, name);
+    if (editingName === name) { setEditMode(null); clearForm(); }
+  });
 });
 
 /* ---------- final score ---------- */
@@ -1348,16 +1528,18 @@ document.getElementById("btn-final").addEventListener("click", function(){
   var sa = document.getElementById("fin-sa").value;
   var sc = document.getElementById("fin-sc").value;
   if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
-  fsSetFinal(m.id, [num(sa), num(sc)]);
-  document.getElementById("fin-sa").value = "";
-  document.getElementById("fin-sc").value = "";
-  confetti();
+  requirePin(function(){
+    fsSetFinal(m.id, [num(sa), num(sc)]);
+    document.getElementById("fin-sa").value = "";
+    document.getElementById("fin-sc").value = "";
+    confetti();
+  });
 });
 
 document.getElementById("btn-clear-final").addEventListener("click", function(){
   var m = cm();
   if (!m) return;
-  fsSetFinal(m.id, null);
+  requirePin(function(){ fsSetFinal(m.id, null); });
 });
 
 document.getElementById("btn-share-results").addEventListener("click", function(){
@@ -1385,9 +1567,123 @@ document.getElementById("btn-share-results").addEventListener("click", function(
   shareContent(lines.join("\n"));
 });
 
+function fitText(ctx, text, maxWidth, startSize, minSize, weight, family){
+  var size = startSize;
+  while (size > minSize) {
+    ctx.font = weight + " " + size + "px " + family;
+    if (ctx.measureText(text).width <= maxWidth) break;
+    size -= 2;
+  }
+  return size;
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function buildResultImage(m){
+  var W = 1080, H = 1080;
+  var FAM = "-apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  var c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  var ctx = c.getContext("2d");
+
+  var grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, "#0A3B2A");
+  grad.addColorStop(1, "#0E5C3F");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#FFB612";
+  ctx.fillRect(0, 0, W, 14);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#FFB612";
+  ctx.font = "800 28px " + FAM;
+  ctx.fillText("🏉  BOK FAMILY PREDICTOR", W/2, 90);
+
+  ctx.fillStyle = "#CDE3D6";
+  ctx.font = "700 22px " + FAM;
+  ctx.fillText("FULL TIME", W/2, 135);
+
+  ctx.fillStyle = "#FFFFFF";
+  var hSize = fitText(ctx, m.h.toUpperCase(), W-140, 52, 30, "800", FAM);
+  ctx.font = "800 " + hSize + "px " + FAM;
+  ctx.fillText(m.h.toUpperCase(), W/2, 220);
+
+  ctx.fillStyle = "#FFB612";
+  ctx.font = "900 96px " + FAM;
+  ctx.fillText(m.f[0] + "  –  " + m.f[1], W/2, 335);
+
+  ctx.fillStyle = "#FFFFFF";
+  var aSize = fitText(ctx, m.a.toUpperCase(), W-140, 52, 30, "800", FAM);
+  ctx.font = "800 " + aSize + "px " + FAM;
+  ctx.fillText(m.a.toUpperCase(), W/2, 410);
+
+  ctx.strokeStyle = "rgba(255,255,255,.2)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(140, 460); ctx.lineTo(W-140, 460); ctx.stroke();
+
+  ctx.fillStyle = "#FFB612";
+  ctx.font = "800 24px " + FAM;
+  ctx.fillText("TOP PREDICTORS", W/2, 520);
+
+  var ranked = standings(m);
+  var podium = ranked.slice(0, 5);
+  var medals = ["🏆","🥈","🥉"];
+  var startY = 590, rowH = 82;
+  podium.forEach(function(s, i){
+    var y = startY + i*rowH;
+    ctx.fillStyle = i === 0 ? "rgba(255,182,18,.15)" : "rgba(255,255,255,.06)";
+    roundRect(ctx, 100, y-46, W-200, 64, 14);
+    ctx.fill();
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "800 30px " + FAM;
+    ctx.fillText((medals[i] || (i+1) + ".") + "  " + s.e[0], 130, y);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#FFB612";
+    ctx.font = "800 26px " + FAM;
+    ctx.fillText(s.e[1] + "–" + s.e[2] + "  ·  +" + s.pts + " pts", W-130, y);
+  });
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#8FB5A2";
+  ctx.font = "600 18px " + FAM;
+  ctx.fillText("Bok Family Predictor", W/2, H-40);
+
+  return c;
+}
+document.getElementById("btn-share-image").addEventListener("click", function(){
+  var m = cm();
+  if (!m || !m.f || !m.p.length) return;
+  var canvas = buildResultImage(m);
+  canvas.toBlob(function(blob){
+    if (!blob) { toast("Couldn't create the image"); return; }
+    var file = new File([blob], "result.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: m.h + " vs " + m.a }).catch(function(){});
+      return;
+    }
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "result.png";
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("Image saved — share it from your downloads");
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 30000);
+  }, "image/png");
+});
+
 /* ---------- pot ---------- */
 document.getElementById("pot-amount").addEventListener("change", function(){
-  fsSetPot(this.value);
+  var val = num(this.value);
+  requirePin(function(){ fsSetPot(val); });
+  render();
 });
 
 /* ---------- main share ---------- */

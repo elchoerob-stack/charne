@@ -1,5 +1,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Family Rugby Predictor</title>
+<meta name="theme-color" content="#0A3B2A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bok Predictor">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Bok Family Predictor</title>
 <style>
   :root{
     --forest:#0A3B2A;
@@ -218,6 +226,15 @@
   .lg-row .total{text-align:right;font-weight:900;font-size:17px;color:var(--grass);font-variant-numeric:tabular-nums}
   .lg-row.top{background:#FFF7E0}
 
+  /* ---------- install card ---------- */
+  .install-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--forest);border:1px solid var(--grass);color:#fff;
+  }
+  .install-card .txt{flex:1;font-size:13.5px;line-height:1.5;color:#CDE3D6}
+  .install-card .txt strong{color:#fff}
+  .install-card .btn{margin-top:0;width:auto;padding:12px 16px;flex:0 0 auto}
+
   /* ---------- share bar & toast ---------- */
   .sharebar{
     position:fixed;left:0;right:0;bottom:0;
@@ -247,6 +264,10 @@
 <nav class="chips" id="chips" aria-label="Matches"></nav>
 
 <main>
+  <section id="sec-install" hidden>
+    <div class="card install-card" id="install-inner"></div>
+  </section>
+
   <!-- ============ MATCH VIEW ============ -->
   <div id="view-match">
     <section id="sec-status" hidden>
@@ -405,6 +426,21 @@
        ["Clive",38,19],["Alan W",38,15],["Fred D",39,16],["Fred C",44,22],
        ["Tess",36,28],["Nowell",18,18],["Sean",21,17]]
   };
+  // 2026 Springbok fixtures. ko is epoch ms (times below are SAST = UTC+2).
+  // July times are confirmed; later ones are best-known and editable in match settings.
+  var FIXTURES = [
+    {id:"sa-sco-2026", h:"South Africa", a:"Scotland",    ko:Date.UTC(2026,6,11,15,40), vn:"Loftus Versfeld, Pretoria"},
+    {id:"sa-wal-2026", h:"South Africa", a:"Wales",       ko:Date.UTC(2026,6,18,15,40), vn:"Kings Park, Durban"},
+    {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Buenos Aires · time TBC"},
+    {id:"sa-nz1-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,22,15,0),  vn:"Ellis Park, Johannesburg"},
+    {id:"sa-nz2-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,29,15,0),  vn:"Cape Town Stadium"},
+    {id:"sa-nz3-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,5,15,0),   vn:"FNB Stadium, Johannesburg"},
+    {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,16,0),  vn:"Baltimore, USA · time TBC"},
+    {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,14,0),  vn:"Italy · date & time TBC"},
+    {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,14,19,10),vn:"France · date & time TBC"},
+    {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,17,40),vn:"Aviva Stadium, Dublin · time TBC"}
+  ];
+
   var KEY = "bok-predictor-v2";
   var OLD_KEY = "sa-sco-predictions-v1";
   var NAME_KEY = "bok-myname";
@@ -461,7 +497,27 @@
       history.replaceState(null, "", location.pathname + location.search);
     }
     if (state.cur >= state.m.length) state.cur = 0;
+    ensureFixtures();
     save();
+  }
+  function ensureFixtures(){
+    FIXTURES.forEach(function(fx){
+      var local = null;
+      for (var i=0;i<state.m.length;i++) if (state.m[i].id===fx.id) { local = state.m[i]; break; }
+      if (!local) {
+        state.m.push({ id:fx.id, h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
+                       ko:fx.ko, vn:fx.vn, p:[], f:null });
+      } else {
+        if (!local.ko) local.ko = fx.ko;
+        if (!local.vn) local.vn = fx.vn;
+      }
+    });
+    sortMatches();
+  }
+  function sortMatches(){
+    var curId = state.m[state.cur] && state.m[state.cur].id;
+    state.m.sort(function(a,b){ return (a.ko || 9e15) - (b.ko || 9e15); });
+    if (curId) for (var i=0;i<state.m.length;i++) if (state.m[i].id===curId) state.cur = i;
   }
   function mergeState(inc){
     inc.m.forEach(function(im){
@@ -474,6 +530,7 @@
       });
       if (im.f && !local.f) local.f = [num(im.f[0]), num(im.f[1])];
       if (im.ko && !local.ko) local.ko = im.ko;
+      if (im.vn && !local.vn) local.vn = im.vn;
     });
     if (inc.pot && !state.pot) state.pot = num(inc.pot);
   }
@@ -652,11 +709,15 @@
     var nav = document.getElementById("chips");
     var html = state.m.map(function(m, i){
       var active = (view==="match" && i===state.cur) ? " active" : "";
-      return '<button class="chip' + active + '" data-chip="m' + i + '">' + m.hf + " v " + m.af + "</button>";
+      var date = m.ko ? " " + new Date(m.ko).toLocaleDateString([], {day:"numeric", month:"short"}) : "";
+      var done = m.f ? "✓ " : "";
+      return '<button class="chip' + active + '" data-chip="m' + i + '">' + done + m.hf + " v " + m.af + esc(date) + "</button>";
     }).join("");
     html += '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 League</button>';
     html += '<button class="chip gold" data-chip="new">＋ Match</button>';
     nav.innerHTML = html;
+    var act = nav.querySelector(".chip.active");
+    if (act && act.scrollIntoView) act.scrollIntoView({ block:"nearest", inline:"center" });
   }
 
   function renderHeader(){
@@ -683,8 +744,8 @@
       '</div>';
     sub.hidden = false;
     sub.innerHTML = m.ko
-      ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>'
-      : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>';
+      ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.vn ? ' · ' + esc(m.vn) : '')
+      : (m.vn ? esc(m.vn) : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>');
   }
 
   function renderMatch(){
@@ -956,6 +1017,7 @@
     }
     editingMatch = null;
     view = "match";
+    sortMatches();
     save(); render();
   });
 
@@ -1133,11 +1195,59 @@
     );
   });
 
+  /* ================= install (PWA) ================= */
+  var deferredInstall = null;
+  function isStandalone(){
+    return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone;
+  }
+  function updateInstallUi(){
+    var sec = document.getElementById("sec-install");
+    var inner = document.getElementById("install-inner");
+    if (isStandalone()) { sec.hidden = true; return; }
+    if (deferredInstall) {
+      sec.hidden = false;
+      inner.innerHTML =
+        '<span class="txt"><strong>Get the app on your phone</strong> — one tap, works offline, no app store needed.</span>' +
+        '<button class="btn" id="btn-install">📲 Install</button>';
+      return;
+    }
+    var ua = navigator.userAgent || "";
+    if (/iphone|ipad|ipod/i.test(ua)) {
+      sec.hidden = false;
+      inner.innerHTML =
+        '<span class="txt"><strong>Add this app to your home screen:</strong> tap the Share button ' +
+        '<strong>⎋</strong> below, then <strong>“Add to Home Screen”</strong>. It works like a normal app after that.</span>';
+      return;
+    }
+    sec.hidden = true;
+  }
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault();
+    deferredInstall = e;
+    updateInstallUi();
+  });
+  window.addEventListener("appinstalled", function(){
+    deferredInstall = null;
+    updateInstallUi();
+    toast("Installed! Look for 🏉 on your home screen");
+  });
+  document.getElementById("sec-install").addEventListener("click", function(ev){
+    if (!ev.target.closest("#btn-install") || !deferredInstall) return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function(){ deferredInstall = null; updateInstallUi(); });
+  });
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    try {
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    } catch(e){}
+  }
+
   /* ================= boot ================= */
   window.addEventListener("hashchange", function(){
     if (location.hash.indexOf("#d=") === 0) location.reload();
   });
   load();
   render();
+  updateInstallUi();
 })();
 </script>

@@ -95,7 +95,7 @@
     font-variant-numeric:tabular-nums;
   }
   .thead,.row{
-    display:grid;grid-template-columns:1fr 62px 62px 34px;
+    display:grid;grid-template-columns:1fr 56px 56px 30px 30px;
     align-items:center;gap:6px;
   }
   .thead{
@@ -103,6 +103,11 @@
     text-transform:uppercase;color:var(--ink-soft);
   }
   .thead .col-num{text-align:center}
+  .row .edit{
+    border:0;background:transparent;color:#9AA89F;font-size:15px;
+    cursor:pointer;padding:4px;border-radius:8px;line-height:1;
+  }
+  .row .edit:active{color:var(--grass);background:#E4EFE7}
   .rows{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   .row{padding:12px 14px;border-top:1px solid var(--line)}
   .row:first-child{border-top:0}
@@ -191,6 +196,7 @@
         </div>
       </div>
       <button class="btn" id="btn-add">Add my prediction</button>
+      <button class="btn quiet" id="btn-cancel-edit" hidden>Cancel — keep as it was</button>
       <button class="btn wa" id="btn-send-mine" hidden>Send my prediction on WhatsApp</button>
       <p class="hint">Added your score? Tap the green button to WhatsApp it back so it lands on the master list.</p>
     </div>
@@ -199,7 +205,7 @@
   <section>
     <h2>Predictions<span class="count-pill" id="count">0</span></h2>
     <div class="thead" aria-hidden="true">
-      <span>Name</span><span class="col-num">🇿🇦 SA</span><span class="col-num">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Sco</span><span></span>
+      <span>Name</span><span class="col-num">🇿🇦 SA</span><span class="col-num">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Sco</span><span></span><span></span>
     </div>
     <div class="rows" id="rows"></div>
   </section>
@@ -247,6 +253,7 @@
 
   var state = { p: [], f: null };   // p: [[name, sa, sc]], f: [sa, sc] or null
   var myName = null;                // last prediction added on this phone
+  var editingName = null;           // original name of the entry being edited
 
   /* ---------- storage + url ---------- */
   function load(){
@@ -341,6 +348,7 @@
           '<span class="who">' + medal + esc(e[0]) + diffHtml + '</span>' +
           '<span class="num sa">' + e[1] + '</span>' +
           '<span class="num sc">' + e[2] + '</span>' +
+          '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
           '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
         '</div>';
       }).join("");
@@ -371,6 +379,18 @@
   }
 
   /* ---------- actions ---------- */
+  function setEditMode(name){
+    editingName = name;
+    var btn = document.getElementById("btn-add");
+    btn.textContent = name ? "Save changes" : "Add my prediction";
+    document.getElementById("btn-cancel-edit").hidden = !name;
+  }
+  function clearForm(){
+    document.getElementById("inp-name").value = "";
+    document.getElementById("inp-sa").value = "";
+    document.getElementById("inp-sc").value = "";
+  }
+
   document.getElementById("btn-add").addEventListener("click", function(){
     var nameEl = document.getElementById("inp-name");
     var saEl = document.getElementById("inp-sa");
@@ -379,13 +399,30 @@
     if (!name) { toast("Type your name first"); nameEl.focus(); return; }
     if (saEl.value === "" || scEl.value === "") { toast("Fill in both scores"); return; }
 
-    var existing = findByName(name);
-    if (existing) { existing[1] = num(saEl.value); existing[2] = num(scEl.value); toast("Updated " + name + "'s prediction"); }
-    else { state.p.push([name, num(saEl.value), num(scEl.value)]); toast("Added — now WhatsApp it back!"); }
+    if (editingName) {
+      var entry = findByName(editingName);
+      var clash = findByName(name);
+      if (clash && clash !== entry) { toast("There's already a " + clash[0] + " on the list"); return; }
+      if (entry) {
+        entry[0] = name; entry[1] = num(saEl.value); entry[2] = num(scEl.value);
+        if (myName && myName.trim().toLowerCase() === editingName.trim().toLowerCase()) myName = name;
+        toast("Saved " + name);
+      }
+      setEditMode(null);
+    } else {
+      var existing = findByName(name);
+      if (existing) { existing[1] = num(saEl.value); existing[2] = num(scEl.value); toast("Updated " + name + "'s prediction"); }
+      else { state.p.push([name, num(saEl.value), num(scEl.value)]); toast("Added — now WhatsApp it back!"); }
+      myName = name;
+    }
 
-    myName = name;
     save(); render();
-    nameEl.value = ""; saEl.value = ""; scEl.value = "";
+    clearForm();
+  });
+
+  document.getElementById("btn-cancel-edit").addEventListener("click", function(){
+    setEditMode(null);
+    clearForm();
   });
 
   document.getElementById("btn-send-mine").addEventListener("click", function(){
@@ -406,12 +443,25 @@
   });
 
   document.getElementById("rows").addEventListener("click", function(ev){
+    var editBtn = ev.target.closest(".edit");
+    if (editBtn) {
+      var entry = findByName(editBtn.getAttribute("data-name"));
+      if (!entry) return;
+      document.getElementById("inp-name").value = entry[0];
+      document.getElementById("inp-sa").value = entry[1];
+      document.getElementById("inp-sc").value = entry[2];
+      setEditMode(entry[0]);
+      document.getElementById("inp-name").scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("inp-name").focus();
+      return;
+    }
     var btn = ev.target.closest(".del");
     if (!btn) return;
     var name = btn.getAttribute("data-name");
     if (!confirm("Remove " + name + "'s prediction?")) return;
     state.p = state.p.filter(function(e){ return e[0] !== name; });
     if (myName === name) myName = null;
+    if (editingName === name) { setEditMode(null); clearForm(); }
     save(); render();
   });
 

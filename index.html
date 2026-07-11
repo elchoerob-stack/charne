@@ -113,6 +113,8 @@
     letter-spacing:.02em;
   }
   .btn:active{background:var(--gold-deep)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  input:disabled{opacity:.55;cursor:not-allowed}
   .btn.share{background:var(--share);color:#fff}
   .btn.quiet{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft);font-weight:700}
   .btn.danger{background:transparent;border:1.5px solid #E7CFCF;color:#8A2B2B;font-weight:700}
@@ -298,7 +300,7 @@
           </div>
           <button class="btn" id="btn-add">Add my prediction</button>
           <button class="btn quiet" id="btn-cancel-edit" hidden>Cancel — keep as it was</button>
-          <p class="hint">Predictions update live for the whole family — no need to send anything.</p>
+          <p class="hint" id="add-hint">Predictions update live for the whole family — no need to send anything.</p>
         </div>
       </section>
 
@@ -535,6 +537,7 @@ function avatarHtml(name){
   return '<span class="avatar" style="background:hsl(' + h + ',45%,86%);color:hsl(' + h + ',55%,28%)" aria-hidden="true">' + esc(initials) + '</span>';
 }
 function isLocked(m){ return !!(m.ko && Date.now() > m.ko); }
+function scoresLocked(m){ return !!m && (isLocked(m) || !!m.f); }
 function fmtKo(ms){
   try {
     return new Date(ms).toLocaleString([], {weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
@@ -861,8 +864,6 @@ function renderMatch(){
     pill.textContent = "🔒 Predictions locked — the game has kicked off!";
   } else { st.hidden = true; }
 
-  document.getElementById("sec-add").hidden = locked;
-
   var rows = document.getElementById("rows");
   document.getElementById("count").textContent = m.p.length;
   var ranked = m.f ? standings(m) : null;
@@ -881,7 +882,7 @@ function renderMatch(){
           '<span class="pts-chip">+' + s.pts + '</span></span>' +
         '<span class="num sa">' + e[1] + '</span>' +
         '<span class="num sc">' + e[2] + '</span>' +
-        '<span></span>' +
+        '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
         '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
       '</div>';
     }).join("");
@@ -891,8 +892,7 @@ function renderMatch(){
         '<span class="who">' + avatarHtml(e[0]) + '<span class="txt">' + esc(e[0]) + '</span></span>' +
         '<span class="num sa">' + e[1] + '</span>' +
         '<span class="num sc">' + e[2] + '</span>' +
-        (locked ? '<span></span>' :
-          '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>') +
+        '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
         '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
       '</div>';
     }).join("");
@@ -970,7 +970,24 @@ function renderMatch(){
     ? "winner takes<br><strong>R" + (state.pot * m.p.length) + "</strong>"
     : "";
 
+  updateAddFormState();
   startTicker();
+}
+
+function updateAddFormState(){
+  var m = cm();
+  var locked = scoresLocked(m);
+  var blockNew = locked && !editingName;
+  document.getElementById("btn-add").disabled = blockNew;
+  document.getElementById("inp-sa").disabled = locked;
+  document.getElementById("inp-sc").disabled = locked;
+  var hint = document.getElementById("add-hint");
+  if (!hint) return;
+  hint.textContent = !locked
+    ? "Predictions update live for the whole family — no need to send anything."
+    : editingName
+      ? "Scores are locked — you can still fix the spelling of a name."
+      : "🔒 Kick-off has passed — tap ✎ next to a name to fix a typo.";
 }
 
 function renderLeague(){
@@ -1125,6 +1142,7 @@ function setEditMode(name){
   editingName = name;
   document.getElementById("btn-add").textContent = name ? "Save changes" : "Add my prediction";
   document.getElementById("btn-cancel-edit").hidden = !name;
+  updateAddFormState();
 }
 function clearForm(){
   document.getElementById("inp-name").value = myName || "";
@@ -1134,7 +1152,9 @@ function clearForm(){
 
 document.getElementById("btn-add").addEventListener("click", function(){
   var m = cm();
-  if (!m || isLocked(m)) { toast("Too late — kick-off has passed!"); return; }
+  if (!m) return;
+  var locked = scoresLocked(m);
+  if (locked && !editingName) { toast("Too late to add new predictions — but you can still fix a typo via ✎"); return; }
   var nameEl = document.getElementById("inp-name");
   var saEl = document.getElementById("inp-sa");
   var scEl = document.getElementById("inp-sc");
@@ -1146,7 +1166,9 @@ document.getElementById("btn-add").addEventListener("click", function(){
     var entry = findIn(m, editingName);
     var clash = findIn(m, name);
     if (clash && clash !== entry) { toast("There's already a " + clash[0] + " on the list"); return; }
-    fsRenamePrediction(m.id, editingName, name, saEl.value, scEl.value);
+    var hsVal = (locked && entry) ? entry[1] : saEl.value;
+    var asVal = (locked && entry) ? entry[2] : scEl.value;
+    fsRenamePrediction(m.id, editingName, name, hsVal, asVal);
     if (myName && keyFor(myName) === keyFor(editingName)) { myName = name; saveName(); }
     toast("Saved " + name);
     setEditMode(null);

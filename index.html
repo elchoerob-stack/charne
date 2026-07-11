@@ -20,7 +20,7 @@
     --ink-soft:#5A6B62;
     --line:#E3DECF;
     --navy:#1B2A4A;
-    --wa:#25D366;
+    --share:#25D366;
   }
   *{box-sizing:border-box}
   [hidden]{display:none !important}
@@ -113,7 +113,7 @@
     letter-spacing:.02em;
   }
   .btn:active{background:var(--gold-deep)}
-  .btn.wa{background:var(--wa);color:#fff}
+  .btn.share{background:var(--share);color:#fff}
   .btn.quiet{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft);font-weight:700}
   .btn.danger{background:transparent;border:1.5px solid #E7CFCF;color:#8A2B2B;font-weight:700}
   .btn:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
@@ -293,8 +293,8 @@
         </div>
         <button class="btn" id="btn-add">Add my prediction</button>
         <button class="btn quiet" id="btn-cancel-edit" hidden>Cancel — keep as it was</button>
-        <button class="btn wa" id="btn-send-mine" hidden>Send my prediction on WhatsApp</button>
-        <p class="hint">Added your score? Tap the green button to WhatsApp it back so it lands on the master list.</p>
+        <button class="btn share" id="btn-send-mine" hidden>Share my prediction</button>
+        <p class="hint">Added your score? Tap Share so it reaches everyone else's list.</p>
       </div>
     </section>
 
@@ -325,7 +325,7 @@
         </div>
         <button class="btn" id="btn-final">Save final score</button>
       </div>
-      <button class="btn wa" id="btn-share-results" hidden>Share the results on WhatsApp</button>
+      <button class="btn share" id="btn-share-results" hidden>Share the results</button>
       <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
       <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong></p>
     </section>
@@ -397,7 +397,7 @@
 
 <div class="sharebar">
   <div class="inner">
-    <button class="btn wa" id="btn-share">Share on WhatsApp</button>
+    <button class="btn share" id="btn-share">Share</button>
   </div>
 </div>
 
@@ -565,11 +565,20 @@
     clearTimeout(t._h);
     t._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
   }
-  function openWhatsApp(text){
-    var a = document.createElement("a");
-    a.href = "https://wa.me/?text=" + encodeURIComponent(text);
-    a.target = "_blank"; a.rel = "noopener";
-    document.body.appendChild(a); a.click(); a.remove();
+  function shareContent(text){
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function(){});
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){
+        toast("Copied! Paste it into any chat app");
+      }).catch(function(){
+        toast("Couldn't copy automatically — copy the link manually");
+      });
+      return;
+    }
+    toast("Sharing isn't supported on this browser");
   }
   function avatarHtml(name){
     var h = 0;
@@ -700,7 +709,7 @@
     document.getElementById("view-league").hidden = view !== "league";
     document.getElementById("view-newmatch").hidden = view !== "newmatch";
     var shareBtn = document.getElementById("btn-share");
-    shareBtn.textContent = view === "league" ? "Share league standings on WhatsApp" : "Share on WhatsApp";
+    shareBtn.textContent = view === "league" ? "Share league standings" : "Share";
     if (view === "match") renderMatch();
     if (view === "league") renderLeague();
   }
@@ -1079,7 +1088,7 @@
     } else {
       var existing = findIn(m, name);
       if (existing) { existing[1] = num(saEl.value); existing[2] = num(scEl.value); toast("Updated " + name + "'s prediction"); }
-      else { m.p.push([name, num(saEl.value), num(scEl.value)]); toast("Added — now WhatsApp it back!"); }
+      else { m.p.push([name, num(saEl.value), num(scEl.value)]); toast("Added — tap Share so it reaches everyone!"); }
       myName = name;
     }
     save(); render();
@@ -1095,7 +1104,7 @@
     var m = cm();
     var e = myName && findIn(m, myName);
     if (!e) return;
-    openWhatsApp(
+    shareContent(
       "🏉 My " + m.h + " vs " + m.a + " prediction:\n" +
       e[0] + ": " + m.hf + " " + m.h + " " + e[1] + " — " + e[2] + " " + m.a + " " + m.af + "\n\n" +
       "Full list here: " + shareUrl()
@@ -1164,7 +1173,7 @@
     }
     lines.push("");
     lines.push("Full standings: " + shareUrl());
-    openWhatsApp(lines.join("\n"));
+    shareContent(lines.join("\n"));
   });
 
   /* ---------- pot ---------- */
@@ -1185,11 +1194,11 @@
       if (table.length > 10) lines.push("…and " + (table.length - 10) + " more");
       lines.push("");
       lines.push("Join in: " + shareUrl());
-      openWhatsApp(lines.join("\n"));
+      shareContent(lines.join("\n"));
       return;
     }
     var m = cm();
-    openWhatsApp(
+    shareContent(
       "🏉 " + m.h + " vs " + m.a + " — score predictions!\n" +
       "Open this link, add your score and send it back:\n" + shareUrl()
     );

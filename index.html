@@ -451,7 +451,16 @@ function flagFor(name){
 // 2026 Springbok fixtures. ko is epoch ms (times below are SAST = UTC+2).
 // July times are confirmed; later ones are best-known and editable in match settings.
 var FIXTURES = [
-  {id:"sa-sco-2026", h:"South Africa", a:"Scotland",    ko:Date.UTC(2026,6,11,15,40), vn:"Loftus Versfeld, Pretoria"},
+  {id:"sa-eng-2026", h:"South Africa", a:"England",     ko:Date.UTC(2026,6,4,15,40),  vn:"Ellis Park, Johannesburg",
+   seed:[["Doug",32,14],["Caroline",24,20],["Jaco",42,15],["Charné",36,22],["Reinhardt",32,19],
+         ["Fred D",33,13],["Clive",17,25],["Noelene",31,21],["Deon",28,22],["Hylt",24,16],
+         ["Michelle",35,18],["Bren",26,17],["Carla",22,12],["Fred",33,25],["Tess",38,24],
+         ["Olivia",33,25],["Stan",36,30],["Gerna",23,18]]},
+  {id:"sa-sco-2026", h:"South Africa", a:"Scotland",    ko:Date.UTC(2026,6,11,15,40), vn:"Loftus Versfeld, Pretoria",
+   seed:[["Doug",38,18],["Caroline",30,20],["Jaco",52,12],["Charné",45,20],
+         ["Tanay",38,0],["Reinhardt",37,0],["Noelene",42,21],["Stan",40,22],
+         ["Clive",38,19],["Alan W",38,15],["Fred D",39,16],["Fred C",44,22],
+         ["Tess",36,28],["Nowell",18,18],["Sean",21,17]]},
   {id:"sa-wal-2026", h:"South Africa", a:"Wales",       ko:Date.UTC(2026,6,18,15,40), vn:"Kings Park, Durban"},
   {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Buenos Aires · time TBC"},
   {id:"sa-nz1-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,22,15,0),  vn:"Ellis Park, Johannesburg"},
@@ -701,18 +710,31 @@ function startLiveSync(){
     render();
   }, function(){});
 }
+function seedToMap(seedArr){
+  var m = {};
+  (seedArr || []).forEach(function(e){
+    m[keyFor(e[0])] = { name:e[0], hs:num(e[1]), as:num(e[2]) };
+  });
+  return m;
+}
 function ensureFixtures(){
   return getDocs(matchesCol).then(function(snap){
-    var existingIds = {};
-    snap.forEach(function(d){ existingIds[d.id] = true; });
+    var existing = {};
+    snap.forEach(function(d){ existing[d.id] = d.data(); });
     var batch = writeBatch(db);
     var any = false;
     FIXTURES.forEach(function(fx){
-      if (!existingIds[fx.id]) {
+      var cur = existing[fx.id];
+      if (!cur) {
         batch.set(doc(db,"matches",fx.id), {
           h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
-          ko:fx.ko, vn:fx.vn, f:null, p:{}
+          ko:fx.ko, vn:fx.vn, f:null, p: seedToMap(fx.seed)
         });
+        any = true;
+      } else if (fx.seed && fx.seed.length && (!cur.p || Object.keys(cur.p).length === 0) && !cur.seeded) {
+        // one-time backfill: only fires if the match still has zero predictions
+        // and has never been seeded before, so it never overwrites real entries.
+        batch.set(doc(db,"matches",fx.id), { p: seedToMap(fx.seed), seeded: true }, { merge:true });
         any = true;
       }
     });

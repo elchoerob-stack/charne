@@ -1,0 +1,433 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SA vs Scotland — Score Predictions</title>
+<style>
+  :root{
+    --forest:#0A3B2A;
+    --grass:#0E5C3F;
+    --gold:#FFB612;
+    --gold-deep:#D99400;
+    --cream:#F6F3EA;
+    --card:#FFFFFF;
+    --ink:#17251F;
+    --ink-soft:#5A6B62;
+    --line:#E3DECF;
+    --navy:#1B2A4A;
+    --wa:#25D366;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:96px;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    background:linear-gradient(160deg,var(--forest) 0%,var(--grass) 100%);
+    color:#fff;
+    padding:calc(env(safe-area-inset-top,0px) + 20px) 20px 22px;
+    border-bottom:4px solid var(--gold);
+  }
+  .eyebrow{
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin:0 0 10px;
+  }
+  .match{
+    display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
+  }
+  .team{text-align:center}
+  .team .flag{font-size:34px;line-height:1;display:block;margin-bottom:6px}
+  .team .name{font-size:15px;font-weight:800;letter-spacing:.02em;text-wrap:balance}
+  .vs{
+    font-size:12px;font-weight:800;color:var(--forest);
+    background:var(--gold);border-radius:999px;padding:6px 10px;letter-spacing:.08em;
+  }
+  .subline{
+    text-align:center;margin:14px 0 0;font-size:12.5px;color:#CDE3D6;
+  }
+  .subline strong{color:#fff}
+
+  /* ---------- layout ---------- */
+  main{max-width:560px;margin:0 auto;padding:16px}
+  section{margin-top:18px}
+  h2{
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:700;margin:0 0 10px 4px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;box-shadow:0 1px 2px rgba(23,37,31,.05);
+  }
+
+  /* ---------- add form ---------- */
+  .form-row{display:flex;gap:10px}
+  .field{flex:1;display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:11px;font-weight:700;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase}
+  input{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;
+    padding:12px;font-size:16px;background:#FCFBF7;color:var(--ink);
+    font-family:inherit;
+  }
+  input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold-deep)}
+  input[type=number]{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+  .scores-row{display:flex;gap:10px;margin-top:10px}
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;border:0;border-radius:12px;padding:14px;
+    font-size:15.5px;font-weight:800;font-family:inherit;cursor:pointer;
+    margin-top:12px;color:var(--forest);background:var(--gold);
+    letter-spacing:.02em;
+  }
+  .btn:active{background:var(--gold-deep)}
+  .btn.wa{background:var(--wa);color:#fff}
+  .btn.quiet{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft);font-weight:700}
+  .btn:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+  .hint{font-size:12.5px;color:var(--ink-soft);margin:10px 4px 0;line-height:1.5}
+
+  /* ---------- predictions table ---------- */
+  .count-pill{
+    display:inline-block;font-size:12px;font-weight:800;color:var(--forest);
+    background:#E4EFE7;border-radius:999px;padding:3px 10px;margin-left:6px;
+    font-variant-numeric:tabular-nums;
+  }
+  .thead,.row{
+    display:grid;grid-template-columns:1fr 62px 62px 34px;
+    align-items:center;gap:6px;
+  }
+  .thead{
+    padding:4px 14px 8px;font-size:10.5px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+  .thead .col-num{text-align:center}
+  .rows{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .row{padding:12px 14px;border-top:1px solid var(--line)}
+  .row:first-child{border-top:0}
+  .row .who{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .medal{margin-right:4px}
+  .row .num{
+    text-align:center;font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;
+  }
+  .row .num.sa{color:var(--grass)}
+  .row .num.sc{color:var(--navy)}
+  .row .del{
+    border:0;background:transparent;color:#B9B2A0;font-size:17px;
+    cursor:pointer;padding:4px;border-radius:8px;line-height:1;
+  }
+  .row .del:active{color:#8A2B2B;background:#F6E7E7}
+  .row.winner{background:#FFF7E0}
+  .row .diff{font-size:11px;color:var(--ink-soft);font-weight:600;display:block;font-variant-numeric:tabular-nums}
+  .empty{padding:22px 14px;text-align:center;color:var(--ink-soft);font-size:14px}
+
+  /* ---------- result banner ---------- */
+  .final-banner{
+    background:var(--forest);color:#fff;border-radius:14px;padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border:1px solid var(--grass);margin-bottom:12px;
+  }
+  .final-banner .score{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--gold)}
+  .final-banner .label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#CDE3D6}
+  .champ{
+    background:#FFF7E0;border:1.5px solid var(--gold);border-radius:14px;
+    padding:14px 16px;margin-bottom:12px;font-size:15px;line-height:1.5;
+  }
+  .champ strong{font-size:17px}
+
+  /* ---------- sticky share bar ---------- */
+  .sharebar{
+    position:fixed;left:0;right:0;bottom:0;
+    padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);
+    background:rgba(246,243,234,.92);backdrop-filter:blur(8px);
+    border-top:1px solid var(--line);
+  }
+  .sharebar .inner{max-width:560px;margin:0 auto}
+  .sharebar .btn{margin-top:0}
+
+  .toast{
+    position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(8px);
+    background:var(--ink);color:#fff;font-size:13.5px;font-weight:600;
+    padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;white-space:nowrap;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<header>
+  <p class="eyebrow">Family &amp; Friends Score Predictor</p>
+  <div class="match" role="group" aria-label="South Africa versus Scotland">
+    <div class="team">
+      <span class="flag" aria-hidden="true">🇿🇦</span>
+      <span class="name">South Africa</span>
+    </div>
+    <span class="vs">VS</span>
+    <div class="team">
+      <span class="flag" aria-hidden="true">🏴󠁧󠁢󠁳󠁣󠁴󠁿</span>
+      <span class="name">Scotland</span>
+    </div>
+  </div>
+  <p class="subline">Guess the final score — <strong>closest prediction takes the bragging rights</strong></p>
+</header>
+
+<main>
+  <section>
+    <h2>Add your prediction</h2>
+    <div class="card">
+      <div class="field">
+        <label for="inp-name">Your name</label>
+        <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30">
+      </div>
+      <div class="scores-row">
+        <div class="field">
+          <label for="inp-sa">🇿🇦 South Africa</label>
+          <input id="inp-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="inp-sc">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland</label>
+          <input id="inp-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+        </div>
+      </div>
+      <button class="btn" id="btn-add">Add my prediction</button>
+      <button class="btn wa" id="btn-send-mine" hidden>Send my prediction on WhatsApp</button>
+      <p class="hint">Added your score? Tap the green button to WhatsApp it back so it lands on the master list.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Predictions<span class="count-pill" id="count">0</span></h2>
+    <div class="thead" aria-hidden="true">
+      <span>Name</span><span class="col-num">🇿🇦 SA</span><span class="col-num">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Sco</span><span></span>
+    </div>
+    <div class="rows" id="rows"></div>
+  </section>
+
+  <section>
+    <h2>Final result</h2>
+    <div id="final-display"></div>
+    <div class="card" id="final-form">
+      <p class="hint" style="margin:0 4px 10px">After the final whistle, enter the real score to crown the winner.</p>
+      <div class="scores-row" style="margin-top:0">
+        <div class="field">
+          <label for="fin-sa">🇿🇦 South Africa</label>
+          <input id="fin-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="fin-sc">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland</label>
+          <input id="fin-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+        </div>
+      </div>
+      <button class="btn" id="btn-final">Save final score</button>
+    </div>
+    <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
+  </section>
+</main>
+
+<div class="sharebar">
+  <div class="inner">
+    <button class="btn wa" id="btn-share">Share this list on WhatsApp</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SEED = [
+    ["Doug",38,18],["Caroline",30,20],["Jaco",52,12],["Charné",45,20],
+    ["Tanay",38,0],["Reinhardt",37,0],["Noelene",42,21],["Stan",40,22],
+    ["Clive",38,19],["Alan W",38,15],["Fred D",39,16],["Fred C",44,22],
+    ["Tess",36,28],["Nowell",18,18],["Sean",21,17]
+  ];
+  var KEY = "sa-sco-predictions-v1";
+
+  var state = { p: [], f: null };   // p: [[name, sa, sc]], f: [sa, sc] or null
+  var myName = null;                // last prediction added on this phone
+
+  /* ---------- storage + url ---------- */
+  function load(){
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(KEY)); } catch(e){}
+    if (stored && Array.isArray(stored.p)) state = stored;
+    else state = { p: SEED.slice(), f: null };
+
+    // Merge anything carried in the shared link (#d=...)
+    var m = location.hash.match(/#d=([^&]+)/);
+    if (m) {
+      try {
+        var incoming = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+        if (incoming && Array.isArray(incoming.p)) {
+          incoming.p.forEach(function(e){
+            if (!Array.isArray(e) || typeof e[0] !== "string") return;
+            if (!findByName(e[0])) state.p.push([String(e[0]).slice(0,30), num(e[1]), num(e[2])]);
+          });
+          if (incoming.f && state.f === null) state.f = [num(incoming.f[0]), num(incoming.f[1])];
+        }
+      } catch(e){}
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    save();
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function shareUrl(){
+    var payload = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    return location.origin + location.pathname + location.search + "#d=" + payload;
+  }
+
+  /* ---------- helpers ---------- */
+  function num(v){ v = parseInt(v,10); return isNaN(v) ? 0 : Math.max(0, Math.min(150, v)); }
+  function findByName(name){
+    var n = String(name).trim().toLowerCase();
+    for (var i=0;i<state.p.length;i++)
+      if (state.p[i][0].trim().toLowerCase() === n) return state.p[i];
+    return null;
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function diffTo(final, e){ return Math.abs(e[1]-final[0]) + Math.abs(e[2]-final[1]); }
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+  function openWhatsApp(text){
+    var a = document.createElement("a");
+    a.href = "https://wa.me/?text=" + encodeURIComponent(text);
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    var rows = document.getElementById("rows");
+    document.getElementById("count").textContent = state.p.length;
+
+    var list = state.p.slice();
+    var ranked = null;
+    if (state.f) {
+      ranked = list.slice().sort(function(a,b){ return diffTo(state.f,a) - diffTo(state.f,b); });
+      list = ranked;
+    }
+
+    if (!list.length) {
+      rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
+    } else {
+      rows.innerHTML = list.map(function(e, i){
+        var medal = "";
+        var diffHtml = "";
+        var winner = "";
+        if (state.f) {
+          var d = diffTo(state.f, e);
+          diffHtml = '<span class="diff">' + d + ' off</span>';
+          if (i === 0) { medal = '<span class="medal">🏆</span>'; winner = " winner"; }
+          else if (i === 1) medal = '<span class="medal">🥈</span>';
+          else if (i === 2) medal = '<span class="medal">🥉</span>';
+        }
+        return '<div class="row' + winner + '">' +
+          '<span class="who">' + medal + esc(e[0]) + diffHtml + '</span>' +
+          '<span class="num sa">' + e[1] + '</span>' +
+          '<span class="num sc">' + e[2] + '</span>' +
+          '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
+        '</div>';
+      }).join("");
+    }
+
+    // final score area
+    var disp = document.getElementById("final-display");
+    var form = document.getElementById("final-form");
+    var clearBtn = document.getElementById("btn-clear-final");
+    if (state.f) {
+      var champ = ranked && ranked.length ? ranked[0] : null;
+      disp.innerHTML =
+        '<div class="final-banner"><div><div class="label">Full-time score</div>' +
+        '<div class="score">🇿🇦 ' + state.f[0] + ' — ' + state.f[1] + ' 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div></div></div>' +
+        (champ
+          ? '<div class="champ">🏆 <strong>' + esc(champ[0]) + '</strong> wins with ' +
+            champ[1] + '–' + champ[2] + ' (only ' + diffTo(state.f, champ) + ' points off)!</div>'
+          : "");
+      form.hidden = true;
+      clearBtn.hidden = false;
+    } else {
+      disp.innerHTML = "";
+      form.hidden = false;
+      clearBtn.hidden = true;
+    }
+
+    document.getElementById("btn-send-mine").hidden = !myName;
+  }
+
+  /* ---------- actions ---------- */
+  document.getElementById("btn-add").addEventListener("click", function(){
+    var nameEl = document.getElementById("inp-name");
+    var saEl = document.getElementById("inp-sa");
+    var scEl = document.getElementById("inp-sc");
+    var name = nameEl.value.trim();
+    if (!name) { toast("Type your name first"); nameEl.focus(); return; }
+    if (saEl.value === "" || scEl.value === "") { toast("Fill in both scores"); return; }
+
+    var existing = findByName(name);
+    if (existing) { existing[1] = num(saEl.value); existing[2] = num(scEl.value); toast("Updated " + name + "'s prediction"); }
+    else { state.p.push([name, num(saEl.value), num(scEl.value)]); toast("Added — now WhatsApp it back!"); }
+
+    myName = name;
+    save(); render();
+    nameEl.value = ""; saEl.value = ""; scEl.value = "";
+  });
+
+  document.getElementById("btn-send-mine").addEventListener("click", function(){
+    var e = myName && findByName(myName);
+    if (!e) return;
+    openWhatsApp(
+      "🏉 My SA vs Scotland prediction:\n" +
+      e[0] + ": 🇿🇦 South Africa " + e[1] + " — Scotland " + e[2] + " 🏴󠁧󠁢󠁳󠁣󠁴󠁿\n\n" +
+      "Full list here: " + shareUrl()
+    );
+  });
+
+  document.getElementById("btn-share").addEventListener("click", function(){
+    openWhatsApp(
+      "🏉 South Africa vs Scotland — score predictions!\n" +
+      "Open this link, add your score and send it back:\n" + shareUrl()
+    );
+  });
+
+  document.getElementById("rows").addEventListener("click", function(ev){
+    var btn = ev.target.closest(".del");
+    if (!btn) return;
+    var name = btn.getAttribute("data-name");
+    if (!confirm("Remove " + name + "'s prediction?")) return;
+    state.p = state.p.filter(function(e){ return e[0] !== name; });
+    if (myName === name) myName = null;
+    save(); render();
+  });
+
+  document.getElementById("btn-final").addEventListener("click", function(){
+    var sa = document.getElementById("fin-sa").value;
+    var sc = document.getElementById("fin-sc").value;
+    if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
+    state.f = [num(sa), num(sc)];
+    save(); render();
+  });
+
+  document.getElementById("btn-clear-final").addEventListener("click", function(){
+    state.f = null;
+    save(); render();
+  });
+
+  load(); render();
+})();
+</script>

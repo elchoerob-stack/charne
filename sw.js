@@ -41,3 +41,31 @@ self.addEventListener("fetch", function(e){
     })
   );
 });
+
+self.addEventListener("push", function(e){
+  var data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (err) {}
+  var title = data.title || "🏉 Bok Family Predictor";
+  var body = data.body || "Kick-off is coming up — add your prediction!";
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body: body,
+      icon: "./icon-192.png",
+      badge: "./icon-192.png",
+      data: { url: data.url || "./" }
+    })
+  );
+});
+
+self.addEventListener("notificationclick", function(e){
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || "./";
+  e.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(list){
+      for (var i=0;i<list.length;i++) {
+        if ("focus" in list[i]) { list[i].navigate(url); return list[i].focus(); }
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
+  );
+});

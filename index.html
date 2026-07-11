@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Bok Family Predictor</title>
+<script src="vendor-qrcode.js"></script>
 <style>
   :root{
     --forest:#0A3B2A;
@@ -40,10 +41,18 @@
     padding:calc(env(safe-area-inset-top,0px) + 18px) 20px 16px;
     border-bottom:4px solid var(--gold);
   }
+  .eyebrow-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
   .eyebrow{
     font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--gold);font-weight:700;margin:0 0 10px;
+    color:var(--gold);font-weight:700;margin:0;
   }
+  .help-btn{
+    flex:0 0 auto;width:26px;height:26px;border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);
+    color:#fff;font-size:12px;font-weight:800;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit;
+  }
+  .help-btn:active{background:rgba(255,255,255,.2)}
   .match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
   .team{text-align:center}
   .team .flag{font-size:34px;line-height:1;display:block;margin-bottom:6px}
@@ -67,6 +76,24 @@
     text-transform:uppercase;background:rgba(255,182,18,.22);color:var(--gold);
     border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:2px;
   }
+
+  /* ---------- modals ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(10,20,15,.55);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:60;
+  }
+  .modal-card{
+    background:var(--card);border-radius:16px;padding:22px;
+    max-width:400px;width:100%;max-height:85vh;overflow-y:auto;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+  }
+  .modal-card h3{margin:0 0 4px;font-size:19px;color:var(--forest)}
+  .modal-card .step{
+    display:flex;gap:10px;align-items:flex-start;margin-top:14px;
+    font-size:14px;line-height:1.5;color:var(--ink);
+  }
+  .modal-card .step .ic{font-size:20px;flex:0 0 auto}
 
   /* ---------- match chips ---------- */
   nav.chips{
@@ -325,7 +352,10 @@
 </style>
 
 <header>
-  <p class="eyebrow">Family &amp; Friends Score Predictor</p>
+  <div class="eyebrow-row">
+    <p class="eyebrow">Family &amp; Friends Score Predictor</p>
+    <button type="button" class="help-btn" id="btn-help" aria-label="How this app works">❓</button>
+  </div>
   <div id="head-card"></div>
   <p class="subline" id="head-sub"></p>
 </header>
@@ -356,7 +386,8 @@
           <div class="field">
             <label for="inp-name">Your name</label>
             <div class="name-row">
-              <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30">
+              <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30" list="known-names">
+              <datalist id="known-names"></datalist>
               <button type="button" class="avatar-btn" id="btn-avatar" aria-label="Choose your avatar emoji">🙂</button>
             </div>
           </div>
@@ -406,7 +437,7 @@
         <button class="btn share" id="btn-share-results" hidden>Share the results</button>
         <button class="btn quiet" id="btn-share-image" hidden>📸 Share as image</button>
         <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
-        <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong></p>
+        <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong> · 🎲 called an upset <strong>+3</strong></p>
       </section>
 
       <section>
@@ -437,7 +468,14 @@
           <span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span>
         </div>
         <div class="rows" id="lg-rows"></div>
-        <p class="legend">Points per match: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong>. Add more matches to keep the league running all season!</p>
+        <p class="legend">Points per match: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong> · 🎲 called an upset <strong>+3</strong>. Add more matches to keep the league running all season!</p>
+      </section>
+
+      <section>
+        <h2>Tools</h2>
+        <button class="btn quiet" id="btn-show-qr">📱 Show QR code</button>
+        <button class="btn quiet" id="btn-export">💾 Export season data</button>
+        <button class="btn quiet" id="btn-enable-push" hidden>🔔 Enable kick-off alerts</button>
       </section>
     </div>
 
@@ -494,6 +532,27 @@
     </div>
   </div>
 </main>
+
+<div class="modal-overlay" id="modal-intro" hidden>
+  <div class="modal-card">
+    <h3>🏉 How this works</h3>
+    <div class="step"><span class="ic">📅</span><span><strong>Fixtures</strong> lists every match still to come. Tap one and add your score guess before kick-off.</span></div>
+    <div class="step"><span class="ic">✅</span><span><strong>Results</strong> shows finished matches with the final score and who called it closest.</span></div>
+    <div class="step"><span class="ic">🏆</span><span><strong>League</strong> is the running scoreboard for the whole season — points add up across every match.</span></div>
+    <div class="step"><span class="ic">🔒</span><span>Deleting a prediction, setting a final score, or editing someone else's guess needs the family PIN.</span></div>
+    <div class="step"><span class="ic">💰</span><span>Set a pot amount on any match and the season's points leader takes it all.</span></div>
+    <button class="btn" id="btn-intro-close" style="margin-top:20px">Got it!</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-qr" hidden>
+  <div class="modal-card" style="text-align:center">
+    <h3>📱 Scan to join</h3>
+    <p class="hint" style="margin:4px 0 16px">Point a phone camera at this to open the app instantly.</p>
+    <canvas id="qr-canvas" style="max-width:100%;border-radius:10px"></canvas>
+    <button class="btn quiet" id="btn-qr-close" style="margin-top:16px">Close</button>
+  </div>
+</div>
 
 <div class="sharebar">
   <div class="inner">
@@ -688,15 +747,28 @@ function basePoints(f, e){
   if (w) return 5;
   return 0;
 }
+var UPSET_THRESHOLD = 5;  // crowd's avg predicted margin must clear this to count as a clear favourite
 function standings(m){
   var f = m.f;
   var list = m.p.map(function(e){
-    return { e:e, d:diffTo(f,e), w:pickedWinner(f,e), pts:basePoints(f,e), closest:false };
+    return { e:e, d:diffTo(f,e), w:pickedWinner(f,e), pts:basePoints(f,e), closest:false, upset:false };
   });
   if (list.length) {
     var minD = Infinity;
     list.forEach(function(s){ if (s.d < minD) minD = s.d; });
     list.forEach(function(s){ if (s.d === minD) { s.pts += 2; s.closest = true; } });
+  }
+  // upset bonus: the crowd's average predicted margin stands in for "the expected
+  // favourite" (no external odds feed here) — correctly calling the actual result
+  // flip that margin earns a bonus, on top of the usual points.
+  if (list.length >= 3) {
+    var avgMargin = list.reduce(function(sum,s){ return sum + (s.e[1]-s.e[2]); }, 0) / list.length;
+    var actualMargin = f[0] - f[1];
+    if (Math.abs(avgMargin) >= UPSET_THRESHOLD && actualMargin !== 0 && Math.sign(avgMargin) !== Math.sign(actualMargin)) {
+      list.forEach(function(s){
+        if (Math.sign(s.e[1]-s.e[2]) === Math.sign(actualMargin)) { s.pts += 3; s.upset = true; }
+      });
+    }
   }
   list.sort(function(a,b){
     if (a.pts !== b.pts) return b.pts - a.pts;
@@ -971,6 +1043,22 @@ function render(){
   if (view === "fixtures") renderFixturesList();
   if (view === "results") renderResultsList();
   renderReminderBanner();
+  renderKnownNames();
+}
+
+function renderKnownNames(){
+  var dl = document.getElementById("known-names");
+  if (!dl) return;
+  var seen = {};
+  state.m.forEach(function(m){
+    m.p.forEach(function(e){
+      var k = keyFor(e[0]);
+      if (!seen[k]) seen[k] = e[0];
+    });
+  });
+  dl.innerHTML = Object.keys(seen).map(function(k){
+    return '<option value="' + esc(seen[k]) + '"></option>';
+  }).join("");
 }
 
 function nextUnpredictedSoon(){
@@ -1134,7 +1222,7 @@ function renderMatch(){
     rows.innerHTML = ranked.map(function(s){
       var e = s.e;
       var medal = medalFor(s.rank);
-      var tags = s.d + " off" + (s.closest ? " · 🎖 closest" : "") + (s.w ? "" : " · wrong team");
+      var tags = s.d + " off" + (s.closest ? " · 🎖 closest" : "") + (s.upset ? " · 🎲 upset" : "") + (s.w ? "" : " · wrong team");
       return '<div class="row' + (s.rank===1 ? ' winner' : '') + '">' +
         '<span class="who"><span class="rank">' + s.rank + '.</span>' + avatarHtml(e[0]) +
           '<span class="txt">' + (medal ? medal + " " : "") + esc(e[0]) +
@@ -1786,6 +1874,112 @@ window.addEventListener("hashchange", function(){
   if (applyHashMatch()) { view = "match"; cameFrom = fromForMatch(cm()); render(); }
 });
 
+/* ================= onboarding ================= */
+var INTRO_KEY = "bok-seen-intro";
+function showIntro(){ document.getElementById("modal-intro").hidden = false; }
+function hideIntro(){
+  document.getElementById("modal-intro").hidden = true;
+  try { localStorage.setItem(INTRO_KEY, "1"); } catch(e){}
+}
+document.getElementById("btn-help").addEventListener("click", showIntro);
+document.getElementById("btn-intro-close").addEventListener("click", hideIntro);
+
+/* ================= QR code ================= */
+document.getElementById("btn-show-qr").addEventListener("click", function(){
+  var canvas = document.getElementById("qr-canvas");
+  var qr = window.qrcode(0, "M");
+  qr.addData(appUrl());
+  qr.make();
+  var cell = 8, margin = 4;
+  var n = qr.getModuleCount();
+  var size = (n + margin * 2) * cell;
+  canvas.width = size; canvas.height = size;
+  var ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#0A3B2A";
+  for (var r=0;r<n;r++){
+    for (var c=0;c<n;c++){
+      if (qr.isDark(r, c)) ctx.fillRect((c+margin)*cell, (r+margin)*cell, cell, cell);
+    }
+  }
+  document.getElementById("modal-qr").hidden = false;
+});
+document.getElementById("btn-qr-close").addEventListener("click", function(){
+  document.getElementById("modal-qr").hidden = true;
+});
+
+/* ================= data export ================= */
+function downloadBlob(blob, filename){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 30000);
+}
+function csvCell(v){
+  var s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+document.getElementById("btn-export").addEventListener("click", function(){
+  var today = new Date().toISOString().slice(0, 10);
+  var backup = { exportedAt: new Date().toISOString(), pot: state.pot, matches: state.m, avatars: state.avatars };
+  downloadBlob(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }), "bok-predictor-backup-" + today + ".json");
+
+  var rows = [["Match", "Kick-off", "Predictor", "Home Score", "Away Score", "Final Home", "Final Away", "Points"]];
+  state.m.forEach(function(m){
+    var ranked = m.f ? standings(m) : null;
+    var byName = {};
+    if (ranked) ranked.forEach(function(s){ byName[keyFor(s.e[0])] = s.pts; });
+    m.p.forEach(function(e){
+      rows.push([
+        m.h + " v " + m.a, m.ko ? fmtKo(m.ko) : "TBC", e[0], e[1], e[2],
+        m.f ? m.f[0] : "", m.f ? m.f[1] : "", ranked ? byName[keyFor(e[0])] : ""
+      ]);
+    });
+  });
+  var csv = rows.map(function(r){ return r.map(csvCell).join(","); }).join("\n");
+  downloadBlob(new Blob([csv], { type: "text/csv" }), "bok-predictor-predictions-" + today + ".csv");
+  toast("Backup downloaded");
+});
+
+/* ================= push notifications ================= */
+var VAPID_PUBLIC_KEY = "BJmuttRyryMqveEFKTaPzjh9uMl5QzmYcOAYei8E7fGbYSktHWrRSvM6J0vmYBBiydJDlgGOV0YQYAp2snQ3doI";
+function urlBase64ToUint8Array(base64String){
+  var padding = "=".repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  var raw = atob(base64);
+  var arr = new Uint8Array(raw.length);
+  for (var i=0;i<raw.length;i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+function updatePushUi(){
+  var btn = document.getElementById("btn-enable-push");
+  if (!btn) return;
+  var supported = "serviceWorker" in navigator && "PushManager" in window && location.protocol === "https:";
+  if (!supported || Notification.permission === "granted") { btn.hidden = true; return; }
+  btn.hidden = false;
+}
+document.getElementById("btn-enable-push").addEventListener("click", function(){
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    toast("Push isn't supported on this browser"); return;
+  }
+  Notification.requestPermission().then(function(perm){
+    if (perm !== "granted") { toast("Notifications weren't allowed"); return; }
+    navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }).then(function(sub){
+      var ref = doc(collection(db, "pushSubs"));
+      setDoc(ref, { name: myName || null, sub: sub.toJSON(), createdAt: Date.now() })
+        .then(function(){ toast("Kick-off alerts enabled!"); updatePushUi(); })
+        .catch(function(){ toast("Couldn't save — try again"); });
+    }).catch(function(){ toast("Couldn't enable alerts — try again"); });
+  });
+});
+
 /* ================= boot ================= */
 try { myName = localStorage.getItem(NAME_KEY) || null; } catch(e){}
 if (myName) {
@@ -1795,4 +1989,6 @@ if (myName) {
 startLiveSync();
 ensureFixtures().catch(function(){});
 updateInstallUi();
+updatePushUi();
+try { if (!localStorage.getItem(INTRO_KEY)) showIntro(); } catch(e){}
 </script>

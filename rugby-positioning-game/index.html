@@ -326,6 +326,7 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
     <div class="control-bar">
       <button class="chip-toggle" id="btnHeatmap">◐ Space Map</button>
       <button class="chip-toggle on" id="btnDrift">⇄ Drag: Team</button>
+      <button class="chip-toggle" id="btnPlayCall">▶</button>
       <button class="chip-toggle" id="btnSavePlay">💾</button>
       <div class="spacer"></div>
       <button class="chip-toggle" id="btnTip">? Coach Tip</button>
@@ -1834,16 +1835,15 @@ function effectiveTeamPositions(level, uPos){
                sweeper:!!p.sweeper, isUser:!!p.isUser, isCarrier:!!p.isCarrier,
                inLine:!!p.inLine, pod:!!p.pod, x:p.x, y:p.y, driftW:0};
       if(p.isUser){ c.x=uPos.x; c.y=uPos.y; return c; }
-      if(ownTeam && !p.anchored && dragMode!=="me"){
-        var w;
-        if(dragMode==="line"){
-          w = p.isForward ? 0 : 1; // whole backline moves rigidly; pods hold their spot
-        } else {
-          w = 0.7*Math.exp(-dist(p, level.userBase)/13);
-        }
-        if(w > 0.04){
-          c.x = clamp(p.x + d.x*w, -PITCH_W/2+1.5, PITCH_W/2-1.5);
-          c.y = clamp(p.y + d.y*w, 2.2, PITCH_L-1.5);
+      if(ownTeam && !p.anchored){
+        var w = 0;
+        if(dragMode==="line") w = p.isForward ? 0 : 1; // whole backline moves rigidly
+        else if(dragMode==="team") w = 0.7*Math.exp(-dist(p, level.userBase)/13);
+        if(w <= 0.04) w = 0;
+        var mx = p.mx||0, my = p.my||0; // individually dragged placement
+        if(w > 0 || mx || my){
+          c.x = clamp(p.x + d.x*w + mx, -PITCH_W/2+1.5, PITCH_W/2-1.5);
+          c.y = clamp(p.y + d.y*w + my, 2.2, PITCH_L-1.5);
           c.driftW = w;
         }
       }
@@ -1856,10 +1856,16 @@ function effectiveTeamPositions(level, uPos){
 function checkOffside(level, userPos){
   if(!level.dynamic || level.userSide!=="defense") return null;
   var margin = 1.3;
-  if(userPos.y < level.offsideY - margin){
-    return {amount: level.offsideY - userPos.y};
-  }
-  return null;
+  var eff = effectiveTeamPositions(level, userPos).defense;
+  var worst = null;
+  eff.forEach(function(p){
+    if(p.anchored) return;
+    var amount = level.offsideY - p.y;
+    if(amount > margin && (!worst || amount > worst.amount)){
+      worst = {amount: amount, label: p.label, isUser: p.isUser};
+    }
+  });
+  return worst;
 }
 
 /* ---------- passing-chain phase engine ---------- */
@@ -1872,6 +1878,11 @@ var COMMENTARY_AF = {
   tryScored: ["DRIE!!!", "DRIE! Wat 'n afronding!", "DRIE — daar duik hy oor!"],
   touch: ["in die kantlyn gedruk", "uitgedruk — in die kantlyn"],
   blitz: ["Hulle storm op — BLITSVERDEDIGING!"],
+  kickBox: ["{a} sit skoen aan bal — hoog op!", "die hoë skop gaan op van {a} af..."],
+  kickGrubber: ["{a} rol dit deur die lyn!", "klein skoppie agter die lyn in van {a}..."],
+  kickCross: ["dwarsskop van {a} — dit hang daar bo..."],
+  regather: ["TERUGGEVANG — briljante jaag!", "die jagters wen dit terug!"],
+  cover: ["die verdediging vee dit op", "skoongemaak deur die dekking"],
   driftD: ["Die verdediging dryf oor..."],
   blind: ["Hulle draai na die blinde kant!"]
 };
@@ -1881,6 +1892,11 @@ var COMMENTARY = {
   brk: ["HE'S THROUGH THE GAP!", "Through the hole — he's away!", "The line is BROKEN!"],
   sprint: ["he sees the space and goes!", "he pins his ears back!"],
   blitz: ["They're rushing up — BLITZ defence!"],
+  kickBox: ["{a} puts boot to ball — up and under!", "the box kick goes up from {a}..."],
+  kickGrubber: ["{a} grubbers it through the line!", "little kick in behind from {a}..."],
+  kickCross: ["cross-field kick from {a} — it hangs up there..."],
+  regather: ["REGATHERED — brilliant chase!", "the chase wins it back!"],
+  cover: ["the defence sweeps it up", "cleaned up by the cover"],
   driftD: ["The defence is drifting across..."],
   blind: ["They switch it to the blind side!"],
   tackle: ["wrapped up by {t}", "big hit from {t}!", "{t} drags him down", "{t} closes the door"],
@@ -1944,6 +1960,52 @@ function simulateV2(level, atk0, def0){
   if(defLook==="blitz") events.push({f:3, type:"look", text:pickLine("blitz")});
   else if(defLook==="drift") events.push({f:3, type:"look", text:pickLine("driftD")});
   if(wentBlind) events.push({f:6, type:"blind", text:pickLine("blind")});
+
+  // Kicking plan: the user's play call on attack; AI judgement when they defend
+  var call = level.playCall || "run";
+  if(level.userSide==="defense"){
+    var td0 = level.tagData || {};
+    var kr = Math.random();
+    if(td0.distOwn < 22 && kr < 0.5) call = "box";
+    else if(kr < 0.15) call = ["grubber","box","cross"][Math.floor(Math.random()*3)];
+    else call = "run";
+  }
+  var kickPending = call!=="run";
+  var kickDone=false, kickType=null, kickLanding=null, ballVel=null, kickWind=0;
+  var chaseGapAtLanding=null, claimerWasUser=false, regathered=false;
+  if(kickPending) maxSteps = 140;
+
+  function executeKick(ki, s){
+    var k = A[ki];
+    kickDone = true; kickType = call; holderIdx = -1;
+    var target;
+    if(call==="box"){
+      target = {x: clamp(k.x + openDir*(5+Math.random()*5), -30, 30),
+                y: Math.min(PITCH_L-2, k.y + 20 + Math.random()*6)};
+      flight = {fx:k.x, fy:k.y, tx:target.x, ty:target.y, t:0, dur:2.3, arc:5.5};
+      events.push({f:s, type:"kick", text:pickLine("kickBox", cname(k))});
+    } else if(call==="grubber"){
+      var bestX=k.x, bestS=-Infinity;
+      for(var gx=-28; gx<=28; gx+=2){
+        var sp = spaceAround({x:gx, y:lineY0+6});
+        var sc = sp - Math.abs(gx-k.x)*0.08;
+        if(sc>bestS){ bestS=sc; bestX=gx; }
+      }
+      target = {x:bestX, y: Math.min(PITCH_L-2, lineY0 + 7 + Math.random()*3)};
+      flight = {fx:k.x, fy:k.y, tx:target.x, ty:target.y, t:0,
+                dur:Math.max(0.8, dist(k,target)/15), arc:0.7};
+      events.push({f:s, type:"kick", text:pickLine("kickGrubber", cname(k))});
+    } else { // cross-field
+      target = {x: clamp(openDir*(PITCH_W/2 - 5), -31, 31),
+                y: Math.min(PITCH_L-2, k.y + 12 + Math.random()*5)};
+      flight = {fx:k.x, fy:k.y, tx:target.x, ty:target.y, t:0, dur:1.8, arc:4.5};
+      events.push({f:s, type:"kick", text:pickLine("kickCross", cname(k))});
+    }
+    kickLanding = target;
+    state = "kickFly";
+    // onside law: only players behind (or level with) the kicker may chase
+    A.forEach(function(p){ p.legalChaser = !p.anchored && p.y <= k.y + 0.8; });
+  }
 
   function moveTo(p, tx, ty, maxStep){
     var dx=tx-p.x, dy=ty-p.y, dd=Math.sqrt(dx*dx+dy*dy);
@@ -2018,6 +2080,27 @@ function simulateV2(level, atk0, def0){
         flight=null;
         car = A[holderIdx];
       }
+    } else if(state==="kickFly"){
+      flight.t += dt;
+      var tk = Math.min(1, flight.t/flight.dur);
+      ball.x = lerp(flight.fx, flight.tx, tk);
+      ball.y = lerp(flight.fy, flight.ty, tk);
+      ball.h = Math.sin(Math.PI*tk)*(flight.arc||4);
+      if(tk>=1){
+        state="loose"; ball.h=0;
+        var kdx = flight.tx-flight.fx, kdy = flight.ty-flight.fy;
+        var kdl = Math.max(0.001, Math.sqrt(kdx*kdx+kdy*kdy));
+        var roll = kickType==="grubber" ? 5 : 2.5;
+        ballVel = {x:kdx/kdl*roll, y:kdy/kdl*roll};
+        var bestChase=Infinity;
+        A.forEach(function(p){ if(p.legalChaser){ var q=dist(p,ball); if(q<bestChase)bestChase=q; } });
+        chaseGapAtLanding = bestChase;
+        flight=null;
+      }
+    } else if(state==="loose"){
+      ball.x = clamp(ball.x + ballVel.x*dt, -PITCH_W/2+0.4, PITCH_W/2-0.4);
+      ball.y = clamp(ball.y + ballVel.y*dt, 0.5, PITCH_L-0.5);
+      ballVel.x*=0.94; ballVel.y*=0.94;
     }
 
     // attackers
@@ -2026,6 +2109,28 @@ function simulateV2(level, atk0, def0){
       a.px=a.x; a.py=a.y;
       if(a.anchored && i!==holderIdx){ a.y += 0.2*dt; continue; }
       if(i===holderIdx && state==="held"){
+        // a called kick takes priority: box goes up from the base, grubber/cross from first receiver
+        if(kickPending && !kickDone){
+          var isKicker = call==="box" ? true : (a.key==="10" || passCount>=1);
+          if(isKicker){
+            if(kickWind===0) kickWind = s;
+            if(s - kickWind >= 3){ executeKick(i, s); continue; }
+            ball.x=a.x; ball.y=a.y; continue; // brief wind-up
+          }
+          if(a.key==="9"){
+            var tenIdx = -1;
+            for(var q3=0;q3<A.length;q3++){ if(A[q3].key==="10" && !A[q3].anchored){ tenIdx=q3; break; } }
+            if(tenIdx>=0 && s>2){
+              passCount++;
+              var pdK = dist(a, A[tenIdx]);
+              flight = {toIdx:tenIdx, fx:a.x, fy:a.y, t:0, dur:Math.max(0.18, pdK/16)};
+              state="flying"; holderIdx=-1;
+              events.push({f:s, type:"pass", text:pickLine("pass", cname(a), cname(A[tenIdx]))});
+              continue;
+            }
+            ball.x=a.x; ball.y=a.y; continue;
+          }
+        }
         var ld = lateralDir(a, openDir);
         if(corridorClear(a)){
           if(!sprintCalled && a.y>ball.y-1){ sprintCalled=true; events.push({f:s,type:"sprint",text:pickLine("sprint")}); }
@@ -2045,6 +2150,12 @@ function simulateV2(level, atk0, def0){
           moveTo(a, a.x+ld*0.5, a.y+2.2, 6.4*dt);
         }
         if(state==="held"){ ball.x=a.x; ball.y=a.y; }
+      } else if(state==="kickFly" || state==="loose"){
+        // chase the kick — but only if you were behind the kicker (onside)
+        if(a.legalChaser){
+          var tgt = state==="kickFly" ? kickLanding : ball;
+          moveTo(a, tgt.x, tgt.y, 6.8*dt);
+        }
       } else {
         // support: run forward but stay behind the ball for the pass
         var capY = ball.y - 1.4;
@@ -2092,7 +2203,31 @@ function simulateV2(level, atk0, def0){
     }
 
     // checks
-    if(car && state==="held"){
+    if(state==="loose"){
+      var aBest=-1, aD=Infinity, dBest=-1, dD=Infinity;
+      A.forEach(function(p,ii){ if(p.legalChaser){ var q=dist(p,ball); if(q<aD){aD=q;aBest=ii;} } });
+      D.forEach(function(p,jj){ if(!p.anchored){ var q=dist(p,ball); if(q<dD){dD=q;dBest=jj;} } });
+      if(Math.abs(ball.x) > PITCH_W/2 - 1.2){
+        outcome="INTO TOUCH";
+        events.push({f:s, type:"touch", text:pickLine("touch")});
+      } else if(aD<1.6 && aD<=dD){
+        claimerWasUser = A[aBest].isUser;
+        if(ball.y >= tryY){
+          outcome="TRY"; regathered=true;
+          events.push({f:s, type:"try", text:pickLine("tryScored")});
+        } else {
+          holderIdx=aBest; state="held"; regathered=true;
+          if(A[aBest].isUser) userTouches++;
+          events.push({f:s, type:"regather", text:pickLine("regather")});
+        }
+      } else if(dD<1.6){
+        outcome="KICK COVERED"; claimerWasUser = D[dBest].isUser;
+        events.push({f:s, type:"cover", text:pickLine("cover")});
+      } else if(ball.y>=tryY && Math.abs(ballVel.x)+Math.abs(ballVel.y)<0.6){
+        outcome="KICK COVERED";
+        events.push({f:s, type:"cover", text:pickLine("cover")});
+      }
+    } else if(car && state==="held"){
       if(car.y >= tryY){
         outcome="TRY";
         events.push({f:s, type:"try", text:pickLine("tryScored")});
@@ -2137,6 +2272,7 @@ function simulateV2(level, atk0, def0){
     tacklerWasUser: tacklerIdx>=0 && !!D[tacklerIdx].isUser,
     userTouches:userTouches,
     defLook:defLook, wentBlind:wentBlind, overlapExisted:overlapExisted,
+    kicked:kickType, chaseGap:chaseGapAtLanding, claimerWasUser:claimerWasUser, regathered:regathered,
     atkMeta: A.map(function(p){return {label:p.label, isForward:p.isForward, isUser:p.isUser};}),
     defMeta: D.map(function(p){return {label:p.label, isForward:p.isForward, isUser:p.isUser};})
   };
@@ -2180,6 +2316,25 @@ function dynamicFeedback(level, userPos, sim){
               "En dis JOU duikslag wat dit beëindig — jy het die spel gelees en self die gaping toegemaak.")
           : T("Attack smothered — your line squeezed the space together and the ball died.",
               "Aanval versmoor — jou lyn het die ruimte toegedruk en die bal het gesterf.")));
+  }
+  // kicking game lessons
+  if(sim.kicked){
+    if(sim.outcome==="KICK COVERED"){
+      bits.push(atkUser
+        ? T("The kick was covered — your nearest chaser was "+(sim.chaseGap!=null?sim.chaseGap.toFixed(0):"?")+"m away when it landed. A kick is only as good as its chase.",
+            "Die skop is gedek — jou naaste jagter was "+(sim.chaseGap!=null?sim.chaseGap.toFixed(0):"?")+"m weg toe dit land. 'n Skop is net so goed soos sy jaagwerk.")
+        : (sim.claimerWasUser
+            ? T("And YOU swept it up — exactly what the back field is there for.",
+                "En JY het dit opgevee — presies waarvoor die agterveld daar is.")
+            : T("Your back field read the kick and cleaned it up. That cover doesn't happen by accident.",
+                "Jou agterveld het die skop gelees en skoongemaak. Daardie dekking gebeur nie per ongeluk nie.")));
+    } else if(sim.regathered){
+      bits.push(atkUser
+        ? T("Kick into space plus bodies arriving — the regather is what turns a boot into an attacking weapon.",
+            "Skop in die ruimte plus liggame wat aankom — die terugvang is wat 'n skoen in 'n aanvalswapen verander.")
+        : T("They kicked and won it back — the space behind your line was unguarded when it mattered.",
+            "Hulle het geskop en dit teruggewen — die ruimte agter jou lyn was onbewaak toe dit saak gemaak het."));
+    }
   }
   // defensive look lesson
   if(sim.defLook==="blitz"){
@@ -2443,7 +2598,7 @@ function openPlay(level){
     document.getElementById("playBrief").innerHTML = lvlBrief(level);
   }
   document.getElementById("pitchHint").textContent = level.dynamic
-    ? T("Drag your player — the team shifts with you","Sleep jou speler — die span skuif saam")
+    ? T("Drag any of your players into position","Sleep enige van jou spelers in posisie")
     : T("Drag the gold marker to your spot","Sleep die goue merker na jou plek");
   document.getElementById("pitchHint").style.opacity = 1;
   var userObj = level.attack.concat(level.defense).filter(function(p){return p.isUser;})[0];
@@ -2456,6 +2611,9 @@ function openPlay(level){
   document.getElementById("btnDrift").style.display = level.dynamic ? "" : "none";
   document.getElementById("btnSavePlay").style.display = level.dynamic ? "" : "none";
   document.getElementById("btnSavePlay").textContent = "💾";
+  document.getElementById("btnPlayCall").style.display = (level.dynamic && level.userSide==="attack") ? "" : "none";
+  playCall = level.playCall || "run";
+  refreshPlayCallChip();
   if(level.dynamic) refreshDriftChip();
   document.getElementById("btnTip").classList.remove("on");
   document.getElementById("tipCard").classList.remove("show");
@@ -2638,17 +2796,53 @@ function eventPitchPoint(evt){
   var px = (clientX-rect.left)*dpr, py=(clientY-rect.top)*dpr;
   return toPitch(px,py);
 }
+var dragTarget = null; // {t:"user"} | {t:"mate", side:"attack"|"defense", idx:n}
 canvas.addEventListener("pointerdown", function(e){
   if(playState!=="positioning") return;
   var p = eventPitchPoint(e);
-  if(dist(p,userPos) < 9){ dragging=true; canvas.setPointerCapture(e.pointerId); document.getElementById("pitchHint").style.opacity=0; }
+  dragTarget = null;
+  if(dist(p,userPos) < 7){
+    dragTarget = {t:"user"};
+  } else if(currentLevel && currentLevel.dynamic){
+    // grab the nearest own-team player: every one of YOUR players is movable
+    var eff = effectiveTeamPositions(currentLevel, userPos);
+    var own = currentLevel.userSide==="attack" ? eff.attack : eff.defense;
+    var side = currentLevel.userSide==="attack" ? "attack" : "defense";
+    var best=-1, bestD=6;
+    own.forEach(function(pl, i){
+      if(pl.isUser || pl.anchored) return;
+      var d = dist(p, pl);
+      if(d < bestD){ bestD=d; best=i; }
+    });
+    if(best>=0) dragTarget = {t:"mate", side:side, idx:best};
+    else if(dist(p,userPos) < 10) dragTarget = {t:"user"};
+  } else if(dist(p,userPos) < 10){
+    dragTarget = {t:"user"};
+  }
+  if(dragTarget){
+    dragging=true;
+    canvas.setPointerCapture(e.pointerId);
+    document.getElementById("pitchHint").style.opacity=0;
+  }
 });
 canvas.addEventListener("pointermove", function(e){
-  if(!dragging) return;
-  userPos = eventPitchPoint(e);
+  if(!dragging || !dragTarget) return;
+  var p = eventPitchPoint(e);
+  if(dragTarget.t==="user"){
+    userPos = p;
+  } else {
+    // move the grabbed teammate: adjust their manual offset so their effective
+    // position (base + drift + manual) lands under the finger
+    var list = dragTarget.side==="attack" ? currentLevel.attack : currentLevel.defense;
+    var pl = list[dragTarget.idx];
+    var eff = effectiveTeamPositions(currentLevel, userPos);
+    var e2 = (dragTarget.side==="attack" ? eff.attack : eff.defense)[dragTarget.idx];
+    pl.mx = (pl.mx||0) + (p.x - e2.x);
+    pl.my = (pl.my||0) + (p.y - e2.y);
+  }
 });
-canvas.addEventListener("pointerup", function(e){ dragging=false; });
-canvas.addEventListener("pointercancel", function(e){ dragging=false; });
+canvas.addEventListener("pointerup", function(e){ dragging=false; dragTarget=null; });
+canvas.addEventListener("pointercancel", function(e){ dragging=false; dragTarget=null; });
 
 document.getElementById("btnHeatmap").addEventListener("click", function(){
   showHeat = !showHeat;
@@ -2662,6 +2856,27 @@ function refreshDriftChip(){
 document.getElementById("btnDrift").addEventListener("click", function(){
   dragMode = DRAG_MODES[(DRAG_MODES.indexOf(dragMode)+1) % DRAG_MODES.length];
   refreshDriftChip();
+});
+
+/* play call: run it, or use the boot */
+var PLAY_CALLS = ["run","grubber","box","cross"];
+var playCall = "run";
+function playCallLabel(c){
+  return "▶ " + {
+    run: T("Call: Run","Roep: Hardloop"),
+    grubber: T("Call: Grubber","Roep: Rolskop"),
+    box: T("Call: Box Kick","Roep: Hoë Skop"),
+    cross: T("Call: Cross Kick","Roep: Dwarsskop")
+  }[c];
+}
+function refreshPlayCallChip(){
+  var b = document.getElementById("btnPlayCall");
+  b.textContent = playCallLabel(playCall);
+  b.classList.toggle("on", playCall!=="run");
+}
+document.getElementById("btnPlayCall").addEventListener("click", function(){
+  playCall = PLAY_CALLS[(PLAY_CALLS.indexOf(playCall)+1) % PLAY_CALLS.length];
+  refreshPlayCallChip();
 });
 document.getElementById("btnTip").addEventListener("click", function(){
   var card = document.getElementById("tipCard");
@@ -2692,6 +2907,8 @@ document.getElementById("btnPlayOut").addEventListener("click", function(){
     playState = "result";
     simResult = staticFrameResult(currentLevel, userPos, "PENALTY");
     simResult.offsideAmount = offside.amount;
+    simResult.offsideLabel = offside.label;
+    simResult.offsideWasUser = offside.isUser;
     simFrameIdx = 0;
     document.getElementById("btnPlayOut").disabled = true;
     showResult();
@@ -2702,6 +2919,7 @@ document.getElementById("btnPlayOut").addEventListener("click", function(){
   document.getElementById("pitchHint").style.opacity = 0;
   var durationMs;
   if(currentLevel.dynamic){
+    if(currentLevel.userSide==="attack") currentLevel.playCall = playCall;
     var eff = effectiveTeamPositions(currentLevel, userPos);
     simResult = simulateV2(currentLevel, eff.attack, eff.defense);
     durationMs = Math.max(1600, simResult.frames.length*42);
@@ -2732,6 +2950,7 @@ var OUTCOME_LABELS = {
   "TACKLED": ["TACKLED","PLATGEVAT"],
   "CAUGHT FROM BEHIND": ["CAUGHT FROM BEHIND","VAN AGTER GEVANG"],
   "INTO TOUCH": ["INTO TOUCH","IN DIE KANTLYN"],
+  "KICK COVERED": ["KICK COVERED","SKOP GEDEK"],
   "PENALTY": ["PENALTY CONCEDED","STRAFSKOP AFGESTAAN"]
 };
 function outcomeLabel(o){
@@ -2796,8 +3015,11 @@ function showResult(){
 
   document.getElementById("coachText").innerHTML = currentLevel.dynamic
     ? (isPenalty
-        ? T("You hadn't retreated far enough before the ball moved — that's an automatic penalty in a real game, every time.",
-            "Jy het nie ver genoeg teruggeval voor die bal beweeg het nie — in 'n regte wedstryd is dit elke keer 'n outomatiese strafskop.")
+        ? (simResult.offsideWasUser===false
+            ? T("Your No."+simResult.offsideLabel+" hadn't retreated behind the offside line — you placed him there, and the whistle punishes the whole team.",
+                "Jou nr."+simResult.offsideLabel+" het nie agter die onkantlyn teruggeval nie — jy het hom daar geplaas, en die fluitjie straf die hele span.")
+            : T("You hadn't retreated far enough before the ball moved — that's an automatic penalty in a real game, every time.",
+                "Jy het nie ver genoeg teruggeval voor die bal beweeg het nie — in 'n regte wedstryd is dit elke keer 'n outomatiese strafskop."))
         : dynamicFeedback(currentLevel, userPos, simResult))
     : lvlFeedback(currentLevel, score.dir);
 

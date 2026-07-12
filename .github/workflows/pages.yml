@@ -1,33 +1,50 @@
-name: Deploy Gap King to GitHub Pages
+name: Sync Gap King to the Pages branch
+
+# The repository's GitHub Pages site deploys from the score-prediction app's
+# branch, so publishing the game means copying its folder onto that branch.
+# The Pages auto-build then redeploys the whole site (score app at the root,
+# Gap King at /rugby-positioning-game/).
 
 on:
   push:
-    branches: [main, claude/rugby-positioning-game-oktl2h]
+    branches: [claude/rugby-positioning-game-oktl2h]
     paths: ["rugby-positioning-game/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: pages-sync
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
+      - name: Check out the Pages branch
+        uses: actions/checkout@v4
         with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
+          ref: claude/sa-score-prediction-app-eia010
+          path: site
+      - name: Check out the game branch
+        uses: actions/checkout@v4
         with:
-          path: rugby-positioning-game
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          ref: claude/rugby-positioning-game-oktl2h
+          path: game
+      - name: Copy the game into the site
+        run: |
+          rm -rf site/rugby-positioning-game
+          cp -r game/rugby-positioning-game site/rugby-positioning-game
+      - name: Commit and push if anything changed
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Game already up to date on the Pages branch."
+          else
+            git commit -m "Update Gap King app from ${GITHUB_SHA::7}"
+            git push
+          fi

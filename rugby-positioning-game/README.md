@@ -45,11 +45,19 @@ Beyond the 16 set levels, **Free Play** puts a realistic, full-size rugby pitch 
 3. Pick whose ball it is, and which of the full 15 positions you're playing — any back or any forward.
 4. The game builds a realistic attack/defence picture **for that exact spot on the field** — pinned in your own 5m, it's cramped and the defence can blitz; on their try line, the defence is stacked and desperate; near touch, width is tight; off a penalty tap, the defence starts illegally close until you notice they have to retreat 10m.
 
-From there it's the same drag-and-simulate loop as the Academy, plus one extra, very real rule: if you're defending and you haven't retreated behind the offside line (the back of the ruck/scrum, or the full 10m on a penalty tap) before you hit **Play It Out**, the whistle blows immediately — **Penalty Conceded** — before the phase even runs. It's an easy, memorable way to feel out why the offside line matters, not just read about it.
+From there the phase **plays out like real rugby**:
 
-Free Play scenarios aren't part of the star/progress system — they're for open-ended practice, so there's no "right answer" saved anywhere, just the outcome and a coach's note built from the actual numbers of that attempt (your depth off the ball, the gap at the moment of contact, distance to touch).
+- **The ball goes through the hands.** The 9 clears it from the base and each carrier decides in the moment — take the gap if it's open, or ship it on to the next player out wide. A good shape sends the ball all the way to the wing; a bad one dies two passes in. A live commentary bar calls the play as it happens ("10 ships it to 12... HE'S THROUGH THE GAP!").
+- **Your teammates move with you.** Drag your player and the players near you drift to hold the team's shape, exactly like a real line adjusting — so you're never positioning one dot in a vacuum, you're bending the whole shape. (Toggle it off with the **Team Drift** chip to experiment with solo movement.)
+- **Rucks look like real rucks.** Only 2–4 forwards commit at the breakdown; the rest hold in pods off 9 and 10 or fold into the defensive line — different every time you tap.
+- **The fullback matters.** On attack he sometimes injects into the line as the extra man (and if you *are* the 15, choosing between joining the line and sweeping behind is the whole lesson). On defense he sweeps the backfield and runs down line breaks.
+- **Real laws apply.** A defender who hasn't retreated behind the offside line (back of the ruck/scrum, 10m at a lineout for the backs, the full 10m on a penalty tap) concedes an immediate **Penalty** before the ball even moves.
 
-For Scrum, Lineout and Ruck phases, the full forward pack is on the pitch for both teams — all eight forwards (1–8), shown as smaller tokens so the backline still reads clearly, shaped realistically per phase: packed down at a scrum, strung out along the line of touch at a lineout, clustered tight at a ruck. Penalty taps skip the set pack, since realistically the forwards are still arriving, not formed up. Pick any forward position from the role list to see exactly where you personally should be in that shape.
+Outcomes are graded like a real phase: **TRY** (with a celebration), **LINE BREAK**, **GOOD GAIN**, **TACKLED**, or **INTO TOUCH**, with metres gained and pass count shown, and a coach's note built from what actually happened — including whether the ball ever reached *you*.
+
+Free Play scenarios aren't part of the star/progress system — they're open-ended practice with a fresh picture every tap.
+
+For Scrum and Lineout the full bound pack (1–8) is on the pitch for both teams, shown as smaller tokens so the backline reads clearly. Penalty taps carry no set pack, since the forwards are realistically still arriving. Any of the 15 positions is playable, forwards included.
 
 ## Coach's Corner
 

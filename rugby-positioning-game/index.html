@@ -295,7 +295,7 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
     </div>
     <div class="control-bar">
       <button class="chip-toggle" id="btnHeatmap">◐ Space Map</button>
-      <button class="chip-toggle on" id="btnDrift">⇄ Team Drift</button>
+      <button class="chip-toggle on" id="btnDrift">⇄ Drag: Team</button>
       <div class="spacer"></div>
       <button class="chip-toggle" id="btnTip">? Coach Tip</button>
     </div>
@@ -1414,7 +1414,11 @@ function generateFreeplayScenario(phaseId, fieldPt, side, roleKey){
 }
 
 /* ---------- linked team movement (drift-with) ---------- */
-var driftLinked = true;
+// Drag modes: "me" = solo, "team" = nearby teammates drift with falloff,
+// "line" = the complete backline translates rigidly with you.
+var dragMode = "team";
+var DRAG_MODES = ["me","team","line"];
+var DRAG_MODE_LABELS = {me:"⇢ Drag: Me", team:"⇄ Drag: Team", line:"⇶ Drag: Line"};
 function effectiveTeamPositions(level, uPos){
   var d = {x:uPos.x - level.userBase.x, y:uPos.y - level.userBase.y};
   var userIsAtk = level.userSide==="attack";
@@ -1424,11 +1428,16 @@ function effectiveTeamPositions(level, uPos){
                sweeper:!!p.sweeper, isUser:!!p.isUser, isCarrier:!!p.isCarrier,
                inLine:!!p.inLine, pod:!!p.pod, x:p.x, y:p.y, driftW:0};
       if(p.isUser){ c.x=uPos.x; c.y=uPos.y; return c; }
-      if(ownTeam && !p.anchored && driftLinked){
-        var w = 0.7*Math.exp(-dist(p, level.userBase)/13);
+      if(ownTeam && !p.anchored && dragMode!=="me"){
+        var w;
+        if(dragMode==="line"){
+          w = p.isForward ? 0 : 1; // whole backline moves rigidly; pods hold their spot
+        } else {
+          w = 0.7*Math.exp(-dist(p, level.userBase)/13);
+        }
         if(w > 0.04){
           c.x = clamp(p.x + d.x*w, -PITCH_W/2+1.5, PITCH_W/2-1.5);
-          c.y = clamp(p.y + d.y*w, 1, PITCH_L-1);
+          c.y = clamp(p.y + d.y*w, 2.2, PITCH_L-1.5);
           c.driftW = w;
         }
       }
@@ -1935,6 +1944,7 @@ function openPlay(level){
   showHeat = false;
   document.getElementById("btnHeatmap").classList.remove("on");
   document.getElementById("btnDrift").style.display = level.dynamic ? "" : "none";
+  if(level.dynamic) refreshDriftChip();
   document.getElementById("btnTip").classList.remove("on");
   document.getElementById("tipCard").classList.remove("show");
   setCommentary(null);
@@ -2020,7 +2030,7 @@ function render(){
       var eff = effectiveTeamPositions(level, userPos);
       if(showHeat) drawHeatmap(eff.attack, eff.defense, level);
       // link lines while dragging: show that the team moves as one shape
-      if(dragging && driftLinked){
+      if(dragging && dragMode!=="me"){
         var own = level.userSide==="attack" ? eff.attack : eff.defense;
         var us = toScreen(userPos);
         own.forEach(function(p){
@@ -2131,9 +2141,14 @@ document.getElementById("btnHeatmap").addEventListener("click", function(){
   showHeat = !showHeat;
   this.classList.toggle("on", showHeat);
 });
+function refreshDriftChip(){
+  var b = document.getElementById("btnDrift");
+  b.textContent = DRAG_MODE_LABELS[dragMode];
+  b.classList.toggle("on", dragMode!=="me");
+}
 document.getElementById("btnDrift").addEventListener("click", function(){
-  driftLinked = !driftLinked;
-  this.classList.toggle("on", driftLinked);
+  dragMode = DRAG_MODES[(DRAG_MODES.indexOf(dragMode)+1) % DRAG_MODES.length];
+  refreshDriftChip();
 });
 document.getElementById("btnTip").addEventListener("click", function(){
   var card = document.getElementById("tipCard");

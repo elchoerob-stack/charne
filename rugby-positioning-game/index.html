@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Gap King — Rugby Positioning Academy</title>
+<meta name="description" content="A rugby positioning trainer. Pick your spot, watch the game play out, and learn to create space on attack and close gaps in defence." />
+<meta name="theme-color" content="#0b120d" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Gap King" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230b120d'/%3E%3Cellipse cx='50' cy='50' rx='34' ry='22' fill='%23e8b93c'/%3E%3Cpath d='M20 50 L80 50 M32 38 L32 62 M68 38 L68 62' stroke='%230b120d' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230b120d'/%3E%3Cellipse cx='50' cy='50' rx='34' ry='22' fill='%23e8b93c'/%3E%3Cpath d='M20 50 L80 50 M32 38 L32 62 M68 38 L68 62' stroke='%230b120d' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+:root{
+  --bg:#0a0f0a;
+  --bg-2:#0f170f;
+  --panel:#131f14;
+  --panel-2:#182619;
+  --line:#2b3d2a;
+  --grass-1:#1c5231;
+  --grass-2:#17472a;
+  --gold:#e3b43c;
+  --gold-bright:#ffd35c;
+  --gold-dim:#8a6c26;
+  --cream:#f2ecd9;
+  --red:#b0453f;
+  --red-dim:#6e2e2b;
+  --ink:#edf1e7;
+  --ink-dim:#9fb09a;
+  --ink-faint:#5f7259;
+  --good:#4fb37e;
+  --danger:#d6564f;
+  --font-display:"Avenir Next Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,monospace;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;margin:0;background:var(--bg);}
+body{
+  font-family:var(--font-body);
+  color:var(--ink);
+  overflow:hidden;
+  overscroll-behavior:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#app{position:fixed;inset:0;height:100dvh;background:
+  radial-gradient(ellipse 120% 60% at 50% -10%, rgba(227,180,60,0.10), transparent 55%),
+  radial-gradient(ellipse 90% 50% at 50% 110%, rgba(20,40,25,0.6), transparent),
+  var(--bg);
+}
+button{font-family:inherit;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity .22s ease, transform .22s ease;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
+.screen.active{opacity:1;pointer-events:auto;transform:translateY(0);}
+
+/* ---------- shared bits ---------- */
+.h-bar{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;flex:0 0 auto;}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:0 0 auto;}
+.icon-btn:active{background:var(--panel-2);}
+.h-title{flex:1;min-width:0;}
+.h-title .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.09em;color:var(--gold);text-transform:uppercase;opacity:.85;}
+.h-title h1{font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:.02em;margin:1px 0 0;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+.pill-attack{background:rgba(227,180,60,.15);color:var(--gold-bright);border:1px solid rgba(227,180,60,.35);}
+.pill-defense{background:rgba(176,69,63,.18);color:#e78f89;border:1px solid rgba(176,69,63,.4);}
+.stars{display:flex;gap:2px;}
+.star{font-size:14px;color:var(--ink-faint);}
+.star.on{color:var(--gold-bright);}
+.scrollpane{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 24px;}
+.btn-primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#231a06;font-family:var(--font-display);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:16px;border:none;border-radius:14px;padding:15px 18px;box-shadow:0 6px 18px rgba(227,180,60,.25);cursor:pointer;}
+.btn-primary:active{transform:translateY(1px);}
+.btn-primary:disabled{opacity:.4;box-shadow:none;}
+.btn-ghost{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:var(--font-display);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-radius:12px;padding:12px 16px;cursor:pointer;}
+.btn-ghost:active{background:var(--panel-2);}
+
+/* ---------- HOME ---------- */
+#screen-home .scrollpane{padding-top:6px;}
+.hero{padding:26px 20px 10px;text-align:center;}
+.hero .kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;opacity:.85;}
+.hero h1{font-family:var(--font-display);font-weight:800;font-size:52px;letter-spacing:.03em;line-height:.92;margin:8px 0 0;
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold-dim));
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-transform:uppercase;}
+.hero p{color:var(--ink-dim);font-size:14.5px;line-height:1.5;max-width:34ch;margin:12px auto 0;}
+.rank-chip{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:6px 14px 6px 6px;border-radius:100px;background:var(--panel);border:1px solid var(--line);}
+.rank-chip .dot{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--gold-bright),var(--gold-dim));display:flex;align-items:center;justify-content:center;font-size:13px;}
+.rank-chip .txt{text-align:left;}
+.rank-chip .txt b{display:block;font-family:var(--font-display);font-size:13px;letter-spacing:.04em;text-transform:uppercase;}
+.rank-chip .txt span{display:block;font-family:var(--font-mono);font-size:10px;color:var(--ink-dim);}
+
+.ladder{padding:22px 16px 10px;display:flex;flex-direction:column;gap:12px;}
+.band-card{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line);cursor:pointer;text-align:left;}
+.band-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:16px 0 0 16px;background:var(--gold);}
+.band-card.locked{opacity:.45;}
+.band-card.locked::before{background:var(--ink-faint);}
+.band-num{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--gold-bright);width:34px;text-align:center;flex:0 0 auto;}
+.band-card.locked .band-num{color:var(--ink-faint);}
+.band-body{flex:1;min-width:0;}
+.band-body .age{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-dim);text-transform:uppercase;}
+.band-body h3{font-family:var(--font-display);font-size:17px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;margin:2px 0 6px;}
+.band-progress{height:5px;border-radius:4px;background:var(--line);overflow:hidden;}
+.band-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold-bright));}
+.band-lock{font-size:20px;color:var(--ink-faint);flex:0 0 auto;}
+.home-links{display:flex;gap:10px;justify-content:center;padding:14px 16px 26px;}
+
+/* ---------- LEVEL LIST ---------- */
+.level-card{position:relative;display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);margin-bottom:10px;cursor:pointer;}
+.level-card.locked{opacity:.4;}
+.level-badge{width:40px;height:40px;border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:16px;color:var(--gold-bright);flex:0 0 auto;border:1px solid var(--line);}
+.level-info{flex:1;min-width:0;}
+.level-info .row1{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;}
+.level-info h4{font-family:var(--font-display);font-size:15.5px;font-weight:800;letter-spacing:.01em;margin:2px 0 3px;text-transform:uppercase;}
+.level-info p{font-size:12.5px;color:var(--ink-dim);line-height:1.4;margin:0;}
+.level-lock-icon{font-size:18px;color:var(--ink-faint);}
+
+/* ---------- PLAY SCREEN ---------- */
+#screen-play{padding-bottom:0;}
+.play-meta{padding:0 14px 8px;}
+.play-meta .brief{font-size:13px;color:var(--ink-dim);line-height:1.45;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+.play-meta .brief b{color:var(--gold-bright);}
+.pitch-wrap{flex:1;position:relative;margin:0 10px;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:inset 0 0 40px rgba(0,0,0,.5);min-height:0;}
+canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
+.pitch-hint{position:absolute;left:0;right:0;bottom:10px;text-align:center;pointer-events:none;font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;color:var(--cream);text-transform:uppercase;background:rgba(10,15,10,.55);backdrop-filter:blur(2px);margin:0 auto;padding:6px 12px;border-radius:100px;width:fit-content;transition:opacity .3s;}
+.tip-card{position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:14px;background:rgba(19,31,20,.94);border:1px solid var(--gold-dim);box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s ease, transform .2s ease;}
+.tip-card.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.tip-card .who{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.tip-card p{margin:0;font-size:12.5px;line-height:1.45;color:var(--cream);}
+.control-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex:0 0 auto;}
+.chip-toggle{display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:100px;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;flex:0 0 auto;}
+.chip-toggle.on{background:rgba(227,180,60,.15);border-color:var(--gold-dim);color:var(--gold-bright);}
+.control-bar .spacer{flex:1;}
+.play-actions{padding:6px 14px calc(16px + var(--safe-bottom));flex:0 0 auto;}
+
+/* result sheet */
+.sheet-backdrop{position:absolute;inset:0;background:rgba(6,9,6,.6);opacity:0;pointer-events:none;transition:opacity .25s;}
+.sheet-backdrop.show{opacity:1;pointer-events:auto;}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,var(--panel-2),var(--bg-2));border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + var(--safe-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);max-height:78%;overflow-y:auto;}
+.sheet.show{transform:translateY(0);}
+.result-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:.03em;text-transform:uppercase;padding:6px 4px;}
+.result-badge.good{color:var(--good);}
+.result-badge.bad{color:var(--danger);}
+.gap-line{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-dim);margin-top:2px;}
+.sheet .stars{margin:14px 0 2px;gap:5px;}
+.sheet .stars .star{font-size:26px;}
+.coach-note{display:flex;gap:10px;margin-top:14px;padding:12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);}
+.coach-note .who{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.coach-note p{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink);}
+.coach-note .term{color:var(--gold-bright);font-weight:700;}
+.sheet-actions{display:flex;gap:10px;margin-top:16px;}
+.sheet-actions .btn-ghost, .sheet-actions .btn-primary{flex:1;text-align:center;}
+
+/* ---------- GLOSSARY ---------- */
+.glossary-item{padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);margin-bottom:10px;}
+.glossary-item h4{font-family:var(--font-display);font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;margin:0 0 5px;color:var(--gold-bright);}
+.glossary-item p{margin:0;font-size:13px;line-height:1.5;color:var(--ink-dim);}
+
+/* misc */
+.empty-note{text-align:center;color:var(--ink-faint);font-size:12.5px;padding:30px 10px;font-family:var(--font-mono);}
+.reset-link{background:none;border:none;color:var(--ink-faint);font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;text-decoration:underline;padding:8px;cursor:pointer;}
+@media (min-width:640px){
+  #app{max-width:480px;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.6);}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <section class="screen active" id="screen-home">
+    <div class="scrollpane">
+      <div class="hero">
+        <div class="kicker">Rugby Positioning Academy</div>
+        <h1>Gap King</h1>
+        <p>Pick your spot on the field. Watch the phase play out. Learn to see space before it opens — and close it before it does.</p>
+        <div class="rank-chip" id="rankChip">
+          <div class="dot">🏉</div>
+          <div class="txt"><b id="rankName">Water Boy</b><span id="rankStars">0 stars earned</span></div>
+        </div>
+      </div>
+      <div class="ladder" id="ladder"></div>
+      <div class="home-links">
+        <button class="btn-ghost" id="btnGlossary">Coach's Corner</button>
+        <button class="btn-ghost" id="btnReset">Reset Progress</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEVEL LIST -->
+  <section class="screen" id="screen-levels">
+    <div class="h-bar">
+      <button class="icon-btn" id="backFromLevels">←</button>
+      <div class="h-title"><div class="eyebrow" id="bandAge">Grade 8–9</div><h1 id="bandTitle">Schoolboy Rookie</h1></div>
+    </div>
+    <div class="scrollpane" id="levelList"></div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="screen-play">
+    <div class="h-bar">
+      <button class="icon-btn" id="backFromPlay">←</button>
+      <div class="h-title"><div class="eyebrow" id="playEyebrow">L1 · Schoolboy Rookie</div><h1 id="playTitle">Stand Deep Enough</h1></div>
+      <button class="icon-btn" id="btnRestart" title="Restart">↻</button>
+    </div>
+    <div class="play-meta"><div class="brief" id="playBrief"></div></div>
+    <div class="pitch-wrap">
+      <canvas id="pitch"></canvas>
+      <div class="pitch-hint" id="pitchHint">Drag the gold marker to your spot</div>
+      <div class="tip-card" id="tipCard"><div class="who">🧢</div><p id="tipText"></p></div>
+      <div class="sheet-backdrop" id="sheetBackdrop"></div>
+      <div class="sheet" id="sheet">
+        <div class="result-badge" id="resultBadge">TRY!</div>
+        <div class="gap-line" id="gapLine">Gap at the point of contact: 4.2m</div>
+        <div class="stars" id="resultStars"></div>
+        <div class="coach-note"><div class="who">🧢</div><p id="coachText">Nice depth.</p></div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="btnRetry">Retry</button>
+          <button class="btn-primary" id="btnNext">Next Level</button>
+        </div>
+      </div>
+    </div>
+    <div class="control-bar">
+      <button class="chip-toggle" id="btnHeatmap">◐ Space Map</button>
+      <div class="spacer"></div>
+      <button class="chip-toggle" id="btnTip">? Coach Tip</button>
+    </div>
+    <div class="play-actions"><button class="btn-primary" id="btnPlayOut" style="width:100%">Play It Out</button></div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section class="screen" id="screen-glossary">
+    <div class="h-bar">
+      <button class="icon-btn" id="backFromGlossary">←</button>
+      <div class="h-title"><div class="eyebrow">Coach's Corner</div><h1>Rugby IQ</h1></div>
+    </div>
+    <div class="scrollpane" id="glossaryList"></div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================== DATA ============================== */
+
+var BANDS = [
+  {id:1, name:"Schoolboy Rookie", age:"Grade 8–9 · Age 13–14", intro:"First-team basics: depth, alignment and straight running."},
+  {id:2, name:"Club Player", age:"Grade 10 · Age 15", intro:"Width, overlaps and drift defence — playing with numbers."},
+  {id:3, name:"Provincial Trialist", age:"Grade 11 · Age 16", intro:"Line speed, decoys and broken-field reads."},
+  {id:4, name:"Matric Test Level", age:"Grade 12 · Age 17–18", intro:"Full-field reads. The picture changes — so must you."}
+];
+
+var GLOSSARY = [
+  {t:"Gain line", d:"An imaginary line through the ball at a ruck or scrum. Cross it and you're winning the collision; get stopped behind it and you're going backwards."},
+  {t:"Depth", d:"How far back from the gain line you stand. More depth buys you time to see the picture; too much and the whole line loses its go-forward."},
+  {t:"Alignment", d:"Staying square and close enough to the ball-carrier that you're a real option — not drifted away before the pass even arrives."},
+  {t:"Width", d:"How far you spread across the field. Hold your width and you keep an overlap alive; drift in early and you fold the space away."},
+  {t:"Overlap / extra man", d:"When your side has more attackers than the defence has defenders in a channel. Hold your shape and the numbers do the work."},
+  {t:"Drift defence", d:"Defenders sliding sideways together, matching the attacker one-out, squeezing space instead of chasing the ball."},
+  {t:"Blitz defence", d:"Defenders rushing up fast to remove the attacking team's time and space before they can pass or offload."},
+  {t:"Decoy / dummy runner", d:"A runner with no intention of getting the ball, whose only job is to occupy a defender and free up space for someone else."},
+  {t:"Support line", d:"The angle and depth you run to stay useful to a team-mate who has broken the line — close enough to take an offload."},
+  {t:"Sweeper", d:"Usually the fullback, covering the space behind the defensive line in case of a kick or a break through the middle."},
+  {t:"Second phase", d:"The next ruck or tackle after the first — shape has to be rebuilt fast, and defences are often still scrambling into position."},
+  {t:"Line speed", d:"How fast a defensive line moves forward together. High line speed removes an attacker's time on the ball."},
+  {t:"Go-forward", d:"Positive momentum into the opposition — won at the collision, and protected by not standing so deep you lose it."},
+  {t:"Cutting angle", d:"Running to where the ball-carrier will be, not where they are now — the difference between a real chase and a hopeless one."}
+];
+
+/*
+Coordinate system: x in [-35,35] (touchline to touchline), y in [0,55] (own side to attacking direction, +y).
+Every level has exactly one object flagged isUser across attack[]/defense[].
+*/
+var LEVELS = [
+// ---------------- BAND 1 : SCHOOLBOY ROOKIE ----------------
+{
+  id:1, band:1, role:"Fly-half", mode:"attack", axis:"depth",
+  title:"Give Yourself Time",
+  principle:"Depth buys you time to read the defence.",
+  brief:"First phase off the base. The scrumhalf is about to pass to you. <b>Where do you stand?</b>",
+  tip:"Standing flat feels brave. It just means you get hit before you can do anything useful with the ball.",
+  referenceY:20, showTryLine:false,
+  ball:{x:-6,y:19},
+  attack:[
+    {x:-6,y:19,label:"9"},
+    {x:2,y:19,label:"10",isUser:true,isCarrier:true},
+    {x:11,y:20,label:"12"},
+    {x:19,y:20,label:"13"},
+    {x:28,y:21,label:"14"}
+  ],
+  defense:[
+    {x:-4,y:22,label:"7"},
+    {x:3,y:22,label:"10"},
+    {x:12,y:22,label:"12"},
+    {x:20,y:23,label:"13"},
+    {x:29,y:23,label:"14"}
+  ],
+  optimal:{x:2,y:25,r:3.2},
+  feedback:{
+    low:"You stood right on top of the gain line — the defence was on you before you'd even seen the picture. Give yourself room to read it.",
+    high:"You dropped so deep the defence just walked up and swallowed the space. Too much depth kills your go-forward too.",
+    good:"That's textbook depth — far enough back to have a real look, close enough to keep the line moving forward."
+  }
+},
+{
+  id:2, band:1, role:"Fullback", mode:"defense", axis:"depth",
+  title:"Cover The Middle",
+  principle:"The sweeper's depth decides whether a break through the middle is a disaster or a non-event.",
+  brief:"Ruck front-on. Their No.8 is picking and driving. <b>Where do you sit as the last line?</b>",
+  tip:"If you're standing in the front line, nobody is covering what happens if it breaks.",
+  referenceY:17, showTryLine:false,
+  ball:{x:2,y:17},
+  attack:[
+    {x:-16,y:16,label:"L"},{x:-6,y:16,label:"L"},
+    {x:2,y:17,label:"8",isCarrier:true},
+    {x:9,y:16,label:"R"},{x:17,y:16,label:"R"}
+  ],
+  defense:[
+    {x:-16,y:17,label:"6"},{x:-6,y:17,label:"4"},
+    {x:9,y:17,label:"5"},{x:17,y:17,label:"7"},
+    {x:0,y:19,label:"15",isUser:true}
+  ],
+  optimal:{x:2,y:9,r:3.5},
+  feedback:{
+    low:"You crept right up into the front line — now there's nobody behind it, and if he breaks through there's a footrace to the try line that you lose.",
+    high:"You dropped so far back you're basically a spectator — you won't reach the breakdown before the extra man does.",
+    good:"You sat right where a sweeper should: central, and deep enough to cover anything that gets through the middle."
+  }
+},
+{
+  id:3, band1:1, band:1, role:"Inside Centre", mode:"attack", axis:"width",
+  title:"Come Onto The Ball Straight",
+  principle:"Drifting away from the ball before it arrives kills your options and tips off the defence.",
+  brief:"Your fly-half has the ball. <b>Where do you line up before he passes?</b>",
+  tip:"If you're already running away from the ball when it arrives, you can only go one direction — sideways.",
+  referenceY:22, showTryLine:false,
+  ball:{x:-8,y:22},
+  attack:[
+    {x:-8,y:22,label:"10",isCarrier:true},
+    {x:15,y:22,label:"12",isUser:true},
+    {x:22,y:23,label:"13"},{x:30,y:24,label:"14"}
+  ],
+  defense:[
+    {x:-6,y:24,label:"10"},{x:6,y:24,label:"12"},
+    {x:16,y:25,label:"13"},{x:24,y:25,label:"14"},{x:32,y:26,label:"15"}
+  ],
+  optimal:{x:3,y:22,r:3.2},
+  feedback:{
+    low:"You lined up almost on top of your fly-half — you crowd the pass and both of you get swallowed by the same defender.",
+    high:"You'd already drifted wide before the ball left his hands — the defence reads it easily and the pass turns into a hospital ball.",
+    good:"You stayed close and square. The ball arrives while you're still able to go either direction."
+  }
+},
+{
+  id:4, band:1, role:"Wing", mode:"defense", axis:"width",
+  title:"Hold The Line, Don't Chase Colour",
+  principle:"Against a 2-on-1, shutting down the ball-carrier's outside shoulder forces the pass — don't sprint to mark the free man.",
+  brief:"Their centre has an extra man outside him. <b>Where do you stand as the last defender?</b>",
+  tip:"Committing to the far man leaves the near one a free run infield. Make him choose.",
+  referenceY:20, showTryLine:false,
+  ball:{x:20,y:24},
+  attack:[
+    {x:20,y:24,label:"13",isCarrier:true},
+    {x:31,y:25,label:"14"}
+  ],
+  defense:[
+    {x:26,y:13,label:"15"},
+    {x:22,y:20,label:"11",isUser:true}
+  ],
+  optimal:{x:22,y:20,r:3.2},
+  feedback:{
+    low:"You stayed too far infield — the centre just steps outside you and it's two-on-none from there.",
+    high:"You bolted straight out to mark the winger — the centre steps back inside where nobody's home.",
+    good:"You held his outside shoulder — he can't go around you, and every option he has runs back toward your cover."
+  }
+},
+
+// ---------------- BAND 2 : CLUB PLAYER ----------------
+{
+  id:5, band:2, role:"Outside Centre", mode:"attack", axis:"width",
+  title:"Hold Your Width",
+  principle:"An overlap only exists if you don't fold it away before the ball arrives.",
+  brief:"Your side has an extra man out wide. <b>Where do you stand to keep the overlap alive?</b>",
+  tip:"The temptation is to drift in close to 'help'. That's exactly how a 3-on-2 becomes a 2-on-2.",
+  referenceY:24, showTryLine:false,
+  ball:{x:-6,y:24},
+  attack:[
+    {x:-6,y:24,label:"12",isCarrier:true},
+    {x:6,y:24,label:"13",isUser:true},
+    {x:26,y:25,label:"14"}
+  ],
+  defense:[
+    {x:-8,y:22,label:"10"},{x:5,y:22,label:"12"},{x:18,y:22,label:"13"}
+  ],
+  optimal:{x:16,y:24,r:3.5},
+  feedback:{
+    low:"You drifted in early to stay close to the ball — now there's only two defenders trying to cover three attackers, but you've folded your own space away.",
+    high:"You stood so wide you're barely in the play — the pass has to travel too far and the defence has time to scramble across.",
+    good:"You held the width. The last defender has too much ground to cover — the overlap is real and it's showing outside you."
+  }
+},
+{
+  id:6, band:2, role:"Outside Centre", mode:"defense", axis:"width",
+  title:"Drift, Don't Chase",
+  principle:"Against an overlap, matching your opposite number and trusting the drift beats sprinting at the first receiver.",
+  brief:"They've got width on you. <b>Where do you stand to shut it down as a line, not alone?</b>",
+  tip:"Shooting out of the line at the ball feels proactive. It's actually how you get beaten.",
+  referenceY:22, showTryLine:false,
+  ball:{x:-6,y:24},
+  attack:[
+    {x:-6,y:24,label:"12",isCarrier:true},
+    {x:8,y:24,label:"13"},{x:26,y:25,label:"14"}
+  ],
+  defense:[
+    {x:-9,y:21,label:"10"},
+    {x:11,y:21,label:"13",isUser:true}
+  ],
+  optimal:{x:11,y:21,r:3.5},
+  feedback:{
+    low:"You shot up on the first receiver — everyone outside you is now unmarked and it's a race you can't win.",
+    high:"You drifted too far, too early — you've opened a gap infield of you that a switch or a short ball punishes straight away.",
+    good:"You matched your man and held the line — you're squeezing the space, not chasing the ball, and cover has time to arrive."
+  }
+},
+{
+  id:7, band:2, role:"Scrumhalf", mode:"attack", axis:"depth",
+  title:"Stay In The Pocket",
+  principle:"A support line is only useful if you're close enough to the break to actually receive the offload.",
+  brief:"Your flanker has just broken the line. <b>Where do you run to support him?</b>",
+  tip:"If you're following from way back, you'll arrive just in time to watch the tackle.",
+  referenceY:20, showTryLine:true, tryLineY:50,
+  ball:{x:8,y:30},
+  attack:[
+    {x:8,y:30,label:"7",isCarrier:true},
+    {x:-2,y:15,label:"9",isUser:true}
+  ],
+  defense:[
+    {x:20,y:35,label:"13"},{x:-10,y:32,label:"15"}
+  ],
+  optimal:{x:4,y:24,r:4},
+  feedback:{
+    low:"You were miles off the pace — by the time you arrive the tackle's already made and there's nobody there to take the scraps.",
+    high:"You sprinted right onto his shoulder — no depth means no time to catch an offload if he's wrapped up.",
+    good:"You stayed tucked in behind the break, close enough that if he's touched, the ball stays alive through you."
+  }
+},
+{
+  id:8, band:2, role:"Blindside Wing", mode:"defense", axis:"width",
+  title:"Shut The Short Side",
+  principle:"A ruck near the touchline leaves a short side that only you can cover.",
+  brief:"Ruck's gone down near the left touchline. Their scrumhalf is eyeing the blindside. <b>Where do you stand?</b>",
+  tip:"Old habit is to drift to the open side where the ball 'usually' goes. Not here.",
+  referenceY:20, showTryLine:false,
+  ball:{x:-28,y:20},
+  attack:[
+    {x:-28,y:20,label:"9",isCarrier:true},
+    {x:6,y:21,label:"12"}
+  ],
+  defense:[
+    {x:2,y:20,label:"13"},
+    {x:20,y:20,label:"11",isUser:true}
+  ],
+  optimal:{x:-20,y:17,r:4},
+  feedback:{
+    low:"You'd already drifted out to the open side — the short side is wide open and the scrumhalf strolls round the corner.",
+    high:"You crowded right on top of the ruck — no room to react if he steps, and you're offside risk territory.",
+    good:"You stayed tight on the short side. There's simply nowhere for him to go."
+  }
+},
+
+// ---------------- BAND 3 : PROVINCIAL TRIALIST ----------------
+{
+  id:9, band:3, role:"Fly-half", mode:"attack", axis:"depth",
+  title:"Second Phase Shape",
+  principle:"Straight after a ruck, the defence is still resetting — the right depth lets you actually see the gap before it closes.",
+  brief:"Quick ball off the deck. Forward pods either side of you. <b>Where do you take it?</b>",
+  tip:"Second phase ball moves fast. Flat here means you're reacting, not deciding.",
+  referenceY:25, showTryLine:false,
+  ball:{x:0,y:25},
+  attack:[
+    {x:-9,y:26,label:"8"},
+    {x:0,y:26,label:"10",isUser:true,isCarrier:true},
+    {x:10,y:26,label:"6"}
+  ],
+  defense:[
+    {x:-10,y:27,label:"4"},{x:-2,y:29,label:"7"},{x:9,y:27,label:"5"}
+  ],
+  optimal:{x:2,y:31,r:3.2},
+  feedback:{
+    low:"You took it flat off the ruck — the defence hadn't even finished resetting and you ran straight into the one defender who had.",
+    high:"You dropped so deep the pod runners lost their line completely — by the time you decided, the gap had closed itself.",
+    good:"You gave yourself just enough depth to see which side of the ruck was still disorganised — and attacked it."
+  }
+},
+{
+  id:10, band:3, role:"Inside Centre", mode:"defense", axis:"depth",
+  title:"Press The Line",
+  principle:"Blitz defence removes an attacker's time — but only if you're actually up on the gain line when the ball arrives.",
+  brief:"Their fly-half has flat runners either side, hunting an offload. <b>Where do you stand to shut it down?</b>",
+  tip:"Sitting off feels safe. It's actually the invitation he's hoping for.",
+  referenceY:20, showTryLine:false,
+  ball:{x:0,y:24},
+  attack:[
+    {x:0,y:24,label:"10",isCarrier:true},
+    {x:-9,y:24,label:"12"},{x:9,y:24,label:"8"}
+  ],
+  defense:[
+    {x:-9,y:20,label:"13"},
+    {x:4,y:14,label:"12",isUser:true}
+  ],
+  optimal:{x:4,y:20,r:3},
+  feedback:{
+    low:"You sat back off the line — he's got all the time in the world to look up and find the offload before anyone lays a hand on him.",
+    high:"You rushed so far up you overran your own line — a simple pass behind you and you've taken yourself out of the game.",
+    good:"You pressed right up onto the gain line, together with your line. No time to look up, no time to offload."
+  }
+},
+{
+  id:11, band:3, role:"Blindside Flanker", mode:"attack", axis:"depth",
+  title:"Run The Decoy Line",
+  principle:"A decoy runner's job isn't to get the ball — it's to occupy a defender who would otherwise be free to shut down the real gap.",
+  brief:"Your fly-half is attacking a gap. There's a spare defender who can cover it — unless someone fixes him first. <b>Where do you run?</b>",
+  tip:"If you run your own line miles from any defender, nobody has to worry about you at all.",
+  referenceY:20, showTryLine:false,
+  ball:{x:0,y:22},
+  attack:[
+    {x:0,y:22,label:"10",isCarrier:true},
+    {x:-15,y:25,label:"6",isUser:true}
+  ],
+  defense:[
+    {x:-2,y:20,label:"10"},{x:8,y:20,label:"12",label2:"spare"}
+  ],
+  optimal:{x:8,y:23,r:3.2},
+  feedback:{
+    low:"You ran your own line, well clear of any defender — nobody had to account for you, so the spare man sprinted straight across and shut the gap on your fly-half.",
+    high:"You ran so tight to the ruck you never threatened anyone out here — same result, the spare defender is free.",
+    good:"You ran straight at the spare defender's inside shoulder. He had to respect you — which means he couldn't help out, and the gap stayed open."
+  }
+},
+{
+  id:12, band:3, role:"Fullback", mode:"defense", axis:"width",
+  title:"Shift To The Danger Side",
+  principle:"After a turnover, the sweeper has to already be shifting toward the space before the break happens, not reacting to it.",
+  brief:"Turnover ball — their winger is away down the near touchline. <b>Where do you position to cut him off?</b>",
+  tip:"Staying central 'just in case' means you're already too late on this one.",
+  referenceY:20, showTryLine:true, tryLineY:50,
+  ball:{x:-28,y:30},
+  attack:[
+    {x:-28,y:30,label:"14",isCarrier:true}
+  ],
+  defense:[
+    {x:2,y:20,label:"15",isUser:true}
+  ],
+  optimal:{x:-16,y:26,r:4},
+  feedback:{
+    low:"You stayed camped in the middle of the field expecting a kick — by the time you react to the break he's already gone past you on the outside.",
+    high:"You over-committed to the touchline early — if he'd cut back infield there'd be nobody home either.",
+    good:"You'd already shifted to the danger side. You're in his eyeline the whole way and cutting his angle down."
+  }
+},
+
+// ---------------- BAND 4 : MATRIC TEST LEVEL ----------------
+{
+  id:13, band:4, role:"Scrumhalf", mode:"attack", axis:"width",
+  title:"Read The Scramble",
+  principle:"After a turnover the defence is disorganised — but only in one place. Find the actual seam, not the habitual one.",
+  brief:"Quick turnover ball. The defence hasn't reset evenly. <b>Where do you attack from?</b>",
+  tip:"Don't go blindside out of habit — go where the picture actually says the space is.",
+  referenceY:19, showTryLine:false,
+  ball:{x:0,y:18},
+  attack:[
+    {x:0,y:18,label:"9",isUser:true,isCarrier:true}
+  ],
+  defense:[
+    {x:-9,y:19,label:"4"},{x:-6,y:19,label:"6"},{x:-3,y:20,label:"7"},
+    {x:16,y:20,label:"5"}
+  ],
+  optimal:{x:9,y:19,r:3},
+  feedback:{
+    low:"You went to the bunched side out of old habit — there was no space there, just bodies stacked on top of each other.",
+    high:"You ran so wide you gave the one spread defender all the time he needed to drift across and cover you alone.",
+    good:"You read the picture and attacked the actual seam — three defenders bunched one side, space and a mismatch on the other."
+  }
+},
+{
+  id:14, band:4, role:"Openside Flanker", mode:"defense", axis:"width",
+  title:"Take The Cutting Angle",
+  principle:"A hopeless chase runs at where the ball-carrier is. A real chance runs at where he's going.",
+  brief:"The line's just been broken. This is the split-second freeze frame. <b>Where do you plant your next stride?</b>",
+  tip:"Chasing straight from behind, you'll never close a gap. You need an angle across his line.",
+  referenceY:20, showTryLine:true, tryLineY:50,
+  ball:{x:-10,y:34},
+  attack:[
+    {x:-10,y:34,label:"13",isCarrier:true},
+    {x:-16,y:28,label:"11"}
+  ],
+  defense:[
+    {x:20,y:20,label:"7",isUser:true}
+  ],
+  optimal:{x:-2,y:38,r:4},
+  feedback:{
+    low:"You took a flat-footed line straight from behind him — you'll chase his heels all the way to the line and never actually close the gap.",
+    high:"You cut across so early you ran yourself out of the play entirely — if he'd stepped back inside, you'd already have missed him.",
+    good:"You took the cutting angle early — every stride brings you closer instead of just trailing in his wake."
+  }
+},
+{
+  id:15, band:4, role:"Fly-half", mode:"attack", axis:"depth",
+  title:"Read Their Line Speed",
+  principle:"Textbook depth only works against a textbook defence. A rushing line demands you adjust — the principle is right, the number changes.",
+  brief:"This defence is already flying up off the line before the ball's even out. <b>Where do you stand this time?</b>",
+  tip:"The 'normal' depth that worked before gets you swallowed against a blitz. Read the speed of the line in front of you, not just the textbook picture.",
+  referenceY:20, showTryLine:false,
+  ball:{x:-6,y:19},
+  attack:[
+    {x:-6,y:19,label:"9"},
+    {x:2,y:25,label:"10",isUser:true,isCarrier:true}
+  ],
+  defense:[
+    {x:3,y:23,label:"10"},{x:12,y:23,label:"12"},{x:-5,y:23,label:"7"}
+  ],
+  optimal:{x:2,y:30,r:3},
+  feedback:{
+    low:"You used the depth that worked back in Grade 8 — but this line is already flying up before the ball's out. Same depth, faster rush, means you got swallowed anyway.",
+    high:"You dropped so deep even a rushing line had time to read and shut down every option — depth only helps if you actually use the extra time.",
+    good:"You gave yourself extra depth to match their line speed — exactly enough time to see the gap they left in behind the rush."
+  }
+},
+{
+  id:16, band:4, role:"Fullback", mode:"defense", axis:"width",
+  title:"Use The Touchline",
+  principle:"Isolated one-on-one near touch, the line itself is an extra defender — if you stand on the right shoulder.",
+  brief:"Last defender, isolated, right touchline close by. <b>Where do you stand to make the tackle?</b>",
+  tip:"Standing square-on lets him choose either way. Take one option away for him.",
+  referenceY:20, showTryLine:true, tryLineY:50,
+  ball:{x:20,y:26},
+  attack:[
+    {x:20,y:26,label:"11",isCarrier:true}
+  ],
+  defense:[
+    {x:16,y:24,label:"15",isUser:true}
+  ],
+  optimal:{x:22,y:22,r:2.8},
+  feedback:{
+    low:"You stayed too far infield — you've left him the entire width of the field including the easy step outside.",
+    high:"You drifted onto his outside shoulder — you've just opened the inside and given him the whole pitch to work with.",
+    good:"You held his inside shoulder. The touchline's doing half your job now — he's got nowhere to go but into it."
+  }
+}
+];
+
+/* ============================== STATE ============================== */
+
+var PITCH_W = 70, PITCH_L = 55; // meters
+var SAVE_KEY = "gapking_progress_v3";
+
+function loadProgress(){
+  try{
+    var raw = localStorage.getItem(SAVE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {stars:{}};
+}
+function saveProgress(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); }catch(e){} }
+var progress = loadProgress();
+
+function starsFor(levelId){ return progress.stars[levelId]||0; }
+function totalStars(){ var t=0; for(var k in progress.stars) t+=progress.stars[k]; return t; }
+function bandLevels(bandId){ return LEVELS.filter(function(l){return l.band===bandId;}); }
+function bandStars(bandId){ var t=0; bandLevels(bandId).forEach(function(l){t+=starsFor(l.id);}); return t; }
+function bandUnlocked(bandId){
+  if(bandId===1) return true;
+  var prev = bandLevels(bandId-1);
+  var done = prev.every(function(l){return starsFor(l.id)>0;});
+  return done;
+}
+function levelUnlocked(level){
+  if(!bandUnlocked(level.band)) return false;
+  var levels = bandLevels(level.band);
+  var idx = levels.indexOf(level);
+  if(idx===0) return true;
+  return starsFor(levels[idx-1].id) > 0;
+}
+var RANKS = [
+  {min:0,name:"Water Boy"},
+  {min:6,name:"Schoolboy Rookie"},
+  {min:14,name:"Club Player"},
+  {min:24,name:"Provincial Trialist"},
+  {min:34,name:"Junior Bok"},
+  {min:44,name:"Gap King"}
+];
+function currentRank(){
+  var t = totalStars(), r = RANKS[0];
+  for(var i=0;i<RANKS.length;i++) if(t>=RANKS[i].min) r=RANKS[i];
+  return r;
+}
+
+/* ============================== NAVIGATION ============================== */
+
+var screens = {};
+["home","levels","play","glossary"].forEach(function(id){ screens[id]=document.getElementById("screen-"+id); });
+var currentBandId = 1;
+var currentLevel = null;
+
+function showScreen(name){
+  Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); });
+  if(name!=="play") stopPlayLoop();
+}
+
+function renderHome(){
+  var r = currentRank();
+  document.getElementById("rankName").textContent = r.name;
+  document.getElementById("rankStars").textContent = totalStars() + " / " + (LEVELS.length*3) + " stars earned";
+  var ladder = document.getElementById("ladder");
+  ladder.innerHTML = "";
+  BANDS.forEach(function(b){
+    var levels = bandLevels(b.id);
+    var st = bandStars(b.id), max = levels.length*3;
+    var unlocked = bandUnlocked(b.id);
+    var card = document.createElement("button");
+    card.className = "band-card" + (unlocked? "":" locked");
+    card.innerHTML =
+      '<div class="band-num">'+String(b.id).padStart(2,"0")+'</div>'+
+      '<div class="band-body">'+
+        '<div class="age">'+b.age+'</div>'+
+        '<h3>'+b.name+'</h3>'+
+        '<div class="band-progress"><i style="width:'+Math.round(100*st/max)+'%"></i></div>'+
+      '</div>'+
+      '<div class="band-lock">'+(unlocked? (st===max?"✓":"›") : "🔒")+'</div>';
+    card.addEventListener("click", function(){ if(unlocked){ currentBandId=b.id; openLevelList(b.id);} });
+    ladder.appendChild(card);
+  });
+}
+
+function openLevelList(bandId){
+  var band = BANDS.filter(function(b){return b.id===bandId;})[0];
+  document.getElementById("bandAge").textContent = band.age;
+  document.getElementById("bandTitle").textContent = band.name;
+  var list = document.getElementById("levelList");
+  list.innerHTML = "";
+  var levels = bandLevels(bandId);
+  levels.forEach(function(l, idx){
+    var unlocked = levelUnlocked(l);
+    var st = starsFor(l.id);
+    var card = document.createElement("button");
+    card.className = "level-card"+(unlocked?"":" locked");
+    var starsHtml = "";
+    for(var i=1;i<=3;i++) starsHtml += '<span class="star'+(i<=st?" on":"")+'">★</span>';
+    card.innerHTML =
+      '<div class="level-badge">L'+l.id+'</div>'+
+      '<div class="level-info">'+
+        '<div class="row1"><span class="pill pill-'+l.mode+'">'+l.mode+'</span><span class="stars">'+starsHtml+'</span></div>'+
+        '<h4>'+l.title+'</h4>'+
+        '<p>'+l.role+' — '+l.principle+'</p>'+
+      '</div>'+
+      (unlocked? '' : '<div class="level-lock-icon">🔒</div>');
+    card.addEventListener("click", function(){ if(levelUnlocked(l)) openPlay(l); });
+    list.appendChild(card);
+  });
+  showScreen("levels");
+}
+
+document.getElementById("backFromLevels").addEventListener("click", function(){ renderHome(); showScreen("home"); });
+document.getElementById("btnGlossary").addEventListener("click", openGlossary);
+document.getElementById("backFromGlossary").addEventListener("click", function(){ showScreen("home"); });
+document.getElementById("btnReset").addEventListener("click", function(){
+  if(confirm("Reset all progress? This clears every star.")){
+    progress = {stars:{}}; saveProgress(); renderHome();
+  }
+});
+document.getElementById("backFromPlay").addEventListener("click", function(){ openLevelList(currentLevel.band); });
+
+function openGlossary(){
+  var list = document.getElementById("glossaryList");
+  list.innerHTML = "";
+  GLOSSARY.forEach(function(g){
+    var el = document.createElement("div");
+    el.className = "glossary-item";
+    el.innerHTML = "<h4>"+g.t+"</h4><p>"+g.d+"</p>";
+    list.appendChild(el);
+  });
+  showScreen("glossary");
+}
+
+/* ============================== GEOMETRY / ENGINE ============================== */
+
+function dist(a,b){ var dx=a.x-b.x, dy=a.y-b.y; return Math.sqrt(dx*dx+dy*dy); }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+function nearestDist(pt, arr){
+  var m = Infinity;
+  for(var i=0;i<arr.length;i++){ var d=dist(pt,arr[i]); if(d<m) m=d; }
+  return m;
+}
+
+function findBestTarget(carrierStart, attackArr, defenseArr){
+  var best=null, bestScore=-Infinity;
+  for(var y=carrierStart.y+3; y<=Math.min(PITCH_L-1, carrierStart.y+24); y+=2){
+    for(var x=Math.max(-PITCH_W/2+1, carrierStart.x-20); x<=Math.min(PITCH_W/2-1, carrierStart.x+20); x+=2){
+      var pt={x:x,y:y};
+      var dAtk = nearestDist(pt, attackArr);
+      var dDef = nearestDist(pt, defenseArr);
+      if(dDef <= dAtk) continue; // defense-controlled, not real space for attack
+      var score = dDef - 0.045*dist(carrierStart, pt);
+      if(score>bestScore){ bestScore=score; best=pt; }
+    }
+  }
+  if(!best){
+    // fallback: least-bad point straight ahead
+    for(var y2=carrierStart.y+3; y2<=Math.min(PITCH_L-1, carrierStart.y+18); y2+=2){
+      var pt2={x:carrierStart.x,y:y2};
+      var dDef2 = nearestDist(pt2, defenseArr);
+      var score2 = dDef2 - 0.02*dist(carrierStart,pt2);
+      if(score2>bestScore){ bestScore=score2; best=pt2; }
+    }
+  }
+  return best || {x:carrierStart.x, y:Math.min(PITCH_L-1, carrierStart.y+10)};
+}
+
+function simulate(level, userPos){
+  var attack = level.attack.map(function(a){ return {x:a.x,y:a.y,label:a.label,isCarrier:!!a.isCarrier,isUser:!!a.isUser}; });
+  var defense = level.defense.map(function(d){ return {x:d.x,y:d.y,label:d.label,isUser:!!d.isUser}; });
+  attack.forEach(function(a){ if(a.isUser){ a.x=userPos.x; a.y=userPos.y; } });
+  defense.forEach(function(d){ if(d.isUser){ d.x=userPos.x; d.y=userPos.y; } });
+
+  var carrier = attack.filter(function(a){return a.isCarrier;})[0] || attack[0];
+  var carrierStart = {x:carrier.x,y:carrier.y};
+  var target = findBestTarget(carrierStart, attack, defense);
+  var dirLen = Math.max(0.0001, dist(carrierStart,target));
+  var dir = {x:(target.x-carrierStart.x)/dirLen, y:(target.y-carrierStart.y)/dirLen};
+
+  // marking assignment: each defender marks nearest non-carrier attacker within range
+  var others = attack.filter(function(a){return a!==carrier;});
+  var marks = defense.map(function(d){
+    var best=null, bestD=8.5;
+    others.forEach(function(a){ var dd=dist(d,a); if(dd<bestD){bestD=dd; best=a;} });
+    return best;
+  });
+
+  var carrierSpeed = 7.3, defenderSpeed = 6.9, markSpeed = 2.4;
+  var dt = 0.055, steps = 52;
+  var frames = [];
+  var defPos = defense.map(function(d){ return {x:d.x,y:d.y}; });
+  var carPos = {x:carrierStart.x,y:carrierStart.y};
+  var traveled = 0;
+
+  for(var s=0;s<=steps;s++){
+    var remaining = dirLen - traveled;
+    var step = Math.min(carrierSpeed*dt, Math.max(0,remaining));
+    carPos = {x: carPos.x+dir.x*step, y: carPos.y+dir.y*step};
+    traveled += step;
+
+    for(var i=0;i<defPos.length;i++){
+      var mk = marks[i];
+      var goal;
+      if(mk){ goal = {x:mk.x, y:mk.y}; }
+      else { goal = {x: carPos.x+dir.x*2.2, y: carPos.y+dir.y*2.2}; }
+      var spd = mk? markSpeed : defenderSpeed;
+      var dd = dist(defPos[i], goal);
+      var mv = Math.min(spd*dt, dd);
+      if(dd>0.0001){
+        defPos[i] = {
+          x: defPos[i].x + (goal.x-defPos[i].x)/dd*mv,
+          y: defPos[i].y + (goal.y-defPos[i].y)/dd*mv
+        };
+      }
+    }
+    frames.push({ carrier:{x:carPos.x,y:carPos.y}, defense: defPos.map(function(p){return {x:p.x,y:p.y};}) });
+  }
+
+  var finalCarrier = frames[frames.length-1].carrier;
+  var finalDef = frames[frames.length-1].defense;
+  var nearestDefDist = Infinity;
+  finalDef.forEach(function(p){ var d=dist(finalCarrier,p); if(d<nearestDefDist) nearestDefDist=d; });
+  var gap = nearestDefDist - 1.1;
+  var outcome;
+  if(gap>0.3){
+    outcome = (level.showTryLine && finalCarrier.y>=level.tryLineY-4) ? "TRY" : "LINE BREAK";
+  } else if(gap>-0.6){
+    outcome = "CAUGHT FROM BEHIND";
+  } else {
+    outcome = "TACKLED";
+  }
+
+  return {
+    frames: frames, attackStatic: attack.filter(function(a){return a!==carrier;}),
+    defense: defense, target: target, carrierStart: carrierStart,
+    outcome: outcome, gap: Math.max(0,nearestDefDist), userIsAttack: attack.some(function(a){return a.isUser;})
+  };
+}
+
+function scorePosition(level, userPos){
+  var o = level.optimal;
+  var d = dist(userPos, o) - o.r;
+  d = Math.max(0,d);
+  var star = d<=0.15 ? 3 : (d<=2.6 ? 2 : (d<=5.8 ? 1 : 0));
+  var dir; // which authored feedback to use
+  if(level.axis==="depth"){
+    dir = userPos.y < o.y ? "low" : (userPos.y > o.y ? "high" : "good");
+  } else {
+    dir = userPos.x < o.x ? "low" : (userPos.x > o.x ? "high" : "good");
+  }
+  if(star===3) dir="good";
+  return {stars:star, dir:dir, dist:d};
+}
+
+/* ============================== CANVAS RENDER ============================== */
+
+var canvas = document.getElementById("pitch");
+var ctx = canvas.getContext("2d");
+var dpr = Math.max(1, window.devicePixelRatio||1);
+var pitchWrap = document.querySelector(".pitch-wrap");
+
+function resizeCanvas(){
+  var r = pitchWrap.getBoundingClientRect();
+  canvas.width = Math.round(r.width*dpr);
+  canvas.height = Math.round(r.height*dpr);
+  canvas.style.width = r.width+"px";
+  canvas.style.height = r.height+"px";
+}
+window.addEventListener("resize", resizeCanvas);
+
+function toScreen(pt){
+  var r = pitchWrap.getBoundingClientRect();
+  var pad = 14*dpr;
+  var w = canvas.width - pad*2, h = canvas.height - pad*2;
+  var sx = pad + (pt.x + PITCH_W/2)/PITCH_W * w;
+  var sy = canvas.height - pad - (pt.y/PITCH_L) * h;
+  return {x:sx, y:sy};
+}
+function toPitch(px,py){
+  var pad = 14*dpr;
+  var w = canvas.width - pad*2, h = canvas.height - pad*2;
+  var x = ((px-pad)/w)*PITCH_W - PITCH_W/2;
+  var y = ((canvas.height - pad - py)/h)*PITCH_L;
+  return {x:clamp(x,-PITCH_W/2+1,PITCH_W/2-1), y:clamp(y,1,PITCH_L-1)};
+}
+
+function drawPitch(level){
+  var w=canvas.width,h=canvas.height;
+  var grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,"#1c5231"); grad.addColorStop(1,"#123a20");
+  ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+  // mow stripes every 5m
+  ctx.save();
+  for(var yy=0; yy<PITCH_L; yy+=5){
+    if(Math.floor(yy/5)%2===0){
+      var p1=toScreen({x:-PITCH_W/2,y:yy}), p2=toScreen({x:PITCH_W/2,y:Math.min(PITCH_L,yy+5)});
+      ctx.fillStyle="rgba(255,255,255,0.025)";
+      ctx.fillRect(p1.x, p2.y, p2.x-p1.x, p1.y-p2.y);
+    }
+  }
+  ctx.restore();
+  // touchlines
+  ctx.strokeStyle="rgba(240,240,225,0.55)"; ctx.lineWidth=2*dpr;
+  var tl1=toScreen({x:-PITCH_W/2,y:0}), tl2=toScreen({x:-PITCH_W/2,y:PITCH_L});
+  var tr1=toScreen({x:PITCH_W/2,y:0}), tr2=toScreen({x:PITCH_W/2,y:PITCH_L});
+  ctx.beginPath(); ctx.moveTo(tl1.x,tl1.y); ctx.lineTo(tl2.x,tl2.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tr1.x,tr1.y); ctx.lineTo(tr2.x,tr2.y); ctx.stroke();
+  // reference/gain line
+  ctx.setLineDash([6*dpr,6*dpr]);
+  ctx.strokeStyle="rgba(227,180,60,0.55)"; ctx.lineWidth=1.6*dpr;
+  var rl1=toScreen({x:-PITCH_W/2,y:level.referenceY}), rl2=toScreen({x:PITCH_W/2,y:level.referenceY});
+  ctx.beginPath(); ctx.moveTo(rl1.x,rl1.y); ctx.lineTo(rl2.x,rl2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="rgba(227,180,60,0.75)";
+  ctx.font=(10*dpr)+"px "+getFontMono();
+  ctx.fillText("GAIN LINE", rl1.x+4*dpr, rl1.y-4*dpr);
+  // try line
+  if(level.showTryLine){
+    var tly1=toScreen({x:-PITCH_W/2,y:level.tryLineY}), tly2=toScreen({x:PITCH_W/2,y:level.tryLineY});
+    ctx.strokeStyle="rgba(214,86,79,0.7)"; ctx.lineWidth=2.4*dpr;
+    ctx.beginPath(); ctx.moveTo(tly1.x,tly1.y); ctx.lineTo(tly2.x,tly2.y); ctx.stroke();
+    ctx.fillStyle="rgba(214,86,79,0.85)";
+    ctx.fillText("TRY LINE", tly1.x+4*dpr, tly1.y-4*dpr);
+  }
+  // vignette
+  var vg = ctx.createRadialGradient(w/2,h/2,h*0.25,w/2,h/2,h*0.85);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,0.38)");
+  ctx.fillStyle=vg; ctx.fillRect(0,0,w,h);
+}
+
+function getFontMono(){ return "ui-monospace, monospace"; }
+
+var HEAT_STEP = 2.3;
+function drawHeatmap(attackArr, defenseArr, level){
+  var yLo = Math.max(1, level.referenceY - 13);
+  var yHi = Math.min(PITCH_L-1, level.referenceY + 27);
+  ctx.save();
+  for(var y=yLo; y<yHi; y+=HEAT_STEP){
+    for(var x=-PITCH_W/2+1; x<PITCH_W/2; x+=HEAT_STEP){
+      var pt={x:x,y:y};
+      var dAtk=nearestDist(pt,attackArr), dDef=nearestDist(pt,defenseArr);
+      var margin = Math.abs(dAtk-dDef);
+      var op = clamp(0.34 + margin/22, 0.34, 0.72);
+      var s = toScreen(pt);
+      var size = (HEAT_STEP*1.02)/PITCH_W*(canvas.width-28*dpr);
+      ctx.fillStyle = dAtk<dDef ? "rgba(255,196,58,"+op+")" : "rgba(219,73,66,"+op+")";
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(s.x-size/2, s.y-size/2, size, size, size*0.28) : ctx.rect(s.x-size/2,s.y-size/2,size,size);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawBall(pt){
+  var s=toScreen(pt);
+  ctx.save();
+  ctx.translate(s.x,s.y);
+  ctx.rotate(-0.4);
+  ctx.fillStyle="#caa15a";
+  ctx.beginPath(); ctx.ellipse(0,0, 7*dpr, 4.2*dpr, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#3a2a10"; ctx.lineWidth=1*dpr;
+  ctx.beginPath(); ctx.moveTo(-6*dpr,0); ctx.lineTo(6*dpr,0); ctx.stroke();
+  ctx.restore();
+}
+
+function drawToken(pt, opts){
+  opts = opts||{};
+  var s = toScreen(pt);
+  var r = (opts.user? 15: 12)*dpr;
+  if(opts.user){
+    var pulse = 1 + 0.12*Math.sin(performance.now()/260);
+    ctx.beginPath();
+    ctx.arc(s.x,s.y, r*1.55*pulse, 0, Math.PI*2);
+    ctx.strokeStyle = "rgba(255,211,92,0.55)"; ctx.lineWidth=2*dpr; ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(s.x,s.y,r,0,Math.PI*2);
+  ctx.fillStyle = opts.user ? "#ffd35c" : (opts.side==="attack" ? "#e3b43c" : "#c0524b");
+  ctx.fill();
+  ctx.lineWidth=1.6*dpr;
+  ctx.strokeStyle = opts.user ? "#2a2005" : "rgba(0,0,0,0.35)";
+  ctx.stroke();
+  if(opts.carrier){
+    ctx.beginPath(); ctx.arc(s.x,s.y,r+4*dpr,0,Math.PI*2);
+    ctx.strokeStyle="rgba(255,255,255,0.8)"; ctx.lineWidth=1.6*dpr; ctx.setLineDash([3*dpr,3*dpr]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.fillStyle = opts.user ? "#231a06" : "#160f06";
+  ctx.font = "700 "+(10.5*dpr)+"px "+getFontMono();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(opts.label||"", s.x, s.y+0.5*dpr);
+  if(opts.user){
+    ctx.fillStyle="#ffd35c";
+    ctx.font="700 "+(9*dpr)+"px "+getFontMono();
+    ctx.fillText("YOU", s.x, s.y - r - 8*dpr);
+  }
+}
+
+function drawOptimalZone(o, show){
+  if(!show) return;
+  var s = toScreen({x:o.x,y:o.y});
+  var rpx = (o.r/PITCH_W)*(canvas.width-28*dpr);
+  ctx.beginPath();
+  ctx.arc(s.x,s.y,rpx,0,Math.PI*2);
+  ctx.strokeStyle="rgba(79,179,126,0.55)"; ctx.lineWidth=1.6*dpr; ctx.setLineDash([4*dpr,4*dpr]); ctx.stroke(); ctx.setLineDash([]);
+}
+
+/* ============================== PLAY SCREEN LOGIC ============================== */
+
+var playState = "idle"; // idle -> positioning -> simulating -> result
+var userPos = {x:0,y:0};
+var dragging = false;
+var rafId = null;
+var simResult = null;
+var simFrameIdx = 0;
+var showHeat = false;
+var showOptimalDebug = false; // kept false; educational zone only shown after result
+
+function openPlay(level){
+  currentLevel = level;
+  document.getElementById("playEyebrow").textContent = "L"+level.id+" · "+BANDS.filter(function(b){return b.id===level.band;})[0].name;
+  document.getElementById("playTitle").textContent = level.title;
+  document.getElementById("playBrief").innerHTML = level.brief;
+  document.getElementById("pitchHint").textContent = "Drag the gold marker to your spot";
+  document.getElementById("pitchHint").style.opacity = 1;
+  var userObj = level.attack.concat(level.defense).filter(function(p){return p.isUser;})[0];
+  userPos = {x:userObj.x, y:userObj.y};
+  playState = "positioning";
+  simResult = null;
+  showHeat = false;
+  document.getElementById("btnHeatmap").classList.remove("on");
+  document.getElementById("btnTip").classList.remove("on");
+  document.getElementById("tipCard").classList.remove("show");
+  document.getElementById("btnPlayOut").style.display = "block";
+  document.getElementById("btnPlayOut").disabled = false;
+  document.getElementById("btnPlayOut").textContent = "Play It Out";
+  closeSheet();
+  showScreen("play");
+  resizeCanvas();
+  startPlayLoop();
+}
+
+function startPlayLoop(){
+  stopPlayLoop();
+  function loop(){
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+  rafId = requestAnimationFrame(loop);
+}
+function stopPlayLoop(){ if(rafId){ cancelAnimationFrame(rafId); rafId=null; } }
+
+function render(){
+  if(!currentLevel) return;
+  var level = currentLevel;
+  drawPitch(level);
+
+  if(playState==="positioning"){
+    var attackLive = level.attack.map(function(a){ return a.isUser? {x:userPos.x,y:userPos.y,label:a.label,isCarrier:a.isCarrier} : a; });
+    var defenseLive = level.defense.map(function(d){ return d.isUser? {x:userPos.x,y:userPos.y,label:d.label} : d; });
+    if(showHeat) drawHeatmap(attackLive, defenseLive, level);
+    drawBall(level.ball);
+    level.attack.forEach(function(a){ if(!a.isUser) drawToken(a, {side:"attack", label:a.label, carrier:a.isCarrier}); });
+    level.defense.forEach(function(d){ if(!d.isUser) drawToken(d, {side:"defense", label:d.label}); });
+    drawToken(userPos, {user:true, label: (level.attack.concat(level.defense).filter(function(p){return p.isUser;})[0]).label, carrier:(level.attack.filter(function(a){return a.isUser;})[0]||{}).isCarrier});
+  } else if(playState==="simulating" || playState==="result"){
+    var f = simResult.frames[Math.min(simFrameIdx, simResult.frames.length-1)];
+    if(showHeat) drawHeatmap([f.carrier].concat(simResult.attackStatic), f.defense, level);
+    // faded target marker
+    var ts = toScreen(simResult.target);
+    ctx.beginPath(); ctx.arc(ts.x,ts.y,5*dpr,0,Math.PI*2);
+    ctx.strokeStyle="rgba(255,255,255,0.35)"; ctx.lineWidth=1.4*dpr; ctx.stroke();
+
+    simResult.attackStatic.forEach(function(a){ drawToken(a, {side:"attack", label:a.label}); });
+    simResult.defense.forEach(function(d,i){
+      var pos = f.defense[i];
+      drawToken(pos, {side:"defense", label:d.label, user: d.isUser && playState!=="result_final"});
+    });
+    var carrierIsUser = currentLevel.attack.some(function(a){return a.isUser && a.isCarrier;});
+    drawToken(f.carrier, {user: carrierIsUser, side:"attack", label:(currentLevel.attack.filter(function(a){return a.isCarrier;})[0]||{}).label, carrier:true});
+
+    if(playState==="result"){
+      drawOptimalZone(currentLevel.optimal, true);
+    }
+  }
+}
+
+/* pointer / drag */
+function eventPitchPoint(evt){
+  var rect = canvas.getBoundingClientRect();
+  var clientX = evt.touches? evt.touches[0].clientX : evt.clientX;
+  var clientY = evt.touches? evt.touches[0].clientY : evt.clientY;
+  var px = (clientX-rect.left)*dpr, py=(clientY-rect.top)*dpr;
+  return toPitch(px,py);
+}
+canvas.addEventListener("pointerdown", function(e){
+  if(playState!=="positioning") return;
+  var p = eventPitchPoint(e);
+  if(dist(p,userPos) < 9){ dragging=true; canvas.setPointerCapture(e.pointerId); document.getElementById("pitchHint").style.opacity=0; }
+});
+canvas.addEventListener("pointermove", function(e){
+  if(!dragging) return;
+  userPos = eventPitchPoint(e);
+});
+canvas.addEventListener("pointerup", function(e){ dragging=false; });
+canvas.addEventListener("pointercancel", function(e){ dragging=false; });
+
+document.getElementById("btnHeatmap").addEventListener("click", function(){
+  showHeat = !showHeat;
+  this.classList.toggle("on", showHeat);
+});
+document.getElementById("btnTip").addEventListener("click", function(){
+  var card = document.getElementById("tipCard");
+  var isShown = card.classList.contains("show");
+  if(isShown){ card.classList.remove("show"); this.classList.remove("on"); return; }
+  document.getElementById("tipText").textContent = currentLevel.tip;
+  card.classList.add("show");
+  this.classList.add("on");
+});
+document.getElementById("btnRestart").addEventListener("click", function(){ openPlay(currentLevel); });
+
+document.getElementById("btnPlayOut").addEventListener("click", function(){
+  if(playState!=="positioning") return;
+  playState = "simulating";
+  document.getElementById("btnPlayOut").disabled = true;
+  simResult = simulate(currentLevel, {x:userPos.x,y:userPos.y});
+  simFrameIdx = 0;
+  var startT = performance.now();
+  var totalFrames = simResult.frames.length;
+  var durationMs = 2000;
+  function step(now){
+    var t = clamp((now-startT)/durationMs, 0, 1);
+    simFrameIdx = Math.floor(t*(totalFrames-1));
+    if(t<1){
+      requestAnimationFrame(step);
+    } else {
+      playState = "result";
+      showResult();
+    }
+  }
+  requestAnimationFrame(step);
+});
+
+function showResult(){
+  var score = scorePosition(currentLevel, userPos);
+  if(score.stars > starsFor(currentLevel.id)){
+    progress.stars[currentLevel.id] = score.stars;
+    saveProgress();
+  }
+  var badge = document.getElementById("resultBadge");
+  var good = simResult.outcome==="TRY" || simResult.outcome==="LINE BREAK";
+  badge.textContent = simResult.outcome + (simResult.outcome==="TRY" ? " 🎉":"");
+  badge.className = "result-badge " + (good?"good":"bad");
+  document.getElementById("gapLine").textContent = good
+    ? "Space at the gap: "+simResult.gap.toFixed(1)+"m clear"
+    : "Nearest defender at contact: "+simResult.gap.toFixed(1)+"m";
+  var starsEl = document.getElementById("resultStars");
+  starsEl.innerHTML = "";
+  for(var i=1;i<=3;i++){
+    var sp=document.createElement("span");
+    sp.className="star"+(i<=score.stars?" on":"");
+    sp.textContent="★";
+    starsEl.appendChild(sp);
+  }
+  document.getElementById("coachText").innerHTML = currentLevel.feedback[score.dir];
+  var nextBtn = document.getElementById("btnNext");
+  var levels = bandLevels(currentLevel.band);
+  var idx = levels.indexOf(currentLevel);
+  var hasNext = idx < levels.length-1;
+  var nextInBand = hasNext ? levels[idx+1] : null;
+  var nextBand = BANDS.filter(function(b){return b.id===currentLevel.band+1;})[0];
+  if(score.stars===0){
+    nextBtn.textContent = "Try Again";
+    nextBtn.onclick = function(){ openPlay(currentLevel); };
+  } else if(nextInBand){
+    nextBtn.textContent = "Next Level →";
+    nextBtn.onclick = function(){ openPlay(nextInBand); };
+  } else if(nextBand){
+    nextBtn.textContent = "Next: "+nextBand.name+" →";
+    nextBtn.onclick = function(){ currentBandId=nextBand.id; openLevelList(nextBand.id); };
+  } else {
+    nextBtn.textContent = "You've Made The Boks!";
+    nextBtn.onclick = function(){ renderHome(); showScreen("home"); };
+  }
+  openSheet();
+}
+
+function openSheet(){
+  document.getElementById("sheetBackdrop").classList.add("show");
+  document.getElementById("sheet").classList.add("show");
+}
+function closeSheet(){
+  document.getElementById("sheetBackdrop").classList.remove("show");
+  document.getElementById("sheet").classList.remove("show");
+}
+document.getElementById("sheetBackdrop").addEventListener("click", closeSheet);
+document.getElementById("btnRetry").addEventListener("click", function(){ openPlay(currentLevel); });
+
+/* ============================== INIT ============================== */
+renderHome();
+resizeCanvas();
+window.addEventListener("orientationchange", function(){ setTimeout(resizeCanvas, 200); });
+})();
+</script>
+</body>
+</html>

@@ -164,6 +164,8 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
 .field-tag{display:inline-flex;align-items:center;padding:5px 12px;border-radius:100px;background:rgba(227,180,60,.15);border:1px solid var(--gold-dim);color:var(--gold-bright);font-family:var(--font-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:16px;}
 .setup-block{margin-bottom:16px;}
 .setup-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:8px;}
+.setup-sublabel{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:8px 0 6px;}
+.setup-sublabel:first-of-type{margin-top:0;}
 .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
 .pick-chip{padding:9px 14px;border-radius:100px;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;}
 .pick-chip.on{background:rgba(227,180,60,.2);border-color:var(--gold-bright);color:var(--gold-bright);}
@@ -251,7 +253,10 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
       </div>
       <div class="setup-block">
         <div class="setup-label">Which position are you playing?</div>
-        <div class="chip-row" id="roleChips"></div>
+        <div class="setup-sublabel">Backs</div>
+        <div class="chip-row" id="roleChipsBacks"></div>
+        <div class="setup-sublabel">Forwards</div>
+        <div class="chip-row" id="roleChipsForwards"></div>
       </div>
       <div class="sheet-actions">
         <button class="btn-ghost" id="btnCancelSetup">Cancel</button>
@@ -724,30 +729,80 @@ var PHASES = [
   {id:"tap",     label:"Penalty Tap", icon:"★",  desc:"Quick tap and go — the defence has to retreat 10m first."}
 ];
 var FREE_ROLES = [
-  {key:"9",  label:"Scrumhalf"},
-  {key:"10", label:"Fly-half"},
-  {key:"12", label:"Inside Centre"},
-  {key:"13", label:"Outside Centre"},
-  {key:"14", label:"Wing"},
-  {key:"15", label:"Fullback"}
+  {key:"9",  label:"Scrumhalf", group:"back"},
+  {key:"10", label:"Fly-half", group:"back"},
+  {key:"11", label:"Left Wing", group:"back"},
+  {key:"12", label:"Inside Centre", group:"back"},
+  {key:"13", label:"Outside Centre", group:"back"},
+  {key:"14", label:"Right Wing", group:"back"},
+  {key:"15", label:"Fullback", group:"back"},
+  {key:"1",  label:"Loosehead Prop", group:"forward"},
+  {key:"2",  label:"Hooker", group:"forward"},
+  {key:"3",  label:"Tighthead Prop", group:"forward"},
+  {key:"4",  label:"Lock", group:"forward"},
+  {key:"5",  label:"Lock", group:"forward"},
+  {key:"6",  label:"Blindside Flanker", group:"forward"},
+  {key:"7",  label:"Openside Flanker", group:"forward"},
+  {key:"8",  label:"Number 8", group:"forward"}
 ];
 // Nominal backline shape relative to the ball at a standard phase (dx = width offset, dy = depth offset)
 var BACKLINE_TEMPLATE = [
-  {key:"9",  dx:-6, dy:-1},
-  {key:"10", dx:2,  dy:5},
-  {key:"12", dx:11, dy:0},
-  {key:"13", dx:19, dy:0},
-  {key:"14", dx:28, dy:1},
-  {key:"15", dx:-2, dy:-11}
+  {key:"9",  dx:-6,  dy:-1},
+  {key:"10", dx:2,   dy:5},
+  {key:"11", dx:-15, dy:-2},
+  {key:"12", dx:11,  dy:0},
+  {key:"13", dx:19,  dy:0},
+  {key:"14", dx:28,  dy:1},
+  {key:"15", dx:-2,  dy:-11}
 ];
 var DEFENSE_TEMPLATE = [
-  {key:"9",  dx:-6, dy:3},
-  {key:"10", dx:2,  dy:3},
-  {key:"12", dx:11, dy:2.5},
-  {key:"13", dx:19, dy:2.5},
-  {key:"14", dx:28, dy:3},
-  {key:"15", dx:0,  dy:16}
+  {key:"9",  dx:-6,  dy:3},
+  {key:"10", dx:2,   dy:3},
+  {key:"11", dx:-15, dy:3},
+  {key:"12", dx:11,  dy:2.5},
+  {key:"13", dx:19,  dy:2.5},
+  {key:"14", dx:28,  dy:3},
+  {key:"15", dx:0,   dy:16}
 ];
+// Forward pack shapes per phase (dx/dy relative to the ball). Penalty taps carry no set pack — forwards are still arriving.
+var FORWARDS_BY_PHASE = {
+  scrum: {
+    attack: [
+      {key:"1",dx:-3,  dy:-1.5},{key:"2",dx:0,  dy:-1.5},{key:"3",dx:3,  dy:-1.5},
+      {key:"4",dx:-1.5,dy:-2.8},{key:"5",dx:1.5,dy:-2.8},
+      {key:"6",dx:-3.5,dy:-3.2},{key:"7",dx:3.5,dy:-3.2},{key:"8",dx:0,  dy:-3.8}
+    ],
+    defense: [
+      {key:"1",dx:3,  dy:1.3},{key:"2",dx:0,  dy:1.3},{key:"3",dx:-3,  dy:1.3},
+      {key:"4",dx:1.5,dy:2.6},{key:"5",dx:-1.5,dy:2.6},
+      {key:"6",dx:3.5,dy:3.0},{key:"7",dx:-3.5,dy:3.0},{key:"8",dx:0,  dy:3.6}
+    ]
+  },
+  lineout: {
+    attack: [
+      {key:"2",dx:1,  dy:-0.6},{key:"1",dx:2,dy:-1.1},{key:"3",dx:2,dy:0.9},
+      {key:"4",dx:3.5,dy:0},{key:"5",dx:5.5,dy:0},
+      {key:"6",dx:7.5,dy:0},{key:"7",dx:9.5,dy:0},{key:"8",dx:11.5,dy:0}
+    ],
+    defense: [
+      {key:"2",dx:1,  dy:0.9},{key:"1",dx:2,dy:0.4},{key:"3",dx:2,dy:2.4},
+      {key:"4",dx:3.5,dy:1.5},{key:"5",dx:5.5,dy:1.5},
+      {key:"6",dx:7.5,dy:1.5},{key:"7",dx:9.5,dy:1.5},{key:"8",dx:11.5,dy:1.5}
+    ]
+  },
+  ruck: {
+    attack: [
+      {key:"1",dx:-1.5,dy:-1},{key:"2",dx:0,dy:-1.5},{key:"3",dx:1.5,dy:-1},
+      {key:"4",dx:-1,  dy:-2.2},{key:"5",dx:1,dy:-2.2},
+      {key:"6",dx:-2,  dy:-0.5},{key:"7",dx:2,dy:-0.5},{key:"8",dx:0,dy:-0.3}
+    ],
+    defense: [
+      {key:"1",dx:1.5, dy:1},{key:"2",dx:0,dy:1.5},{key:"3",dx:-1.5,dy:1},
+      {key:"4",dx:1,   dy:2.2},{key:"5",dx:-1,dy:2.2},
+      {key:"6",dx:2,   dy:0.6},{key:"7",dx:-2,dy:0.6},{key:"8",dx:0,dy:0.4}
+    ]
+  }
+};
 
 /* ============================== STATE ============================== */
 
@@ -923,8 +978,8 @@ function findBestTarget(carrierStart, attackArr, defenseArr){
 }
 
 function simulate(level, userPos){
-  var attack = level.attack.map(function(a){ return {x:a.x,y:a.y,label:a.label,isCarrier:!!a.isCarrier,isUser:!!a.isUser}; });
-  var defense = level.defense.map(function(d){ return {x:d.x,y:d.y,label:d.label,isUser:!!d.isUser}; });
+  var attack = level.attack.map(function(a){ return {x:a.x,y:a.y,label:a.label,isCarrier:!!a.isCarrier,isUser:!!a.isUser,isForward:!!a.isForward}; });
+  var defense = level.defense.map(function(d){ return {x:d.x,y:d.y,label:d.label,isUser:!!d.isUser,isForward:!!d.isForward}; });
   attack.forEach(function(a){ if(a.isUser){ a.x=userPos.x; a.y=userPos.y; } });
   defense.forEach(function(d){ if(d.isUser){ d.x=userPos.x; d.y=userPos.y; } });
 
@@ -1146,7 +1201,7 @@ function drawBall(pt){
 function drawToken(pt, opts){
   opts = opts||{};
   var s = toScreen(pt);
-  var r = (opts.user? 15: 12)*dpr;
+  var r = (opts.user? 15 : (opts.small? 8.5 : 12))*dpr;
   if(opts.user){
     var pulse = 1 + 0.12*Math.sin(performance.now()/260);
     ctx.beginPath();
@@ -1165,7 +1220,7 @@ function drawToken(pt, opts){
     ctx.strokeStyle="rgba(255,255,255,0.8)"; ctx.lineWidth=1.6*dpr; ctx.setLineDash([3*dpr,3*dpr]); ctx.stroke(); ctx.setLineDash([]);
   }
   ctx.fillStyle = opts.user ? "#231a06" : "#160f06";
-  ctx.font = "700 "+(10.5*dpr)+"px "+getFontMono();
+  ctx.font = "700 "+((opts.user?10.5:(opts.small?8.5:10.5))*dpr)+"px "+getFontMono();
   ctx.textAlign="center"; ctx.textBaseline="middle";
   ctx.fillText(opts.label||"", s.x, s.y+0.5*dpr);
   if(opts.user){
@@ -1240,25 +1295,34 @@ function generateFreeplayScenario(phaseId, fieldPt, side, roleKey){
   if(phaseId==="tap") defenseGap = 10 - compression*2;
   if(phaseId==="lineout") defenseGap = 5 - compression*1.6;
 
-  var attack=[], defense=[];
+  var attackBacks=[], defenseBacks=[], attackForwards=[], defenseForwards=[];
   BACKLINE_TEMPLATE.forEach(function(slot){
     var dx = slot.dx*widthScale;
     if(phaseId==="lineout" && slot.key!=="15") dx = dx*0.55 + 3;
     var dy = slot.key==="15" ? slot.dy : slot.dy*(1-compression*0.4);
-    attack.push({key:slot.key, label:slot.key, x:clamp(ball.x+dx,-PITCH_W/2+2,PITCH_W/2-2), y:ball.y+dy});
+    attackBacks.push({key:slot.key, label:slot.key, x:clamp(ball.x+dx,-PITCH_W/2+2,PITCH_W/2-2), y:ball.y+dy});
   });
   DEFENSE_TEMPLATE.forEach(function(slot){
     var dx = slot.dx*widthScale;
     if(phaseId==="lineout" && slot.key!=="15") dx = dx*0.55 + 3;
     var dy = slot.key==="15" ? slot.dy : defenseGap + (slot.dy-3)*0.4;
-    defense.push({key:slot.key, label:slot.key, x:clamp(ball.x+dx,-PITCH_W/2+2,PITCH_W/2-2), y:ball.y+dy});
+    defenseBacks.push({key:slot.key, label:slot.key, x:clamp(ball.x+dx,-PITCH_W/2+2,PITCH_W/2-2), y:ball.y+dy});
   });
+  var packs = FORWARDS_BY_PHASE[phaseId];
+  if(packs){
+    packs.attack.forEach(function(slot){
+      attackForwards.push({key:slot.key, label:slot.key, isForward:true,
+        x:clamp(ball.x+slot.dx*widthScale,-PITCH_W/2+2,PITCH_W/2-2), y:ball.y+slot.dy});
+    });
+    packs.defense.forEach(function(slot){
+      defenseForwards.push({key:slot.key, label:slot.key, isForward:true,
+        x:clamp(ball.x+slot.dx*widthScale,-PITCH_W/2+2,PITCH_W/2-2), y:ball.y+slot.dy});
+    });
+  }
+  var attack = attackBacks.concat(attackForwards);
+  var defense = defenseBacks.concat(defenseForwards);
   if(redZone){
     defense.push({key:"X", label:"5", x:ball.x+3.5, y:ball.y+defenseGap-0.6});
-  }
-  if(phaseId==="scrum" || phaseId==="lineout"){
-    attack.push({key:"F", label:"FWD", x:ball.x-3, y:ball.y-1.5});
-    defense.push({key:"F", label:"FWD", x:ball.x-3, y:ball.y+1.5});
   }
 
   var userIsCarrier = false, offsideY = ball.y;
@@ -1469,7 +1533,10 @@ function openFieldSetupSheet(){
   );
   renderChipRow("phaseChips", PHASES.map(function(p){ return {value:p.id, label:p.icon+" "+p.label}; }), setupState.phase, function(v){ setupState.phase=v; });
   renderChipRow("sideChips", [{value:"attack",label:"Your Ball"},{value:"defense",label:"Their Ball"}], setupState.side, function(v){ setupState.side=v; });
-  renderChipRow("roleChips", FREE_ROLES.map(function(r){ return {value:r.key,label:r.key,sub:r.label}; }), setupState.role, function(v){ setupState.role=v; });
+  var backs = FREE_ROLES.filter(function(r){return r.group==="back";});
+  var forwards = FREE_ROLES.filter(function(r){return r.group==="forward";});
+  renderChipRow("roleChipsBacks", backs.map(function(r){ return {value:r.key,label:r.key,sub:r.label}; }), setupState.role, function(v){ setupState.role=v; });
+  renderChipRow("roleChipsForwards", forwards.map(function(r){ return {value:r.key,label:r.key,sub:r.label}; }), setupState.role, function(v){ setupState.role=v; });
   document.getElementById("btnBuildScenario").disabled = !setupState.phase;
   document.getElementById("fieldSheetBackdrop").classList.add("show");
   document.getElementById("fieldSheet").classList.add("show");
@@ -1556,8 +1623,8 @@ function render(){
     var defenseLive = level.defense.map(function(d){ return d.isUser? {x:userPos.x,y:userPos.y,label:d.label} : d; });
     if(showHeat) drawHeatmap(attackLive, defenseLive, level);
     drawBall(level.ball);
-    level.attack.forEach(function(a){ if(!a.isUser) drawToken(a, {side:"attack", label:a.label, carrier:a.isCarrier}); });
-    level.defense.forEach(function(d){ if(!d.isUser) drawToken(d, {side:"defense", label:d.label}); });
+    level.attack.forEach(function(a){ if(!a.isUser) drawToken(a, {side:"attack", label:a.label, carrier:a.isCarrier, small:a.isForward}); });
+    level.defense.forEach(function(d){ if(!d.isUser) drawToken(d, {side:"defense", label:d.label, small:d.isForward}); });
     drawToken(userPos, {user:true, label: (level.attack.concat(level.defense).filter(function(p){return p.isUser;})[0]).label, carrier:(level.attack.filter(function(a){return a.isUser;})[0]||{}).isCarrier});
   } else if(playState==="simulating" || playState==="result"){
     var f = simResult.frames[Math.min(simFrameIdx, simResult.frames.length-1)];
@@ -1567,10 +1634,10 @@ function render(){
     ctx.beginPath(); ctx.arc(ts.x,ts.y,5*dpr,0,Math.PI*2);
     ctx.strokeStyle="rgba(255,255,255,0.35)"; ctx.lineWidth=1.4*dpr; ctx.stroke();
 
-    simResult.attackStatic.forEach(function(a){ drawToken(a, {side:"attack", label:a.label}); });
+    simResult.attackStatic.forEach(function(a){ drawToken(a, {side:"attack", label:a.label, small:a.isForward}); });
     simResult.defense.forEach(function(d,i){
       var pos = f.defense[i];
-      drawToken(pos, {side:"defense", label:d.label, user: d.isUser && playState!=="result_final"});
+      drawToken(pos, {side:"defense", label:d.label, small:d.isForward, user: d.isUser && playState!=="result_final"});
     });
     var carrierIsUser = currentLevel.attack.some(function(a){return a.isUser && a.isCarrier;});
     drawToken(f.carrier, {user: carrierIsUser, side:"attack", label:(currentLevel.attack.filter(function(a){return a.isCarrier;})[0]||{}).label, carrier:true});
@@ -1616,8 +1683,8 @@ document.getElementById("btnTip").addEventListener("click", function(){
 document.getElementById("btnRestart").addEventListener("click", function(){ openPlay(currentLevel); });
 
 function staticFrameResult(level, userPos, outcome){
-  var attack = level.attack.map(function(a){ return {x:a.isUser?userPos.x:a.x, y:a.isUser?userPos.y:a.y, label:a.label, isCarrier:!!a.isCarrier, isUser:!!a.isUser}; });
-  var defense = level.defense.map(function(d){ return {x:d.isUser?userPos.x:d.x, y:d.isUser?userPos.y:d.y, label:d.label, isUser:!!d.isUser}; });
+  var attack = level.attack.map(function(a){ return {x:a.isUser?userPos.x:a.x, y:a.isUser?userPos.y:a.y, label:a.label, isCarrier:!!a.isCarrier, isUser:!!a.isUser, isForward:!!a.isForward}; });
+  var defense = level.defense.map(function(d){ return {x:d.isUser?userPos.x:d.x, y:d.isUser?userPos.y:d.y, label:d.label, isUser:!!d.isUser, isForward:!!d.isForward}; });
   var carrier = attack.filter(function(a){return a.isCarrier;})[0] || attack[0];
   var frame = { carrier:{x:carrier.x,y:carrier.y}, defense: defense.map(function(d){return {x:d.x,y:d.y};}) };
   return {

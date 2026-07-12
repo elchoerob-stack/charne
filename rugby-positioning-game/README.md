@@ -36,6 +36,19 @@ Each level is either an **attack** scenario (how do you create space?) or a **de
 
 Progress (stars, unlocked bands) is saved in the browser's local storage on the device, so it persists between sessions on the same phone.
 
+## Free Play — build your own scenario
+
+Beyond the 16 set levels, **Free Play** puts a realistic, full-size rugby pitch (100m try-line to try-line, 22s, halfway, 10m lines, 5m/15m marks, goal posts — the works) in front of you and lets you tap anywhere on it.
+
+1. Tap a spot on the field.
+2. Pick what's happening there: **Scrum, Lineout, Ruck, or Penalty Tap.**
+3. Pick whose ball it is, and which position you're playing.
+4. The game builds a realistic attack/defence picture **for that exact spot on the field** — pinned in your own 5m, it's cramped and the defence can blitz; on their try line, the defence is stacked and desperate; near touch, width is tight; off a penalty tap, the defence starts illegally close until you notice they have to retreat 10m.
+
+From there it's the same drag-and-simulate loop as the Academy, plus one extra, very real rule: if you're defending and you haven't retreated behind the offside line (the back of the ruck/scrum, or the full 10m on a penalty tap) before you hit **Play It Out**, the whistle blows immediately — **Penalty Conceded** — before the phase even runs. It's an easy, memorable way to feel out why the offside line matters, not just read about it.
+
+Free Play scenarios aren't part of the star/progress system — they're for open-ended practice, so there's no "right answer" saved anywhere, just the outcome and a coach's note built from the actual numbers of that attempt (your depth off the ball, the gap at the moment of contact, distance to touch).
+
 ## Coach's Corner
 
 An in-app glossary (accessible from the home screen and mid-level via the "Coach Tip" button) explains the rugby vocabulary in plain language: gain line, depth, alignment, width, overlap, drift defence, blitz defence, decoy runner, support line, sweeper, second phase, line speed, go-forward, cutting angle.

@@ -1580,10 +1580,11 @@ function simulateV2(level, atk0, def0){
     // defenders run intercept lines (cutting angles), not tail-chases
     var breach = car ? car.y > lineY0 + 2.2 : ball.y > lineY0 + 2.2;
     var chaseTarget = car || ball;
-    var lead = chaseTarget;
+    var leadFull = chaseTarget, leadSoft = chaseTarget;
     if(car){
       var cvx=(car.x-car.px)/dt, cvy=(car.y-car.py)/dt;
-      lead = {x: car.x + cvx*0.7, y: car.y + cvy*0.7};
+      leadFull = {x: car.x + cvx*0.7, y: car.y + cvy*0.7};  // cover defense: real cutting angles
+      leadSoft = {x: car.x + cvx*0.3, y: car.y + cvy*0.3};  // line defenders: human anticipation
     }
     var nearestIdx=-1, nearestD=Infinity;
     for(var j2=0;j2<D.length;j2++){
@@ -1596,9 +1597,11 @@ function simulateV2(level, atk0, def0){
       if(d.sweeper && !breach){
         moveTo(d, ball.x*0.55, Math.max(ball.y+8, d.y-1), 6.2*dt);
       } else if(d.sweeper){
-        moveTo(d, lead.x, lead.y, 7.6*dt);
-      } else if(j===nearestIdx || (breach && dist(d,chaseTarget)<14)){
-        moveTo(d, lead.x, lead.y, (breach?7.45:7.1)*dt);
+        moveTo(d, leadFull.x, leadFull.y, 7.6*dt);
+      } else if(breach && dist(d,chaseTarget)<14){
+        moveTo(d, leadFull.x, leadFull.y, 7.45*dt);
+      } else if(j===nearestIdx){
+        moveTo(d, leadSoft.x, leadSoft.y, 7.0*dt);
       } else {
         // hold the line: mark nearest attacker, press forward, drift with the ball
         var mk=null, mkD=Infinity;

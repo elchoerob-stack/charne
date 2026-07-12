@@ -91,7 +91,17 @@ button{font-family:inherit;}
 .rank-chip .txt b{display:block;font-family:var(--font-display);font-size:13px;letter-spacing:.04em;text-transform:uppercase;}
 .rank-chip .txt span{display:block;font-family:var(--font-mono);font-size:10px;color:var(--ink-dim);}
 
-.freeplay-cta-wrap{padding:18px 16px 0;}
+.freeplay-cta-wrap{padding:18px 16px 0;display:flex;flex-direction:column;gap:10px;}
+.freeplay-cta.secondary{background:linear-gradient(135deg,var(--panel-2),var(--panel));border-color:var(--line);}
+.freeplay-cta.secondary .freeplay-cta-body b{color:var(--ink);}
+.freeplay-cta.secondary .freeplay-cta-icon{background:var(--panel-2);}
+.freeplay-cta.secondary .freeplay-cta-arrow{color:var(--ink-dim);}
+.home-links{flex-wrap:wrap;}
+.name-sheet{position:fixed;z-index:60;}
+.sheet-backdrop#nameBackdrop{position:fixed;z-index:59;}
+.text-input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--gold-dim);background:var(--bg-2);color:var(--ink);font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:.03em;outline:none;margin-top:4px;}
+.text-input:focus{border-color:var(--gold-bright);}
+.play-del{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--danger);font-size:15px;cursor:pointer;flex:0 0 auto;}
 .freeplay-cta{width:100%;display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:linear-gradient(135deg,rgba(227,180,60,.22),rgba(227,180,60,.06));border:1px solid var(--gold-dim);cursor:pointer;text-align:left;}
 .freeplay-cta-icon{font-size:26px;flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:rgba(227,180,60,.18);display:flex;align-items:center;justify-content:center;}
 .freeplay-cta-body{flex:1;min-width:0;}
@@ -100,7 +110,7 @@ button{font-family:inherit;}
 .freeplay-cta-arrow{font-size:22px;color:var(--gold-bright);flex:0 0 auto;}
 .section-label{padding:22px 16px 0;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);}
 .ladder{padding:10px 16px 10px;display:flex;flex-direction:column;gap:12px;}
-.band-card{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line);cursor:pointer;text-align:left;}
+.band-card{color:var(--ink);position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line);cursor:pointer;text-align:left;}
 .band-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:16px 0 0 16px;background:var(--gold);}
 .band-card.locked{opacity:.45;}
 .band-card.locked::before{background:var(--ink-faint);}
@@ -115,7 +125,7 @@ button{font-family:inherit;}
 .home-links{display:flex;gap:10px;justify-content:center;padding:14px 16px 26px;}
 
 /* ---------- LEVEL LIST ---------- */
-.level-card{position:relative;display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);margin-bottom:10px;cursor:pointer;}
+.level-card{color:var(--ink);position:relative;display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);margin-bottom:10px;cursor:pointer;}
 .level-card.locked{opacity:.4;}
 .level-badge{width:40px;height:40px;border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:16px;color:var(--gold-bright);flex:0 0 auto;border:1px solid var(--line);}
 .level-info{flex:1;min-width:0;}
@@ -139,8 +149,9 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
 .tip-card.show{opacity:1;transform:translateY(0);pointer-events:auto;}
 .tip-card .who{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;}
 .tip-card p{margin:0;font-size:12.5px;line-height:1.45;color:var(--cream);}
-.control-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex:0 0 auto;}
-.chip-toggle{display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:100px;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;flex:0 0 auto;}
+.control-bar{display:flex;align-items:center;gap:6px;padding:10px 12px;flex:0 0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.control-bar::-webkit-scrollbar{display:none;}
+.chip-toggle{display:flex;align-items:center;gap:5px;padding:8px 10px;border-radius:100px;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;flex:0 0 auto;white-space:nowrap;}
 .chip-toggle.on{background:rgba(227,180,60,.15);border-color:var(--gold-dim);color:var(--gold-bright);}
 .control-bar .spacer{flex:1;}
 .play-actions{padding:6px 14px calc(16px + var(--safe-bottom));flex:0 0 auto;}
@@ -208,19 +219,38 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
         <button class="freeplay-cta" id="btnFreePlay">
           <div class="freeplay-cta-icon">📍</div>
           <div class="freeplay-cta-body">
-            <b>Free Play</b>
-            <span>Tap anywhere on the field — scrum, lineout, ruck or penalty tap. The game builds the scenario.</span>
+            <b id="ctaFreeTitle">Free Play</b>
+            <span id="ctaFreeDesc">Tap anywhere on the field — scrum, lineout, ruck or penalty tap. The game builds the scenario.</span>
+          </div>
+          <div class="freeplay-cta-arrow">›</div>
+        </button>
+        <button class="freeplay-cta secondary" id="btnMyPlays">
+          <div class="freeplay-cta-icon">📋</div>
+          <div class="freeplay-cta-body">
+            <b id="ctaPlaysTitle">My Plays</b>
+            <span id="ctaPlaysDesc">Your saved plays — practise them against different defensive looks.</span>
           </div>
           <div class="freeplay-cta-arrow">›</div>
         </button>
       </div>
-      <div class="section-label">Training Academy</div>
+      <div class="section-label" id="lblAcademy">Training Academy</div>
       <div class="ladder" id="ladder"></div>
       <div class="home-links">
         <button class="btn-ghost" id="btnGlossary">Coach's Corner</button>
         <button class="btn-ghost" id="btnReset">Reset Progress</button>
+        <button class="btn-ghost" id="btnPlayerName">✎ Player Name</button>
+        <button class="btn-ghost" id="btnLang">🌍 Afrikaans</button>
       </div>
     </div>
+  </section>
+
+  <!-- MY PLAYS -->
+  <section class="screen" id="screen-plays">
+    <div class="h-bar">
+      <button class="icon-btn" id="backFromPlays">←</button>
+      <div class="h-title"><div class="eyebrow" id="playsEyebrow">Playbook</div><h1 id="playsTitle">My Plays</h1></div>
+    </div>
+    <div class="scrollpane" id="playsList"></div>
   </section>
 
   <!-- LEVEL LIST -->
@@ -296,6 +326,7 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
     <div class="control-bar">
       <button class="chip-toggle" id="btnHeatmap">◐ Space Map</button>
       <button class="chip-toggle on" id="btnDrift">⇄ Drag: Team</button>
+      <button class="chip-toggle" id="btnSavePlay">💾</button>
       <div class="spacer"></div>
       <button class="chip-toggle" id="btnTip">? Coach Tip</button>
     </div>
@@ -306,10 +337,21 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
   <section class="screen" id="screen-glossary">
     <div class="h-bar">
       <button class="icon-btn" id="backFromGlossary">←</button>
-      <div class="h-title"><div class="eyebrow">Coach's Corner</div><h1>Rugby IQ</h1></div>
+      <div class="h-title"><div class="eyebrow" id="glossEyebrow">Coach's Corner</div><h1 id="glossTitle">Rugby IQ</h1></div>
     </div>
     <div class="scrollpane" id="glossaryList"></div>
   </section>
+
+  <!-- NAME INPUT SHEET (shared: player name / play name) -->
+  <div class="sheet-backdrop" id="nameBackdrop"></div>
+  <div class="sheet name-sheet" id="nameSheet">
+    <div class="setup-label" id="nameSheetTitle">Name</div>
+    <input type="text" id="nameInput" class="text-input" maxlength="18" autocomplete="off" />
+    <div class="sheet-actions">
+      <button class="btn-ghost" id="nameCancel">Cancel</button>
+      <button class="btn-primary" id="nameConfirm">Save</button>
+    </div>
+  </div>
 
 </div>
 
@@ -320,30 +362,31 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
 /* ============================== DATA ============================== */
 
 var BANDS = [
-  {id:1, name:"Schoolboy Rookie", age:"Grade 8–9 · Age 13–14", intro:"First-team basics: depth, alignment and straight running."},
-  {id:2, name:"Club Player", age:"Grade 10 · Age 15", intro:"Width, overlaps and drift defence — playing with numbers."},
-  {id:3, name:"Provincial Trialist", age:"Grade 11 · Age 16", intro:"Line speed, decoys and broken-field reads."},
-  {id:4, name:"Matric Test Level", age:"Grade 12 · Age 17–18", intro:"Full-field reads. The picture changes — so must you."}
+  {id:1, name:"Schoolboy Rookie", nameAf:"Skoolseun Groentjie", age:"Grade 8–9 · Age 13–14", ageAf:"Graad 8–9 · Ouderdom 13–14", intro:"First-team basics: depth, alignment and straight running."},
+  {id:2, name:"Club Player", nameAf:"Klubspeler", age:"Grade 10 · Age 15", ageAf:"Graad 10 · Ouderdom 15", intro:"Width, overlaps and drift defence — playing with numbers."},
+  {id:3, name:"Provincial Trialist", nameAf:"Provinsiale Proefspeler", age:"Grade 11 · Age 16", ageAf:"Graad 11 · Ouderdom 16", intro:"Line speed, decoys and broken-field reads."},
+  {id:4, name:"Matric Test Level", nameAf:"Matriek Toetsvlak", age:"Grade 12 · Age 17–18", ageAf:"Graad 12 · Ouderdom 17–18", intro:"Full-field reads. The picture changes — so must you."}
 ];
+function bandName(b){ return T(b.name, b.nameAf); }
+function bandAge(b){ return T(b.age, b.ageAf); }
 
 var GLOSSARY = [
-  {t:"Gain line", d:"An imaginary line through the ball at a ruck or scrum. Cross it and you're winning the collision; get stopped behind it and you're going backwards."},
-  {t:"Depth", d:"How far back from the gain line you stand. More depth buys you time to see the picture; too much and the whole line loses its go-forward."},
-  {t:"Alignment", d:"Staying square and close enough to the ball-carrier that you're a real option — not drifted away before the pass even arrives."},
-  {t:"Width", d:"How far you spread across the field. Hold your width and you keep an overlap alive; drift in early and you fold the space away."},
-  {t:"Overlap / extra man", d:"When your side has more attackers than the defence has defenders in a channel. Hold your shape and the numbers do the work."},
-  {t:"Drift defence", d:"Defenders sliding sideways together, matching the attacker one-out, squeezing space instead of chasing the ball."},
-  {t:"Blitz defence", d:"Defenders rushing up fast to remove the attacking team's time and space before they can pass or offload."},
-  {t:"Decoy / dummy runner", d:"A runner with no intention of getting the ball, whose only job is to occupy a defender and free up space for someone else."},
-  {t:"Support line", d:"The angle and depth you run to stay useful to a team-mate who has broken the line — close enough to take an offload."},
-  {t:"Sweeper", d:"Usually the fullback, covering the space behind the defensive line in case of a kick or a break through the middle."},
-  {t:"Second phase", d:"The next ruck or tackle after the first — shape has to be rebuilt fast, and defences are often still scrambling into position."},
-  {t:"Line speed", d:"How fast a defensive line moves forward together. High line speed removes an attacker's time on the ball."},
-  {t:"Go-forward", d:"Positive momentum into the opposition — won at the collision, and protected by not standing so deep you lose it."},
-  {t:"Cutting angle", d:"Running to where the ball-carrier will be, not where they are now — the difference between a real chase and a hopeless one."},
-  {t:"Pod", d:"A small group of forwards standing off the ruck, ready to carry the ball or clean out the next breakdown. Not every forward joins the ruck — most of the pack works in pods."},
-  {t:"Through the hands", d:"Moving the ball along the backline with quick passes — 9 to 10 to 12 and on — so it reaches the space out wide before the defence can drift across."},
-  {t:"Extra man", d:"When the fullback (or blind winger) joins the attacking line, the attack suddenly has one more runner than the defence has tacklers. Timed right, someone comes free."}
+  {t:"Gain line", tAf:"Voordeellyn", d:"An imaginary line through the ball at a ruck or scrum. Cross it and you're winning the collision; get stopped behind it and you're going backwards.", dAf:"'n Denkbeeldige lyn deur die bal by 'n losskrum of skrum. Kruis dit en jy wen die botsing; word jy daaragter gestuit, beweeg jy agteruit."},
+  {t:"Depth", tAf:"Diepte", d:"How far back from the gain line you stand. More depth buys you time to see the picture; too much and the whole line loses its go-forward.", dAf:"Hoe ver agter die voordeellyn jy staan. Meer diepte gee jou tyd om die prentjie te lees; te veel en die hele lyn verloor sy momentum vorentoe."},
+  {t:"Alignment", tAf:"Belyning", d:"Staying square and close enough to the ball-carrier that you're a real option, not drifted away before the pass even arrives.", dAf:"Om vierkantig en naby genoeg aan die baldraer te bly sodat jy 'n werklike opsie is, nie weggedryf voor die aangee eers aankom nie."},
+  {t:"Width", tAf:"Wydte", d:"How far you spread across the field. Hold your width and you keep an overlap alive; drift in early and you fold the space away.", dAf:"Hoe wyd jy oor die veld versprei. Hou jou wydte en die oorvleueling bly lewendig; dryf te vroeg in en jy vou die ruimte toe."},
+  {t:"Overlap / extra man", tAf:"Oorvleueling / ekstra man", d:"When your side has more attackers than the defence has defenders in a channel. Hold your shape and the numbers do the work.", dAf:"Wanneer jou span meer aanvallers in 'n kanaal het as wat die verdediging verdedigers het. Hou jou vorm en die getalle doen die werk."},
+  {t:"Drift defence", tAf:"Dryfverdediging", d:"Defenders sliding sideways together, matching the attacker one-out, squeezing space instead of chasing the ball.", dAf:"Verdedigers wat saam sywaarts skuif, elkeen een aanvaller uit, en ruimte toedruk in plaas daarvan om die bal te jaag."},
+  {t:"Blitz defence", tAf:"Blitsverdediging", d:"Defenders rushing up fast to remove the attacking team's time and space before they can pass or offload.", dAf:"Verdedigers wat vinnig opstorm om die aanvallers se tyd en ruimte weg te vat voor hulle kan aangee."},
+  {t:"Decoy / dummy runner", tAf:"Lokhardloper", d:"A runner with no intention of getting the ball, whose only job is to occupy a defender and free up space for someone else.", dAf:"'n Hardloper wat nooit die bal gaan kry nie; sy enigste werk is om 'n verdediger besig te hou en ruimte vir iemand anders oop te maak."},
+  {t:"Support line", tAf:"Steunlyn", d:"The angle and depth you run to stay useful to a team-mate who has broken the line, close enough to take an offload.", dAf:"Die hoek en diepte waarteen jy hardloop om bruikbaar te bly vir 'n spanmaat wat deurgebreek het, naby genoeg vir die afgee."},
+  {t:"Sweeper", tAf:"Veër", d:"Usually the fullback, covering the space behind the defensive line in case of a kick or a break through the middle.", dAf:"Gewoonlik die heelagter, wat die ruimte agter die verdedigingslyn dek vir 'n skop of 'n deurbraak in die middel."},
+  {t:"Second phase", tAf:"Tweede fase", d:"The next ruck or tackle after the first: shape has to be rebuilt fast, and defences are often still scrambling into position.", dAf:"Die volgende losskrum of duikslag na die eerste een: vorm moet vinnig herbou word, en verdedigings sukkel dikwels nog om in posisie te kom."},
+  {t:"Line speed", tAf:"Lynspoed", d:"How fast a defensive line moves forward together. High line speed removes an attacker's time on the ball.", dAf:"Hoe vinnig 'n verdedigingslyn saam vorentoe beweeg. Hoë lynspoed vat 'n aanvaller se tyd op die bal weg."},
+  {t:"Go-forward", tAf:"Momentum vorentoe", d:"Positive momentum into the opposition: won at the collision, and protected by not standing so deep you lose it.", dAf:"Positiewe momentum in die opposisie in: gewen by die botsing, en beskerm deurdat jy nie so diep staan dat jy dit verloor nie."},
+  {t:"Cutting angle", tAf:"Afsnyhoek", d:"Running to where the ball-carrier will be, not where they are now: the difference between a real chase and a hopeless one.", dAf:"Hardloop na waar die baldraer gaan wees, nie waar hy nou is nie: die verskil tussen 'n werklike jaagtog en 'n hopelose een."},
+  {t:"Pod", tAf:"Groepie (pod)", d:"A small group of forwards standing off the ruck as ball-carrying options, instead of everyone piling into the breakdown.", dAf:"'n Klein groepie voorspelers wat weg van die losskrum staan as baldra-opsies, in plaas daarvan dat almal op die afbreekpunt instorm."},
+  {t:"Through the hands", tAf:"Deur die hande", d:"Moving the ball along the backline with quick passes so it reaches the space out wide before the defence can drift across.", dAf:"Om die bal met vinnige aangee-werk langs die agterlyn te beweeg sodat dit die ruimte wyd bereik voor die verdediging kan oordryf."}
 ];
 
 /*
@@ -728,31 +771,138 @@ var LEVELS = [
 }
 ];
 
+/* ---------- Academy level translations (Afrikaans), keyed by level id ---------- */
+var LEVELS_AF = {
+  1:{t:"Gee Jouself Tyd", p:"Diepte koop jou tyd om die verdediging te lees.",
+     b:"Eerste fase van die basis af. Die skrumskakel gaan nou-nou vir jou aangee. <b>Waar staan jy?</b>",
+     tip:"Om plat te staan voel dapper. Dit beteken net jy word gepootjie voor jy enigiets nuttigs met die bal kan doen.",
+     low:"Jy het reg bo-op die voordeellyn gestaan — die verdediging was op jou voor jy die prentjie eers gesien het. Gee jouself ruimte om dit te lees.",
+     high:"Jy het so diep gesak dat die verdediging maar net kon opstap en die ruimte insluk. Te veel diepte vermoor ook jou momentum.",
+     good:"Dis handboek-diepte — ver genoeg terug om regtig te kyk, naby genoeg om die lyn vorentoe te hou."},
+  2:{t:"Dek Die Middel", p:"Die veër se diepte bepaal of 'n deurbraak in die middel 'n ramp is of 'n nie-gebeurtenis.",
+     b:"Losskrum reg van voor. Hulle agsteman gaan optel en druk. <b>Waar sit jy as die laaste lyn?</b>",
+     tip:"As jy in die voorste lyn staan, dek niemand wat gebeur as dit breek nie.",
+     low:"Jy het reg in die voorste lyn ingekruip — nou is daar niemand agter nie, en as hy deurbreek is dit 'n resies doellyn toe wat jy verloor.",
+     high:"Jy het so ver teruggesak dat jy feitlik 'n toeskouer is — jy gaan nie betyds by die afbreekpunt uitkom nie.",
+     good:"Jy het presies gesit waar 'n veër moet: sentraal, en diep genoeg om enigiets te dek wat deur die middel kom."},
+  3:{t:"Kom Reguit Op Die Bal", p:"Om weg te dryf van die bal voor dit aankom, vermoor jou opsies en verklap alles aan die verdediging.",
+     b:"Jou losskakel het die bal. <b>Waar staan jy in voor hy aangee?</b>",
+     tip:"As jy klaar weghardloop van die bal wanneer dit aankom, kan jy net een rigting gaan — sywaarts.",
+     low:"Jy het amper bo-op jou losskakel ingestaan — julle verdring die aangee en dieselfde verdediger sluk julle albei in.",
+     high:"Jy het klaar wyd gedryf voor die bal sy hande verlaat het — die verdediging lees dit maklik en die aangee word 'n hospitaalbal.",
+     good:"Jy het naby en vierkantig gebly. Die bal kom aan terwyl jy nog albei kante toe kan gaan."},
+  4:{t:"Hou Die Lyn, Moenie Kleur Jaag Nie", p:"Teen 'n 2-teen-1 dwing jy die aangee af deur die baldraer se buiteskouer toe te maak — moenie na die los man hardloop nie.",
+     b:"Hulle senter het 'n ekstra man buite hom. <b>Waar staan jy as die laaste verdediger?</b>",
+     tip:"As jy jou op die ver man vaslê, kry die nabye een 'n oop pad binnetoe. Laat hom kies.",
+     low:"Jy het te ver binnekant gebly — die senter gee net 'n systappie buite jou verby en van daar af is dit twee-teen-niemand.",
+     high:"Jy het reguit uitgepyl om die vleuel te merk — die senter stap terug binnetoe waar niemand tuis is nie.",
+     good:"Jy het sy buiteskouer gehou — hy kan nie om jou nie, en al sy opsies hardloop terug na jou dekking toe."},
+  5:{t:"Hou Jou Wydte", p:"'n Oorvleueling bestaan net as jy dit nie toevou voor die bal aankom nie.",
+     b:"Julle het 'n ekstra man wyd. <b>Waar staan jy om die oorvleueling lewendig te hou?</b>",
+     tip:"Die versoeking is om in te dryf om te 'help'. Dis presies hoe 'n 3-teen-2 'n 2-teen-2 word.",
+     low:"Jy het vroeg ingedryf om naby die bal te bly — daar was net twee verdedigers vir drie aanvallers, maar jy het jou eie ruimte toegevou.",
+     high:"Jy het so wyd gestaan dat jy skaars in die spel is — die aangee moet te ver trek en die verdediging kry tyd om oor te skarrel.",
+     good:"Jy het die wydte gehou. Die laaste verdediger het te veel grond om te dek — die oorvleueling is eg en dit wys buite jou."},
+  6:{t:"Dryf, Moenie Jaag Nie", p:"Teen 'n oorvleueling klop dit om jou man te merk en die dryf te vertrou, eerder as om op die eerste ontvanger af te storm.",
+     b:"Hulle het wydte op julle. <b>Waar staan jy om dit as 'n lyn toe te maak, nie alleen nie?</b>",
+     tip:"Om uit die lyn op die bal af te skiet voel proaktief. Dis eintlik hoe jy geklop word.",
+     low:"Jy het op die eerste ontvanger opgeskiet — almal buite jou is nou ongemerk en dis 'n resies wat jy nie kan wen nie.",
+     high:"Jy het te ver, te vroeg gedryf — jy het 'n gaping binnekant jou oopgemaak wat 'n kruisaangee dadelik straf.",
+     good:"Jy het jou man gemerk en die lyn gehou — jy druk die ruimte toe in plaas van die bal te jaag, en dekking kry tyd om aan te kom."},
+  7:{t:"Bly In Die Sak", p:"'n Steunlyn help net as jy naby genoeg aan die deurbraak is om die afgee te vat.",
+     b:"Jou flank het pas die lyn gebreek. <b>Waar hardloop jy om hom te steun?</b>",
+     tip:"As jy van ver agter volg, kom jy net betyds aan om die duikslag te sien.",
+     low:"Jy was myle van die pas af — teen die tyd dat jy aankom is die duikslag klaar gemaak en niemand is daar vir die krummels nie.",
+     high:"Jy het reg op sy skouer gehardloop — geen diepte beteken geen tyd om 'n afgee te vang as hy vasgedraai word nie.",
+     good:"Jy het netjies agter die deurbraak ingesit, naby genoeg dat as hy geraak word, die bal deur jou lewendig bly."},
+  8:{t:"Sluit Die Kort Kant", p:"'n Losskrum naby die kantlyn los 'n kort kant wat net jy kan dek.",
+     b:"Losskrum naby die linkerkantlyn. Hulle skrumskakel loer na die blinde kant. <b>Waar staan jy?</b>",
+     tip:"Ou gewoonte is om oop kant toe te dryf waar die bal 'gewoonlik' gaan. Nie hier nie.",
+     low:"Jy het klaar oop kant toe gedryf — die kort kant is wawyd oop en die skrumskakel stap om die hoek.",
+     high:"Jy het reg bo-op die losskrum saamgedrom — geen ruimte om te reageer as hy 'n systappie gee nie.",
+     good:"Jy het styf op die kort kant gebly. Daar is eenvoudig nêrens vir hom om te gaan nie."},
+  9:{t:"Tweede-Fase Vorm", p:"Reg ná 'n losskrum is die verdediging nog besig om te herstel — die regte diepte laat jou die gaping sien voor dit toemaak.",
+     b:"Vinnige bal van die grond af. Voorspeler-groepies weerskante van jou. <b>Waar vat jy dit?</b>",
+     tip:"Tweede-fase-bal beweeg vinnig. Plat hier beteken jy reageer, jy besluit nie.",
+     low:"Jy het dit plat van die losskrum af gevat — die verdediging was nog nie eens klaar herstel nie en jy het reguit in die een verdediger vasgehardloop wat wel was.",
+     high:"Jy het so diep gesak dat die groepie-hardlopers hul lyne heeltemal verloor het — teen die tyd dat jy besluit het, het die gaping homself toegemaak.",
+     good:"Jy het jouself net genoeg diepte gegee om te sien watter kant van die losskrum nog deurmekaar was — en dit aangeval."},
+  10:{t:"Druk Die Lyn", p:"Blitsverdediging vat 'n aanvaller se tyd weg — maar net as jy werklik op die voordeellyn is wanneer die bal aankom.",
+     b:"Hulle losskakel het plat hardlopers weerskante, op soek na die afgee. <b>Waar staan jy om dit toe te maak?</b>",
+     tip:"Om terug te sit voel veilig. Dis eintlik die uitnodiging waarop hy hoop.",
+     low:"Jy het terug van die lyn af gesit — hy het al die tyd in die wêreld om op te kyk en die afgee te vind voor iemand aan hom raak.",
+     high:"Jy het so ver opgestorm dat jy jou eie lyn verbygehardloop het — een eenvoudige aangee agter jou en jy is uit die spel uit.",
+     good:"Jy het reg op die voordeellyn gedruk, saam met jou lyn. Geen tyd om op te kyk nie, geen tyd vir die afgee nie."},
+  11:{t:"Hardloop Die Loklyn", p:"'n Lokhardloper se werk is nie om die bal te kry nie — dis om 'n verdediger besig te hou wat andersins die regte gaping kon toemaak.",
+     b:"Jou losskakel val 'n gaping aan. Daar is 'n spaar verdediger wat dit kan dek — tensy iemand hom eers vaspen. <b>Waar hardloop jy?</b>",
+     tip:"As jy jou eie lyn myle van enige verdediger af hardloop, hoef niemand hom oor jou te bekommer nie.",
+     low:"Jy het jou eie lyn gehardloop, ver van enige verdediger — niemand moes jou in ag neem nie, so die spaar man het oorgehardloop en die gaping op jou losskakel toegemaak.",
+     high:"Jy het so styf teen die losskrum gehardloop dat jy niemand hier buite bedreig het nie — dieselfde uitkoms, die spaar verdediger is los.",
+     good:"Jy het reguit op die spaar verdediger se binneskouer afgehardloop. Hy moes jou respekteer — wat beteken hy kon nie help nie, en die gaping het oop gebly."},
+  12:{t:"Skuif Na Die Gevaarkant", p:"Ná 'n omdraaibal moet die veër reeds na die ruimte toe skuif voor die deurbraak gebeur, nie daarop reageer nie.",
+     b:"Omdraaibal — hulle vleuel is weg teen die nabye kantlyn af. <b>Waar posisioneer jy om hom af te sny?</b>",
+     tip:"Om sentraal te bly 'vir ingeval' beteken jy is klaar te laat op hierdie een.",
+     low:"Jy het in die middel van die veld bly kampeer en 'n skop verwag — teen die tyd dat jy op die deurbraak reageer is hy klaar buite jou verby.",
+     high:"Jy het te vroeg op die kantlyn oorgeleun — as hy binnetoe teruggesny het, was daar ook niemand tuis nie.",
+     good:"Jy het reeds na die gevaarkant geskuif. Jy is heelpad in sy gesigsveld en sny sy hoek af."},
+  13:{t:"Lees Die Skarrel", p:"Ná 'n omdraaibal is die verdediging deurmekaar — maar net op een plek. Vind die werklike naat, nie die gewoonte-een nie.",
+     b:"Vinnige omdraaibal. Die verdediging het nie eweredig herstel nie. <b>Van waar af val jy aan?</b>",
+     tip:"Moenie uit gewoonte blinde kant toe gaan nie — gaan waar die prentjie regtig sê die ruimte is.",
+     low:"Jy het uit ou gewoonte na die saamgedromde kant toe gegaan — daar was geen ruimte nie, net liggame op mekaar gestapel.",
+     high:"Jy het so wyd gehardloop dat jy die een verspreide verdediger al die tyd gegee het wat hy nodig gehad het om oor te dryf en jou alleen te dek.",
+     good:"Jy het die prentjie gelees en die werklike naat aangeval — drie verdedigers saamgedrom aan een kant, ruimte en 'n wanpassing aan die ander."},
+  14:{t:"Vat Die Afsnyhoek", p:"'n Hopelose jaagtog hardloop na waar die baldraer is. 'n Werklike kans hardloop na waar hy gaan wees.",
+     b:"Die lyn is pas gebreek. Dit is die vriespunt-oomblik. <b>Waar plant jy jou volgende treë?</b>",
+     tip:"As jy reguit van agter af jaag, maak jy nooit 'n gaping toe nie. Jy het 'n hoek oor sy lyn nodig.",
+     low:"Jy het 'n plat lyn reguit agter hom gevat — jy gaan sy hakke jaag tot by die doellyn en die gaping nooit werklik toemaak nie.",
+     high:"Jy het so vroeg oorgesny dat jy jouself heeltemal uit die spel uit gehardloop het — as hy binnetoe teruggestap het, het jy hom klaar gemis.",
+     good:"Jy het die afsnyhoek vroeg gevat — elke treë bring jou nader in plaas daarvan dat jy net in sy stof volg."},
+  15:{t:"Lees Hulle Lynspoed", p:"Handboek-diepte werk net teen 'n handboek-verdediging. 'n Stormende lyn eis dat jy aanpas — die beginsel bly reg, die syfer verander.",
+     b:"Hierdie verdediging vlieg al van die lyn af op voor die bal eers uit is. <b>Waar staan jy dié keer?</b>",
+     tip:"Die 'normale' diepte wat vroeër gewerk het, laat jou ingesluk word teen 'n blits. Lees die spoed van die lyn voor jou, nie net die handboek-prentjie nie.",
+     low:"Jy het die diepte gebruik wat in Graad 8 gewerk het — maar hierdie lyn vlieg al op voor die bal uit is. Selfde diepte, vinniger storm, beteken jy is in elk geval ingesluk.",
+     high:"Jy het so diep gesak dat selfs 'n stormende lyn tyd gehad het om elke opsie te lees en toe te maak — diepte help net as jy die ekstra tyd regtig gebruik.",
+     good:"Jy het jouself ekstra diepte gegee om by hulle lynspoed te pas — presies genoeg tyd om die gaping te sien wat hulle agter die storm gelos het."},
+  16:{t:"Gebruik Die Kantlyn", p:"Geïsoleer een-teen-een naby die kantlyn is die lyn self 'n ekstra verdediger — as jy op die regte skouer staan.",
+     b:"Laaste verdediger, geïsoleer, regterkantlyn naby. <b>Waar staan jy om die duikslag te maak?</b>",
+     tip:"Om vierkantig voor hom te staan laat hom enige kant toe kies. Vat een opsie vir hom weg.",
+     low:"Jy het te ver binnekant gebly — jy het vir hom die hele wydte van die veld gelos, insluitend die maklike systappie buitentoe.",
+     high:"Jy het na sy buiteskouer gedryf — jy het pas die binnekant oopgemaak en hom die hele veld gegee om mee te werk.",
+     good:"Jy het sy binneskouer gehou. Die kantlyn doen nou die helfte van jou werk — hy het nêrens om te gaan behalwe daarin nie."}
+};
+function lvlTitle(l){ var a=LEVELS_AF[l.id]; return T(l.title, a&&a.t); }
+function lvlPrinciple(l){ var a=LEVELS_AF[l.id]; return T(l.principle, a&&a.p); }
+function lvlBrief(l){ var a=LEVELS_AF[l.id]; return T(l.brief, a&&a.b); }
+function lvlTip(l){ var a=LEVELS_AF[l.id]; return T(l.tip, a&&a.tip); }
+function lvlFeedback(l, dir){ var a=LEVELS_AF[l.id]; return T(l.feedback[dir], a&&a[dir]); }
+
 /* ============================== FREE PLAY DATA ============================== */
 
 var PHASES = [
-  {id:"scrum",   label:"Scrum",       icon:"⬛", desc:"Set piece, forwards packed down at the mark."},
-  {id:"lineout", label:"Lineout",     icon:"▤",  desc:"Throw-in from touch. The mark sits near whichever touchline you tapped closest to."},
-  {id:"ruck",    label:"Ruck",        icon:"●",  desc:"Ball on the deck at a breakdown, quick phase ball."},
-  {id:"tap",     label:"Penalty Tap", icon:"★",  desc:"Quick tap and go — the defence has to retreat 10m first."}
+  {id:"scrum",   label:"Scrum",       af:"Skrum",             icon:"⬛", desc:"Set piece, forwards packed down at the mark."},
+  {id:"lineout", label:"Lineout",     af:"Lynstaan",          icon:"▤",  desc:"Throw-in from touch. The mark sits near whichever touchline you tapped closest to."},
+  {id:"ruck",    label:"Ruck",        af:"Losskrum",          icon:"●",  desc:"Ball on the deck at a breakdown, quick phase ball."},
+  {id:"tap",     label:"Penalty Tap", af:"Vinnige Strafskop", icon:"★",  desc:"Quick tap and go — the defence has to retreat 10m first."}
 ];
+function phaseLabel(p){ return T(p.label, p.af); }
 var FREE_ROLES = [
-  {key:"9",  label:"Scrumhalf", group:"back"},
-  {key:"10", label:"Fly-half", group:"back"},
-  {key:"11", label:"Left Wing", group:"back"},
-  {key:"12", label:"Inside Centre", group:"back"},
-  {key:"13", label:"Outside Centre", group:"back"},
-  {key:"14", label:"Right Wing", group:"back"},
-  {key:"15", label:"Fullback", group:"back"},
-  {key:"1",  label:"Loosehead Prop", group:"forward"},
-  {key:"2",  label:"Hooker", group:"forward"},
-  {key:"3",  label:"Tighthead Prop", group:"forward"},
-  {key:"4",  label:"Lock", group:"forward"},
-  {key:"5",  label:"Lock", group:"forward"},
-  {key:"6",  label:"Blindside Flanker", group:"forward"},
-  {key:"7",  label:"Openside Flanker", group:"forward"},
-  {key:"8",  label:"Number 8", group:"forward"}
+  {key:"9",  label:"Scrumhalf",         af:"Skrumskakel",    group:"back"},
+  {key:"10", label:"Fly-half",          af:"Losskakel",      group:"back"},
+  {key:"11", label:"Left Wing",         af:"Linkervleuel",   group:"back"},
+  {key:"12", label:"Inside Centre",     af:"Binnesenter",    group:"back"},
+  {key:"13", label:"Outside Centre",    af:"Buitesenter",    group:"back"},
+  {key:"14", label:"Right Wing",        af:"Regtervleuel",   group:"back"},
+  {key:"15", label:"Fullback",          af:"Heelagter",      group:"back"},
+  {key:"1",  label:"Loosehead Prop",    af:"Loskopstut",     group:"forward"},
+  {key:"2",  label:"Hooker",            af:"Haker",          group:"forward"},
+  {key:"3",  label:"Tighthead Prop",    af:"Vaskopstut",     group:"forward"},
+  {key:"4",  label:"Lock",              af:"Slot",           group:"forward"},
+  {key:"5",  label:"Lock",              af:"Slot",           group:"forward"},
+  {key:"6",  label:"Blindside Flanker", af:"Blindekantflank",group:"forward"},
+  {key:"7",  label:"Openside Flanker",  af:"Oopkantflank",   group:"forward"},
+  {key:"8",  label:"Number 8",          af:"Agsteman",       group:"forward"}
 ];
+function roleLabel(r){ return T(r.label, r.af); }
 // Backline shape relative to the ball, attacking toward +y with the open side at +x
 // (dx is flipped by openDir at generation). aDy = attack depth (behind the ball,
 // diagonal pocket alignment); dDy = defense offset (in front of the ball).
@@ -810,6 +960,24 @@ function loadProgress(){
 function saveProgress(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); }catch(e){} }
 var progress = loadProgress();
 
+/* ---------- profile: player name + language ---------- */
+var PROFILE_KEY = "gapking_profile_v1";
+var profile = (function(){
+  try{ var r = localStorage.getItem(PROFILE_KEY); if(r) return JSON.parse(r); }catch(e){}
+  return {name:"", lang:"en"};
+})();
+function saveProfile(){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }catch(e){} }
+function T(en, af){ return profile.lang==="af" && af ? af : en; }
+function playerName(){ return (profile.name||"").trim().slice(0,12) || T("YOU","JY"); }
+
+/* ---------- saved plays ---------- */
+var PLAYS_KEY = "gapking_plays_v1";
+var savedPlays = (function(){
+  try{ var r = localStorage.getItem(PLAYS_KEY); if(r) return JSON.parse(r); }catch(e){}
+  return [];
+})();
+function savePlays(){ try{ localStorage.setItem(PLAYS_KEY, JSON.stringify(savedPlays)); }catch(e){} }
+
 function starsFor(levelId){ return progress.stars[levelId]||0; }
 function totalStars(){ var t=0; for(var k in progress.stars) t+=progress.stars[k]; return t; }
 function bandLevels(bandId){ return LEVELS.filter(function(l){return l.band===bandId;}); }
@@ -828,12 +996,12 @@ function levelUnlocked(level){
   return starsFor(levels[idx-1].id) > 0;
 }
 var RANKS = [
-  {min:0,name:"Water Boy"},
-  {min:6,name:"Schoolboy Rookie"},
-  {min:14,name:"Club Player"},
-  {min:24,name:"Provincial Trialist"},
-  {min:34,name:"Junior Bok"},
-  {min:44,name:"Gap King"}
+  {min:0,name:"Water Boy",nameAf:"Waterdraer"},
+  {min:6,name:"Schoolboy Rookie",nameAf:"Skoolseun Groentjie"},
+  {min:14,name:"Club Player",nameAf:"Klubspeler"},
+  {min:24,name:"Provincial Trialist",nameAf:"Provinsiale Proefspeler"},
+  {min:34,name:"Junior Bok",nameAf:"Junior Bok"},
+  {min:44,name:"Gap King",nameAf:"Gaping-Koning"}
 ];
 function currentRank(){
   var t = totalStars(), r = RANKS[0];
@@ -844,20 +1012,72 @@ function currentRank(){
 /* ============================== NAVIGATION ============================== */
 
 var screens = {};
-["home","levels","play","glossary","field"].forEach(function(id){ screens[id]=document.getElementById("screen-"+id); });
+["home","levels","play","glossary","field","plays"].forEach(function(id){ screens[id]=document.getElementById("screen-"+id); });
 var currentBandId = 1;
 var currentLevel = null;
 
 function showScreen(name){
   Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); });
-  if(name!=="play") stopPlayLoop();
+  if(name!=="play"){ stopPlayLoop(); closeSheet(); }
   if(name!=="field") stopFieldLoop();
+}
+
+/* static-DOM language application */
+function applyStaticLang(){
+  function set(id, en, af){ var el=document.getElementById(id); if(el) el.textContent = T(en, af); }
+  set("ctaFreeTitle","Free Play","Vrye Spel");
+  set("ctaFreeDesc","Tap anywhere on the field — scrum, lineout, ruck or penalty tap. The game builds the scenario.",
+      "Tik enige plek op die veld — skrum, lynstaan, losskrum of vinnige strafskop. Die spel bou die scenario.");
+  set("ctaPlaysTitle","My Plays","My Spelplanne");
+  set("ctaPlaysDesc","Your saved plays — practise them against different defensive looks.",
+      "Jou gestoorde spelplanne — oefen hulle teen verskillende verdedigingstyle.");
+  set("lblAcademy","Training Academy","Oefenakademie");
+  set("btnGlossary","Coach's Corner","Afrigter se Hoekie");
+  set("btnReset","Reset Progress","Herstel Vordering");
+  document.getElementById("btnPlayerName").textContent = "✎ " + T("Player Name","Spelernaam");
+  document.getElementById("btnLang").textContent = profile.lang==="af" ? "🌍 English" : "🌍 Afrikaans";
+  set("playsEyebrow","Playbook","Spelplanboek");
+  set("playsTitle","My Plays","My Spelplanne");
+  set("glossEyebrow","Coach's Corner","Afrigter se Hoekie");
+  set("glossTitle","Rugby IQ","Rugby-IK");
+  set("nameCancel","Cancel","Kanselleer");
+  set("nameConfirm","Save","Stoor");
+  var hero = document.querySelector(".hero .kicker");
+  if(hero) hero.textContent = T("Rugby Positioning Academy","Rugby Posisionering Akademie");
+  var heroP = document.querySelector(".hero p");
+  if(heroP) heroP.textContent = T("Pick your spot on the field. Watch the phase play out. Learn to see space before it opens — and close it before it does.",
+    "Kies jou plek op die veld. Kyk hoe die fase uitspeel. Leer om ruimte te sien voor dit oopgaan — en om dit toe te maak voor dit gebeur.");
+  var fieldTitle = document.querySelector("#screen-field .h-title h1");
+  if(fieldTitle) fieldTitle.textContent = T("Tap Where It's Happening","Tik Waar Dit Gebeur");
+  var fieldEyebrow = document.querySelector("#screen-field .h-title .eyebrow");
+  if(fieldEyebrow) fieldEyebrow.textContent = T("Free Play","Vrye Spel");
+  var fieldBrief = document.querySelector("#screen-field .play-meta .brief");
+  if(fieldBrief) fieldBrief.textContent = T("Tap anywhere on the field to drop a mark, then choose what's happening there.",
+    "Tik enige plek op die veld om 'n merk te sit, kies dan wat daar gebeur.");
+  var fieldHint = document.getElementById("fieldHint");
+  if(fieldHint) fieldHint.textContent = T("Tap the field to set a mark","Tik op die veld om 'n merk te sit");
+  set("btnHeatmap","◐ Space Map","◐ Ruimtekaart");
+  set("btnTip","? Coach Tip","? Afrigter-wenk");
+  set("btnRetry","Retry","Probeer Weer");
+  var setupLabels = document.querySelectorAll("#fieldSheet .setup-label");
+  if(setupLabels.length>=3){
+    setupLabels[0].textContent = T("What's happening here?","Wat gebeur hier?");
+    setupLabels[1].textContent = T("Whose ball is it?","Wie se bal is dit?");
+    setupLabels[2].textContent = T("Which position are you playing?","Watter posisie speel jy?");
+  }
+  var subLabels = document.querySelectorAll("#fieldSheet .setup-sublabel");
+  if(subLabels.length>=2){
+    subLabels[0].textContent = T("Backs","Agterspelers");
+    subLabels[1].textContent = T("Forwards","Voorspelers");
+  }
+  set("btnCancelSetup","Cancel","Kanselleer");
+  set("btnBuildScenario","Set Up The Play","Stel Die Spel Op");
 }
 
 function renderHome(){
   var r = currentRank();
-  document.getElementById("rankName").textContent = r.name;
-  document.getElementById("rankStars").textContent = totalStars() + " / " + (LEVELS.length*3) + " stars earned";
+  document.getElementById("rankName").textContent = T(r.name, r.nameAf);
+  document.getElementById("rankStars").textContent = totalStars() + " / " + (LEVELS.length*3) + " " + T("stars earned","sterre verdien");
   var ladder = document.getElementById("ladder");
   ladder.innerHTML = "";
   BANDS.forEach(function(b){
@@ -869,20 +1089,26 @@ function renderHome(){
     card.innerHTML =
       '<div class="band-num">'+String(b.id).padStart(2,"0")+'</div>'+
       '<div class="band-body">'+
-        '<div class="age">'+b.age+'</div>'+
-        '<h3>'+b.name+'</h3>'+
+        '<div class="age">'+bandAge(b)+'</div>'+
+        '<h3>'+bandName(b)+'</h3>'+
         '<div class="band-progress"><i style="width:'+Math.round(100*st/max)+'%"></i></div>'+
       '</div>'+
       '<div class="band-lock">'+(unlocked? (st===max?"✓":"›") : "🔒")+'</div>';
     card.addEventListener("click", function(){ if(unlocked){ currentBandId=b.id; openLevelList(b.id);} });
     ladder.appendChild(card);
   });
+  applyStaticLang();
+}
+
+function roleLabelByKey(key){
+  var r = FREE_ROLES.filter(function(x){return x.key===key;})[0];
+  return r ? roleLabel(r) : key;
 }
 
 function openLevelList(bandId){
   var band = BANDS.filter(function(b){return b.id===bandId;})[0];
-  document.getElementById("bandAge").textContent = band.age;
-  document.getElementById("bandTitle").textContent = band.name;
+  document.getElementById("bandAge").textContent = bandAge(band);
+  document.getElementById("bandTitle").textContent = bandName(band);
   var list = document.getElementById("levelList");
   list.innerHTML = "";
   var levels = bandLevels(bandId);
@@ -893,12 +1119,13 @@ function openLevelList(bandId){
     card.className = "level-card"+(unlocked?"":" locked");
     var starsHtml = "";
     for(var i=1;i<=3;i++) starsHtml += '<span class="star'+(i<=st?" on":"")+'">★</span>';
+    var modeTxt = l.mode==="attack" ? T("attack","aanval") : T("defense","verdedig");
     card.innerHTML =
       '<div class="level-badge">L'+l.id+'</div>'+
       '<div class="level-info">'+
-        '<div class="row1"><span class="pill pill-'+l.mode+'">'+l.mode+'</span><span class="stars">'+starsHtml+'</span></div>'+
-        '<h4>'+l.title+'</h4>'+
-        '<p>'+l.role+' — '+l.principle+'</p>'+
+        '<div class="row1"><span class="pill pill-'+l.mode+'">'+modeTxt+'</span><span class="stars">'+starsHtml+'</span></div>'+
+        '<h4>'+lvlTitle(l)+'</h4>'+
+        '<p>'+l.role+' — '+lvlPrinciple(l)+'</p>'+
       '</div>'+
       (unlocked? '' : '<div class="level-lock-icon">🔒</div>');
     card.addEventListener("click", function(){ if(levelUnlocked(l)) openPlay(l); });
@@ -911,12 +1138,13 @@ document.getElementById("backFromLevels").addEventListener("click", function(){ 
 document.getElementById("btnGlossary").addEventListener("click", openGlossary);
 document.getElementById("backFromGlossary").addEventListener("click", function(){ showScreen("home"); });
 document.getElementById("btnReset").addEventListener("click", function(){
-  if(confirm("Reset all progress? This clears every star.")){
+  if(confirm(T("Reset all progress? This clears every star.","Herstel alle vordering? Dit vee elke ster uit."))){
     progress = {stars:{}}; saveProgress(); renderHome();
   }
 });
 document.getElementById("backFromPlay").addEventListener("click", function(){
-  if(currentLevel && currentLevel.dynamic){ showScreen("field"); resizeFieldCanvas(); startFieldLoop(); }
+  if(currentLevel && currentLevel.fromPlaybook){ openMyPlays(); }
+  else if(currentLevel && currentLevel.dynamic){ showScreen("field"); resizeFieldCanvas(); startFieldLoop(); }
   else { openLevelList(currentLevel.band); }
 });
 
@@ -926,11 +1154,121 @@ function openGlossary(){
   GLOSSARY.forEach(function(g){
     var el = document.createElement("div");
     el.className = "glossary-item";
-    el.innerHTML = "<h4>"+g.t+"</h4><p>"+g.d+"</p>";
+    el.innerHTML = "<h4>"+T(g.t,g.tAf)+"</h4><p>"+T(g.d,g.dAf)+"</p>";
     list.appendChild(el);
   });
   showScreen("glossary");
 }
+
+/* ---------- name input sheet (player name / play name) ---------- */
+var nameSheetCb = null;
+function askName(title, initial, cb){
+  document.getElementById("nameSheetTitle").textContent = title;
+  var inp = document.getElementById("nameInput");
+  inp.value = initial || "";
+  nameSheetCb = cb;
+  document.getElementById("nameBackdrop").classList.add("show");
+  document.getElementById("nameSheet").classList.add("show");
+  setTimeout(function(){ inp.focus(); }, 250);
+}
+function closeNameSheet(){
+  document.getElementById("nameBackdrop").classList.remove("show");
+  document.getElementById("nameSheet").classList.remove("show");
+  nameSheetCb = null;
+}
+document.getElementById("nameBackdrop").addEventListener("click", closeNameSheet);
+document.getElementById("nameCancel").addEventListener("click", closeNameSheet);
+document.getElementById("nameConfirm").addEventListener("click", function(){
+  var v = document.getElementById("nameInput").value.trim();
+  var cb = nameSheetCb;
+  closeNameSheet();
+  if(cb) cb(v);
+});
+document.getElementById("nameInput").addEventListener("keydown", function(e){
+  if(e.key==="Enter") document.getElementById("nameConfirm").click();
+});
+
+document.getElementById("btnPlayerName").addEventListener("click", function(){
+  askName(T("What's your name, champ?","Wat's jou naam, kampioen?"), profile.name, function(v){
+    profile.name = v.slice(0,12);
+    saveProfile();
+    renderHome();
+  });
+});
+document.getElementById("btnLang").addEventListener("click", function(){
+  profile.lang = profile.lang==="af" ? "en" : "af";
+  saveProfile();
+  renderHome();
+});
+
+/* ---------- My Plays ---------- */
+function openMyPlays(){
+  var list = document.getElementById("playsList");
+  list.innerHTML = "";
+  if(!savedPlays.length){
+    var empty = document.createElement("div");
+    empty.className = "empty-note";
+    empty.textContent = T("No saved plays yet. Set one up in Free Play, then tap 💾 to save it.",
+                          "Nog geen spelplanne gestoor nie. Stel een op in Vrye Spel, tik dan 💾 om te stoor.");
+    list.appendChild(empty);
+  }
+  savedPlays.forEach(function(p){
+    var lvl = p.lvl;
+    var texts = dynamicTexts(lvl);
+    var card = document.createElement("button");
+    card.className = "level-card";
+    var modeTxt = lvl.userSide==="attack" ? T("attack","aanval") : T("defense","verdedig");
+    card.innerHTML =
+      '<div class="level-badge">🏉</div>'+
+      '<div class="level-info">'+
+        '<div class="row1"><span class="pill pill-'+(lvl.userSide==="attack"?"attack":"defense")+'">'+modeTxt+'</span></div>'+
+        '<h4>'+p.name.replace(/</g,"&lt;")+'</h4>'+
+        '<p>'+texts.title+' · '+texts.fieldTag+'</p>'+
+      '</div>';
+    var del = document.createElement("button");
+    del.className = "play-del";
+    del.textContent = "🗑";
+    del.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      if(confirm(T("Delete this play?","Vee hierdie spelplan uit?"))){
+        savedPlays = savedPlays.filter(function(x){return x.id!==p.id;});
+        savePlays(); openMyPlays();
+      }
+    });
+    card.appendChild(del);
+    card.addEventListener("click", function(){
+      var copy = JSON.parse(JSON.stringify(lvl));
+      copy.fromPlaybook = true;
+      copy.playName = p.name;
+      openPlay(copy);
+    });
+    list.appendChild(card);
+  });
+  applyStaticLang();
+  showScreen("plays");
+}
+document.getElementById("btnMyPlays").addEventListener("click", openMyPlays);
+document.getElementById("backFromPlays").addEventListener("click", function(){ renderHome(); showScreen("home"); });
+
+document.getElementById("btnSavePlay").addEventListener("click", function(){
+  if(!currentLevel || !currentLevel.dynamic) return;
+  askName(T("Name this play","Gee hierdie spelplan 'n naam"), currentLevel.playName||"", function(v){
+    if(!v) return;
+    var eff = effectiveTeamPositions(currentLevel, userPos);
+    var lvl = JSON.parse(JSON.stringify(currentLevel));
+    lvl.attack = eff.attack;
+    lvl.defense = eff.defense;
+    lvl.userBase = {x:userPos.x, y:userPos.y};
+    var holder = lvl.attack.filter(function(a){return a.isCarrier;})[0];
+    if(holder){ lvl.ball = {x:holder.x, y:holder.y}; }
+    delete lvl.fromPlaybook;
+    savedPlays.push({id:Date.now(), name:v.slice(0,24), lvl:lvl});
+    savePlays();
+    var chip = document.getElementById("btnSavePlay");
+    chip.textContent = "✓";
+    setTimeout(function(){ chip.textContent = "💾"; }, 1200);
+  });
+});
 
 /* ============================== GEOMETRY / ENGINE ============================== */
 
@@ -1116,14 +1454,14 @@ function drawPitch(level){
   ctx.setLineDash([]);
   ctx.fillStyle="rgba(227,180,60,0.75)";
   ctx.font=(10*dpr)+"px "+getFontMono();
-  ctx.fillText("GAIN LINE", rl1.x+4*dpr, rl1.y-4*dpr);
+  ctx.fillText(T("GAIN LINE","VOORDEELLYN"), rl1.x+4*dpr, rl1.y-4*dpr);
   // try line
   if(level.showTryLine){
     var tly1=toScreen({x:-PITCH_W/2,y:level.tryLineY}), tly2=toScreen({x:PITCH_W/2,y:level.tryLineY});
     ctx.strokeStyle="rgba(214,86,79,0.7)"; ctx.lineWidth=2.4*dpr;
     ctx.beginPath(); ctx.moveTo(tly1.x,tly1.y); ctx.lineTo(tly2.x,tly2.y); ctx.stroke();
     ctx.fillStyle="rgba(214,86,79,0.85)";
-    ctx.fillText("TRY LINE", tly1.x+4*dpr, tly1.y-4*dpr);
+    ctx.fillText(T("TRY LINE","DOELLYN"), tly1.x+4*dpr, tly1.y-4*dpr);
     drawGoalPosts(tly1, tly2);
   }
   // own try line (pressure cue when pinned deep)
@@ -1132,7 +1470,7 @@ function drawPitch(level){
     ctx.strokeStyle="rgba(214,86,79,0.55)"; ctx.lineWidth=2.2*dpr;
     ctx.beginPath(); ctx.moveTo(oty1.x,oty1.y); ctx.lineTo(oty2.x,oty2.y); ctx.stroke();
     ctx.fillStyle="rgba(214,86,79,0.7)";
-    ctx.fillText("YOUR LINE", oty1.x+4*dpr, oty1.y+13*dpr);
+    ctx.fillText(T("YOUR LINE","JOU LYN"), oty1.x+4*dpr, oty1.y+13*dpr);
     drawGoalPosts(oty1, oty2);
   }
   // vignette
@@ -1189,35 +1527,77 @@ function drawBall(pt){
   ctx.restore();
 }
 
+// Little rugby players instead of abstract circles: head + shoulders + jersey with
+// the number on the back, viewed from above-behind like a broadcast angle.
 function drawToken(pt, opts){
   opts = opts||{};
   var s = toScreen(pt);
-  var r = (opts.user? 15 : (opts.small? 8.5 : 12))*dpr;
+  var sc = (opts.user? 1.18 : (opts.small? 0.76 : 1)) * dpr;
+  var running = (playState==="simulating");
+  var phase = performance.now()/95 + (pt.x*13 + pt.y*7);
+  var sway = running ? Math.sin(phase)*1.1*sc : 0;
+  var bob  = running ? Math.abs(Math.cos(phase))*0.9*sc : 0;
+  var cx = s.x, cy = s.y - bob;
+
+  // shadow
+  ctx.beginPath();
+  ctx.ellipse(s.x, s.y+8*sc, 8.5*sc, 3.2*sc, 0, 0, Math.PI*2);
+  ctx.fillStyle="rgba(0,0,0,0.30)"; ctx.fill();
+
   if(opts.user){
-    var pulse = 1 + 0.12*Math.sin(performance.now()/260);
+    var pulse = 1 + 0.10*Math.sin(performance.now()/260);
     ctx.beginPath();
-    ctx.arc(s.x,s.y, r*1.55*pulse, 0, Math.PI*2);
+    ctx.arc(s.x, s.y, 17*sc*pulse, 0, Math.PI*2);
     ctx.strokeStyle = "rgba(255,211,92,0.55)"; ctx.lineWidth=2*dpr; ctx.stroke();
   }
-  ctx.beginPath();
-  ctx.arc(s.x,s.y,r,0,Math.PI*2);
-  ctx.fillStyle = opts.user ? "#ffd35c" : (opts.side==="attack" ? "#e3b43c" : "#c0524b");
-  ctx.fill();
-  ctx.lineWidth=1.6*dpr;
-  ctx.strokeStyle = opts.user ? "#2a2005" : "rgba(0,0,0,0.35)";
-  ctx.stroke();
   if(opts.carrier){
-    ctx.beginPath(); ctx.arc(s.x,s.y,r+4*dpr,0,Math.PI*2);
-    ctx.strokeStyle="rgba(255,255,255,0.8)"; ctx.lineWidth=1.6*dpr; ctx.setLineDash([3*dpr,3*dpr]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(s.x, s.y, 14.5*sc, 0, Math.PI*2);
+    ctx.strokeStyle="rgba(255,255,255,0.85)"; ctx.lineWidth=1.6*dpr;
+    ctx.setLineDash([3*dpr,3*dpr]); ctx.stroke(); ctx.setLineDash([]);
   }
-  ctx.fillStyle = opts.user ? "#231a06" : "#160f06";
-  ctx.font = "700 "+((opts.user?10.5:(opts.small?8.5:10.5))*dpr)+"px "+getFontMono();
+
+  var jersey = opts.user ? "#ffd35c" : (opts.side==="attack" ? "#e3b43c" : "#c0524b");
+  var jerseyDark = opts.user ? "#c79a2e" : (opts.side==="attack" ? "#a97f24" : "#8c3a35");
+  var edge = opts.user ? "#2a2005" : "rgba(0,0,0,0.4)";
+
+  // arms (swing opposite each other while running)
+  ctx.fillStyle = jerseyDark;
+  ctx.beginPath(); ctx.ellipse(cx-8*sc, cy+1*sc + sway*0.8, 3*sc, 4.4*sc, -0.35, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+8*sc, cy+1*sc - sway*0.8, 3*sc, 4.4*sc, 0.35, 0, Math.PI*2); ctx.fill();
+
+  // torso jersey (shoulders wider than waist)
+  var grad = ctx.createLinearGradient(cx, cy-7*sc, cx, cy+8*sc);
+  grad.addColorStop(0, jersey); grad.addColorStop(1, jerseyDark);
+  ctx.beginPath();
+  ctx.moveTo(cx-7.5*sc, cy-5*sc);
+  ctx.quadraticCurveTo(cx, cy-8.5*sc, cx+7.5*sc, cy-5*sc);
+  ctx.quadraticCurveTo(cx+6.5*sc, cy+7*sc, cx, cy+8*sc);
+  ctx.quadraticCurveTo(cx-6.5*sc, cy+7*sc, cx-7.5*sc, cy-5*sc);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.lineWidth = 1.3*dpr; ctx.strokeStyle = edge; ctx.stroke();
+
+  // head above the collar
+  ctx.beginPath(); ctx.arc(cx + sway*0.4, cy-9.5*sc, 4.2*sc, 0, Math.PI*2);
+  ctx.fillStyle = "#caa07d"; ctx.fill();
+  ctx.lineWidth = 1*dpr; ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.stroke();
+  // hair
+  ctx.beginPath(); ctx.arc(cx + sway*0.4, cy-10.3*sc, 3.4*sc, Math.PI*1.05, Math.PI*1.95);
+  ctx.strokeStyle = "#3a2a1a"; ctx.lineWidth = 2.2*sc; ctx.stroke();
+
+  // number on the jersey
+  ctx.fillStyle = opts.user ? "#231a06" : "rgba(20,12,4,0.9)";
+  ctx.font = "800 "+(8.5*sc)+"px "+getFontMono();
   ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText(opts.label||"", s.x, s.y+0.5*dpr);
+  ctx.fillText(opts.label||"", cx, cy+1.5*sc);
+
   if(opts.user){
+    var nm = playerName().toUpperCase();
     ctx.fillStyle="#ffd35c";
-    ctx.font="700 "+(9*dpr)+"px "+getFontMono();
-    ctx.fillText("YOU", s.x, s.y - r - 8*dpr);
+    ctx.font="800 "+(9*dpr)+"px "+getFontMono();
+    ctx.strokeStyle="rgba(0,0,0,0.55)"; ctx.lineWidth=3*dpr; ctx.lineJoin="round";
+    ctx.strokeText(nm, s.x, cy - 19*sc);
+    ctx.fillText(nm, s.x, cy - 19*sc);
   }
 }
 
@@ -1234,33 +1614,46 @@ function drawOptimalZone(o, show){
 
 function fieldBadgeText(distOwn, distOpp, distTouch){
   var zone;
-  if(distOpp<5) zone = "5M OUT";
-  else if(distOwn<5) zone = "OWN 5M";
-  else if(distOpp<22) zone = "THEIR 22";
-  else if(distOwn<22) zone = "OWN 22";
-  else if(distOwn<50) zone = "OWN HALF";
-  else zone = "THEIR HALF";
-  return zone + (distTouch<13 ? " · NEAR TOUCH" : "");
+  if(distOpp<5) zone = T("5M OUT","5M UIT");
+  else if(distOwn<5) zone = T("OWN 5M","EIE 5M");
+  else if(distOpp<22) zone = T("THEIR 22","HUL 22");
+  else if(distOwn<22) zone = T("OWN 22","EIE 22");
+  else if(distOwn<50) zone = T("OWN HALF","EIE HELFTE");
+  else zone = T("THEIR HALF","HUL HELFTE");
+  return zone + (distTouch<13 ? T(" · NEAR TOUCH"," · NABY KANTLYN") : "");
 }
 
 function phaseDescription(phaseId, side, fieldTag){
-  var whose = side==="attack" ? "Your ball." : "Their ball.";
-  var phaseText = {scrum:"Scrum feeds in.", lineout:"Throw goes up.", ruck:"Ball's on the deck.", tap:"Quick tap and go."}[phaseId] || "";
-  return whose+" "+phaseText+" <b>"+fieldTag+".</b> Where do you stand?";
+  var whose = side==="attack" ? T("Your ball.","Julle bal.") : T("Their ball.","Hulle bal.");
+  var phaseText = {
+    scrum: T("Scrum feeds in.","Skrum voer in."),
+    lineout: T("Throw goes up.","Ingooi gaan op."),
+    ruck: T("Ball's on the deck.","Bal is op die grond."),
+    tap: T("Quick tap and go.","Vinnige tik en hardloop.")
+  }[phaseId] || "";
+  return whose+" "+phaseText+" <b>"+fieldTag+".</b> "+T("Where do you stand?","Waar staan jy?");
 }
 
 function phaseTip(phaseId, side, redZone, ownRedZone, nearTouch){
   if(phaseId==="tap") return side==="attack"
-    ? "The defence must retreat 10m from the mark before they can move up. That gap is real — use it before it closes."
-    : "You have to retreat a full 10m from the mark before you can defend it. Creep in early and it's another penalty.";
+    ? T("The defence must retreat 10m from the mark before they can move up. That gap is real — use it before it closes.",
+        "Die verdediging moet 10m van die merk af terugval voor hulle mag opbeweeg. Daardie gaping is eg — gebruik dit voor dit toemaak.")
+    : T("You have to retreat a full 10m from the mark before you can defend it. Creep in early and it's another penalty.",
+        "Jy moet 'n volle 10m van die merk af terugval voor jy mag verdedig. Kruip vroeg in en dis nog 'n strafskop.");
   if(redZone) return side==="attack"
-    ? "Right on their line, space is tight and defenders are stacked. Small, sharp decisions matter more than a big move."
-    : "Defending your own line, there's no space in behind you — line speed matters more than depth here.";
+    ? T("Right on their line, space is tight and defenders are stacked. Small, sharp decisions matter more than a big move.",
+        "Reg op hulle lyn is ruimte skaars en verdedigers opgestapel. Klein, skerp besluite tel meer as een groot skuif.")
+    : T("Defending your own line, there's no space in behind you — line speed matters more than depth here.",
+        "As jy jou eie lyn verdedig, is daar geen ruimte agter jou nie — lynspoed tel hier meer as diepte.");
   if(ownRedZone) return side==="attack"
-    ? "Pinned in your own 22, the defence can afford to rush hard because there's nothing to exploit in behind them."
-    : "They're pinned deep in their own 22 — press up hard, there's no space in behind you to worry about.";
-  if(nearTouch) return "Close to touch, the short side is tight. Don't leave it uncovered out of habit.";
-  return "Read the picture in front of you and back your instinct.";
+    ? T("Pinned in your own 22, the defence can afford to rush hard because there's nothing to exploit in behind them.",
+        "Vasgepen in jou eie 22 kan die verdediging bekostig om hard te storm, want daar is niks agter hulle om te ontgin nie.")
+    : T("They're pinned deep in their own 22 — press up hard, there's no space in behind you to worry about.",
+        "Hulle is diep in hul eie 22 vasgepen — druk hard op, daar is geen ruimte agter jou om oor te bekommer nie.");
+  if(nearTouch) return T("Close to touch, the short side is tight. Don't leave it uncovered out of habit.",
+                         "Naby die kantlyn is die kort kant nou. Moenie dit uit gewoonte oop los nie.");
+  return T("Read the picture in front of you and back your instinct.",
+           "Lees die prentjie voor jou en vertrou jou instink.");
 }
 
 function generateFreeplayScenario(phaseId, fieldPt, side, roleKey){
@@ -1403,13 +1796,26 @@ function generateFreeplayScenario(phaseId, fieldPt, side, roleKey){
     userIsCarrier: side==="attack" && role.key==="9",
     userBase: {x:userObj.x, y:userObj.y},
     openDir: openDir, fbJoinsLine: fbJoinsLine,
-    title: phase.label+" — "+role.label,
-    brief: phaseDescription(phaseId, side, fieldTag),
-    tip: phaseTip(phaseId, side, redZone, ownRedZone, nearTouch),
+    tagData: {distOwn:distOwn, distOpp:distOpp, distTouch:distTouch, redZone:redZone, ownRedZone:ownRedZone, nearTouch:nearTouch},
     referenceY: refY, showTryLine: showTryLine, tryLineY: tryLineY,
     showOwnTryLine: showOwnTryLine, ownTryLineY: ownTryLineY,
     ball: {x:ball.x, y:ball.y}, attack: attack, defense: defense,
     offsideY: offsideY, fieldTag: fieldTag
+  };
+}
+
+// Dynamic scenario text is built at display time so language switches (and saved
+// plays opened later) always render in the current language.
+function dynamicTexts(level){
+  var td = level.tagData || {distOwn:50, distOpp:50, distTouch:35, redZone:false, ownRedZone:false, nearTouch:false};
+  var phase = PHASES.filter(function(p){return p.id===level.phase;})[0] || PHASES[2];
+  var role = FREE_ROLES.filter(function(r){return r.key===level.roleKey;})[0] || FREE_ROLES[1];
+  var tag = fieldBadgeText(td.distOwn, td.distOpp, td.distTouch);
+  return {
+    title: phaseLabel(phase)+" — "+roleLabel(role),
+    brief: phaseDescription(level.phase, level.userSide, tag),
+    tip: phaseTip(level.phase, level.userSide, td.redZone, td.ownRedZone, td.nearTouch),
+    fieldTag: tag
   };
 }
 
@@ -1418,7 +1824,7 @@ function generateFreeplayScenario(phaseId, fieldPt, side, roleKey){
 // "line" = the complete backline translates rigidly with you.
 var dragMode = "team";
 var DRAG_MODES = ["me","team","line"];
-var DRAG_MODE_LABELS = {me:"⇢ Drag: Me", team:"⇄ Drag: Team", line:"⇶ Drag: Line"};
+function dragModeLabel(m){ return {me:"⇢ "+T("Drag: Me","Sleep: Ek"), team:"⇄ "+T("Drag: Team","Sleep: Span"), line:"⇶ "+T("Drag: Line","Sleep: Lyn")}[m]; }
 function effectiveTeamPositions(level, uPos){
   var d = {x:uPos.x - level.userBase.x, y:uPos.y - level.userBase.y};
   var userIsAtk = level.userSide==="attack";
@@ -1457,23 +1863,40 @@ function checkOffside(level, userPos){
 }
 
 /* ---------- passing-chain phase engine ---------- */
+var COMMENTARY_AF = {
+  start: ["Bal is weg van die basis af...", "9 grawe dit uit — hier gaan ons...", "Vinnige bal — die agterspelers beweeg..."],
+  pass: ["{a} na {b}", "{a} gooi dit vir {b}", "vinnige hande — {a} kry {b}", "{a} → {b}, al langs die lyn"],
+  brk: ["HY'S DEUR DIE GAPING!", "Deur die gat — hy's weg!", "DIE LYN IS GEBREEK!"],
+  sprint: ["hy sien die gaping en kies koers!", "hy trek vol vaart los!"],
+  tackle: ["platgevat deur {t}", "groot duikslag van {t}!", "{t} pluk hom plat", "{t} maak die deur toe"],
+  tryScored: ["DRIE!!!", "DRIE! Wat 'n afronding!", "DRIE — daar duik hy oor!"],
+  touch: ["in die kantlyn gedruk", "uitgedruk — in die kantlyn"],
+  blitz: ["Hulle storm op — BLITSVERDEDIGING!"],
+  driftD: ["Die verdediging dryf oor..."],
+  blind: ["Hulle draai na die blinde kant!"]
+};
 var COMMENTARY = {
   start: ["Ball's away from the base...", "9 digs it out — here we go...", "Quick ball — the backs are moving..."],
   pass: ["{a} to {b}", "{a} ships it to {b}", "quick hands — {a} finds {b}", "{a} → {b}, along the line"],
   brk: ["HE'S THROUGH THE GAP!", "Through the hole — he's away!", "The line is BROKEN!"],
   sprint: ["he sees the space and goes!", "he pins his ears back!"],
+  blitz: ["They're rushing up — BLITZ defence!"],
+  driftD: ["The defence is drifting across..."],
+  blind: ["They switch it to the blind side!"],
   tackle: ["wrapped up by {t}", "big hit from {t}!", "{t} drags him down", "{t} closes the door"],
   tryScored: ["TRY!!!", "TRY! What a finish!", "TRY — in they go!"],
   touch: ["bundled into touch", "shepherded out — into touch"]
 };
-function pickLine(arr, a, b){
-  var s = arr[Math.floor(Math.random()*arr.length)];
+function pickLine(key, a, b){
+  var src = (profile.lang==="af" && COMMENTARY_AF[key]) ? COMMENTARY_AF[key] : COMMENTARY[key];
+  var s = src[Math.floor(Math.random()*src.length)];
   return s.replace("{a}", a||"").replace("{b}", b||"").replace("{t}", a||"");
 }
 
 function simulateV2(level, atk0, def0){
   var A = atk0.map(function(p){ return {key:p.key,label:p.label,isForward:p.isForward,anchored:p.anchored,sweeper:p.sweeper,isUser:p.isUser,inLine:p.inLine,pod:p.pod,x:p.x,y:p.y}; });
   var D = def0.map(function(p){ return {key:p.key,label:p.label,isForward:p.isForward,anchored:p.anchored,sweeper:p.sweeper,isUser:p.isUser,x:p.x,y:p.y}; });
+  function cname(p){ return p.isUser ? playerName() : p.label; }
   var openDir = level.openDir || 1;
   var holderIdx = -1;
   atk0.forEach(function(p,i){ if(p.isCarrier) holderIdx=i; });
@@ -1489,8 +1912,38 @@ function simulateV2(level, atk0, def0){
   var state="held"; // held | flying
   var flight=null;
   var passCount=0, breakAt=-1, outcome=null, tacklerIdx=-1, userTouches=0, sprintCalled=false;
-  var pressThresh = 5 + Math.random()*1.2;
-  events.push({f:0, type:"start", text:pickLine(COMMENTARY.start)});
+
+  // Defensive look for this phase: balanced / blitz / drift
+  var lookRoll = Math.random();
+  var defLook = lookRoll<0.34 ? "blitz" : (lookRoll<0.62 ? "drift" : "balanced");
+  var pressThresh = (defLook==="blitz" ? 6.2 : defLook==="drift" ? 4.4 : 5) + Math.random()*1.0;
+  var lineSpeed = defLook==="blitz" ? 6.6 : defLook==="drift" ? 4.8 : 5.6;
+  var driftBias = defLook==="drift" ? 3.0 : (defLook==="blitz" ? 0 : 1.1);
+
+  // Read the numbers: if the blind side has a better count than the open side, go blind
+  function sideCount(list, dir, isDef){
+    var n=0;
+    list.forEach(function(p){
+      if(p.anchored || (isDef && p.sweeper)) return;
+      if((p.x - ball.x)*dir > 2) n++;
+    });
+    return n;
+  }
+  var blindDir = -openDir;
+  var blindSpace = blindDir>0 ? PITCH_W/2 - ball.x : PITCH_W/2 + ball.x;
+  var advOpen = sideCount(A, openDir, false) - sideCount(D, openDir, true);
+  var advBlind = sideCount(A, blindDir, false) - sideCount(D, blindDir, true);
+  var wentBlind = false;
+  if(advBlind > advOpen && blindSpace > 12){
+    openDir = blindDir;
+    wentBlind = true;
+  }
+  var overlapExisted = Math.max(advOpen, advBlind) >= 1;
+
+  events.push({f:0, type:"start", text:pickLine("start")});
+  if(defLook==="blitz") events.push({f:3, type:"look", text:pickLine("blitz")});
+  else if(defLook==="drift") events.push({f:3, type:"look", text:pickLine("driftD")});
+  if(wentBlind) events.push({f:6, type:"blind", text:pickLine("blind")});
 
   function moveTo(p, tx, ty, maxStep){
     var dx=tx-p.x, dy=ty-p.y, dd=Math.sqrt(dx*dx+dy*dy);
@@ -1575,7 +2028,7 @@ function simulateV2(level, atk0, def0){
       if(i===holderIdx && state==="held"){
         var ld = lateralDir(a, openDir);
         if(corridorClear(a)){
-          if(!sprintCalled && a.y>ball.y-1){ sprintCalled=true; events.push({f:s,type:"sprint",text:pickLine(COMMENTARY.sprint)}); }
+          if(!sprintCalled && a.y>ball.y-1){ sprintCalled=true; events.push({f:s,type:"sprint",text:pickLine("sprint")}); }
           moveTo(a, a.x+ld*0.4, a.y+3, 7.3*dt);
         } else if(pressureOn(a) < pressThresh){
           var r = passCount<7 ? pickReceiver(i) : -1;
@@ -1584,7 +2037,7 @@ function simulateV2(level, atk0, def0){
             var pd2 = dist(a, A[r]);
             flight = {toIdx:r, fx:a.x, fy:a.y, t:0, dur:Math.max(0.18, pd2/16)};
             state="flying"; holderIdx=-1;
-            events.push({f:s, type:"pass", text:pickLine(COMMENTARY.pass, a.label, A[r].label)});
+            events.push({f:s, type:"pass", text:pickLine("pass", cname(a), cname(A[r]))});
           } else {
             moveTo(a, a.x+ld*2.2, a.y+1.2, 6.1*dt); // angle away from pressure
           }
@@ -1633,8 +2086,8 @@ function simulateV2(level, atk0, def0){
           var qd=Math.abs(A[q].x-d.x)+Math.abs(A[q].y-d.y)*0.4;
           if(qd<mkD){ mkD=qd; mk=A[q]; }
         }
-        var tx = mk ? mk.x*0.65 + ball.x*0.35 : ball.x;
-        moveTo(d, tx, Math.max(ball.y+0.8, d.y-3.4*dt*10), 6.1*dt);
+        var tx = mk ? mk.x*0.65 + ball.x*0.35 + openDir*driftBias : ball.x + openDir*driftBias;
+        moveTo(d, tx, Math.max(ball.y+0.8, d.y-3.4*dt*10), lineSpeed*dt);
       }
     }
 
@@ -1642,22 +2095,22 @@ function simulateV2(level, atk0, def0){
     if(car && state==="held"){
       if(car.y >= tryY){
         outcome="TRY";
-        events.push({f:s, type:"try", text:pickLine(COMMENTARY.tryScored)});
+        events.push({f:s, type:"try", text:pickLine("tryScored")});
       } else if(Math.abs(car.x) > PITCH_W/2 - 0.9){
         outcome="INTO TOUCH";
-        events.push({f:s, type:"touch", text:pickLine(COMMENTARY.touch)});
+        events.push({f:s, type:"touch", text:pickLine("touch")});
       } else {
         for(var t2=0;t2<D.length;t2++){
           if(dist(D[t2], car) < 1.15){
             outcome="TACKLED"; tacklerIdx=t2;
-            events.push({f:s, type:"tackle", text:pickLine(COMMENTARY.tackle, D[t2].label)});
+            events.push({f:s, type:"tackle", text:pickLine("tackle", cname(D[t2]))});
             break;
           }
         }
       }
       if(!outcome && breakAt<0 && car.y > lineY0 + 2.5){
         breakAt=s;
-        events.push({f:s, type:"break", text:pickLine(COMMENTARY.brk)});
+        events.push({f:s, type:"break", text:pickLine("brk")});
       }
     }
 
@@ -1683,6 +2136,7 @@ function simulateV2(level, atk0, def0){
     gap:finalGap,
     tacklerWasUser: tacklerIdx>=0 && !!D[tacklerIdx].isUser,
     userTouches:userTouches,
+    defLook:defLook, wentBlind:wentBlind, overlapExisted:overlapExisted,
     atkMeta: A.map(function(p){return {label:p.label, isForward:p.isForward, isUser:p.isUser};}),
     defMeta: D.map(function(p){return {label:p.label, isForward:p.isForward, isUser:p.isUser};})
   };
@@ -1692,42 +2146,90 @@ function dynamicFeedback(level, userPos, sim){
   var bits = [];
   var atkUser = level.userSide==="attack";
   var attackGood = ["TRY","LINE BREAK","GOOD GAIN"].indexOf(sim.outcome)>=0;
+  var g = sim.gain.toFixed(0);
   if(sim.outcome==="TRY"){
     bits.push(atkUser
-      ? "Try! The ball went through "+sim.passCount+" set"+(sim.passCount===1?"":"s")+" of hands and the move finished — your spot in the shape helped make that space real."
-      : "They scored. Look at where the ball travelled — the space they used is the space your line left open.");
+      ? T("Try! The ball went through "+sim.passCount+" set"+(sim.passCount===1?"":"s")+" of hands and the move finished — your spot in the shape helped make that space real.",
+          "Drie! Die bal het deur "+sim.passCount+" paar hande gegaan en die beweging is afgerond — jou plek in die vorm het daardie ruimte eg gemaak.")
+      : T("They scored. Look at where the ball travelled — the space they used is the space your line left open.",
+          "Hulle het gedruk. Kyk waar die bal geloop het — die ruimte wat hulle gebruik het, is die ruimte wat jou lyn oopgelos het."));
   } else if(sim.outcome==="LINE BREAK"){
     bits.push(atkUser
-      ? "Line break — +"+sim.gain.toFixed(0)+"m. The defence couldn't cover the shape you set."
-      : "The line got broken for +"+sim.gain.toFixed(0)+"m — someone's channel was open, and the cover arrived too late.");
+      ? T("Line break — +"+g+"m. The defence couldn't cover the shape you set.",
+          "Deurbraak — +"+g+"m. Die verdediging kon nie die vorm dek wat jy opgestel het nie.")
+      : T("The line got broken for +"+g+"m — someone's channel was open, and the cover arrived too late.",
+          "Die lyn is gebreek vir +"+g+"m — iemand se kanaal was oop, en die dekking het te laat aangekom."));
   } else if(sim.outcome==="GOOD GAIN"){
     bits.push(atkUser
-      ? "Solid go-forward: +"+sim.gain.toFixed(0)+"m. No break, but you won the phase."
-      : "You conceded "+sim.gain.toFixed(0)+"m but the line held — that's a defensive win on most days.");
+      ? T("Solid go-forward: +"+g+"m. No break, but you won the phase.",
+          "Stewige momentum: +"+g+"m. Geen deurbraak nie, maar julle het die fase gewen.")
+      : T("You conceded "+g+"m but the line held — that's a defensive win on most days.",
+          "Julle het "+g+"m afgestaan maar die lyn het gehou — meeste dae is dit 'n verdedigingsoorwinning."));
   } else if(sim.outcome==="INTO TOUCH"){
     bits.push(atkUser
-      ? "Ran out of room — bundled into touch. Width only works if there's still grass outside you."
-      : "You used the touchline as the extra defender — he had nowhere left to go. Textbook.");
+      ? T("Ran out of room — bundled into touch. Width only works if there's still grass outside you.",
+          "Ruimte het opgeraak — in die kantlyn gedruk. Wydte werk net as daar nog gras buite jou is.")
+      : T("You used the touchline as the extra defender — he had nowhere left to go. Textbook.",
+          "Jy het die kantlyn as die ekstra verdediger gebruik — hy het nêrens gehad om te gaan nie. Handboek."));
   } else {
     bits.push(atkUser
-      ? "Shut down for +"+Math.max(0,sim.gain).toFixed(0)+"m. The defence closed every option before the ball found space."
-      : (sim.tacklerWasUser ? "And it's YOUR tackle that ends it — you read the play and closed the gap yourself." : "Attack smothered — your line squeezed the space together and the ball died."));
+      ? T("Shut down for +"+Math.max(0,sim.gain).toFixed(0)+"m. The defence closed every option before the ball found space.",
+          "Toegemaak vir +"+Math.max(0,sim.gain).toFixed(0)+"m. Die verdediging het elke opsie toegemaak voor die bal ruimte kon kry.")
+      : (sim.tacklerWasUser
+          ? T("And it's YOUR tackle that ends it — you read the play and closed the gap yourself.",
+              "En dis JOU duikslag wat dit beëindig — jy het die spel gelees en self die gaping toegemaak.")
+          : T("Attack smothered — your line squeezed the space together and the ball died.",
+              "Aanval versmoor — jou lyn het die ruimte toegedruk en die bal het gesterf.")));
+  }
+  // defensive look lesson
+  if(sim.defLook==="blitz"){
+    bits.push(atkUser
+      ? (attackGood
+          ? T("And that against a blitz — depth and quick hands beat a rushing line every time.",
+              "En dit teen 'n blits — diepte en vinnige hande klop 'n stormende lyn elke keer.")
+          : T("That was a BLITZ defence — against a rushing line you need extra depth and quicker hands.",
+              "Dit was BLITSVERDEDIGING — teen 'n stormende lyn het jy ekstra diepte en vinniger hande nodig."))
+      : T("Your side blitzed — high risk, high reward. It works while the line stays connected.",
+          "Julle het geblits — hoë risiko, hoë beloning. Dit werk solank die lyn verbind bly."));
+  } else if(sim.defLook==="drift"){
+    bits.push(atkUser
+      ? T("The defence was drifting — the counter is a hard, straight line back at the inside shoulder.",
+          "Die verdediging het gedryf — die teenset is 'n harde, reguit lyn terug na die binneskouer.")
+      : T("Your side played drift defence — sliding across to match the width.",
+          "Julle het dryfverdediging gespeel — oorgeskuif om die wydte te pas."));
+  }
+  // overlap + blind-switch intelligence
+  if(sim.wentBlind){
+    bits.push(atkUser
+      ? T("The numbers were better on the blind side — and the attack took it. That's reading the field, not the habit.",
+          "Die getalle was beter aan die blinde kant — en die aanval het dit gevat. Dis om die veld te lees, nie die gewoonte nie.")
+      : T("They went blind because your line over-chased the open side.",
+          "Hulle het blind gegaan omdat julle lyn die oop kant oorgejaag het."));
+  } else if(sim.overlapExisted && atkUser && !attackGood){
+    bits.push(T("You had the extra man out wide — the overlap was there, but the ball died before it got to him.",
+                "Julle het die ekstra man wyd gehad — die oorvleueling was daar, maar die bal het gesterf voor dit by hom uitgekom het."));
   }
   if(atkUser && sim.userTouches>0 && level.roleKey!=="9"){
-    bits.push("The ball reached you in the chain — you were a live option, not a spectator.");
-  } else if(atkUser && sim.userTouches===0 && level.roleKey!=="9" && attackGood===false){
-    bits.push("The ball never reached you. Ask yourself: were you standing where a pass could actually find you?");
+    bits.push(T("The ball reached you in the chain — you were a live option, not a spectator.",
+                "Die bal het jou in die ketting bereik — jy was 'n lewende opsie, nie 'n toeskouer nie."));
+  } else if(atkUser && sim.userTouches===0 && level.roleKey!=="9" && !attackGood){
+    bits.push(T("The ball never reached you. Ask yourself: were you standing where a pass could actually find you?",
+                "Die bal het jou nooit bereik nie. Vra jouself: het jy gestaan waar 'n aangee jou werklik kon kry?"));
   }
   if(level.roleKey==="15"){
     var depth = level.userSide==="attack" ? level.ball.y - userPos.y : userPos.y - level.ball.y;
     if(atkUser){
       bits.push(depth < 6
-        ? "Fullback joining the line — that's the extra man defences hate. High risk, high reward."
-        : "You held back as the sweeper. Safe — but the attack played without its extra man.");
+        ? T("Fullback joining the line — that's the extra man defences hate. High risk, high reward.",
+            "Heelagter wat by die lyn aansluit — dis die ekstra man wat verdedigings haat. Hoë risiko, hoë beloning.")
+        : T("You held back as the sweeper. Safe — but the attack played without its extra man.",
+            "Jy het teruggebly as die veër. Veilig — maar die aanval het sonder sy ekstra man gespeel."));
     } else {
       bits.push(depth > 9
-        ? "Good sweeping depth — anything through or over the top was yours to clean up."
-        : "You crept up out of the backfield — one grubber or break past the line and there's nobody home.");
+        ? T("Good sweeping depth — anything through or over the top was yours to clean up.",
+            "Goeie veër-diepte — enigiets deur of oor die top was joune om op te ruim.")
+        : T("You crept up out of the backfield — one grubber or break past the line and there's nobody home.",
+            "Jy het uit die agterveld opgekruip — een rolskoppie of deurbraak verby die lyn en niemand is tuis nie."));
     }
   }
   return bits.join(" ");
@@ -1810,13 +2312,13 @@ function drawFullPitch(){
   }
   hLine(-FIELD_INGOAL, "rgba(240,240,225,0.35)", 1.6);
   hLine(FIELD_LEN+FIELD_INGOAL, "rgba(240,240,225,0.35)", 1.6);
-  hLine(0, "rgba(214,86,79,0.8)", 2.6, null, "TRY LINE");
-  hLine(FIELD_LEN, "rgba(214,86,79,0.8)", 2.6, null, "TRY LINE");
+  hLine(0, "rgba(214,86,79,0.8)", 2.6, null, T("TRY LINE","DOELLYN"));
+  hLine(FIELD_LEN, "rgba(214,86,79,0.8)", 2.6, null, T("TRY LINE","DOELLYN"));
   hLine(22, "rgba(240,240,225,0.55)", 1.8, null, "22");
   hLine(FIELD_LEN-22, "rgba(240,240,225,0.55)", 1.8, null, "22");
   hLine(40, "rgba(240,240,225,0.3)", 1.4, [5*dpr,5*dpr]);
   hLine(60, "rgba(240,240,225,0.3)", 1.4, [5*dpr,5*dpr]);
-  hLine(50, "rgba(240,240,225,0.65)", 2, null, "HALFWAY");
+  hLine(50, "rgba(240,240,225,0.65)", 2, null, T("HALFWAY","HALFPAD"));
 
   fctx.strokeStyle="rgba(240,240,225,0.22)"; fctx.lineWidth=1.2*dpr;
   for(var yTick=0; yTick<=FIELD_LEN; yTick+=5){
@@ -1879,12 +2381,12 @@ function openFieldSetupSheet(){
   document.getElementById("fieldTag").textContent = fieldBadgeText(
     selectedFieldPoint.y, 100-selectedFieldPoint.y, 35-Math.abs(selectedFieldPoint.x)
   );
-  renderChipRow("phaseChips", PHASES.map(function(p){ return {value:p.id, label:p.icon+" "+p.label}; }), setupState.phase, function(v){ setupState.phase=v; });
-  renderChipRow("sideChips", [{value:"attack",label:"Your Ball"},{value:"defense",label:"Their Ball"}], setupState.side, function(v){ setupState.side=v; });
+  renderChipRow("phaseChips", PHASES.map(function(p){ return {value:p.id, label:p.icon+" "+phaseLabel(p)}; }), setupState.phase, function(v){ setupState.phase=v; });
+  renderChipRow("sideChips", [{value:"attack",label:T("Your Ball","Julle Bal")},{value:"defense",label:T("Their Ball","Hulle Bal")}], setupState.side, function(v){ setupState.side=v; });
   var backs = FREE_ROLES.filter(function(r){return r.group==="back";});
   var forwards = FREE_ROLES.filter(function(r){return r.group==="forward";});
-  renderChipRow("roleChipsBacks", backs.map(function(r){ return {value:r.key,label:r.key,sub:r.label}; }), setupState.role, function(v){ setupState.role=v; });
-  renderChipRow("roleChipsForwards", forwards.map(function(r){ return {value:r.key,label:r.key,sub:r.label}; }), setupState.role, function(v){ setupState.role=v; });
+  renderChipRow("roleChipsBacks", backs.map(function(r){ return {value:r.key,label:r.key,sub:roleLabel(r)}; }), setupState.role, function(v){ setupState.role=v; });
+  renderChipRow("roleChipsForwards", forwards.map(function(r){ return {value:r.key,label:r.key,sub:roleLabel(r)}; }), setupState.role, function(v){ setupState.role=v; });
   document.getElementById("btnBuildScenario").disabled = !setupState.phase;
   document.getElementById("fieldSheetBackdrop").classList.add("show");
   document.getElementById("fieldSheet").classList.add("show");
@@ -1927,14 +2429,22 @@ var showOptimalDebug = false; // kept false; educational zone only shown after r
 
 function openPlay(level){
   currentLevel = level;
-  document.getElementById("playEyebrow").textContent = level.dynamic
-    ? "FREE PLAY · "+level.fieldTag
-    : "L"+level.id+" · "+BANDS.filter(function(b){return b.id===level.band;})[0].name;
-  document.getElementById("playTitle").textContent = level.title;
-  document.getElementById("playBrief").innerHTML = level.brief;
+  if(level.dynamic){
+    var dtx = dynamicTexts(level);
+    level.displayTip = dtx.tip;
+    document.getElementById("playEyebrow").textContent =
+      (level.fromPlaybook ? T("MY PLAY","MY SPELPLAN") : T("FREE PLAY","VRYE SPEL")) + " · " + dtx.fieldTag;
+    document.getElementById("playTitle").textContent = level.fromPlaybook && level.playName ? level.playName : dtx.title;
+    document.getElementById("playBrief").innerHTML = dtx.brief;
+  } else {
+    var band = BANDS.filter(function(b){return b.id===level.band;})[0];
+    document.getElementById("playEyebrow").textContent = "L"+level.id+" · "+bandName(band);
+    document.getElementById("playTitle").textContent = lvlTitle(level);
+    document.getElementById("playBrief").innerHTML = lvlBrief(level);
+  }
   document.getElementById("pitchHint").textContent = level.dynamic
-    ? "Drag your player — the team shifts with you"
-    : "Drag the gold marker to your spot";
+    ? T("Drag your player — the team shifts with you","Sleep jou speler — die span skuif saam")
+    : T("Drag the gold marker to your spot","Sleep die goue merker na jou plek");
   document.getElementById("pitchHint").style.opacity = 1;
   var userObj = level.attack.concat(level.defense).filter(function(p){return p.isUser;})[0];
   userPos = {x:userObj.x, y:userObj.y};
@@ -1944,13 +2454,16 @@ function openPlay(level){
   showHeat = false;
   document.getElementById("btnHeatmap").classList.remove("on");
   document.getElementById("btnDrift").style.display = level.dynamic ? "" : "none";
+  document.getElementById("btnSavePlay").style.display = level.dynamic ? "" : "none";
+  document.getElementById("btnSavePlay").textContent = "💾";
   if(level.dynamic) refreshDriftChip();
   document.getElementById("btnTip").classList.remove("on");
   document.getElementById("tipCard").classList.remove("show");
   setCommentary(null);
+  applyStaticLang();
   document.getElementById("btnPlayOut").style.display = "block";
   document.getElementById("btnPlayOut").disabled = false;
-  document.getElementById("btnPlayOut").textContent = "Play It Out";
+  document.getElementById("btnPlayOut").textContent = T("Play It Out","Speel Dit Uit");
   closeSheet();
   showScreen("play");
   resizeCanvas();
@@ -2143,7 +2656,7 @@ document.getElementById("btnHeatmap").addEventListener("click", function(){
 });
 function refreshDriftChip(){
   var b = document.getElementById("btnDrift");
-  b.textContent = DRAG_MODE_LABELS[dragMode];
+  b.textContent = dragModeLabel(dragMode);
   b.classList.toggle("on", dragMode!=="me");
 }
 document.getElementById("btnDrift").addEventListener("click", function(){
@@ -2154,7 +2667,7 @@ document.getElementById("btnTip").addEventListener("click", function(){
   var card = document.getElementById("tipCard");
   var isShown = card.classList.contains("show");
   if(isShown){ card.classList.remove("show"); this.classList.remove("on"); return; }
-  document.getElementById("tipText").textContent = currentLevel.tip;
+  document.getElementById("tipText").textContent = currentLevel.dynamic ? (currentLevel.displayTip||"") : lvlTip(currentLevel);
   card.classList.add("show");
   this.classList.add("on");
 });
@@ -2212,6 +2725,20 @@ document.getElementById("btnPlayOut").addEventListener("click", function(){
   requestAnimationFrame(step);
 });
 
+var OUTCOME_LABELS = {
+  "TRY": ["TRY","DRIE"],
+  "LINE BREAK": ["LINE BREAK","DEURBRAAK"],
+  "GOOD GAIN": ["GOOD GAIN","GOEIE WINS"],
+  "TACKLED": ["TACKLED","PLATGEVAT"],
+  "CAUGHT FROM BEHIND": ["CAUGHT FROM BEHIND","VAN AGTER GEVANG"],
+  "INTO TOUCH": ["INTO TOUCH","IN DIE KANTLYN"],
+  "PENALTY": ["PENALTY CONCEDED","STRAFSKOP AFGESTAAN"]
+};
+function outcomeLabel(o){
+  var pair = OUTCOME_LABELS[o];
+  return pair ? T(pair[0], pair[1]) : o;
+}
+
 function showResult(){
   var badge = document.getElementById("resultBadge");
   var isPenalty = simResult.outcome==="PENALTY";
@@ -2219,19 +2746,22 @@ function showResult(){
   // color the badge from the USER's perspective: stopping a try is a win for a defender
   var userDefends = currentLevel.mode==="defense";
   var goodForUser = isPenalty ? false : (userDefends ? !attackGood : attackGood);
-  badge.textContent = (isPenalty?"PENALTY CONCEDED":simResult.outcome) + (simResult.outcome==="TRY" ? " 🎉":"");
+  badge.textContent = outcomeLabel(simResult.outcome) + (simResult.outcome==="TRY" ? " 🎉":"");
   badge.className = "result-badge " + (goodForUser?"good":"bad");
   if(isPenalty){
-    document.getElementById("gapLine").textContent =
-      "Offside by "+simResult.offsideAmount.toFixed(1)+"m — whistle goes before the ball even moves";
+    document.getElementById("gapLine").textContent = T(
+      "Offside by "+simResult.offsideAmount.toFixed(1)+"m — whistle goes before the ball even moves",
+      "Onkant met "+simResult.offsideAmount.toFixed(1)+"m — die fluitjie blaas voor die bal eers beweeg");
   } else if(simResult.v2){
-    var passBit = simResult.passCount===0 ? "no passes" : simResult.passCount+" pass"+(simResult.passCount===1?"":"es");
+    var passBit = simResult.passCount===0
+      ? T("no passes","geen aangee")
+      : simResult.passCount+" "+T(simResult.passCount===1?"pass":"passes", simResult.passCount===1?"aangee":"aangee");
     document.getElementById("gapLine").textContent =
-      (simResult.gain>=0?"+":"")+simResult.gain.toFixed(0)+"m gained · ball through "+passBit;
+      (simResult.gain>=0?"+":"")+simResult.gain.toFixed(0)+"m "+T("gained","gewen")+" · "+T("ball through","bal deur")+" "+passBit;
   } else {
     document.getElementById("gapLine").textContent = attackGood
-      ? "Space at the gap: "+simResult.gap.toFixed(1)+"m clear"
-      : "Nearest defender at contact: "+simResult.gap.toFixed(1)+"m";
+      ? T("Space at the gap: "+simResult.gap.toFixed(1)+"m clear","Ruimte by die gaping: "+simResult.gap.toFixed(1)+"m oop")
+      : T("Nearest defender at contact: "+simResult.gap.toFixed(1)+"m","Naaste verdediger by kontak: "+simResult.gap.toFixed(1)+"m");
   }
   if(simResult.v2 && simResult.outcome==="TRY"){
     var lastF = simResult.frames[simResult.frames.length-1];
@@ -2265,12 +2795,18 @@ function showResult(){
   }
 
   document.getElementById("coachText").innerHTML = currentLevel.dynamic
-    ? (isPenalty ? "You hadn't retreated far enough before the ball moved — that's an automatic penalty in a real game, every time." : dynamicFeedback(currentLevel, userPos, simResult))
-    : currentLevel.feedback[score.dir];
+    ? (isPenalty
+        ? T("You hadn't retreated far enough before the ball moved — that's an automatic penalty in a real game, every time.",
+            "Jy het nie ver genoeg teruggeval voor die bal beweeg het nie — in 'n regte wedstryd is dit elke keer 'n outomatiese strafskop.")
+        : dynamicFeedback(currentLevel, userPos, simResult))
+    : lvlFeedback(currentLevel, score.dir);
 
   var nextBtn = document.getElementById("btnNext");
-  if(currentLevel.dynamic){
-    nextBtn.textContent = "New Scenario →";
+  if(currentLevel.fromPlaybook){
+    nextBtn.textContent = T("Run It Again →","Hardloop Dit Weer →");
+    nextBtn.onclick = function(){ openPlay(currentLevel); };
+  } else if(currentLevel.dynamic){
+    nextBtn.textContent = T("New Scenario →","Nuwe Scenario →");
     nextBtn.onclick = function(){ stopPlayLoop(); showScreen("field"); resizeFieldCanvas(); startFieldLoop(); };
   } else {
     var levels = bandLevels(currentLevel.band);
@@ -2279,16 +2815,16 @@ function showResult(){
     var nextInBand = hasNext ? levels[idx+1] : null;
     var nextBand = BANDS.filter(function(b){return b.id===currentLevel.band+1;})[0];
     if(score.stars===0){
-      nextBtn.textContent = "Try Again";
+      nextBtn.textContent = T("Try Again","Probeer Weer");
       nextBtn.onclick = function(){ openPlay(currentLevel); };
     } else if(nextInBand){
-      nextBtn.textContent = "Next Level →";
+      nextBtn.textContent = T("Next Level →","Volgende Vlak →");
       nextBtn.onclick = function(){ openPlay(nextInBand); };
     } else if(nextBand){
-      nextBtn.textContent = "Next: "+nextBand.name+" →";
+      nextBtn.textContent = T("Next: ","Volgende: ")+bandName(nextBand)+" →";
       nextBtn.onclick = function(){ currentBandId=nextBand.id; openLevelList(nextBand.id); };
     } else {
-      nextBtn.textContent = "You've Made The Boks!";
+      nextBtn.textContent = T("You've Made The Boks!","Jy het die Bokke gehaal!");
       nextBtn.onclick = function(){ renderHome(); showScreen("home"); };
     }
   }

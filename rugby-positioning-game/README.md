@@ -55,7 +55,19 @@ From there the phase **plays out like real rugby**:
 
 Outcomes are graded like a real phase: **TRY** (with a celebration), **LINE BREAK**, **GOOD GAIN**, **TACKLED**, or **INTO TOUCH**, with metres gained and pass count shown, and a coach's note built from what actually happened — including whether the ball ever reached *you*.
 
+**The defence thinks too.** Every phase the defence randomly picks a look — a rushing **blitz**, a sliding **drift**, or a balanced press — announced in the commentary, and the coach's note ties the lesson to it ("against a blitz you need extra depth and quicker hands"). The attack reads numbers as well: if your line loads the blind side and the count favours it, the play switches blind. Overlaps are detected and reported ("you had the extra man — the ball died before it got to him").
+
 Free Play scenarios aren't part of the star/progress system — they're open-ended practice with a fresh picture every tap.
+
+## My Plays — save and practise your own plays
+
+Set up any Free Play scenario, shape your line exactly how you want it (Line drag mode makes this easy), then tap **💾** and give the play a name — "Deep Strike", "Blitz Beater", whatever sticks. Saved plays live in **My Plays** on the home screen. Opening one restores the exact team shape and scenario; every run plays out against a freshly chosen defensive look, so practising the same play teaches *when* it works, not just *that* it works. Plays are stored on the device.
+
+## Make it yours
+
+- **Player name**: set it once from the home screen and your player carries it above their head on the pitch — and the commentary calls your name when you touch the ball or make the tackle.
+- **Afrikaans**: one tap on the home screen switches the whole game — menus, briefs, coach feedback, commentary ("HY'S DEUR DIE GAPING!... DRIE!"), the glossary, and all 16 Academy levels — between English and Afrikaans. The choice is remembered.
+- **Players look like players**: little jerseyed figures with heads, swinging arms while they run, and their number on the back — gold for your team, red for the opposition.
 
 For Scrum and Lineout the full bound pack (1–8) is on the pitch for both teams, shown as smaller tokens so the backline reads clearly. Penalty taps carry no set pack, since the forwards are realistically still arriving. Any of the 15 positions is playable, forwards included.
 

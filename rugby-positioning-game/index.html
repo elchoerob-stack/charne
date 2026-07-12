@@ -1310,6 +1310,20 @@ function generateFreeplayScenario(phaseId, fieldPt, side, roleKey){
       anchored:false, sweeper:!!s.sweeper});
   });
 
+  // Wings are named by FIELD side, not open/blind side: the attack's 11 is always
+  // the leftmost wing on their own facing (screen-left), 14 the rightmost. The
+  // defending team faces the other way, so their 11 covers screen-right.
+  function assignWingSides(team, facingUp){
+    var wings = team.filter(function(p){ return p.key==="11" || p.key==="14"; });
+    if(wings.length!==2) return;
+    var left = wings[0].x <= wings[1].x ? wings[0] : wings[1];
+    var right = left===wings[0] ? wings[1] : wings[0];
+    left.key  = facingUp ? "11" : "14"; left.label  = left.key;
+    right.key = facingUp ? "14" : "11"; right.label = right.key;
+  }
+  assignWingSides(attack, true);
+  assignWingSides(defense, false);
+
   var FWD_KEYS = ["1","2","3","4","5","6","7","8"];
   if(phaseId==="scrum" || phaseId==="lineout"){
     SETPIECE_PACKS[phaseId].attack.forEach(function(s){

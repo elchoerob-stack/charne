@@ -4,13 +4,22 @@ A phone-first rugby positioning trainer. You pick a position, drag your marker t
 
 Built as a single self-contained HTML file — no build step, no install, no server required. It works fully offline once loaded.
 
-## How to play it on a phone
+## Install it as an app
 
-Pick whichever is easiest:
+The game is live at:
 
-1. **GitHub Pages (best for a real "app" feel):** enable Pages on this repo (Settings → Pages → deploy from branch → root), then open `https://<your-username>.github.io/<repo>/rugby-positioning-game/` on the phone. On iOS Safari or Android Chrome, use "Add to Home Screen" — it launches full-screen like a real app.
-2. **Quick share:** open `rugby-positioning-game/index.html` directly from any static file host (Netlify Drop, a gist raw link via an HTML viewer, etc).
-3. **Local testing on a laptop:** `cd rugby-positioning-game && python3 -m http.server 8000`, then visit `http://localhost:8000` (or your machine's LAN IP from the phone, same Wi-Fi).
+**https://elchoerob-stack.github.io/charne/rugby-positioning-game/**
+
+It's a full PWA — open that link on a phone and install it:
+
+- **Android (Chrome):** open the link → tap the ⋮ menu → **Add to Home screen** / **Install app**.
+- **iPhone (Safari):** open the link → tap the Share button → **Add to Home Screen**.
+
+It installs with its own Gap King icon, launches full-screen with no browser bars, and **works offline** after the first load — practice on the bus, no data needed. Progress, saved plays, the player name and language choice all live on the device.
+
+Updates deploy automatically: any push that touches `rugby-positioning-game/` on the game branch is synced to the Pages branch by `.github/workflows/pages.yml`, and the installed app picks the new version up in the background next time it's opened with a connection.
+
+Local testing on a laptop: `cd rugby-positioning-game && python3 -m http.server 8000`, then visit `http://localhost:8000`.
 
 ## The concept
 

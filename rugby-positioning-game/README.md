@@ -45,6 +45,24 @@ Each level is either an **attack** scenario (how do you create space?) or a **de
 
 Progress (stars, unlocked bands) is saved in the browser's local storage on the device, so it persists between sessions on the same phone.
 
+## Season — the career mode
+
+**Season** is the headline mode: a career of eight matches against a rising ladder of fictional South African schools and clubs (Riverside High up to the Junior Springboks), each opponent tougher than the last. It plays like a sports-game career:
+
+- Each match is **best of 3 phases**. In each phase you get a fresh rugby picture (scrum/ruck/lineout, attack or defence, somewhere on the field), you position, and you play it out. Win 2 phases to win the match.
+- You carry an **OVR rating** (EA-style overall) shown on a player card. Beating stronger sides pushes it up; losses nudge it down. Climb from "Prospect" to "World Class".
+- **Difficulty scales for real** — tougher opponents defend with faster line speed and blitz far more often, so the same positioning that beat Riverside High gets swallowed by Grey College. That is the lesson: the better the defence, the sharper your reads and depth have to be.
+- Each phase is **one genuine attempt** (decisions carry weight), with a **Replay** button to re-watch how it unfolded before you commit and continue.
+- Pick your specialist position on the player card; career progress and rating persist on the device.
+
+## Live opposition — the defence reads you back
+
+The biggest realism upgrade: **the opposition moves while you position, before the ball is played.**
+
+- When you attack, the AI defence **drifts and re-marks in real time** as you shift your line — sliding across to match up man-for-man, holding its spacing, the fullback covering the danger side. You **cannot** manufacture an overlap just by standing wide against a well-drilled drift; you need a genuine extra man (the fullback into the line, or a mismatch), exactly as in the real game.
+- When you defend, the AI attack **probes your thinnest channel**.
+- A live **tactical read-out** names the picture as you move: it rings the **spare man out wide** when you've genuinely made an overlap, or the **unmarked attacker / gap in your line** when you're defending — teaching the eye what to look for. What you see while positioning is exactly what feeds the phase when you play it out.
+
 ## Free Play — build your own scenario
 
 Beyond the 16 set levels, **Free Play** puts a realistic, full-size rugby pitch (100m try-line to try-line, 22s, halfway, 10m lines, 5m/15m marks, goal posts — the works) in front of you and lets you tap anywhere on it.

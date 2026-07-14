@@ -109,7 +109,51 @@ button{font-family:inherit;}
 .freeplay-cta-body b{display:block;font-family:var(--font-display);font-size:17px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--gold-bright);}
 .freeplay-cta-body span{display:block;font-size:12px;line-height:1.4;color:var(--ink-dim);margin-top:3px;}
 .freeplay-cta-arrow{font-size:22px;color:var(--gold-bright);flex:0 0 auto;}
+.season-cta{background:linear-gradient(100deg,rgba(227,180,60,.34),rgba(227,180,60,.08));border-color:var(--gold);}
+.season-cta .freeplay-cta-icon{background:rgba(227,180,60,.28);color:var(--gold-bright);}
+.season-ovr{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 8px;flex:0 0 auto;}
+.season-ovr b{font-family:var(--font-display);font-weight:800;font-style:italic;font-size:26px;line-height:1;color:var(--gold-bright);}
+.season-ovr span{font-family:var(--font-mono);font-size:8px;letter-spacing:.15em;color:var(--ink-dim);}
 .section-label{padding:22px 16px 0;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);}
+/* player card */
+.player-card{margin:14px 0 0;padding:0;background:linear-gradient(150deg,#20301f,#141d13);border:1px solid var(--gold-dim);clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px);overflow:hidden;}
+.pc-top{display:flex;gap:14px;align-items:center;padding:18px 18px 10px;}
+.pc-ovr{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;padding-right:14px;border-right:1px solid var(--line);}
+.pc-ovr b{font-family:var(--font-display);font-weight:800;font-style:italic;font-size:52px;line-height:.9;color:var(--gold-bright);}
+.pc-ovr span{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;color:var(--ink-dim);}
+.pc-id{min-width:0;}
+.pc-name{font-family:var(--font-display);font-weight:800;font-style:italic;font-size:24px;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-pos{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--gold-bright);text-transform:uppercase;margin-top:2px;}
+.pc-title{font-size:12px;color:var(--ink-dim);margin-top:3px;}
+.pc-actions{padding:0 18px 16px;}
+.pc-actions .btn-ghost{font-size:12px;padding:9px 14px;}
+/* fixtures */
+.fixtures{padding:8px 0 4px;display:flex;flex-direction:column;gap:8px;}
+.fixture{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);}
+.fixture.next{border-color:var(--gold);background:linear-gradient(100deg,rgba(227,180,60,.14),var(--panel));}
+.fixture.done{opacity:.85;}
+.fixture.locked{opacity:.4;}
+.fx-badge{width:38px;height:38px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-style:italic;font-size:13px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);}
+.fx-body{flex:1;min-width:0;}
+.fx-name{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.01em;}
+.fx-meta{font-family:var(--font-mono);font-size:10px;color:var(--ink-dim);letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+.fx-result{font-family:var(--font-display);font-weight:800;font-style:italic;font-size:13px;padding:3px 8px;flex:0 0 auto;}
+.fx-result.win{color:var(--good);}
+.fx-result.loss{color:var(--danger);}
+/* match overlay */
+.match-overlay{position:fixed;z-index:62;left:50%;top:50%;transform:translate(-50%,-46%) scale(.96);width:calc(100% - 40px);max-width:400px;background:linear-gradient(160deg,#1a2718,#0c110b);border:1px solid var(--gold-dim);clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);padding:24px 22px;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;text-align:center;}
+.match-overlay.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+.mo-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;}
+.mo-vs{display:flex;align-items:center;justify-content:center;gap:14px;margin:16px 0 6px;}
+.mo-team{flex:1;font-family:var(--font-display);font-weight:800;font-style:italic;font-size:26px;text-transform:uppercase;padding:12px 6px;}
+.mo-home{background:linear-gradient(180deg,#f0c453,#c8952e);color:#231a06;clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%);}
+.mo-away{background:linear-gradient(180deg,#c0524b,#8c3a35);color:#fff;clip-path:polygon(10px 0,100% 0,100% 100%,0 100%);}
+.mo-x{font-family:var(--font-display);font-weight:800;font-style:italic;font-size:20px;color:var(--ink-dim);flex:0 0 auto;}
+.mo-sub{color:var(--ink-dim);font-size:13px;line-height:1.5;margin:8px 4px 14px;}
+.mo-phasepips{display:flex;justify-content:center;gap:8px;margin-bottom:18px;}
+.mo-pip{width:20px;height:20px;border:2px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);}
+.mo-pip.win{background:var(--good);border-color:var(--good);color:#06231a;}
+.mo-pip.loss{background:var(--danger);border-color:var(--danger);color:#fff;}
 .ladder{padding:10px 16px 10px;display:flex;flex-direction:column;gap:12px;}
 .band-card{color:var(--ink);position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:0;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line);cursor:pointer;text-align:left;}
 .band-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:16px 0 0 16px;background:var(--gold);}
@@ -226,6 +270,15 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
         </div>
       </div>
       <div class="freeplay-cta-wrap">
+        <button class="freeplay-cta season-cta" id="btnSeason">
+          <div class="freeplay-cta-icon">★</div>
+          <div class="freeplay-cta-body">
+            <b id="ctaSeasonTitle">Season</b>
+            <span id="ctaSeasonDesc">Play a season of matches. Read the game, beat the fixtures, grow your rating.</span>
+          </div>
+          <div class="season-ovr"><b id="ctaOvr">64</b><span>OVR</span></div>
+          <div class="freeplay-cta-arrow">›</div>
+        </button>
         <button class="freeplay-cta" id="btnFreePlay">
           <div class="freeplay-cta-icon">▶</div>
           <div class="freeplay-cta-body">
@@ -253,6 +306,46 @@ canvas#pitch{width:100%;height:100%;display:block;touch-action:none;}
       </div>
     </div>
   </section>
+
+  <!-- SEASON HUB -->
+  <section class="screen" id="screen-season">
+    <div class="h-bar">
+      <button class="icon-btn" id="backFromSeason">←</button>
+      <div class="h-title"><div class="eyebrow" id="seasonEyebrow">Career</div><h1 id="seasonTitle">Season</h1></div>
+    </div>
+    <div class="scrollpane" id="seasonScroll">
+      <div class="player-card" id="playerCard">
+        <div class="pc-top">
+          <div class="pc-ovr"><b id="pcOvr">64</b><span>OVR</span></div>
+          <div class="pc-id">
+            <div class="pc-name" id="pcName">YOU</div>
+            <div class="pc-pos" id="pcPos">FLY-HALF</div>
+            <div class="pc-title" id="pcTitle">Squad Player</div>
+          </div>
+        </div>
+        <div class="pc-actions">
+          <button class="btn-ghost" id="pcChangePos">Change Position</button>
+        </div>
+      </div>
+      <div class="section-label" id="lblFixtures">Fixtures</div>
+      <div class="fixtures" id="fixtures"></div>
+      <button class="btn-primary" id="btnKickOff" style="width:100%;margin-top:6px;">Kick Off</button>
+    </div>
+  </section>
+
+  <!-- MATCH INTRO / RESULT OVERLAY -->
+  <div class="sheet-backdrop" id="matchBackdrop"></div>
+  <div class="match-overlay" id="matchOverlay">
+    <div class="mo-eyebrow" id="moEyebrow">MATCHDAY</div>
+    <div class="mo-vs">
+      <div class="mo-team mo-home"><span id="moHomeShort">YOU</span></div>
+      <div class="mo-x" id="moCentre">VS</div>
+      <div class="mo-team mo-away"><span id="moAwayShort">OPP</span></div>
+    </div>
+    <div class="mo-sub" id="moSub"></div>
+    <div class="mo-phasepips" id="moPips"></div>
+    <button class="btn-primary" id="moGo" style="width:100%;">Kick Off</button>
+  </div>
 
   <!-- MY PLAYS -->
   <section class="screen" id="screen-plays">
@@ -996,6 +1089,32 @@ var savedPlays = (function(){
 })();
 function savePlays(){ try{ localStorage.setItem(PLAYS_KEY, JSON.stringify(savedPlays)); }catch(e){} }
 
+/* ---------- season / career ---------- */
+var CAREER_KEY = "gapking_career_v2";
+var career = (function(){
+  try{ var r = localStorage.getItem(CAREER_KEY); if(r) return JSON.parse(r); }catch(e){}
+  return {fixture:0, ovr:64, pos:"10", results:[]};
+})();
+function saveCareer(){ try{ localStorage.setItem(CAREER_KEY, JSON.stringify(career)); }catch(e){} }
+// Fictional school/club opponents, rising difficulty (0 -> 1).
+var OPPONENTS = [
+  {name:"Riverside High",    short:"RIV", diff:0.05, ovr:60},
+  {name:"St. Andrew's",      short:"STA", diff:0.16, ovr:64},
+  {name:"Hoërskool Waterkloof", short:"WKF", diff:0.28, ovr:68},
+  {name:"Bishops College",   short:"BIS", diff:0.40, ovr:72},
+  {name:"Grey College",      short:"GRY", diff:0.55, ovr:77},
+  {name:"Paul Roos Gim",     short:"PRG", diff:0.68, ovr:81},
+  {name:"Paarl Boys' High",  short:"PBH", diff:0.82, ovr:85},
+  {name:"Junior Springboks", short:"RSA", diff:1.0,  ovr:90}
+];
+function ovrTitle(o){
+  if(o>=88) return T("World Class","Wêreldklas");
+  if(o>=82) return T("Star Player","Sterspeler");
+  if(o>=74) return T("First Choice","Eerste Keuse");
+  if(o>=68) return T("Squad Player","Spanlid");
+  return T("Prospect","Belofte");
+}
+
 function starsFor(levelId){ return progress.stars[levelId]||0; }
 function totalStars(){ var t=0; for(var k in progress.stars) t+=progress.stars[k]; return t; }
 function bandLevels(bandId){ return LEVELS.filter(function(l){return l.band===bandId;}); }
@@ -1030,7 +1149,7 @@ function currentRank(){
 /* ============================== NAVIGATION ============================== */
 
 var screens = {};
-["home","levels","play","glossary","field","plays"].forEach(function(id){ screens[id]=document.getElementById("screen-"+id); });
+["home","levels","play","glossary","field","plays","season"].forEach(function(id){ screens[id]=document.getElementById("screen-"+id); });
 var currentBandId = 1;
 var currentLevel = null;
 
@@ -1038,11 +1157,19 @@ function showScreen(name){
   Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); });
   if(name!=="play"){ stopPlayLoop(); closeSheet(); }
   if(name!=="field") stopFieldLoop();
+  if(name==="home" || name==="season"){ /* overlay handled by flow */ }
 }
 
 /* static-DOM language application */
 function applyStaticLang(){
   function set(id, en, af){ var el=document.getElementById(id); if(el) el.textContent = T(en, af); }
+  set("ctaSeasonTitle","Season","Seisoen");
+  set("ctaSeasonDesc","Play a season of matches. Read the game, beat the fixtures, grow your rating.",
+      "Speel 'n seisoen van wedstryde. Lees die spel, klop die wedstryde, laat jou gradering groei.");
+  set("seasonEyebrow","Career","Loopbaan");
+  set("seasonTitle","Season","Seisoen");
+  set("lblFixtures","Fixtures","Wedstryde");
+  set("pcChangePos","Change Position","Verander Posisie");
   set("ctaFreeTitle","Free Play","Vrye Spel");
   set("ctaFreeDesc","Tap anywhere on the field — scrum, lineout, ruck or penalty tap. The game builds the scenario.",
       "Tik enige plek op die veld — skrum, lynstaan, losskrum of vinnige strafskop. Die spel bou die scenario.");
@@ -1115,6 +1242,7 @@ function renderHome(){
     card.addEventListener("click", function(){ if(unlocked){ currentBandId=b.id; openLevelList(b.id);} });
     ladder.appendChild(card);
   });
+  document.getElementById("ctaOvr").textContent = career.ovr;
   applyStaticLang();
 }
 
@@ -1161,6 +1289,12 @@ document.getElementById("btnReset").addEventListener("click", function(){
   }
 });
 document.getElementById("backFromPlay").addEventListener("click", function(){
+  if(currentLevel && currentLevel.career){
+    if(confirm(T("Leave the match? This counts as a loss.","Verlaat die wedstryd? Dit tel as 'n verlies."))){
+      matchState = null; stopPlayLoop(); openSeason();
+    }
+    return;
+  }
   if(currentLevel && currentLevel.fromPlaybook){ openMyPlays(); }
   else if(currentLevel && currentLevel.dynamic){ showScreen("field"); resizeFieldCanvas(); startFieldLoop(); }
   else { openLevelList(currentLevel.band); }
@@ -1267,6 +1401,158 @@ function openMyPlays(){
 }
 document.getElementById("btnMyPlays").addEventListener("click", openMyPlays);
 document.getElementById("backFromPlays").addEventListener("click", function(){ renderHome(); showScreen("home"); });
+
+/* ---------- SEASON / CAREER ---------- */
+var matchState = null; // {oppIdx, phase, phasesWon, phasesLost}
+function careerDone(){ return career.fixture >= OPPONENTS.length; }
+
+function openSeason(){
+  var pos = FREE_ROLES.filter(function(r){return r.key===career.pos;})[0] || FREE_ROLES[1];
+  document.getElementById("pcOvr").textContent = career.ovr;
+  document.getElementById("ctaOvr").textContent = career.ovr;
+  document.getElementById("pcName").textContent = playerName().toUpperCase();
+  document.getElementById("pcPos").textContent = roleLabel(pos).toUpperCase();
+  document.getElementById("pcTitle").textContent = ovrTitle(career.ovr);
+  var list = document.getElementById("fixtures");
+  list.innerHTML = "";
+  OPPONENTS.forEach(function(op, i){
+    var state = i<career.fixture ? "done" : (i===career.fixture ? "next" : "locked");
+    var res = career.results[i];
+    var fx = document.createElement("div");
+    fx.className = "fixture " + state;
+    var right = res ? '<div class="fx-result '+(res.win?"win":"loss")+'">'+(res.win?T("WON","GEWEN"):T("LOST","VERLOOR"))+' '+res.won+'-'+res.lost+'</div>'
+                    : (state==="next" ? '<div class="fx-result">'+T("NEXT","VOLGENDE")+'</div>' : '');
+    fx.innerHTML =
+      '<div class="fx-badge">'+op.short+'</div>'+
+      '<div class="fx-body"><div class="fx-name">'+op.name+'</div>'+
+        '<div class="fx-meta">'+T("Match","Wedstryd")+' '+(i+1)+' · OVR '+op.ovr+' · '+
+          (op.diff<0.35?T("Easy","Maklik"):op.diff<0.7?T("Medium","Medium"):T("Hard","Moeilik"))+'</div></div>'+
+      right;
+    list.appendChild(fx);
+  });
+  var btn = document.getElementById("btnKickOff");
+  if(careerDone()){
+    btn.textContent = T("Season Complete — Replay","Seisoen Voltooi — Herspeel");
+    btn.onclick = function(){ if(confirm(T("Start a new season? Your rating carries over.","Begin 'n nuwe seisoen? Jou gradering dra oor."))){ career.fixture=0; career.results=[]; saveCareer(); openSeason(); } };
+  } else {
+    var op = OPPONENTS[career.fixture];
+    btn.textContent = T("Play: ","Speel: ")+op.short;
+    btn.onclick = function(){ showMatchIntro(); };
+  }
+  applyStaticLang();
+  showScreen("season");
+}
+document.getElementById("btnSeason").addEventListener("click", openSeason);
+document.getElementById("backFromSeason").addEventListener("click", function(){ renderHome(); showScreen("home"); });
+document.getElementById("pcChangePos").addEventListener("click", function(){
+  // cycle through the back positions as the player's specialist role
+  var backs = FREE_ROLES.filter(function(r){return r.group==="back";});
+  var idx = backs.findIndex(function(r){return r.key===career.pos;});
+  career.pos = backs[(idx+1)%backs.length].key;
+  saveCareer(); openSeason();
+});
+
+function showMatchIntro(){
+  var op = OPPONENTS[career.fixture];
+  matchState = {oppIdx:career.fixture, phase:0, phasesWon:0, phasesLost:0};
+  document.getElementById("moEyebrow").textContent = T("MATCHDAY","WEDSTRYDDAG")+" "+(career.fixture+1);
+  document.getElementById("moHomeShort").textContent = (playerName().slice(0,3)||"YOU").toUpperCase();
+  document.getElementById("moAwayShort").textContent = op.short;
+  document.getElementById("moCentre").textContent = "VS";
+  document.getElementById("moSub").textContent = T("Best of 3 phases. Win 2 to take the match.","Beste uit 3 fases. Wen 2 om die wedstryd te vat.");
+  renderPips();
+  var go = document.getElementById("moGo");
+  go.textContent = T("Kick Off","Skop Af");
+  go.onclick = startNextPhase;
+  openMatchOverlay();
+}
+function renderPips(){
+  var pips = document.getElementById("moPips");
+  pips.innerHTML = "";
+  for(var i=0;i<3;i++){
+    var p = document.createElement("div");
+    p.className = "mo-pip";
+    if(matchState.results && matchState.results[i]) p.className += matchState.results[i]==="win" ? " win" : " loss";
+    p.textContent = i+1;
+    pips.appendChild(p);
+  }
+}
+function openMatchOverlay(){ document.getElementById("matchBackdrop").classList.add("show"); document.getElementById("matchOverlay").classList.add("show"); }
+function closeMatchOverlay(){ document.getElementById("matchBackdrop").classList.remove("show"); document.getElementById("matchOverlay").classList.remove("show"); }
+
+// each phase: vary the type/side/field so a match tests breadth
+var PHASE_PLAN = [
+  {phase:"scrum",   side:"attack"},
+  {phase:"ruck",    side:"defense"},
+  {phase:"lineout", side:"attack"}
+];
+function startNextPhase(){
+  closeMatchOverlay();
+  var op = OPPONENTS[matchState.oppIdx];
+  var plan = PHASE_PLAN[matchState.phase];
+  // spread the field position across the pitch, favouring meaningful zones
+  var fx = (Math.random()*2-1) * 28;
+  var fy = [30, 55, 78, 20][matchState.phase % 4] + (Math.random()*16-8);
+  var pt = {x:fx, y:clamp(fy,8,92)};
+  var role = plan.side==="attack" ? career.pos : career.pos;
+  var lvl = generateFreeplayScenario(plan.phase, pt, plan.side, role);
+  lvl.difficulty = op.diff;
+  lvl.career = true;
+  lvl.matchLabel = op.short;
+  lvl.phaseNo = matchState.phase+1;
+  openPlay(lvl);
+}
+
+function recordPhaseResult(good){
+  matchState.results = matchState.results || [];
+  matchState.results[matchState.phase] = good ? "win" : "loss";
+  if(good) matchState.phasesWon++; else matchState.phasesLost++;
+  matchState.phase++;
+  var decided = matchState.phasesWon>=2 || matchState.phasesLost>=2 || matchState.phase>=3;
+  if(decided) finishMatch();
+  else { renderPips(); showPhaseBreak(); }
+}
+function showPhaseBreak(){
+  var op = OPPONENTS[matchState.oppIdx];
+  document.getElementById("moEyebrow").textContent = T("PHASE","FASE")+" "+matchState.phase+" / 3";
+  document.getElementById("moCentre").textContent = matchState.phasesWon+"–"+matchState.phasesLost;
+  document.getElementById("moSub").textContent = matchState.phasesWon>matchState.phasesLost
+    ? T("You're ahead. Keep reading the game.","Jy is voor. Bly die spel lees.")
+    : (matchState.phasesWon<matchState.phasesLost ? T("Behind — you need this phase.","Agter — jy het hierdie fase nodig.")
+       : T("All square. Next phase decides the momentum.","Gelykop. Volgende fase besluit die momentum."));
+  renderPips();
+  var go = document.getElementById("moGo");
+  go.textContent = T("Next Phase","Volgende Fase");
+  go.onclick = startNextPhase;
+  openMatchOverlay();
+}
+function finishMatch(){
+  var op = OPPONENTS[matchState.oppIdx];
+  var win = matchState.phasesWon > matchState.phasesLost;
+  // OVR movement: reward beating stronger sides, small knock for losses
+  var before = career.ovr;
+  if(win){ career.ovr = Math.min(99, career.ovr + (op.ovr>career.ovr ? 2 : 1)); }
+  else { career.ovr = Math.max(50, career.ovr - 1); }
+  career.results[matchState.oppIdx] = {win:win, won:matchState.phasesWon, lost:matchState.phasesLost};
+  if(win && matchState.oppIdx===career.fixture) career.fixture++;
+  saveCareer();
+  var delta = career.ovr - before;
+  document.getElementById("moEyebrow").textContent = T("FULL TIME","VOLTYD");
+  document.getElementById("moHomeShort").textContent = (playerName().slice(0,3)||"YOU").toUpperCase();
+  document.getElementById("moAwayShort").textContent = op.short;
+  document.getElementById("moCentre").textContent = matchState.phasesWon+"–"+matchState.phasesLost;
+  document.getElementById("moSub").innerHTML = (win
+    ? T("<b style='color:var(--good)'>MATCH WON</b> vs "+op.name+".","<b style='color:var(--good)'>WEDSTRYD GEWEN</b> teen "+op.name+".")
+    : T("<b style='color:var(--danger)'>MATCH LOST</b> vs "+op.name+".","<b style='color:var(--danger)'>WEDSTRYD VERLOOR</b> teen "+op.name+"."))
+    + "<br>OVR " + before + " → <b style='color:var(--gold-bright)'>"+career.ovr+"</b> ("+(delta>=0?"+":"")+delta+")";
+  document.getElementById("moPips").innerHTML = "";
+  var go = document.getElementById("moGo");
+  go.textContent = careerDone() && win ? T("Lift The Trophy","Lig Die Trofee") : T("Back to Season","Terug na Seisoen");
+  go.onclick = function(){ closeMatchOverlay(); openSeason(); };
+  if(win) AudioFX.tryScored(); else AudioFX.stop(false);
+  openMatchOverlay();
+}
+document.getElementById("matchBackdrop").addEventListener("click", function(){ /* modal: ignore backdrop taps mid-match */ });
 
 document.getElementById("btnSavePlay").addEventListener("click", function(){
   if(!currentLevel || !currentLevel.dynamic) return;
@@ -1980,6 +2266,20 @@ function reactOpposition(level, ownEff, oppList, oppIsDefense){
       }
       d.x = clamp(d.x + (comX - d.x)*0.08, -PITCH_W/2+2, PITCH_W/2-2);    // line follows the ball
     });
+    // Line integrity: a real defensive line holds spacing — never lets two men
+    // stack. Push apart any adjacent pair closer than the minimum channel width.
+    var MIN_GAP = 3.4;
+    markers.sort(function(a,b){ return a.x-b.x; });
+    for(var pass=0; pass<2; pass++){
+      for(var m=0;m<markers.length-1;m++){
+        var g = markers[m+1].x - markers[m].x;
+        if(g < MIN_GAP){
+          var push = (MIN_GAP - g)/2;
+          markers[m].x = clamp(markers[m].x - push, -PITCH_W/2+2, PITCH_W/2-2);
+          markers[m+1].x = clamp(markers[m+1].x + push, -PITCH_W/2+2, PITCH_W/2-2);
+        }
+      }
+    }
     oppList.forEach(function(d){
       if(d.sweeper && !d.anchored){
         d.x = clamp(d.x*0.35 + comX*0.65, -PITCH_W/2+2, PITCH_W/2-2);     // fullback covers danger side
@@ -2077,12 +2377,16 @@ function simulateV2(level, atk0, def0){
   var flight=null;
   var passCount=0, breakAt=-1, outcome=null, tacklerIdx=-1, userTouches=0, sprintCalled=false;
 
-  // Defensive look for this phase: balanced / blitz / drift
+  // Difficulty (career mode): 0 = school 1st XV, 1 = provincial. Raises the
+  // opposition's line speed and how often they blitz, exactly like a better team.
+  var diff = clamp(level.difficulty||0, 0, 1);
+  // Defensive look for this phase: balanced / blitz / drift (tougher teams blitz more)
   var lookRoll = Math.random();
-  var defLook = lookRoll<0.34 ? "blitz" : (lookRoll<0.62 ? "drift" : "balanced");
+  var blitzCut = 0.34 + diff*0.22;
+  var defLook = lookRoll<blitzCut ? "blitz" : (lookRoll<blitzCut+0.28 ? "drift" : "balanced");
   var pressThresh = (defLook==="blitz" ? 6.2 : defLook==="drift" ? 4.4 : 5) + Math.random()*1.0;
-  var lineSpeed = defLook==="blitz" ? 6.6 : defLook==="drift" ? 4.8 : 5.6;
-  var driftBias = defLook==="drift" ? 3.0 : (defLook==="blitz" ? 0 : 1.1);
+  var lineSpeed = (defLook==="blitz" ? 6.6 : defLook==="drift" ? 4.8 : 5.6) + diff*1.4;
+  var driftBias = (defLook==="drift" ? 3.0 : (defLook==="blitz" ? 0 : 1.1)) + diff*0.6;
 
   // Read the numbers: if the blind side has a better count than the open side, go blind
   function sideCount(list, dir, isDef){
@@ -2807,8 +3111,9 @@ function openPlay(level){
   if(level.dynamic){
     var dtx = dynamicTexts(level);
     level.displayTip = dtx.tip;
-    document.getElementById("playEyebrow").textContent =
-      (level.fromPlaybook ? T("MY PLAY","MY SPELPLAN") : T("FREE PLAY","VRYE SPEL")) + " · " + dtx.fieldTag;
+    var eyebrow = level.career ? (T("MATCH","WEDSTRYD")+" vs "+level.matchLabel+" · "+T("PHASE","FASE")+" "+level.phaseNo)
+      : (level.fromPlaybook ? T("MY PLAY","MY SPELPLAN") : T("FREE PLAY","VRYE SPEL")) + " · " + dtx.fieldTag;
+    document.getElementById("playEyebrow").textContent = eyebrow;
     document.getElementById("playTitle").textContent = level.fromPlaybook && level.playName ? level.playName : dtx.title;
     document.getElementById("playBrief").innerHTML = dtx.brief;
   } else {
@@ -3236,21 +3541,33 @@ document.getElementById("btnPlayOut").addEventListener("click", function(){
     simResult = simulate(currentLevel, {x:userPos.x,y:userPos.y});
     durationMs = 2000;
   }
+  runSimAnimation(durationMs, showResult);
+});
+
+function runSimAnimation(durationMs, onEnd){
   simFrameIdx = 0;
+  lastSfxEvent = null;
   var startT = performance.now();
   var totalFrames = simResult.frames.length;
   function step(now){
     var t = clamp((now-startT)/durationMs, 0, 1);
     simFrameIdx = Math.floor(t*(totalFrames-1));
-    if(t<1){
-      requestAnimationFrame(step);
-    } else {
-      playState = "result";
-      showResult();
-    }
+    if(t<1){ requestAnimationFrame(step); }
+    else { playState = "result"; if(onEnd) onEnd(); }
   }
   requestAnimationFrame(step);
-});
+}
+
+// Career replay: re-watch the last phase without changing the result.
+function replayLastPhase(){
+  if(!simResult || !simResult.frames) return;
+  closeSheet();
+  playState = "simulating";
+  document.getElementById("pitchHint").style.opacity = 0;
+  AudioFX.kickoff();
+  startPlayLoop();
+  runSimAnimation(Math.max(1600, simResult.frames.length*42), function(){ openSheet(); });
+}
 
 var OUTCOME_LABELS = {
   "TRY": ["TRY","DRIE"],
@@ -3335,7 +3652,19 @@ function showResult(){
     : lvlFeedback(currentLevel, score.dir);
 
   var nextBtn = document.getElementById("btnNext");
-  if(currentLevel.fromPlaybook){
+  var retryBtn = document.getElementById("btnRetry");
+  retryBtn.style.display = "";
+  retryBtn.textContent = T("Retry","Probeer Weer");
+  retryBtn.onclick = function(){ openPlay(currentLevel); };
+  if(currentLevel.career && matchState){
+    // career phase: one genuine attempt. Retry becomes a REPLAY (re-watch), and
+    // Continue commits the result and advances the match.
+    var lastPhaseGood = goodForUser;
+    retryBtn.textContent = T("◅ Replay","◅ Herspeel");
+    retryBtn.onclick = function(){ replayLastPhase(); };
+    nextBtn.textContent = matchState.phase>=2 ? T("Full Time →","Voltyd →") : T("Continue →","Gaan Voort →");
+    nextBtn.onclick = function(){ stopPlayLoop(); recordPhaseResult(lastPhaseGood); };
+  } else if(currentLevel.fromPlaybook){
     nextBtn.textContent = T("Run It Again →","Hardloop Dit Weer →");
     nextBtn.onclick = function(){ openPlay(currentLevel); };
   } else if(currentLevel.dynamic){

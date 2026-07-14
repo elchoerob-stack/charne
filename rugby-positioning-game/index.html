@@ -1945,7 +1945,60 @@ function effectiveTeamPositions(level, uPos){
       return c;
     });
   }
-  return {attack: proj(level.attack, userIsAtk), defense: proj(level.defense, !userIsAtk)};
+  var attack = proj(level.attack, userIsAtk);
+  var defense = proj(level.defense, !userIsAtk);
+  // The opposition reacts LIVE to how you set your team — drift defence slides to
+  // re-mark, the sweeper mirrors the danger side, and an attack probes the thin side.
+  if(level.dynamic && oppReactOn){
+    if(userIsAtk) reactOpposition(level, attack, defense, true);
+    else reactOpposition(level, defense, attack, false);
+  }
+  return {attack: attack, defense: defense};
+}
+
+// Move the opposition (oppList, already cloned) in response to the user's team (ownEff).
+var oppReactOn = true;
+function reactOpposition(level, ownEff, oppList, oppIsDefense){
+  var openDir = level.openDir || 1;
+  var ballX = level.ball.x, ballY = level.ball.y;
+  var liveOwn = ownEff.filter(function(p){ return !p.anchored; });
+  if(oppIsDefense){
+    // DRIFT DEFENCE: match up in order across the field and slide to track.
+    var atkBacks = liveOwn.filter(function(a){ return !a.isForward; })
+      .sort(function(a,b){ return (a.x-b.x)*openDir; });
+    var comX = 0; atkBacks.forEach(function(a){ comX += a.x; });
+    comX = atkBacks.length ? comX/atkBacks.length : ballX;
+    var markers = [];
+    oppList.forEach(function(d){ if(!d.anchored && !d.sweeper) markers.push(d); });
+    markers.sort(function(a,b){ return (a.x-b.x)*openDir; });
+    // pair inside-out: defender[i] marks attacker[i]; extra attackers on the
+    // open side stay unmarked, so a held overlap shows itself live.
+    markers.forEach(function(d, i){
+      var mark = atkBacks[i];
+      if(mark){
+        d.x = clamp(d.x + (mark.x - d.x)*0.5, -PITCH_W/2+2, PITCH_W/2-2); // slide, hold shape
+      }
+      d.x = clamp(d.x + (comX - d.x)*0.08, -PITCH_W/2+2, PITCH_W/2-2);    // line follows the ball
+    });
+    oppList.forEach(function(d){
+      if(d.sweeper && !d.anchored){
+        d.x = clamp(d.x*0.35 + comX*0.65, -PITCH_W/2+2, PITCH_W/2-2);     // fullback covers danger side
+      }
+    });
+  } else {
+    // Opposition is ATTACKING (you defend): they probe the thinnest channel.
+    var defenders = liveOwn.filter(function(p){ return !p.sweeper; });
+    var best = ballX, bestSpace = -Infinity;
+    for(var x=-24; x<=24; x+=3){
+      var m = Infinity;
+      defenders.forEach(function(dd){ var q=Math.abs(dd.x - x); if(q<m) m=q; });
+      if(m > bestSpace){ bestSpace = m; best = x; }
+    }
+    oppList.forEach(function(a){
+      if(a.anchored || a.isForward) return;
+      a.x = clamp(a.x + (best - a.x)*0.22, -PITCH_W/2+2, PITCH_W/2-2);
+    });
+  }
 }
 
 function checkOffside(level, userPos){
@@ -2860,6 +2913,67 @@ function drawBallFlight(b){
   ctx.restore();
 }
 
+// Live coaching read while positioning: highlight the space and name the picture.
+function ringLabel(pt, color, label){
+  var s = toScreen(pt);
+  var pr = 1 + 0.12*Math.sin(performance.now()/220);
+  ctx.beginPath(); ctx.arc(s.x, s.y+2, 19*dpr*pr, 0, Math.PI*2);
+  ctx.strokeStyle=color; ctx.lineWidth=2.4*dpr;
+  ctx.setLineDash([5*dpr,4*dpr]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=color;
+  ctx.font="800 italic "+(9*dpr)+"px "+getFontMono();
+  ctx.textAlign="center"; ctx.fillText(label, s.x, s.y - 22*dpr); ctx.textAlign="start";
+}
+function drawTacticalRead(level, eff){
+  var atkUser = level.userSide==="attack";
+  var openDir = level.openDir || 1;
+  var ballX = level.ball.x;
+  function nearest(pt, arr){ var m=Infinity; arr.forEach(function(p){ var d=dist(pt,p); if(d<m)m=d; }); return m; }
+  var atkBacks = eff.attack.filter(function(a){ return !a.isForward; });
+  var defLine  = eff.defense.filter(function(d){ return !d.anchored && !d.sweeper; });
+  // count real numbers on the open side of the ball (overlap = attackers > defenders there)
+  var side = function(p){ return (p.x - ballX)*openDir; };
+  var atkOpen = atkBacks.filter(function(a){ return side(a) > 1.5; });
+  var defOpen = defLine.filter(function(d){ return side(d) > 1.5; });
+
+  if(atkUser){
+    if(atkOpen.length > defOpen.length){
+      // genuine overlap — highlight the outermost attacker the defence can't reach
+      var free = atkOpen.slice().sort(function(a,b){ return side(b)-side(a); })[0];
+      var extra = atkOpen.length - defOpen.length;
+      ringLabel(free, "rgba(79,179,126,0.9)", T("+"+extra+" OUT WIDE","+"+extra+" WYD"));
+      setCommentary(T("OVERLAP — YOU HAVE THE EXTRA MAN","OORVLEUELING — JY HET DIE EKSTRA MAN"), false);
+    } else {
+      // no numbers yet — is anyone at least unmarked in a channel?
+      var loose=null, looseGap=0;
+      atkBacks.forEach(function(a){ var g=nearest(a, defLine); if(g>5 && g>looseGap){ looseGap=g; loose=a; } });
+      if(loose){
+        ringLabel(loose, "rgba(230,190,90,0.85)", T("SPACE","RUIMTE"));
+        setCommentary(T("HALF A GAP — HOLD YOUR WIDTH","HALWE GAPING — HOU JOU WYDTE"), false);
+      } else {
+        setCommentary(T("DEFENCE MATCHED — WORK AN OVERLAP","VERDEDIGING PAS — WERK 'N OORVLEUELING"), false);
+      }
+    }
+  } else {
+    // defending: is the attack about to have more men than you in a channel?
+    if(atkOpen.length > defOpen.length){
+      var target = atkOpen.slice().sort(function(a,b){ return side(b)-side(a); })[0];
+      ringLabel(target, "rgba(214,110,60,0.9)", T("UNMARKED","ONGEDEK"));
+      setCommentary(T("THEY'RE OVERLAPPING YOU — SLIDE OUT","HULLE OORVLEUEL JOU — SKUIF UIT"), false);
+    } else {
+      // find the widest undefended channel an attacker sits in
+      var danger=null, dGap=0;
+      atkBacks.forEach(function(a){ var g=nearest(a, defLine); if(g>5.5 && g>dGap){ dGap=g; danger=a; } });
+      if(danger){
+        ringLabel({x:danger.x, y:danger.y}, "rgba(214,110,60,0.85)", T("GAP","GAPING"));
+        setCommentary(T("MAN IN SPACE — GET OFF THE LINE","MAN IN RUIMTE — KOM VAN DIE LYN AF"), false);
+      } else {
+        setCommentary(T("LINE IS SOLID — HOLD IT","LYN IS STEWIG — HOU DIT"), false);
+      }
+    }
+  }
+}
+
 var sbLast = {clock:"", zone:"", home:""};
 function updateScorebug(){
   var secs = (playState==="simulating"||playState==="result") ? simFrameIdx*0.06 : 0;
@@ -2897,6 +3011,7 @@ function render(){
       }
       var holderEff = eff.attack.filter(function(a){return a.isCarrier;})[0];
       drawBall(holderEff ? {x:holderEff.x, y:holderEff.y-0.01} : level.ball);
+      drawTacticalRead(level, eff);
       eff.attack.forEach(function(a){ if(!a.isUser) drawToken(a, {side:"attack", label:a.label, carrier:a.isCarrier, small:a.isForward}); });
       eff.defense.forEach(function(d){ if(!d.isUser) drawToken(d, {side:"defense", label:d.label, small:d.isForward}); });
       var uAll = eff.attack.concat(eff.defense).filter(function(p){return p.isUser;})[0];

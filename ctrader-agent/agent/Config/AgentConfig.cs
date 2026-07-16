@@ -6,6 +6,13 @@ public sealed class CTraderConfig
     public string ProcessName { get; set; } = "cTrader";
     public int StartupTimeoutSeconds { get; set; } = 60;
     public bool AttachIfAlreadyRunning { get; set; } = true;
+
+    /// <summary>
+    /// Whether to drive the backtest "settings" popup (starting capital, commission, data mode).
+    /// Off by default until that popup's UI selectors are calibrated via a second --inspect;
+    /// while off, backtests use cTrader's current values for those fields.
+    /// </summary>
+    public bool DriveBacktestSettingsPopup { get; set; } = false;
 }
 
 public sealed class AgentSettings

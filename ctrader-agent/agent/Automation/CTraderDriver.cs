@@ -98,7 +98,7 @@ public sealed class CTraderDriver : ICTraderDriver
             SetFixedParameters(window, job.Parameters);
 
             // 6. Start and wait.
-            _uiMap.FindRequired(tabItem, "StartButton").AsButton().Invoke();
+            Activate(_uiMap.FindRequired(tabItem, "StartButton"));
             _log.Information("Backtest started for job {JobId}; waiting for completion…", job.Id);
             WaitForCompletion(tabItem, TimeSpan.FromMinutes(RunTimeoutMinutes), job.Type);
 
@@ -213,18 +213,24 @@ public sealed class CTraderDriver : ICTraderDriver
 
     private void ConfigureBacktestSettings(Window window, AutomationElement tabItem, Job job)
     {
-        // The settings popup wasn't captured in the first inspect, so this whole step is best-effort:
-        // if we can't drive the popup, we log and continue — the backtest still runs over the correct
-        // date range, just using cTrader's currently-configured capital/commission.
+        // The settings popup wasn't captured in the first inspect, so driving it is gated off by
+        // default (CTrader.DriveBacktestSettingsPopup in appsettings.json). Until it's calibrated,
+        // the backtest runs over the correct date range using cTrader's current capital/commission.
+        if (!_config.DriveBacktestSettingsPopup)
+        {
+            _log.Information("Skipping backtest settings popup (not calibrated yet); using cTrader's current starting capital / commission / data. Enable CTrader.DriveBacktestSettingsPopup once calibrated.");
+            return;
+        }
+
         try
         {
             var gear = _uiMap.Find(tabItem, "BacktestSettingsButton");
             if (gear is null)
             {
-                _log.Warning("Backtest settings gear not found within the Backtesting tab; skipping capital/commission/data (using cTrader's current values).");
+                _log.Warning("Backtest settings gear not found within the Backtesting tab; using cTrader's current values.");
                 return;
             }
-            gear.AsButton().Invoke();
+            Activate(gear);
             Thread.Sleep(500);
 
             var capital = _uiMap.Find(window, "StartingCapitalField");
@@ -232,7 +238,8 @@ public sealed class CTraderDriver : ICTraderDriver
             else _log.Warning("Starting-capital field not found (settings popup not calibrated); leaving cTrader's current value.");
 
             var autoCommission = _uiMap.Find(window, "ApplyCommissionAutomaticallyCheckbox")?.AsCheckBox();
-            if (autoCommission is not null) autoCommission.IsChecked = job.ApplyCommissionAutomatically;
+            if (autoCommission is not null && autoCommission.IsChecked != job.ApplyCommissionAutomatically)
+                autoCommission.Click();
 
             if (!job.ApplyCommissionAutomatically)
             {
@@ -243,13 +250,12 @@ public sealed class CTraderDriver : ICTraderDriver
             if (!string.IsNullOrWhiteSpace(job.DataMode))
                 _uiMap.Find(window, "DataModeDropdown")?.AsComboBox().Select(job.DataMode);
 
-            // Re-click the gear to dismiss the popup.
-            gear.AsButton().Invoke();
+            Activate(gear); // re-click to dismiss the popup
             Thread.Sleep(300);
         }
         catch (Exception ex)
         {
-            _log.Warning(ex, "Backtest settings popup could not be fully driven (not calibrated yet); continuing with cTrader's current settings.");
+            _log.Warning(ex, "Backtest settings popup could not be fully driven; continuing with cTrader's current settings.");
         }
     }
 
@@ -269,12 +275,28 @@ public sealed class CTraderDriver : ICTraderDriver
 
     private void DisableVisualMode(AutomationElement tabItem)
     {
-        var visual = _uiMap.Find(tabItem, "VisualModeCheckbox")?.AsCheckBox();
-        if (visual is not null && visual.IsChecked == true)
+        var el = _uiMap.Find(tabItem, "VisualModeCheckbox");
+        if (el is null)
         {
-            visual.Click();
-            _log.Information("Visual Mode disabled for a faster backtest.");
+            _log.Warning("Visual Mode checkbox not found; the backtest may run in (slow) visual mode.");
+            return;
         }
+        var visual = el.AsCheckBox();
+
+        // Toggle until it reads clearly off. `!= false` also handles an indeterminate/null read,
+        // which is what silently left Visual Mode on before. Prefer the Toggle pattern (reliable
+        // without an on-screen clickable point); fall back to a real click.
+        for (var attempt = 0; attempt < 3 && visual.IsChecked != false; attempt++)
+        {
+            if (el.Patterns.Toggle.IsSupported) el.Patterns.Toggle.Pattern.Toggle();
+            else el.Click();
+            Thread.Sleep(400);
+        }
+
+        if (visual.IsChecked == false)
+            _log.Information("Visual Mode is off — backtest will run at full speed.");
+        else
+            _log.Warning("Could not confirm Visual Mode is off; the backtest may run slowly in visual mode.");
     }
 
     private void SetFixedParameters(Window window, Dictionary<string, double> parameters)
@@ -402,6 +424,16 @@ public sealed class CTraderDriver : ICTraderDriver
         // Strip currency symbols, spaces and thousands separators before parsing.
         var cleaned = new string(s.Where(c => char.IsDigit(c) || c is '.' or '-').ToArray());
         return double.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : double.MinValue;
+    }
+
+    // Some cTrader buttons don't expose the Invoke pattern (only respond to a real mouse click),
+    // while others only expose Invoke. Try Invoke first, fall back to Click.
+    private static void Activate(AutomationElement element)
+    {
+        if (element.Patterns.Invoke.IsSupported)
+            element.Patterns.Invoke.Pattern.Invoke();
+        else
+            element.Click();
     }
 
     private static void SetText(AutomationElement element, string value)

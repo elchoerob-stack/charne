@@ -69,29 +69,38 @@ public sealed class CTraderDriver : ICTraderDriver
         {
             var window = GetMainWindow();
 
-            // 1. Open the target cBot instance (already on the desired symbol+timeframe).
-            OpenInstance(window, job.InstanceName);
+            // 1. Ensure the target cBot instance is open in the editor.
+            EnsureInstanceOpen(window, job);
 
             // 2. Switch to the Backtesting or Optimisation tab.
-            var tabName = job.Type == JobType.Backtest ? "BacktestingTab" : "OptimisationTab";
-            _uiMap.FindRequired(window, tabName).Click();
+            var tabItemName = job.Type == JobType.Backtest ? "BacktestingTabItem" : "OptimisationTabItem";
+            var tabItem = _uiMap.FindRequired(window, tabItemName);
+            if (tabItem.Patterns.SelectionItem.IsSupported)
+                tabItem.Patterns.SelectionItem.Pattern.Select();
+            else
+                tabItem.Click();
+            Thread.Sleep(500);
 
-            // 3. Backtesting settings dialog: starting capital, commission, data mode.
-            ConfigureBacktestSettings(window, job);
+            if (job.Type == JobType.Optimization)
+                throw new NotSupportedException(
+                    "Optimisation is not calibrated yet — the Optimisation tab wasn't captured in the first --inspect. " +
+                    "Run --inspect with the Optimisation tab active and its Parameters dialog open, then this path can be wired up. " +
+                    "Backtest jobs work now.");
+
+            // 3. Backtesting settings popup (best-effort until re-inspected): starting capital, commission, data.
+            ConfigureBacktestSettings(window, tabItem, job);
 
             // 4. Date range (dd/MM/yyyy) + turn Visual Mode off for speed.
-            SetDateRange(window, job.FromDate, job.ToDate);
-            DisableVisualMode(window);
+            SetDateRange(tabItem, job.FromDate, job.ToDate);
+            DisableVisualMode(tabItem);
 
-            // 5. Parameters.
-            if (job.Type == JobType.Backtest)
-                SetFixedParameters(window, job.Parameters);
-            else
-                ConfigureOptimisation(window, job);
+            // 5. Fixed parameter values.
+            SetFixedParameters(window, job.Parameters);
 
             // 6. Start and wait.
-            _uiMap.FindRequired(window, "StartButton").AsButton().Invoke();
-            WaitForCompletion(window, TimeSpan.FromMinutes(RunTimeoutMinutes), job.Type);
+            _uiMap.FindRequired(tabItem, "StartButton").AsButton().Invoke();
+            _log.Information("Backtest started for job {JobId}; waiting for completion…", job.Id);
+            WaitForCompletion(tabItem, TimeSpan.FromMinutes(RunTimeoutMinutes), job.Type);
 
             // 7. Collect results.
             Directory.CreateDirectory(Path.Combine(reportsDir, job.Id));
@@ -150,128 +159,162 @@ public sealed class CTraderDriver : ICTraderDriver
 
     private const int RunTimeoutMinutes = 180;
 
-    private void OpenInstance(Window window, string instanceName)
+    private void EnsureInstanceOpen(Window window, Job job)
     {
-        // Make sure the Algo section (cBots list) is showing, then open the instance's editor.
-        _uiMap.Find(window, "AlgoSidebarItem")?.Click();
-
-        var row = _uiMap.Find(window, "CBotInstanceRow", new Dictionary<string, string> { ["instanceName"] = instanceName })
-                  ?? throw new InvalidOperationException(
-                      $"cBot instance '{instanceName}' was not found in the Algo cBots list. " +
-                      $"Check spelling/casing, and that the instance exists on the symbol+timeframe you intend to test.");
-        row.Click();
-    }
-
-    private void ConfigureBacktestSettings(Window window, Job job)
-    {
-        // Open the Backtesting settings popup (gear icon).
-        _uiMap.FindRequired(window, "BacktestSettingsButton").AsButton().Invoke();
-
-        SetText(_uiMap.FindRequired(window, "StartingCapitalField"), job.StartingCapital.ToString(CultureInfo.InvariantCulture));
-
-        var autoCommission = _uiMap.Find(window, "ApplyCommissionAutomaticallyCheckbox")?.AsCheckBox();
-        if (autoCommission is not null)
-            autoCommission.IsChecked = job.ApplyCommissionAutomatically;
-
-        if (!job.ApplyCommissionAutomatically)
+        // Primary, reliable path: a cBot editor is already open (its Backtesting tab exists).
+        // We verify the loaded instance's symbol/timeframe against the job when they're provided.
+        var openTab = _uiMap.Find(window, "BacktestingTabItem");
+        if (openTab is not null)
         {
-            var commissionField = _uiMap.Find(window, "CommissionField");
-            if (commissionField is not null)
-                SetText(commissionField, job.Commission.ToString(CultureInfo.InvariantCulture));
+            var symbol = _uiMap.Find(window, "RealtimeSymbolText")?.AsLabel().Text;
+            var timeframe = _uiMap.Find(window, "RealtimeTimeframeText")?.AsLabel().Text;
+            _log.Information("Using the already-open cBot editor (symbol={Symbol}, timeframe={Timeframe}).", symbol, timeframe);
+
+            if (!string.IsNullOrWhiteSpace(job.Symbol) && symbol is not null &&
+                !symbol.Contains(job.Symbol, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(
+                    $"The open cBot is on '{symbol}', but job {job.Id} expects symbol '{job.Symbol}'. " +
+                    $"Open the correct instance in cTrader, or correct the job's symbol.");
+
+            if (!string.IsNullOrWhiteSpace(job.Timeframe) && timeframe is not null &&
+                !string.Equals(timeframe, job.Timeframe, StringComparison.OrdinalIgnoreCase))
+                _log.Warning("Open timeframe '{Open}' differs from job timeframe '{Job}'; proceeding with the open instance.", timeframe, job.Timeframe);
+
+            return;
         }
 
-        if (!string.IsNullOrWhiteSpace(job.DataMode))
-            _uiMap.Find(window, "DataModeDropdown")?.AsComboBox().Select(job.DataMode);
+        // Best-effort auto-open: filter the cBots list by name and open the single result.
+        // (Bot names aren't exposed directly to UI Automation, so we drive the search box.)
+        _log.Information("No cBot editor open; attempting to open '{Instance}' via the Algo search box.", job.InstanceName);
+        _uiMap.Find(window, "AlgoTab")?.AsButton().Invoke();
+        Thread.Sleep(500);
 
-        // Dismiss the popup (explicit close if mapped, otherwise clicking the tab again closes it).
-        var close = _uiMap.Find(window, "SettingsDialogCloseButton");
-        if (close is not null) close.AsButton().Invoke();
-        else _uiMap.Find(window, "BacktestSettingsButton")?.AsButton().Invoke();
+        var search = _uiMap.Find(window, "AlgoSearchField");
+        if (search is not null && !string.IsNullOrWhiteSpace(job.InstanceName))
+        {
+            SetText(search, job.InstanceName);
+            Thread.Sleep(1000);
+
+            var list = _uiMap.Find(window, "AlgoInstancesList");
+            var settingsButton = list?.FindFirstDescendant(cf => cf.ByAutomationId("SettingsButton_AId"));
+            if (settingsButton is not null)
+            {
+                settingsButton.AsButton().Invoke();
+                Thread.Sleep(1000);
+                if (_uiMap.Find(window, "BacktestingTabItem") is not null) return;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Could not open a cBot editor for '{job.InstanceName}'. As a reliable fallback, open the cBot manually in " +
+            $"cTrader (Algo → click the instance) so its Backtesting tab is visible, then requeue the job. " +
+            $"Auto-open by name is best-effort and may need calibration (docs/CALIBRATION.md).");
     }
 
-    private void SetDateRange(Window window, DateOnly from, DateOnly to)
+    private void ConfigureBacktestSettings(Window window, AutomationElement tabItem, Job job)
     {
-        // cTrader shows dates as dd/MM/yyyy.
-        SetText(_uiMap.FindRequired(window, "FromDatePicker"), from.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
-        SetText(_uiMap.FindRequired(window, "ToDatePicker"), to.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+        // The settings popup wasn't captured in the first inspect, so this whole step is best-effort:
+        // if we can't drive the popup, we log and continue — the backtest still runs over the correct
+        // date range, just using cTrader's currently-configured capital/commission.
+        try
+        {
+            var gear = _uiMap.Find(tabItem, "BacktestSettingsButton");
+            if (gear is null)
+            {
+                _log.Warning("Backtest settings gear not found within the Backtesting tab; skipping capital/commission/data (using cTrader's current values).");
+                return;
+            }
+            gear.AsButton().Invoke();
+            Thread.Sleep(500);
+
+            var capital = _uiMap.Find(window, "StartingCapitalField");
+            if (capital is not null) SetText(capital, job.StartingCapital.ToString(CultureInfo.InvariantCulture));
+            else _log.Warning("Starting-capital field not found (settings popup not calibrated); leaving cTrader's current value.");
+
+            var autoCommission = _uiMap.Find(window, "ApplyCommissionAutomaticallyCheckbox")?.AsCheckBox();
+            if (autoCommission is not null) autoCommission.IsChecked = job.ApplyCommissionAutomatically;
+
+            if (!job.ApplyCommissionAutomatically)
+            {
+                var commissionField = _uiMap.Find(window, "CommissionField");
+                if (commissionField is not null) SetText(commissionField, job.Commission.ToString(CultureInfo.InvariantCulture));
+            }
+
+            if (!string.IsNullOrWhiteSpace(job.DataMode))
+                _uiMap.Find(window, "DataModeDropdown")?.AsComboBox().Select(job.DataMode);
+
+            // Re-click the gear to dismiss the popup.
+            gear.AsButton().Invoke();
+            Thread.Sleep(300);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Backtest settings popup could not be fully driven (not calibrated yet); continuing with cTrader's current settings.");
+        }
     }
 
-    private void DisableVisualMode(Window window)
+    private void SetDateRange(AutomationElement tabItem, DateOnly from, DateOnly to)
     {
-        var visual = _uiMap.Find(window, "VisualModeCheckbox")?.AsCheckBox();
-        if (visual is not null) visual.IsChecked = false;
+        // cTrader shows dates as dd/MM/yyyy. The editable text box is a child of each DatePickerEx.
+        var fromPicker = _uiMap.FindRequired(tabItem, "FromDatePicker");
+        var toPicker = _uiMap.FindRequired(tabItem, "ToDatePicker");
+        SetText(DatePickerTextBox(fromPicker), from.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+        SetText(DatePickerTextBox(toPicker), to.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+    }
+
+    private AutomationElement DatePickerTextBox(AutomationElement picker)
+        => _uiMap.Find(picker, "DatePickerTextBox")
+           ?? picker.FindFirstDescendant(cf => cf.ByControlType(ControlType.Edit))
+           ?? throw new InvalidOperationException("Date picker text box not found inside DatePickerEx.");
+
+    private void DisableVisualMode(AutomationElement tabItem)
+    {
+        var visual = _uiMap.Find(tabItem, "VisualModeCheckbox")?.AsCheckBox();
+        if (visual is not null && visual.IsChecked == true)
+        {
+            visual.Click();
+            _log.Information("Visual Mode disabled for a faster backtest.");
+        }
     }
 
     private void SetFixedParameters(Window window, Dictionary<string, double> parameters)
     {
         if (parameters.Count == 0) return;
         var panel = _uiMap.FindRequired(window, "ParametersPanel");
+
+        // The Parameters panel is a FLAT ordered list: each label TextBlock is immediately followed
+        // by its value control (Edit for numbers, ComboBox for enums). Walk the children in order.
+        var children = panel.FindAllChildren();
         foreach (var (name, value) in parameters)
         {
-            var row = _uiMap.Find(panel, "ParameterRow", new Dictionary<string, string> { ["parameterName"] = name });
-            if (row is null)
+            var labelIndex = Array.FindIndex(children, c =>
+                SafeControlType(c) == ControlType.Text &&
+                string.Equals(SafeName(c), name, StringComparison.OrdinalIgnoreCase));
+
+            if (labelIndex < 0)
             {
-                _log.Warning("Parameter '{Name}' not found on the Parameters panel; skipping.", name);
-                continue;
-            }
-            var valueBox = row.FindFirstDescendant(cf => cf.ByControlType(ControlType.Edit));
-            if (valueBox is not null) SetText(valueBox, value.ToString(CultureInfo.InvariantCulture));
-        }
-    }
-
-    private void ConfigureOptimisation(Window window, Job job)
-    {
-        // Optional Genetic Algorithm mode.
-        if (job.UseGeneticAlgorithm)
-            _uiMap.Find(window, "GeneticAlgorithmButton")?.AsButton().Invoke();
-
-        // Open the Optimisation Parameters dialog (sliders icon) that holds the ranges + timeframe.
-        _uiMap.FindRequired(window, "OptimisationParamsButton").AsButton().Invoke();
-
-        if (job.OptimizationTimeframes.Count > 0)
-        {
-            var tfField = _uiMap.Find(window, "OptTimeframeField");
-            if (tfField is not null) SetText(tfField, string.Join("; ", job.OptimizationTimeframes));
-        }
-
-        foreach (var range in job.ParameterRanges)
-        {
-            var row = _uiMap.Find(window, "OptParameterRow", new Dictionary<string, string> { ["parameterName"] = range.Name });
-            if (row is null)
-            {
-                _log.Warning("Parameter '{Name}' not found in the Optimisation Parameters dialog; skipping.", range.Name);
+                _log.Warning("Parameter '{Name}' not found in the Parameters panel; skipping.", name);
                 continue;
             }
 
-            // Tick the include checkbox for this parameter.
-            var enableCheckbox = row.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox));
-            if (enableCheckbox is not null) enableCheckbox.AsCheckBox().IsChecked = true;
+            var valueControl = children.Skip(labelIndex + 1)
+                .FirstOrDefault(c => SafeControlType(c) is ControlType.Edit or ControlType.ComboBox);
 
-            var editBoxes = row.FindAllDescendants(cf => cf.ByControlType(ControlType.Edit));
-            if (range.IsValueList)
+            if (valueControl is null)
             {
-                // Boolean/enum parameter: a single value-list field, e.g. "Yes, No".
-                if (editBoxes.Length >= 1) SetText(editBoxes[0], string.Join(", ", range.Values));
-                else _log.Warning("Expected a value-list field for parameter '{Name}', found none.", range.Name);
+                _log.Warning("No value control found after parameter '{Name}'; skipping.", name);
+                continue;
             }
-            else if (editBoxes.Length >= 3)
-            {
-                // Numeric parameter: Min / Max / Step, in that left-to-right order.
-                SetText(editBoxes[0], range.Min.ToString(CultureInfo.InvariantCulture));
-                SetText(editBoxes[1], range.Max.ToString(CultureInfo.InvariantCulture));
-                SetText(editBoxes[2], range.Step.ToString(CultureInfo.InvariantCulture));
-            }
+
+            var text = value.ToString(CultureInfo.InvariantCulture);
+            if (SafeControlType(valueControl) == ControlType.ComboBox)
+                valueControl.AsComboBox().Select(text);
             else
-            {
-                _log.Warning("Expected 3 fields (Min/Max/Step) for numeric parameter '{Name}', found {Count}.", range.Name, editBoxes.Length);
-            }
+                SetText(valueControl, text);
         }
-
-        // Close the Parameters dialog by re-clicking the button that opened it.
-        _uiMap.Find(window, "OptimisationParamsButton")?.AsButton().Invoke();
     }
 
-    private void WaitForCompletion(Window window, TimeSpan timeout, JobType type)
+    private void WaitForCompletion(AutomationElement tabItem, TimeSpan timeout, JobType type)
     {
         var deadline = DateTime.UtcNow.Add(timeout);
         var sawRunning = false;
@@ -281,7 +324,7 @@ public sealed class CTraderDriver : ICTraderDriver
             // The Start (Play) button is disabled while a run is in progress and re-enables when
             // it finishes. We first confirm we saw it disabled (run actually started), then treat
             // re-enabling as completion — this avoids returning instantly before the run spins up.
-            var startButton = _uiMap.Find(window, "StartButton")?.AsButton();
+            var startButton = _uiMap.Find(tabItem, "StartButton")?.AsButton();
             if (startButton is not null)
             {
                 if (!startButton.IsEnabled) sawRunning = true;
@@ -298,13 +341,10 @@ public sealed class CTraderDriver : ICTraderDriver
     {
         var summary = new Dictionary<string, string>();
 
-        // Open the backtest report if there's a dedicated button for it.
-        _uiMap.Find(window, "BacktestReportButton")?.AsButton().Invoke();
-
         var panel = _uiMap.Find(window, "BacktestReportPanel");
         if (panel is null)
         {
-            _log.Warning("Backtest report panel not located; summary will be empty until BacktestReportPanel is calibrated (docs/CALIBRATION.md).");
+            _log.Warning("Backtest report panel not located; summary will be empty until BacktestReportPanel is calibrated (re-inspect after a completed run — docs/CALIBRATION.md).");
             return summary;
         }
 
@@ -373,6 +413,20 @@ public sealed class CTraderDriver : ICTraderDriver
             return;
         }
         element.AsTextBox().Text = value;
+    }
+
+    // Some cTrader elements throw when a UIA property is unsupported (seen in the inspect dump),
+    // so read ControlType/Name defensively.
+    private static ControlType SafeControlType(AutomationElement element)
+    {
+        try { return element.ControlType; }
+        catch { return ControlType.Custom; }
+    }
+
+    private static string SafeName(AutomationElement element)
+    {
+        try { return element.Name ?? ""; }
+        catch { return ""; }
     }
 
     private static void WriteElementTree(AutomationElement element, StreamWriter writer, int depth)

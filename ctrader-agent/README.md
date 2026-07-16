@@ -1,9 +1,27 @@
-# cTrader Autonomous Agent
+# cTrader Trader Agent
 
-A local Windows agent that drives **cTrader Automate** (the desktop app) to run
-backtests and optimizations on your cBots unattended — you drop job files in a
-folder, the agent runs them against the real cTrader Automate UI while you're
-away, and writes results/reports back out.
+A **trading assistant that lives on your PC**, runs in its own window, and works
+through cTrader tasks autonomously while you're busy — with **Claude guiding it**
+for continuous improvement, and (later) helping record and operate your live
+account safely.
+
+**Read `ROADMAP.md` for the full vision and the three phases.** In short:
+
+1. **Phase 1 (working now):** autonomous backtesting/optimisation — drop job
+   files in a folder, the agent runs them against the real cTrader UI while
+   you're away, and writes results back out.
+2. **Phase 2 (next):** a local Claude reads results and queues the next tests —
+   a continuous-improvement loop (`docs/CONTINUOUS_IMPROVEMENT.md`).
+3. **Phase 3 (designed, gated):** record and operate the live account via the
+   cTrader Open API, behind strict safety rails (`docs/LIVE_TRADING.md`).
+
+> **Two Claudes:** the cloud Claude (claude.ai) *builds* this and has no access
+> to your PC; a **local Claude Code on your Windows machine** *operates and
+> guides* it with direct access to run the agent. See `ROADMAP.md`.
+
+The rest of this file covers Phase 1.
+
+---
 
 ## Why this exists, and its real constraints
 
@@ -59,12 +77,15 @@ ctrader-agent/
     pending/ processing/ done/ failed/   (created at runtime, gitignored)
   reports/                 (created at runtime, gitignored)
   scheduler/
-    Install-ScheduledTask.ps1   Registers the agent to auto-start in your
-                                 interactive session at logon
+    Start-Agent.ps1             Launch the agent in its OWN window (watch mode)
+    Install-ScheduledTask.ps1   Auto-start the agent at logon
   docs/
-    SETUP.md               Step-by-step install on your Windows PC
+    SETUP.md                Step-by-step install on your Windows PC
     JOBS.md                 Job file schema reference
-    CALIBRATION.md          How to fix UI selectors if they don't match
+    CALIBRATION.md          How to fix/finish UI selectors
+    CONTINUOUS_IMPROVEMENT.md  Phase 2: the Claude-guided loop
+    LIVE_TRADING.md         Phase 3: live account design & safety
+  ROADMAP.md                The full vision and phases
 ```
 
 ## Quick start
@@ -80,16 +101,25 @@ copy ..\jobs\examples\backtest-example.json ..\jobs\pending\
 dotnet run -- --watch            # the real thing
 ```
 
-Then use `scheduler\Install-ScheduledTask.ps1` to have it start automatically
-whenever you log in, so you can drop jobs in and walk away.
+To run it in its **own window** alongside your work, use
+`scheduler\Start-Agent.ps1` (opens a separate window watching for jobs). To have
+it start automatically at logon, use `scheduler\Install-ScheduledTask.ps1`.
+Either way, you then drop jobs in `jobs\pending\` and walk away.
 
-## Status
+## Status (Phase 1)
 
-This is a first pass, built without a Windows machine or a live cTrader
-Automate instance to test against in this session. The job queue, models,
-report parsing, and CLI plumbing are complete and should work as-is. The
-`Automation/CTraderDriver.cs` UI selectors are best-effort based on cTrader
-Automate's documented panel layout and will very likely need a short
-calibration pass against your actual installed version — that's what
-`--inspect` and `docs/CALIBRATION.md` are for. Happy to iterate on the
-selectors with you once you run `--inspect` and share the output.
+Calibrated and proven end-to-end against **cTrader 5.7.14**: the agent attaches
+to the running app, uses the open cBot, sets the date range, turns Visual Mode
+off, writes parameters, starts the backtest, and waits for completion — all with
+real UI Automation IDs captured via `--inspect`.
+
+Remaining Phase 1 calibration (a single `--inspect` pass — see
+`docs/CALIBRATION.md`):
+
+- **Backtest settings popup** (starting capital / commission / data mode) —
+  gated off by `CTrader.DriveBacktestSettingsPopup` until captured; backtests
+  currently use cTrader's on-screen values.
+- **Optimisation** — the Optimisation tab wasn't in the first capture; that
+  path raises a clear "not calibrated yet" error until inspected.
+- **Report numbers** — the post-run report panel isn't mapped yet, so summaries
+  are empty pending capture.

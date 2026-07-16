@@ -65,7 +65,7 @@ public sealed class UiMap
         {
             var value = Substitute(strategy.Value, substitutions);
             var cf = root.ConditionFactory;
-            Condition condition = strategy.By switch
+            ConditionBase condition = strategy.By switch
             {
                 "AutomationId" => cf.ByAutomationId(value),
                 "ClassName" => cf.ByClassName(value),

@@ -32,23 +32,23 @@ Edit `agent/appsettings.json`:
 
 ## 3. Calibrate the UI selectors (first run only)
 
-The agent locates buttons/fields in cTrader Automate by name/AutomationId,
-defined in `agent/uimap.json`. These are best-guess defaults and may not
-match your exact cTrader version. To check:
+The agent locates buttons/fields by name/AutomationId, defined in
+`agent/uimap.json`. It's already calibrated from cTrader 5.7 screenshots, but
+the toolbar icon buttons and date fields (no visible text) carry placeholder
+IDs you should confirm. First, in cTrader, open one of your cBots and click
+its **Backtesting** tab so those controls exist in the tree. Then:
 
 ```powershell
 dotnet run -- --inspect
 ```
 
-This launches/attaches cTrader, dumps the full UI Automation tree of the main
-window to `logs/ui-tree-<timestamp>.txt`, and exits without touching
-anything. Open that file and search for the labels of the controls the agent
-needs (Automate tab, Backtesting/Optimization sub-tabs, Symbol/Period
-dropdowns, Start button, parameter grid, etc). If a name in `uimap.json`
-doesn't match what you see, update the corresponding `value` field — no
-rebuild needed, it's read at startup. See `docs/CALIBRATION.md` for the full
-list of elements and how to fix each one. If you get stuck, share the dumped
-tree and I can help adjust the map directly.
+This attaches to cTrader, dumps the full UI Automation tree of the main window
+to `logs/ui-tree-<timestamp>.txt`, and exits without touching anything. Open
+that file and confirm the identifiers for the elements marked
+`"needsInspect": true` in `uimap.json` (gear/settings button, Start/Stop,
+date pickers, results grid). Update the `value` fields to match — no rebuild
+needed, it's read at startup. `docs/CALIBRATION.md` has the full checklist. If
+you get stuck, share the dumped tree and I can adjust the map directly.
 
 ## 4. Dry-run the queue mechanics
 

@@ -1,146 +1,191 @@
 {
-  "_comment": "Every UI Automation lookup the driver performs is defined here as a named element with an ordered list of strategies to try. Strategies are tried in order until one matches. If cTrader Automate changes its UI, fix lookups here first before touching code. Run `dotnet run -- --inspect` to dump the live UI tree and find correct Name/AutomationId/ClassName values for your installed version.",
+  "_comment": "Calibrated against cTrader 5.7.14 (2026) using screenshots of the real Algo → cBot → Backtesting/Optimisation UI. Text-labelled elements (tab names, dialog field labels, checkboxes, result columns) use Name selectors and should be reliable. Toolbar ICON buttons (gear, play, stop, param-settings) and the date-picker fields carry no visible text, so their AutomationId/ClassName values below are PLACEHOLDERS marked with `needsInspect: true` — run `dotnet run -- --inspect` and replace them with the real identifiers from the dumped UI tree. See docs/CALIBRATION.md.",
 
   "elements": {
-    "AutomateTab": {
-      "description": "The top-level 'Automate' tab in the main cTrader window ribbon/sidebar.",
+    "AlgoSidebarItem": {
+      "description": "The 'Algo' item in cTrader's left sidebar (opens the cBots list).",
       "strategies": [
-        { "by": "Name", "value": "Automate" },
-        { "by": "AutomationId", "value": "AutomateTabItem" }
+        { "by": "Name", "value": "Algo" }
       ]
     },
-    "BotList": {
-      "description": "The list/tree of installed cBots in the Automate tab.",
+    "CBotInstanceRow": {
+      "description": "A cBot instance row in the left cBots list, matched by the instance/bot display name (substituted at runtime). Clicking it opens that instance's editor with the EURUSD-h1 / Backtesting / Optimisation tabs. The instance is expected to already be on the symbol+timeframe the job wants (see docs/JOBS.md — jobs target a preconfigured instance rather than switching the chart).",
       "strategies": [
-        { "by": "AutomationId", "value": "cBotsList" },
-        { "by": "ClassName", "value": "cBotList" }
+        { "by": "Name", "value": "{instanceName}" }
       ]
     },
-    "BotListItem": {
-      "description": "A single cBot row in BotList, matched by its display name (substituted at runtime).",
-      "strategies": [
-        { "by": "Name", "value": "{botName}" }
-      ]
-    },
-    "BacktestingSubTab": {
-      "description": "Sub-tab that opens the Backtesting panel for the selected cBot.",
+    "BacktestingTab": {
+      "description": "The 'Backtesting' tab at the top of an open cBot editor.",
       "strategies": [
         { "by": "Name", "value": "Backtesting" }
       ]
     },
-    "OptimizationSubTab": {
-      "description": "Sub-tab that opens the Optimization panel for the selected cBot.",
+    "OptimisationTab": {
+      "description": "The 'Optimisation' tab at the top of an open cBot editor. Note British spelling.",
       "strategies": [
-        { "by": "Name", "value": "Optimization" }
+        { "by": "Name", "value": "Optimisation" }
       ]
     },
-    "SymbolDropdown": {
-      "description": "Symbol selector within the Backtesting/Optimization settings panel.",
+
+    "BacktestSettingsButton": {
+      "description": "Gear icon at the far left of the Backtesting/Optimisation toolbar — opens the 'Backtesting settings' dialog (starting capital, commission, data).",
+      "needsInspect": true,
       "strategies": [
-        { "by": "AutomationId", "value": "SymbolComboBox" },
-        { "by": "Name", "value": "Symbol" }
+        { "by": "AutomationId", "value": "BacktestSettingsButton" },
+        { "by": "Name", "value": "Settings" }
       ]
     },
-    "TimeframeDropdown": {
-      "description": "Timeframe/period selector.",
+    "StartingCapitalField": {
+      "description": "'Starting capital' text field in the Backtesting settings dialog.",
       "strategies": [
-        { "by": "AutomationId", "value": "PeriodComboBox" },
-        { "by": "Name", "value": "Period" }
+        { "by": "AutomationId", "value": "StartingCapitalTextBox" },
+        { "by": "Name", "value": "Starting capital" }
       ]
     },
+    "CommissionField": {
+      "description": "'Commission' text field in the Backtesting settings dialog (disabled while 'Apply commission automatically' is ticked).",
+      "strategies": [
+        { "by": "AutomationId", "value": "CommissionTextBox" },
+        { "by": "Name", "value": "Commission" }
+      ]
+    },
+    "ApplyCommissionAutomaticallyCheckbox": {
+      "description": "'Apply commission automatically' checkbox in the Backtesting settings dialog.",
+      "strategies": [
+        { "by": "Name", "value": "Apply commission automatically" }
+      ]
+    },
+    "DataModeDropdown": {
+      "description": "'Data' dropdown in the Backtesting settings dialog (e.g. 'Tick data from server (accurate)', 'm1 bars from server', etc).",
+      "strategies": [
+        { "by": "AutomationId", "value": "DataModeComboBox" },
+        { "by": "Name", "value": "Data" }
+      ]
+    },
+    "SettingsDialogCloseButton": {
+      "description": "Closes/confirms the Backtesting settings dialog. Often clicking outside the popup dismisses it; this is the explicit control if present.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "Name", "value": "OK" },
+        { "by": "Name", "value": "Close" }
+      ]
+    },
+
     "FromDatePicker": {
-      "description": "Backtest/optimization range start date.",
+      "description": "Backtest/optimisation range START date field on the toolbar (format dd/MM/yyyy). Left of the range slider.",
+      "needsInspect": true,
       "strategies": [
-        { "by": "AutomationId", "value": "FromDatePicker" },
-        { "by": "Name", "value": "From" }
+        { "by": "AutomationId", "value": "FromDatePicker" }
       ]
     },
     "ToDatePicker": {
-      "description": "Backtest/optimization range end date.",
+      "description": "Backtest/optimisation range END date field on the toolbar (format dd/MM/yyyy). Right of the range slider.",
+      "needsInspect": true,
       "strategies": [
-        { "by": "AutomationId", "value": "ToDatePicker" },
-        { "by": "Name", "value": "To" }
+        { "by": "AutomationId", "value": "ToDatePicker" }
       ]
     },
-    "InitialBalanceField": {
-      "description": "Initial account balance input.",
+    "VisualModeCheckbox": {
+      "description": "'Visual Mode' checkbox on the Backtesting toolbar. The agent unchecks this for speed.",
       "strategies": [
-        { "by": "AutomationId", "value": "InitialBalanceTextBox" },
-        { "by": "Name", "value": "Initial Balance" }
+        { "by": "Name", "value": "Visual Mode" }
       ]
     },
-    "SpreadModeDropdown": {
-      "description": "Spread simulation model (Real / Fixed / Zero).",
+    "StartButton": {
+      "description": "Play (▶) button on the toolbar that starts the backtest/optimisation run.",
+      "needsInspect": true,
       "strategies": [
-        { "by": "AutomationId", "value": "SpreadComboBox" },
-        { "by": "Name", "value": "Spread" }
+        { "by": "AutomationId", "value": "StartBacktestButton" },
+        { "by": "Name", "value": "Start" }
       ]
     },
-    "ParametersGrid": {
-      "description": "Grid listing the cBot's configurable parameters, with a Value column for backtests and Min/Max/Step + range-enabled checkbox columns for optimization.",
+    "StopButton": {
+      "description": "Stop (■) button on the toolbar.",
+      "needsInspect": true,
       "strategies": [
-        { "by": "AutomationId", "value": "ParametersDataGrid" },
-        { "by": "ClassName", "value": "ParametersGrid" }
+        { "by": "AutomationId", "value": "StopBacktestButton" },
+        { "by": "Name", "value": "Stop" }
+      ]
+    },
+
+    "ParametersPanel": {
+      "description": "The left-hand Parameters panel of an open cBot editor (grouped by headers like '00 System', '01 Bias/Regime'). Used to set fixed parameter values for a Backtest job.",
+      "strategies": [
+        { "by": "Name", "value": "Parameters" },
+        { "by": "AutomationId", "value": "ParametersPanel" }
       ]
     },
     "ParameterRow": {
-      "description": "A single parameter row in ParametersGrid, matched by parameter label (substituted at runtime).",
+      "description": "A single parameter row in the Parameters panel, matched by its label (substituted at runtime), e.g. 'EMA Fast'. Its editable value control is a descendant Edit/ComboBox.",
       "strategies": [
         { "by": "Name", "value": "{parameterName}" }
       ]
     },
-    "OptimizationCriteriaDropdown": {
-      "description": "The target metric the optimizer maximizes (Net Profit, Profit Factor, Sharpe Ratio, etc).",
+
+    "OptimisationParamsButton": {
+      "description": "The parameter-settings (sliders) icon on the Optimisation toolbar — opens the 'Parameters' dialog where you tick which parameters to optimise and set their Min/Max/Step (numeric) or value list (boolean), plus the Timeframe multi-select.",
+      "needsInspect": true,
       "strategies": [
-        { "by": "AutomationId", "value": "OptimizationCriteriaComboBox" },
-        { "by": "Name", "value": "Optimization Criteria" }
+        { "by": "AutomationId", "value": "OptimisationParametersButton" }
       ]
     },
-    "StartButton": {
-      "description": "Starts the backtest or optimization run.",
+    "OptTimeframeField": {
+      "description": "'Timeframe' multi-select at the top of the Optimisation Parameters dialog (e.g. 'm1; m5; m15; h1; h4').",
       "strategies": [
-        { "by": "Name", "value": "Start" },
-        { "by": "AutomationId", "value": "StartButton" }
+        { "by": "Name", "value": "Timeframe" }
       ]
     },
-    "StopButton": {
-      "description": "Stops a running backtest/optimization.",
+    "OptParameterRow": {
+      "description": "A parameter row in the Optimisation Parameters dialog, matched by label (substituted at runtime). Contains an include checkbox and, for numeric params, Min/Max/Step edit fields (labelled 'Min:', 'Max:', 'Step:').",
       "strategies": [
-        { "by": "Name", "value": "Stop" },
-        { "by": "AutomationId", "value": "StopButton" }
+        { "by": "Name", "value": "{parameterName}" }
       ]
     },
-    "ProgressBar": {
-      "description": "Progress indicator polled to detect completion.",
+    "GeneticAlgorithmButton": {
+      "description": "'GA' button on the Optimisation toolbar — toggles Genetic Algorithm mode (faster, samples the space) vs full grid. Optional; controlled by job.useGeneticAlgorithm.",
       "strategies": [
-        { "by": "AutomationId", "value": "RunProgressBar" },
-        { "by": "ClassName", "value": "ProgressBar" }
+        { "by": "Name", "value": "GA" }
       ]
     },
-    "StatusText": {
-      "description": "Text element showing current run status (e.g. 'Running', 'Completed', 'Stopped').",
+    "AutoselectBestPassCheckbox": {
+      "description": "'Autoselect the best pass' checkbox on the Optimisation panel.",
       "strategies": [
-        { "by": "AutomationId", "value": "StatusTextBlock" }
+        { "by": "Name", "value": "Autoselect the best pass" }
       ]
     },
-    "ResultsPanel": {
-      "description": "Panel showing summary results after a backtest completes.",
+    "PassesLabel": {
+      "description": "The 'Passes:' status label on the Optimisation panel, polled to detect progress/completion.",
       "strategies": [
-        { "by": "Name", "value": "Results" },
-        { "by": "AutomationId", "value": "ResultsPanel" }
+        { "by": "Name", "value": "Passes:" }
       ]
     },
-    "OptimizationResultsGrid": {
-      "description": "Grid of optimization run results (one row per parameter combination tried).",
+    "RemainingTimeLabel": {
+      "description": "The 'Remaining time:' status label on the Optimisation panel.",
       "strategies": [
-        { "by": "AutomationId", "value": "OptimizationResultsDataGrid" }
+        { "by": "Name", "value": "Remaining time:" }
       ]
     },
-    "ExportButton": {
-      "description": "Exports the current report/results grid to a file.",
+
+    "OptimisationResultsGrid": {
+      "description": "The Optimisation results grid. Confirmed columns: Pass, Fitness, Equity, Balance, Net profit, Trades, Winning trades, Losing trades, Profit factor, Max equity, Max balance, Average trade, Pass parameters.",
+      "needsInspect": true,
       "strategies": [
-        { "by": "Name", "value": "Export" },
-        { "by": "AutomationId", "value": "ExportButton" }
+        { "by": "AutomationId", "value": "OptimisationResultsDataGrid" }
+      ]
+    },
+    "BacktestReportButton": {
+      "description": "Report/results icon at the right of the Backtesting toolbar — opens the backtest report (net profit, profit factor, drawdown, trade stats) after a run completes.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "AutomationId", "value": "BacktestReportButton" }
+      ]
+    },
+    "BacktestReportPanel": {
+      "description": "The backtest report/summary panel shown after a completed backtest. Fields mirror the Analyze summary: Net profit, Profit factor, Max balance drawdown, Total trades, Winning/Losing trades, etc.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "AutomationId", "value": "BacktestReportPanel" },
+        { "by": "Name", "value": "Summary" }
       ]
     }
   }

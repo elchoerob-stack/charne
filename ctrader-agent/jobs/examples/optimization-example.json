@@ -1,20 +1,25 @@
 {
   "id": "optimization-example-01",
   "type": "Optimization",
-  "botName": "MyScalperBot",
+  "instanceName": "EurusdWaveCapture",
   "symbol": "EURUSD",
-  "timeframe": "M15",
-  "fromDate": "2024-01-01",
-  "toDate": "2025-01-01",
-  "initialBalance": 10000,
-  "spreadModel": "Real",
-  "commission": 0,
-  "optimizationCriteria": "NetProfit",
+  "timeframe": "h1",
+  "fromDate": "2023-04-11",
+  "toDate": "2026-04-06",
+  "startingCapital": 10000,
+  "commission": 30,
+  "applyCommissionAutomatically": true,
+  "dataMode": "Tick data from server (accurate)",
+  "useGeneticAlgorithm": true,
+  "optimizationTimeframes": ["h1"],
+  "optimizationCriteria": "Net profit",
   "parameterRanges": [
-    { "name": "StopLossPips", "min": 10, "max": 50, "step": 5 },
-    { "name": "TakeProfitPips", "min": 20, "max": 100, "step": 10 },
-    { "name": "RiskPercent", "min": 0.5, "max": 2, "step": 0.5 }
+    { "name": "EMA Fast",  "min": 5,  "max": 50,  "step": 1 },
+    { "name": "EMA Slow",  "min": 10, "max": 100, "step": 1 },
+    { "name": "EMA Trend", "min": 50, "max": 400, "step": 10 },
+    { "name": "ADX Period", "min": 5, "max": 50,  "step": 1 },
+    { "name": "Use H4 Bias Confirmation", "values": ["Yes", "No"] }
   ],
   "topN": 10,
-  "reportName": "myscalper-2024-optimization"
+  "reportName": "eurusdwavecapture-h1-optimization"
 }

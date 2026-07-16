@@ -5,7 +5,17 @@ named entry with an ordered list of lookup strategies (`Name`,
 `AutomationId`, or `ClassName`). The code never hardcodes selectors — if a
 lookup fails, you fix the JSON, not the C#.
 
+The current `uimap.json` was calibrated from screenshots of **cTrader 5.7.14**
+(the Algo → cBot → Backtesting/Optimisation UI). Text-labelled elements (tab
+names, dialog field labels, checkboxes, results columns) should already be
+correct. The entries marked `"needsInspect": true` are **icon buttons and
+date fields with no visible text** — their identifiers are placeholders you
+confirm with `--inspect`.
+
 ## 1. Dump the real UI tree
+
+Open the cBot editor to the Backtesting (or Optimisation) tab first — so the
+relevant controls exist in the tree — then:
 
 ```powershell
 cd ctrader-agent\agent
@@ -15,50 +25,48 @@ dotnet run -- --inspect
 Open the generated `logs/ui-tree-<timestamp>.txt`. Each line is one element:
 
 ```
-[Button] Name='Start' AutomationId='StartButton' ClassName=''
+[Button] Name='' AutomationId='StartBacktestButton' ClassName=''
 ```
 
-## 2. Find each element uimap.json needs
+## 2. Confirm the `needsInspect` elements
 
-Search the dump for the elements listed in `uimap.json`'s `elements` object
-(`AutomateTab`, `BotList`, `BacktestingSubTab`, `SymbolDropdown`,
-`StartButton`, `ParametersGrid`, etc — each has a `description` field
-explaining what it's for). For each one:
+These are the ones most likely to need fixing, because they're toolbar icons
+or unlabelled fields:
 
-1. Locate the matching control in the dump (use the `description` and your
-   knowledge of where it sits in the cTrader UI).
-2. Note its `Name` and/or `AutomationId`.
-3. Update the corresponding `value` in `uimap.json`. You can list multiple
-   fallback strategies — the agent tries them in order and uses the first
-   match, so it's safe to add a second guess without removing the first.
+| uimap element | What it is | How to spot it in the dump |
+|---|---|---|
+| `BacktestSettingsButton` | gear ⚙ (opens Backtesting settings) | a Button near the start of the toolbar |
+| `FromDatePicker` / `ToDatePicker` | the two dd/MM/yyyy date fields | Edit/date controls flanking the range slider |
+| `StartButton` / `StopButton` | Play ▶ / Stop ■ | Buttons on the toolbar |
+| `OptimisationParamsButton` | sliders icon (opens the ranges dialog) | Button on the Optimisation toolbar |
+| `OptimisationResultsGrid` | the passes results grid | a DataGrid/Table with the Pass/Fitness/... columns |
+| `BacktestReportButton` / `BacktestReportPanel` | the post-run report | Button + panel that appear after a backtest |
 
-No rebuild is required; `uimap.json` is read at process startup.
+For each: find the real `AutomationId` (preferred) or `Name` in the dump and
+replace the placeholder `value` in `uimap.json`. You can keep multiple
+fallback strategies — the agent tries them in order and uses the first match.
+No rebuild needed; `uimap.json` is read at startup.
 
-## 3. Elements needing the most attention
+## 3. Things the code assumes about layout
 
-- **`ParameterRow` / parameter grid layout** — `CTraderDriver.SetFixedParameters`
-  and `SetParameterRanges` assume the parameters grid exposes one text edit
-  per value (backtest) or three text edits in Min/Max/Step order plus a
-  checkbox to enable ranging (optimization). If your cTrader version orders
-  or labels these differently, adjust the `editBoxes[...]` indexing in
-  `agent/Automation/CTraderDriver.cs` (`SetParameterRanges` method) to match
-  what `--inspect` shows for an expanded parameter row.
-- **`ExportButton` / export flow** — cTrader's export opens a native OS
-  save-file dialog, which is a separate top-level window from the main
-  cTrader window and isn't covered by `--inspect`'s dump (which only walks
-  the main window). If you want raw exported files (not just the
-  agent-parsed summary), extend `CTraderDriver.ExportReport` to also drive
-  that save dialog — it typically has a filename edit box and a Save
-  button, both easy to find with a second `--inspect`-style dump targeted at
-  the dialog window once it's open (ask me to add a `--inspect-dialog` mode
-  if you want this scripted rather than hand-rolled).
-- **`StatusText`** — used to detect run completion. If your version doesn't
-  expose a plain status text element, the driver falls back to polling
-  whether the Start button re-enables, which is coarser but usually works.
+- **Optimisation parameter rows** (`ConfigureOptimisation` in
+  `agent/Automation/CTraderDriver.cs`): numeric parameters are assumed to
+  expose three Edit fields in **Min, Max, Step** left-to-right order, and
+  boolean/enum parameters a single value-list field. This matches the 5.7
+  Parameters dialog in the screenshots. If your build differs, adjust the
+  `editBoxes[...]` indexing there.
+- **Completion detection** (`WaitForCompletion`): the agent watches the Play
+  button — it waits until the button goes disabled (run started) and then
+  re-enables (run finished). If that proves unreliable on your version, the
+  `RemainingTimeLabel` / `PassesLabel` elements are mapped as secondary
+  signals you can lean on instead.
+- **Settings/param dialogs are dismissed** by re-clicking the button that
+  opened them. If your version needs an explicit OK/Close, map
+  `SettingsDialogCloseButton` to it.
 
 ## 4. Iterating with me
 
-If you'd rather not hand-edit `uimap.json` yourself: run `--inspect`, paste
-me (or commit) the resulting `ui-tree-*.txt`, and tell me which job step is
-failing. I can map the real element names into `uimap.json` and adjust
-`CTraderDriver.cs`'s grid-column assumptions directly.
+If you'd rather not hand-edit `uimap.json`: run `--inspect` with the
+Backtesting tab open, commit the resulting `logs/ui-tree-*.txt` (or paste it),
+and tell me which step is failing. I'll map the real element identifiers into
+`uimap.json` and adjust the driver's assumptions directly.

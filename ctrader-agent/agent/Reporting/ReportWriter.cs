@@ -12,11 +12,11 @@ public static class ReportWriter
         var path = Path.Combine(dir, "summary.md");
 
         var sb = new StringBuilder();
-        sb.AppendLine($"# {job.Type} — {job.BotName} ({job.Symbol} {job.Timeframe})");
+        sb.AppendLine($"# {job.Type} — {job.InstanceName} ({job.Symbol} {job.Timeframe})");
         sb.AppendLine();
         sb.AppendLine($"- Job ID: `{job.Id}`");
         sb.AppendLine($"- Range: {job.FromDate:yyyy-MM-dd} to {job.ToDate:yyyy-MM-dd}");
-        sb.AppendLine($"- Initial balance: {job.InitialBalance}");
+        sb.AppendLine($"- Starting capital: {job.StartingCapital}");
         sb.AppendLine($"- Started: {result.StartedAt:u}");
         sb.AppendLine($"- Finished: {result.FinishedAt:u}");
         sb.AppendLine($"- Result: {(result.Success ? "SUCCESS" : "FAILED")}");

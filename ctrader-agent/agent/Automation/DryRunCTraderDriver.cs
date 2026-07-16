@@ -18,8 +18,9 @@ public sealed class DryRunCTraderDriver : ICTraderDriver
 
     public JobResult RunJob(Job job, string reportsDir)
     {
-        _log.Information("[dry-run] Would run {Type} job {JobId} on bot '{Bot}' ({Symbol} {Timeframe}, {From:d} - {To:d})",
-            job.Type, job.Id, job.BotName, job.Symbol, job.Timeframe, job.FromDate.ToDateTime(TimeOnly.MinValue), job.ToDate.ToDateTime(TimeOnly.MinValue));
+        _log.Information("[dry-run] Would run {Type} job {JobId} on instance '{Instance}' ({Symbol} {Timeframe}, {From:d} - {To:d}), starting capital {Capital}",
+            job.Type, job.Id, job.InstanceName, job.Symbol, job.Timeframe,
+            job.FromDate.ToDateTime(TimeOnly.MinValue), job.ToDate.ToDateTime(TimeOnly.MinValue), job.StartingCapital);
 
         if (job.Type == JobType.Backtest)
         {
@@ -29,7 +30,12 @@ public sealed class DryRunCTraderDriver : ICTraderDriver
         else
         {
             foreach (var range in job.ParameterRanges)
-                _log.Information("[dry-run]   parameter {Name} range {Min}..{Max} step {Step}", range.Name, range.Min, range.Max, range.Step);
+            {
+                if (range.IsValueList)
+                    _log.Information("[dry-run]   parameter {Name} values [{Values}]", range.Name, string.Join(", ", range.Values));
+                else
+                    _log.Information("[dry-run]   parameter {Name} range {Min}..{Max} step {Step}", range.Name, range.Min, range.Max, range.Step);
+            }
         }
 
         Directory.CreateDirectory(Path.Combine(reportsDir, job.Id));

@@ -28,8 +28,8 @@ public sealed class Notifier
         if (!result.Success && !_settings.NotifyOnFailure) return;
 
         var text = result.Success
-            ? $"✅ {job.Type} '{job.BotName}' ({job.Symbol} {job.Timeframe}) finished."
-            : $"❌ {job.Type} '{job.BotName}' ({job.Symbol} {job.Timeframe}) failed: {result.ErrorMessage}";
+            ? $"✅ {job.Type} '{job.InstanceName}' ({job.Symbol} {job.Timeframe}) finished."
+            : $"❌ {job.Type} '{job.InstanceName}' ({job.Symbol} {job.Timeframe}) failed: {result.ErrorMessage}";
 
         try
         {

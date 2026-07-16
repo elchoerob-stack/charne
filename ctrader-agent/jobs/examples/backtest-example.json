@@ -1,18 +1,20 @@
 {
   "id": "backtest-example-01",
   "type": "Backtest",
-  "botName": "MyScalperBot",
+  "instanceName": "EurusdWaveCapture",
   "symbol": "EURUSD",
-  "timeframe": "M15",
-  "fromDate": "2024-01-01",
-  "toDate": "2025-01-01",
-  "initialBalance": 10000,
-  "spreadModel": "Real",
-  "commission": 0,
+  "timeframe": "h1",
+  "fromDate": "2024-06-09",
+  "toDate": "2026-04-30",
+  "startingCapital": 10000,
+  "commission": 30,
+  "applyCommissionAutomatically": true,
+  "dataMode": "Tick data from server (accurate)",
   "parameters": {
-    "StopLossPips": 20,
-    "TakeProfitPips": 40,
-    "RiskPercent": 1
+    "EMA Fast": 21,
+    "EMA Slow": 42,
+    "EMA Trend": 388,
+    "ADX Period": 47
   },
-  "reportName": "myscalper-2024-baseline"
+  "reportName": "eurusdwavecapture-h1-baseline"
 }

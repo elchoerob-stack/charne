@@ -69,30 +69,44 @@ public sealed class CTraderDriver : ICTraderDriver
         {
             var window = GetMainWindow();
 
-            _uiMap.FindRequired(window, "AutomateTab").AsButton().Invoke();
-            SelectBot(window, job.BotName);
+            // 1. Open the target cBot instance (already on the desired symbol+timeframe).
+            OpenInstance(window, job.InstanceName);
 
-            var panelName = job.Type == JobType.Backtest ? "BacktestingSubTab" : "OptimizationSubTab";
-            _uiMap.FindRequired(window, panelName).AsButton().Invoke();
+            // 2. Switch to the Backtesting or Optimisation tab.
+            var tabName = job.Type == JobType.Backtest ? "BacktestingTab" : "OptimisationTab";
+            _uiMap.FindRequired(window, tabName).Click();
 
-            ConfigureCommonSettings(window, job);
+            // 3. Backtesting settings dialog: starting capital, commission, data mode.
+            ConfigureBacktestSettings(window, job);
 
+            // 4. Date range (dd/MM/yyyy) + turn Visual Mode off for speed.
+            SetDateRange(window, job.FromDate, job.ToDate);
+            DisableVisualMode(window);
+
+            // 5. Parameters.
             if (job.Type == JobType.Backtest)
                 SetFixedParameters(window, job.Parameters);
             else
-                SetParameterRanges(window, job.ParameterRanges, job.OptimizationCriteria);
+                ConfigureOptimisation(window, job);
 
+            // 6. Start and wait.
             _uiMap.FindRequired(window, "StartButton").AsButton().Invoke();
-            WaitForCompletion(window, TimeSpan.FromMinutes(180));
+            WaitForCompletion(window, TimeSpan.FromMinutes(RunTimeoutMinutes), job.Type);
 
-            Directory.CreateDirectory(reportsDir);
-            var exportPath = ExportReport(window, job, reportsDir);
+            // 7. Collect results.
+            Directory.CreateDirectory(Path.Combine(reportsDir, job.Id));
+            if (job.Type == JobType.Backtest)
+            {
+                result.Summary = ReadBacktestSummary(window);
+            }
+            else
+            {
+                result.TopResults = ReadTopOptimizationResults(window, job.TopN, job.OptimizationCriteria);
+                if (result.TopResults.Count > 0)
+                    result.Summary = new Dictionary<string, string>(result.TopResults[0]);
+            }
 
             result.Success = true;
-            result.RawReportPath = exportPath;
-            result.Summary = ReadSummaryFromResultsPanel(window, job.Type);
-            if (job.Type == JobType.Optimization)
-                result.TopResults = ReadTopOptimizationResults(window, job.TopN);
         }
         catch (Exception ex)
         {
@@ -134,128 +148,167 @@ public sealed class CTraderDriver : ICTraderDriver
         }
     }
 
-    private void SelectBot(Window window, string botName)
+    private const int RunTimeoutMinutes = 180;
+
+    private void OpenInstance(Window window, string instanceName)
     {
-        var list = _uiMap.FindRequired(window, "BotList");
-        var item = _uiMap.Find(list, "BotListItem", new Dictionary<string, string> { ["botName"] = botName })
-                   ?? throw new InvalidOperationException(
-                       $"cBot '{botName}' was not found in the Automate bot list. Check spelling/casing, and that it's loaded in cTrader Automate.");
-        item.Click();
+        // Make sure the Algo section (cBots list) is showing, then open the instance's editor.
+        _uiMap.Find(window, "AlgoSidebarItem")?.Click();
+
+        var row = _uiMap.Find(window, "CBotInstanceRow", new Dictionary<string, string> { ["instanceName"] = instanceName })
+                  ?? throw new InvalidOperationException(
+                      $"cBot instance '{instanceName}' was not found in the Algo cBots list. " +
+                      $"Check spelling/casing, and that the instance exists on the symbol+timeframe you intend to test.");
+        row.Click();
     }
 
-    private void ConfigureCommonSettings(Window window, Job job)
+    private void ConfigureBacktestSettings(Window window, Job job)
     {
-        _uiMap.FindRequired(window, "SymbolDropdown").AsComboBox().Select(job.Symbol);
-        _uiMap.FindRequired(window, "TimeframeDropdown").AsComboBox().Select(job.Timeframe);
-        _uiMap.FindRequired(window, "FromDatePicker").Patterns.Value.Pattern.SetValue(
-            job.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-        _uiMap.FindRequired(window, "ToDatePicker").Patterns.Value.Pattern.SetValue(
-            job.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-        _uiMap.FindRequired(window, "InitialBalanceField").AsTextBox().Text = job.InitialBalance.ToString(CultureInfo.InvariantCulture);
-        var spreadDropdown = _uiMap.Find(window, "SpreadModeDropdown");
-        spreadDropdown?.AsComboBox().Select(job.SpreadModel);
+        // Open the Backtesting settings popup (gear icon).
+        _uiMap.FindRequired(window, "BacktestSettingsButton").AsButton().Invoke();
+
+        SetText(_uiMap.FindRequired(window, "StartingCapitalField"), job.StartingCapital.ToString(CultureInfo.InvariantCulture));
+
+        var autoCommission = _uiMap.Find(window, "ApplyCommissionAutomaticallyCheckbox")?.AsCheckBox();
+        if (autoCommission is not null)
+            autoCommission.IsChecked = job.ApplyCommissionAutomatically;
+
+        if (!job.ApplyCommissionAutomatically)
+        {
+            var commissionField = _uiMap.Find(window, "CommissionField");
+            if (commissionField is not null)
+                SetText(commissionField, job.Commission.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (!string.IsNullOrWhiteSpace(job.DataMode))
+            _uiMap.Find(window, "DataModeDropdown")?.AsComboBox().Select(job.DataMode);
+
+        // Dismiss the popup (explicit close if mapped, otherwise clicking the tab again closes it).
+        var close = _uiMap.Find(window, "SettingsDialogCloseButton");
+        if (close is not null) close.AsButton().Invoke();
+        else _uiMap.Find(window, "BacktestSettingsButton")?.AsButton().Invoke();
+    }
+
+    private void SetDateRange(Window window, DateOnly from, DateOnly to)
+    {
+        // cTrader shows dates as dd/MM/yyyy.
+        SetText(_uiMap.FindRequired(window, "FromDatePicker"), from.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+        SetText(_uiMap.FindRequired(window, "ToDatePicker"), to.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+    }
+
+    private void DisableVisualMode(Window window)
+    {
+        var visual = _uiMap.Find(window, "VisualModeCheckbox")?.AsCheckBox();
+        if (visual is not null) visual.IsChecked = false;
     }
 
     private void SetFixedParameters(Window window, Dictionary<string, double> parameters)
     {
-        var grid = _uiMap.FindRequired(window, "ParametersGrid");
+        if (parameters.Count == 0) return;
+        var panel = _uiMap.FindRequired(window, "ParametersPanel");
         foreach (var (name, value) in parameters)
         {
-            var row = _uiMap.Find(grid, "ParameterRow", new Dictionary<string, string> { ["parameterName"] = name });
+            var row = _uiMap.Find(panel, "ParameterRow", new Dictionary<string, string> { ["parameterName"] = name });
             if (row is null)
             {
-                _log.Warning("Parameter '{Name}' not found on cBot's parameters grid; skipping.", name);
+                _log.Warning("Parameter '{Name}' not found on the Parameters panel; skipping.", name);
                 continue;
             }
             var valueBox = row.FindFirstDescendant(cf => cf.ByControlType(ControlType.Edit));
-            if (valueBox is not null) valueBox.AsTextBox().Text = value.ToString(CultureInfo.InvariantCulture);
+            if (valueBox is not null) SetText(valueBox, value.ToString(CultureInfo.InvariantCulture));
         }
     }
 
-    private void SetParameterRanges(Window window, List<ParameterRange> ranges, string optimizationCriteria)
+    private void ConfigureOptimisation(Window window, Job job)
     {
-        var grid = _uiMap.FindRequired(window, "ParametersGrid");
-        foreach (var range in ranges)
+        // Optional Genetic Algorithm mode.
+        if (job.UseGeneticAlgorithm)
+            _uiMap.Find(window, "GeneticAlgorithmButton")?.AsButton().Invoke();
+
+        // Open the Optimisation Parameters dialog (sliders icon) that holds the ranges + timeframe.
+        _uiMap.FindRequired(window, "OptimisationParamsButton").AsButton().Invoke();
+
+        if (job.OptimizationTimeframes.Count > 0)
         {
-            var row = _uiMap.Find(grid, "ParameterRow", new Dictionary<string, string> { ["parameterName"] = range.Name });
+            var tfField = _uiMap.Find(window, "OptTimeframeField");
+            if (tfField is not null) SetText(tfField, string.Join("; ", job.OptimizationTimeframes));
+        }
+
+        foreach (var range in job.ParameterRanges)
+        {
+            var row = _uiMap.Find(window, "OptParameterRow", new Dictionary<string, string> { ["parameterName"] = range.Name });
             if (row is null)
             {
-                _log.Warning("Parameter '{Name}' not found on cBot's parameters grid; skipping.", range.Name);
+                _log.Warning("Parameter '{Name}' not found in the Optimisation Parameters dialog; skipping.", range.Name);
                 continue;
             }
 
+            // Tick the include checkbox for this parameter.
             var enableCheckbox = row.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox));
-            enableCheckbox?.AsCheckBox().IsChecked = true;
+            if (enableCheckbox is not null) enableCheckbox.AsCheckBox().IsChecked = true;
 
             var editBoxes = row.FindAllDescendants(cf => cf.ByControlType(ControlType.Edit));
-            // Convention (calibrate in docs/CALIBRATION.md if your cTrader version orders these differently):
-            // editBoxes[0] = Min, editBoxes[1] = Max, editBoxes[2] = Step
-            if (editBoxes.Length >= 3)
+            if (range.IsValueList)
             {
-                editBoxes[0].AsTextBox().Text = range.Min.ToString(CultureInfo.InvariantCulture);
-                editBoxes[1].AsTextBox().Text = range.Max.ToString(CultureInfo.InvariantCulture);
-                editBoxes[2].AsTextBox().Text = range.Step.ToString(CultureInfo.InvariantCulture);
+                // Boolean/enum parameter: a single value-list field, e.g. "Yes, No".
+                if (editBoxes.Length >= 1) SetText(editBoxes[0], string.Join(", ", range.Values));
+                else _log.Warning("Expected a value-list field for parameter '{Name}', found none.", range.Name);
+            }
+            else if (editBoxes.Length >= 3)
+            {
+                // Numeric parameter: Min / Max / Step, in that left-to-right order.
+                SetText(editBoxes[0], range.Min.ToString(CultureInfo.InvariantCulture));
+                SetText(editBoxes[1], range.Max.ToString(CultureInfo.InvariantCulture));
+                SetText(editBoxes[2], range.Step.ToString(CultureInfo.InvariantCulture));
             }
             else
             {
-                _log.Warning("Expected 3 editable fields (min/max/step) for parameter '{Name}', found {Count}.", range.Name, editBoxes.Length);
+                _log.Warning("Expected 3 fields (Min/Max/Step) for numeric parameter '{Name}', found {Count}.", range.Name, editBoxes.Length);
             }
         }
 
-        var criteriaDropdown = _uiMap.Find(window, "OptimizationCriteriaDropdown");
-        criteriaDropdown?.AsComboBox().Select(optimizationCriteria);
+        // Close the Parameters dialog by re-clicking the button that opened it.
+        _uiMap.Find(window, "OptimisationParamsButton")?.AsButton().Invoke();
     }
 
-    private void WaitForCompletion(Window window, TimeSpan timeout)
+    private void WaitForCompletion(Window window, TimeSpan timeout, JobType type)
     {
         var deadline = DateTime.UtcNow.Add(timeout);
+        var sawRunning = false;
+
         while (DateTime.UtcNow < deadline)
         {
-            var status = _uiMap.Find(window, "StatusText")?.AsLabel().Text;
-            if (status is not null &&
-                (status.Contains("Completed", StringComparison.OrdinalIgnoreCase) ||
-                 status.Contains("Finished", StringComparison.OrdinalIgnoreCase)))
-                return;
-
-            if (status is not null && status.Contains("Error", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException($"cTrader reported an error status: '{status}'");
-
-            var startButton = _uiMap.Find(window, "StartButton");
-            if (startButton is not null && startButton.AsButton().IsEnabled)
+            // The Start (Play) button is disabled while a run is in progress and re-enables when
+            // it finishes. We first confirm we saw it disabled (run actually started), then treat
+            // re-enabling as completion — this avoids returning instantly before the run spins up.
+            var startButton = _uiMap.Find(window, "StartButton")?.AsButton();
+            if (startButton is not null)
             {
-                // Start button re-enabling is our fallback completion signal if StatusText isn't found/mapped correctly.
-                return;
+                if (!startButton.IsEnabled) sawRunning = true;
+                else if (sawRunning) return;
             }
 
             Thread.Sleep(2000);
         }
 
-        throw new TimeoutException($"Backtest/optimization run did not complete within {timeout.TotalMinutes} minutes.");
+        throw new TimeoutException($"{type} run did not complete within {timeout.TotalMinutes} minutes.");
     }
 
-    private string ExportReport(Window window, Job job, string reportsDir)
-    {
-        var jobReportDir = Path.Combine(reportsDir, job.Id);
-        Directory.CreateDirectory(jobReportDir);
-
-        var exportButton = _uiMap.Find(window, "ExportButton");
-        exportButton?.AsButton().Invoke();
-
-        // NOTE: cTrader's native export dialog is a separate OS file-save dialog which
-        // requires its own selector calibration (path field + save button) once you've
-        // confirmed the export button's exact behavior on your version. Tracked in
-        // docs/CALIBRATION.md — until calibrated, this records that export was requested.
-        var marker = Path.Combine(jobReportDir, "export-requested.txt");
-        File.WriteAllText(marker, $"Export requested at {DateTimeOffset.UtcNow:O} for job {job.Id}.");
-        return marker;
-    }
-
-    private Dictionary<string, string> ReadSummaryFromResultsPanel(Window window, JobType type)
+    private Dictionary<string, string> ReadBacktestSummary(Window window)
     {
         var summary = new Dictionary<string, string>();
-        var panel = _uiMap.Find(window, "ResultsPanel");
-        if (panel is null) return summary;
 
+        // Open the backtest report if there's a dedicated button for it.
+        _uiMap.Find(window, "BacktestReportButton")?.AsButton().Invoke();
+
+        var panel = _uiMap.Find(window, "BacktestReportPanel");
+        if (panel is null)
+        {
+            _log.Warning("Backtest report panel not located; summary will be empty until BacktestReportPanel is calibrated (docs/CALIBRATION.md).");
+            return summary;
+        }
+
+        // The report shows "Label: value" style text runs (Net profit, Profit factor, Max drawdown, etc).
         foreach (var label in panel.FindAllDescendants(cf => cf.ByControlType(ControlType.Text)))
         {
             var text = label.AsLabel().Text;
@@ -266,23 +319,60 @@ public sealed class CTraderDriver : ICTraderDriver
         return summary;
     }
 
-    private List<Dictionary<string, string>> ReadTopOptimizationResults(Window window, int topN)
+    private List<Dictionary<string, string>> ReadTopOptimizationResults(Window window, int topN, string criteria)
     {
         var results = new List<Dictionary<string, string>>();
         var grid = _uiMap.Find(window, "OptimizationResultsGrid");
-        if (grid is null) return results;
+        if (grid is null)
+        {
+            _log.Warning("Optimisation results grid not located; top results will be empty until OptimisationResultsGrid is calibrated (docs/CALIBRATION.md).");
+            return results;
+        }
 
         var dataGrid = grid.AsGrid();
-        var headers = dataGrid.Header.Columns.Select(h => h.Text).ToArray();
-        var rows = dataGrid.Rows.Take(topN);
-        foreach (var row in rows)
+        var header = dataGrid.Header;
+        if (header is null)
+        {
+            _log.Warning("Optimisation results grid has no readable header; cannot map columns. Calibrate OptimisationResultsGrid (docs/CALIBRATION.md).");
+            return results;
+        }
+        var headers = header.Columns.Select(h => h.Text).ToArray();
+        foreach (var row in dataGrid.Rows)
         {
             var rowDict = new Dictionary<string, string>();
             for (var i = 0; i < headers.Length && i < row.Cells.Length; i++)
                 rowDict[headers[i]] = row.Cells[i].Value ?? "";
             results.Add(rowDict);
         }
-        return results;
+
+        // Rank by the requested criteria column (descending) when present, then take top N.
+        var criteriaColumn = headers.FirstOrDefault(h => string.Equals(h, criteria, StringComparison.OrdinalIgnoreCase));
+        if (criteriaColumn is not null)
+        {
+            results = results
+                .OrderByDescending(r => ParseNumber(r.GetValueOrDefault(criteriaColumn, "")))
+                .ToList();
+        }
+
+        return results.Take(topN).ToList();
+    }
+
+    private static double ParseNumber(string s)
+    {
+        // Strip currency symbols, spaces and thousands separators before parsing.
+        var cleaned = new string(s.Where(c => char.IsDigit(c) || c is '.' or '-').ToArray());
+        return double.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : double.MinValue;
+    }
+
+    private static void SetText(AutomationElement element, string value)
+    {
+        // Prefer the ValuePattern (reliable for text fields); fall back to focus + type.
+        if (element.Patterns.Value.IsSupported)
+        {
+            element.Patterns.Value.Pattern.SetValue(value);
+            return;
+        }
+        element.AsTextBox().Text = value;
     }
 
     private static void WriteElementTree(AutomationElement element, StreamWriter writer, int depth)

@@ -283,14 +283,13 @@ public sealed class CTraderDriver : ICTraderDriver
         }
         var visual = el.AsCheckBox();
 
-        // Toggle until it reads clearly off. `!= false` also handles an indeterminate/null read,
-        // which is what silently left Visual Mode on before. Prefer the Toggle pattern (reliable
-        // without an on-screen clickable point); fall back to a real click.
+        // cTrader's Visual Mode checkbox reacts to a real mouse click, NOT to the UIA Toggle/Invoke
+        // pattern (the app handles the click event, not the bound property), so use a physical
+        // Click(). Loop until it reads clearly off; `!= false` also handles an indeterminate read.
         for (var attempt = 0; attempt < 3 && visual.IsChecked != false; attempt++)
         {
-            if (el.Patterns.Toggle.IsSupported) el.Patterns.Toggle.Pattern.Toggle();
-            else el.Click();
-            Thread.Sleep(400);
+            el.Click();
+            Thread.Sleep(500);
         }
 
         if (visual.IsChecked == false)

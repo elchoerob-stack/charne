@@ -1,0 +1,16 @@
+# .NET build output
+agent/bin/
+agent/obj/
+live-recorder/bin/
+live-recorder/obj/
+
+# Live recorder journal (contains your account activity — never commit)
+journal/
+
+# Runtime job queue and generated reports/logs (keep folder structure via examples only)
+jobs/pending/
+jobs/processing/
+jobs/done/
+jobs/failed/
+reports/
+logs/

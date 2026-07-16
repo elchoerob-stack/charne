@@ -1,0 +1,170 @@
+{
+  "_comment": "Calibrated against cTrader 5.7.14 from a live --inspect dump (backtesting tab active). Backtest-path IDs are real. Elements marked needsInspect were NOT in that dump because their view wasn't open (the backtest settings popup was closed; the Optimisation tab was inactive; the post-run report wasn't shown) — capture a second --inspect with those open to finalise them. See docs/CALIBRATION.md.",
+
+  "elements": {
+    "AlgoTab": {
+      "description": "The 'Algo' item in cTrader's left sidebar.",
+      "strategies": [
+        { "by": "AutomationId", "value": "AlgoTab_AId" }
+      ]
+    },
+    "AlgoSearchField": {
+      "description": "Search box above the cBots list — typing a bot name filters the list. Used as the hook for opening a specific bot (names aren't otherwise exposed to UI Automation).",
+      "strategies": [
+        { "by": "AutomationId", "value": "AlgoApplicationSearchField_AId" }
+      ]
+    },
+    "AlgoInstancesList": {
+      "description": "The scrollable list of cBot templates + instances.",
+      "strategies": [
+        { "by": "AutomationId", "value": "AlgoInstancesScrollView_AId" }
+      ]
+    },
+    "InstanceSettingsButton": {
+      "description": "The gear on an instance row that opens that instance's editor (Parameters + Backtesting/Optimisation tabs). AutomationId is shared, so the driver scopes the search to the filtered list.",
+      "strategies": [
+        { "by": "AutomationId", "value": "SettingsButton_AId" }
+      ]
+    },
+
+    "BacktestingTabItem": {
+      "description": "The 'Backtesting' tab of an open cBot editor. Its children are the backtest toolbar (gear, dates, start/stop, Visual Mode).",
+      "strategies": [
+        { "by": "AutomationId", "value": "AutomateBacktestingTabItem_AId" }
+      ]
+    },
+    "OptimisationTabItem": {
+      "description": "The 'Optimisation' tab of an open cBot editor.",
+      "strategies": [
+        { "by": "AutomationId", "value": "AutomateOptimizationTabItem_AId" }
+      ]
+    },
+    "RealtimeSymbolText": {
+      "description": "Text on the realtime tab showing the instance's symbol (e.g. 'EURUSD'). Read to verify the right instance is loaded.",
+      "strategies": [
+        { "by": "AutomationId", "value": "AutomateRealtimeSymbolTextBlock_AId" }
+      ]
+    },
+    "RealtimeTimeframeText": {
+      "description": "Text on the realtime tab showing the instance's timeframe (e.g. 'h1').",
+      "strategies": [
+        { "by": "AutomationId", "value": "AutomateRealtimeFramePeriodTextBlock_AId" }
+      ]
+    },
+
+    "BacktestSettingsButton": {
+      "description": "Gear icon inside the Backtesting tab that opens the 'Backtesting settings' popup. Scoped to the Backtesting tab item by the driver (AutomationId 'SettingsButton_AId' is reused elsewhere).",
+      "strategies": [
+        { "by": "AutomationId", "value": "SettingsButton_AId" }
+      ]
+    },
+    "FromDatePicker": {
+      "description": "Backtest range START date control (DatePickerEx). Its editable text box is a child.",
+      "strategies": [
+        { "by": "AutomationId", "value": "DatePickerBegin_AId" }
+      ]
+    },
+    "ToDatePicker": {
+      "description": "Backtest range END date control (DatePickerEx).",
+      "strategies": [
+        { "by": "AutomationId", "value": "DatePickerEnd_AId" }
+      ]
+    },
+    "DatePickerTextBox": {
+      "description": "The editable text box inside a DatePickerEx (child of FromDatePicker/ToDatePicker). Format dd/MM/yyyy.",
+      "strategies": [
+        { "by": "AutomationId", "value": "Resources_CTraderDictionary__DatePickerTextBox_PARTTextBox_AId" }
+      ]
+    },
+    "VisualModeCheckbox": {
+      "description": "'Visual Mode' checkbox on the backtest toolbar. Unchecked by the agent for speed.",
+      "strategies": [
+        { "by": "AutomationId", "value": "IsVisualBacktestingCheckBox_AId" },
+        { "by": "Name", "value": "Visual Mode" }
+      ]
+    },
+    "StartButton": {
+      "description": "Play (▶) button that starts a backtest.",
+      "strategies": [
+        { "by": "AutomationId", "value": "BacktestingStartButton_AId" }
+      ]
+    },
+    "StopButton": {
+      "description": "Stop (■) button.",
+      "strategies": [
+        { "by": "AutomationId", "value": "BacktestingStopButton_AId" }
+      ]
+    },
+
+    "ParametersPanel": {
+      "description": "The flat Parameters panel (ScrollViewer). Children alternate: a label TextBlock (ParameterLabel) followed by its value control (SpinnerContent_AId Edit for numbers, ...ComboBox_AllValues_AId for enums, ...TextBox_Value_AId for free text).",
+      "strategies": [
+        { "by": "AutomationId", "value": "Apps_Automate2App_AutomateParameters__ScrollViewer_Parameters_AId" }
+      ]
+    },
+    "ParameterLabel": {
+      "description": "A parameter's label TextBlock in the Parameters panel; Name is the friendly name (e.g. 'EMA Fast'). The driver matches on Name and then takes the following sibling value control.",
+      "strategies": [
+        { "by": "AutomationId", "value": "Apps_Automate2App_AutomateParameters__TextBlock_FriendlyName_AId" }
+      ]
+    },
+
+    "_backtestSettingsDialog_needsInspect": {
+      "description": "Fields inside the 'Backtesting settings' popup (Starting capital, Commission, Apply commission automatically, Data). The popup was closed during the first inspect, so these use best-guess Name selectors and are applied best-effort. Re-inspect with the gear open to finalise.",
+      "needsInspect": true,
+      "strategies": []
+    },
+    "StartingCapitalField": {
+      "description": "'Starting capital' field in the Backtesting settings popup.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "Name", "value": "Starting capital" },
+        { "by": "AutomationId", "value": "StartingCapitalTextBox" }
+      ]
+    },
+    "ApplyCommissionAutomaticallyCheckbox": {
+      "description": "'Apply commission automatically' checkbox in the Backtesting settings popup.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "Name", "value": "Apply commission automatically" }
+      ]
+    },
+    "CommissionField": {
+      "description": "'Commission' field in the Backtesting settings popup.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "Name", "value": "Commission" }
+      ]
+    },
+    "DataModeDropdown": {
+      "description": "'Data' dropdown in the Backtesting settings popup.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "Name", "value": "Data" }
+      ]
+    },
+
+    "OptimisationParamsButton": {
+      "description": "Sliders icon on the Optimisation toolbar (opens the ranges/Timeframe dialog). Not captured yet — Optimisation tab was inactive during the first inspect.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "AutomationId", "value": "OptimisationParametersButton_AId" }
+      ]
+    },
+    "OptimisationResultsGrid": {
+      "description": "The Optimisation passes results grid. Not captured yet — needs an inspect with the Optimisation tab active.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "AutomationId", "value": "OptimisationResultsDataGrid_AId" }
+      ]
+    },
+    "BacktestReportPanel": {
+      "description": "The post-run backtest report (net profit, profit factor, drawdown, trade stats). Not captured yet — needs an inspect right after a completed backtest.",
+      "needsInspect": true,
+      "strategies": [
+        { "by": "AutomationId", "value": "BacktestingReportView_AId" },
+        { "by": "Name", "value": "Summary" }
+      ]
+    }
+  }
+}

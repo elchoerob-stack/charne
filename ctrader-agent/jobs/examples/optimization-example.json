@@ -1,0 +1,25 @@
+{
+  "id": "optimization-example-01",
+  "type": "Optimization",
+  "instanceName": "EurusdWaveCapture",
+  "symbol": "EURUSD",
+  "timeframe": "h1",
+  "fromDate": "2023-04-11",
+  "toDate": "2026-04-06",
+  "startingCapital": 10000,
+  "commission": 30,
+  "applyCommissionAutomatically": true,
+  "dataMode": "Tick data from server (accurate)",
+  "useGeneticAlgorithm": true,
+  "optimizationTimeframes": ["h1"],
+  "optimizationCriteria": "Net profit",
+  "parameterRanges": [
+    { "name": "EMA Fast",  "min": 5,  "max": 50,  "step": 1 },
+    { "name": "EMA Slow",  "min": 10, "max": 100, "step": 1 },
+    { "name": "EMA Trend", "min": 50, "max": 400, "step": 10 },
+    { "name": "ADX Period", "min": 5, "max": 50,  "step": 1 },
+    { "name": "Use H4 Bias Confirmation", "values": ["Yes", "No"] }
+  ],
+  "topN": 10,
+  "reportName": "eurusdwavecapture-h1-optimization"
+}

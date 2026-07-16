@@ -14,18 +14,48 @@ confirm with `--inspect`.
 
 ## 1. Dump the real UI tree
 
-Open the cBot editor to the Backtesting (or Optimisation) tab first — so the
-relevant controls exist in the tree — then:
+`--inspect` dumps **every** cTrader top-level window (main window + any open
+popup/dialog), so whatever you have on screen when it fires gets captured.
+Use `--delay <seconds>` to give yourself time to arrange the UI first.
+
+Each line is one element:
+
+```
+[Button] Name='' AutomationId='BacktestingStartButton_AId' ClassName='Button'
+```
+
+To finish calibration, capture these three states (one dump each — they're
+timestamped, so just run it three times and commit all the files):
 
 ```powershell
 cd ctrader-agent\agent
+
+# a) Backtest settings popup — open a bot's Backtesting tab, click the gear so
+#    the "Backtesting settings" popup is open, then:
+dotnet run -- --inspect
+
+# b) Optimisation — click the Optimisation tab, open its Parameters (sliders)
+#    dialog, then:
+dotnet run -- --inspect
+
+# c) Finished backtest report — run a short backtest to completion so the
+#    report is on screen, then:
 dotnet run -- --inspect
 ```
 
-Open the generated `logs/ui-tree-<timestamp>.txt`. Each line is one element:
+If a popup closes when you switch to the terminal, use the delay instead and
+open it during the countdown:
 
+```powershell
+dotnet run -- --inspect --delay 8
 ```
-[Button] Name='' AutomationId='StartBacktestButton' ClassName=''
+
+Then commit the `logs/ui-tree-*.txt` files (they're gitignored, so force-add):
+
+```powershell
+git add -f ..\logs\ui-tree-*.txt
+git commit -m "Calibration dumps: settings popup, optimisation, report"
+git push origin claude/ctrader-autonomous-agent-mngx05
 ```
 
 ## 2. Confirm the `needsInspect` elements

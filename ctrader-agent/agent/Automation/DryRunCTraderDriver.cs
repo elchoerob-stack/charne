@@ -50,7 +50,7 @@ public sealed class DryRunCTraderDriver : ICTraderDriver
         };
     }
 
-    public void DumpUiTree(string outputPath)
+    public void DumpUiTree(string outputPath, int delaySeconds = 0)
         => _log.Warning("[dry-run] --inspect has no effect in dry-run mode; run without --dry-run to dump the real UI tree.");
 
     public void Dispose() { }

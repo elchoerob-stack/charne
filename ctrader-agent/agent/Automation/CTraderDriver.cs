@@ -131,12 +131,43 @@ public sealed class CTraderDriver : ICTraderDriver
         return result;
     }
 
-    public void DumpUiTree(string outputPath)
+    public void DumpUiTree(string outputPath, int delaySeconds = 0)
     {
-        var window = GetMainWindow();
+        if (delaySeconds > 0)
+        {
+            _log.Information("Waiting {Delay}s before dumping — arrange the cTrader UI now (open the settings popup / Optimisation tab / etc).", delaySeconds);
+            Thread.Sleep(delaySeconds * 1000);
+        }
+
+        if (_app is null || _automation is null)
+            throw new InvalidOperationException("cTrader not attached; call EnsureRunning() first.");
+
         using var writer = new StreamWriter(outputPath);
-        WriteElementTree(window, writer, 0);
-        _log.Information("UI tree dumped to {Path}", outputPath);
+
+        // Dump every top-level window of the process so popups/dialogs (which are separate windows)
+        // are captured, not just the main window. In-window WPF popups appear under the main window
+        // tree while open, so this covers both cases.
+        AutomationElement[] windows;
+        try
+        {
+            windows = _app.GetAllTopLevelWindows(_automation);
+        }
+        catch
+        {
+            windows = Array.Empty<AutomationElement>();
+        }
+
+        if (windows.Length == 0)
+            windows = new AutomationElement[] { GetMainWindow() };
+
+        for (var i = 0; i < windows.Length; i++)
+        {
+            writer.WriteLine($"===== TOP-LEVEL WINDOW {i + 1} of {windows.Length} =====");
+            WriteElementTree(windows[i], writer, 0);
+            writer.WriteLine();
+        }
+
+        _log.Information("UI tree ({Count} window(s)) dumped to {Path}", windows.Length, outputPath);
     }
 
     // ── internals ──────────────────────────────────────────────────────────

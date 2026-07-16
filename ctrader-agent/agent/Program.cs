@@ -31,6 +31,7 @@ var watch = args.Contains("--watch");
 var runOnce = args.Contains("--run-once");
 var dryRun = args.Contains("--dry-run");
 var inspect = args.Contains("--inspect");
+var inspectDelaySeconds = ParseDelaySeconds(args);
 
 var jobsRoot = Path.GetFullPath(Path.Combine(workingDir, config.Agent.JobsRoot));
 var reportsRoot = Path.GetFullPath(Path.Combine(workingDir, config.Agent.ReportsRoot));
@@ -51,7 +52,7 @@ try
     {
         driver.EnsureRunning();
         var outPath = Path.Combine(logsRoot, $"ui-tree-{DateTime.UtcNow:yyyyMMddHHmmss}.txt");
-        driver.DumpUiTree(outPath);
+        driver.DumpUiTree(outPath, inspectDelaySeconds);
         Log.Information("Done. Open {Path} to find real Name/AutomationId/ClassName values for uimap.json.", outPath);
         return 0;
     }
@@ -123,4 +124,19 @@ static AppConfig LoadConfig(string path)
     var text = File.ReadAllText(path);
     return JsonSerializer.Deserialize<AppConfig>(text, options)
            ?? throw new InvalidOperationException($"Failed to load config from '{path}'.");
+}
+
+// Parses `--delay <seconds>` or `--delay=<seconds>` from the CLI (used with --inspect).
+static int ParseDelaySeconds(string[] args)
+{
+    for (var i = 0; i < args.Length; i++)
+    {
+        if (args[i].StartsWith("--delay=", StringComparison.Ordinal) &&
+            int.TryParse(args[i]["--delay=".Length..], out var inline))
+            return Math.Max(0, inline);
+
+        if (args[i] == "--delay" && i + 1 < args.Length && int.TryParse(args[i + 1], out var next))
+            return Math.Max(0, next);
+    }
+    return 0;
 }

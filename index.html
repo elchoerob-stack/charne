@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A3B2A">
 <meta name="mobile-web-app-capable" content="yes">
@@ -225,6 +226,56 @@
   }
   .empty{padding:22px 14px;text-align:center;color:var(--ink-soft);font-size:14px}
 
+  /* ---------- ranked prediction cards ---------- */
+  .pred-card{padding:11px 14px;border-top:1px solid var(--line)}
+  .pred-card:first-child{border-top:0}
+  .pred-card.winner{background:#FFF7E0}
+  .pc-head{display:flex;align-items:center;gap:8px}
+  .pc-rank{
+    flex:0 0 auto;min-width:16px;font-size:12.5px;font-weight:800;
+    color:var(--ink-soft);font-variant-numeric:tabular-nums;
+  }
+  .pc-name{
+    flex:1;min-width:0;font-weight:700;font-size:15px;color:var(--ink);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .pc-pts{
+    flex:0 0 auto;font-size:12.5px;font-weight:900;color:var(--forest);
+    background:var(--gold);border-radius:999px;padding:3px 10px;
+    font-variant-numeric:tabular-nums;
+  }
+  .pc-detail{
+    display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+    margin-top:7px;padding-left:38px;
+  }
+  .pc-score{font-weight:800;font-variant-numeric:tabular-nums;font-size:13.5px;color:var(--ink)}
+  .pc-off{font-size:11.5px;color:var(--ink-soft)}
+  .pc-chip{
+    font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;
+    white-space:nowrap;
+  }
+  .pc-chip.tier{background:#E4EFE7;color:var(--grass)}
+  .pc-chip.bonus{background:#FFF3D6;color:var(--gold-deep)}
+  .pc-chip.warn{background:#F6E7E7;color:#8A2B2B}
+  .pc-actions{margin-left:auto;display:flex;gap:2px;flex:0 0 auto}
+  .pc-actions button{
+    border:0;background:transparent;font-size:15px;cursor:pointer;
+    padding:4px;border-radius:8px;color:#B9B2A0;
+  }
+  .pc-actions .edit{color:#9AA89F}
+  .pc-actions .edit:active{color:var(--grass);background:#E4EFE7}
+  .pc-actions .del:active{color:#8A2B2B;background:#F6E7E7}
+
+  /* ---------- points legend ---------- */
+  .legend-grid{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .legend-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:8px 12px;font-size:12.5px;color:var(--ink);
+  }
+  .legend-item .pts{font-weight:900;color:var(--forest);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .legend-note{font-size:11.5px;color:var(--ink-soft);margin:8px 4px 0;line-height:1.5}
+
   /* ---------- fixtures / results lists ---------- */
   .list-row{
     display:flex;align-items:center;gap:10px;
@@ -294,10 +345,13 @@
     padding:14px 16px;margin-bottom:12px;font-size:15px;line-height:1.5;
   }
   .champ strong{font-size:17px}
-  .podium{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
-  .podium li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-variant-numeric:tabular-nums}
-  .podium .pts{color:var(--ink-soft);font-weight:600;white-space:nowrap}
-  .podium-tag{font-size:11px;font-weight:600;color:var(--ink-soft)}
+  .podium{margin:10px 0 0;padding:0;list-style:none}
+  .podium li{padding:7px 0;border-top:1px solid rgba(10,59,42,.1)}
+  .podium li:first-child{border-top:0}
+  .podium-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .podium-name{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .podium-pts{font-weight:800;color:var(--ink-soft);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .podium-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px}
   .legend{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:8px 4px 0}
 
   /* ---------- pot ---------- */
@@ -438,7 +492,17 @@
         <button class="btn share" id="btn-share-results" hidden>Share the results</button>
         <button class="btn quiet" id="btn-share-image" hidden>📸 Share as image</button>
         <button class="btn quiet" id="btn-clear-final" hidden>Clear final score</button>
-        <p class="legend">Points: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong> · 🎲 called an upset <strong>+3</strong></p>
+      </section>
+
+      <section>
+        <h2>How points work</h2>
+        <div class="legend-grid">
+          <div class="legend-item"><span>🎯 Exact score</span><span class="pts">10</span></div>
+          <div class="legend-item"><span>📏 Right winner, margin within 3</span><span class="pts">7</span></div>
+          <div class="legend-item"><span>✅ Right winner</span><span class="pts">5</span></div>
+          <div class="legend-item"><span>🎖 Closest prediction of the match</span><span class="pts">+2</span></div>
+          <div class="legend-item"><span>🎲 Correctly called an upset</span><span class="pts">+3</span></div>
+        </div>
       </section>
 
       <section>
@@ -469,7 +533,18 @@
           <span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span>
         </div>
         <div class="rows" id="lg-rows"></div>
-        <p class="legend">Points per match: 🎯 exact score <strong>10</strong> · 📏 right winner, margin within 3 <strong>7</strong> · ✅ right winner <strong>5</strong> · 🎖 closest of the match <strong>+2</strong> · 🎲 called an upset <strong>+3</strong>. Add more matches to keep the league running all season!</p>
+        <p class="legend-note">Add more matches to keep the league running all season!</p>
+      </section>
+
+      <section>
+        <h2>How points work</h2>
+        <div class="legend-grid">
+          <div class="legend-item"><span>🎯 Exact score</span><span class="pts">10</span></div>
+          <div class="legend-item"><span>📏 Right winner, margin within 3</span><span class="pts">7</span></div>
+          <div class="legend-item"><span>✅ Right winner</span><span class="pts">5</span></div>
+          <div class="legend-item"><span>🎖 Closest prediction of the match</span><span class="pts">+2</span></div>
+          <div class="legend-item"><span>🎲 Correctly called an upset</span><span class="pts">+3</span></div>
+        </div>
       </section>
 
       <section>
@@ -1224,17 +1299,27 @@ function renderMatch(){
     rows.innerHTML = ranked.map(function(s){
       var e = s.e;
       var medal = medalFor(s.rank);
-      var tags = (s.tierTag ? s.tierTag + " · " : "") + s.d + " off" +
-        (s.closest ? " · 🎖 closest" : "") + (s.upset ? " · 🎲 upset" : "") + (s.w ? "" : " · wrong team");
-      return '<div class="row' + (s.rank===1 ? ' winner' : '') + '">' +
-        '<span class="who"><span class="rank">' + s.rank + '.</span>' + avatarHtml(e[0]) +
-          '<span class="txt">' + (medal ? medal + " " : "") + esc(e[0]) +
-          '<span class="diff">' + tags + '</span></span>' +
-          '<span class="pts-chip">+' + s.pts + '</span></span>' +
-        '<span class="num sa">' + e[1] + '</span>' +
-        '<span class="num sc">' + e[2] + '</span>' +
-        '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
-        '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
+      var chips = "";
+      if (s.tierTag) chips += '<span class="pc-chip tier">' + s.tierTag + '</span>';
+      else chips += '<span class="pc-chip warn">❌ wrong team</span>';
+      if (s.closest) chips += '<span class="pc-chip bonus">🎖 closest</span>';
+      if (s.upset) chips += '<span class="pc-chip bonus">🎲 upset</span>';
+      return '<div class="pred-card' + (s.rank===1 ? ' winner' : '') + '">' +
+        '<div class="pc-head">' +
+          '<span class="pc-rank">' + s.rank + '</span>' +
+          avatarHtml(e[0]) +
+          '<span class="pc-name">' + (medal ? medal + " " : "") + esc(e[0]) + '</span>' +
+          '<span class="pc-pts">+' + s.pts + '</span>' +
+        '</div>' +
+        '<div class="pc-detail">' +
+          '<span class="pc-score">' + e[1] + '–' + e[2] + '</span>' +
+          '<span class="pc-off">' + s.d + ' off</span>' +
+          chips +
+          '<span class="pc-actions">' +
+            '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
+            '<button class="del" data-name="' + esc(e[0]) + '" aria-label="Remove ' + esc(e[0]) + '">✕</button>' +
+          '</span>' +
+        '</div>' +
       '</div>';
     }).join("");
   } else {
@@ -1297,11 +1382,16 @@ function renderMatch(){
         " with " + winners[0].pts + " points!" + potLine +
         '<ul class="podium">' +
         podium.map(function(s){
-          return '<li><span>' + medalFor(s.rank) + " " + esc(s.e[0]) +
-            " (" + s.e[1] + "–" + s.e[2] + ")" +
-            (s.tierTag ? '<br><span class="podium-tag">' + s.tierTag +
-              (s.closest ? " · 🎖 closest" : "") + (s.upset ? " · 🎲 upset" : "") + "</span>" : "") +
-            "</span><span class=\"pts\">+" + s.pts + " pts · " + s.d + " off</span></li>";
+          var chips = s.tierTag ? '<span class="pc-chip tier">' + s.tierTag + '</span>' : '<span class="pc-chip warn">❌ wrong team</span>';
+          if (s.closest) chips += '<span class="pc-chip bonus">🎖 closest</span>';
+          if (s.upset) chips += '<span class="pc-chip bonus">🎲 upset</span>';
+          return '<li>' +
+            '<div class="podium-row">' +
+              '<span class="podium-name">' + medalFor(s.rank) + " " + esc(s.e[0]) + " (" + s.e[1] + "–" + s.e[2] + ")</span>" +
+              '<span class="podium-pts">+' + s.pts + " pts</span>" +
+            '</div>' +
+            '<div class="podium-chips">' + chips + '<span class="pc-off">' + s.d + ' off</span></div>' +
+          '</li>';
         }).join("") +
         "</ul></div>";
     }

@@ -297,6 +297,7 @@
   .podium{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
   .podium li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-variant-numeric:tabular-nums}
   .podium .pts{color:var(--ink-soft);font-weight:600;white-space:nowrap}
+  .podium-tag{font-size:11px;font-weight:600;color:var(--ink-soft)}
   .legend{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:8px 4px 0}
 
   /* ---------- pot ---------- */
@@ -1297,7 +1298,10 @@ function renderMatch(){
         '<ul class="podium">' +
         podium.map(function(s){
           return '<li><span>' + medalFor(s.rank) + " " + esc(s.e[0]) +
-            " (" + s.e[1] + "–" + s.e[2] + ")</span><span class=\"pts\">+" + s.pts + " pts · " + s.d + " off</span></li>";
+            " (" + s.e[1] + "–" + s.e[2] + ")" +
+            (s.tierTag ? '<br><span class="podium-tag">' + s.tierTag +
+              (s.closest ? " · 🎖 closest" : "") + (s.upset ? " · 🎲 upset" : "") + "</span>" : "") +
+            "</span><span class=\"pts\">+" + s.pts + " pts · " + s.d + " off</span></li>";
         }).join("") +
         "</ul></div>";
     }
@@ -1666,7 +1670,8 @@ document.getElementById("btn-share-results").addEventListener("click", function(
   ranked.slice(0, 5).forEach(function(s){
     var medal = medalFor(s.rank);
     lines.push((medal ? medal + " " : "     ") + s.rank + ". " + s.e[0] +
-      " (" + s.e[1] + "–" + s.e[2] + ") — +" + s.pts + " pts, " + s.d + " off");
+      " (" + s.e[1] + "–" + s.e[2] + ") — +" + s.pts + " pts, " + s.d + " off" +
+      (s.tierTag ? " (" + s.tierTag + ")" : ""));
   });
   if (ranked.length > 5) lines.push("…and " + (ranked.length - 5) + " more");
   if (state.pot > 0) {
@@ -1747,21 +1752,26 @@ function buildResultImage(m){
   var ranked = standings(m);
   var podium = ranked.slice(0, 5);
   var medals = ["🏆","🥈","🥉"];
-  var startY = 590, rowH = 82;
+  var startY = 596, rowH = 92;
   podium.forEach(function(s, i){
     var y = startY + i*rowH;
     ctx.fillStyle = i === 0 ? "rgba(255,182,18,.15)" : "rgba(255,255,255,.06)";
-    roundRect(ctx, 100, y-46, W-200, 64, 14);
+    roundRect(ctx, 100, y-40, W-200, 74, 14);
     ctx.fill();
 
     ctx.textAlign = "left";
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "800 30px " + FAM;
-    ctx.fillText((medals[i] || (i+1) + ".") + "  " + s.e[0], 130, y);
+    ctx.font = "800 28px " + FAM;
+    ctx.fillText((medals[i] || (i+1) + ".") + "  " + s.e[0], 130, y - 8);
+    if (s.tierTag) {
+      ctx.fillStyle = "#CDE3D6";
+      ctx.font = "600 17px " + FAM;
+      ctx.fillText(s.tierTag, 130, y + 20);
+    }
 
     ctx.textAlign = "right";
     ctx.fillStyle = "#FFB612";
-    ctx.font = "800 26px " + FAM;
+    ctx.font = "800 24px " + FAM;
     ctx.fillText(s.e[1] + "–" + s.e[2] + "  ·  +" + s.pts + " pts", W-130, y);
   });
 

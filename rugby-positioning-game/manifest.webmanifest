@@ -1,0 +1,17 @@
+{
+  "name": "Gap King — Rugby Positioning Academy",
+  "short_name": "Gap King",
+  "description": "A rugby positioning trainer: design plays, watch them play out, and learn to create space and close gaps.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0f0a",
+  "theme_color": "#0b120d",
+  "lang": "en",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

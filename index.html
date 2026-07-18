@@ -376,6 +376,7 @@
   .lg-row .played{text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums;font-size:14px}
   .lg-row .total{text-align:right;font-weight:900;font-size:17px;color:var(--grass);font-variant-numeric:tabular-nums}
   .lg-row.top{background:#FFF7E0}
+  .lg-row.spoon{background:#FBF1E9}
 
   /* ---------- install card ---------- */
   .install-card{
@@ -473,6 +474,11 @@
       </section>
 
       <section>
+        <h2>Bonus question <span class="count-pill">+3</span></h2>
+        <div id="bq-body"></div>
+      </section>
+
+      <section>
         <h2>Final result</h2>
         <div id="final-display"></div>
         <div class="card" id="final-form">
@@ -503,6 +509,7 @@
           <div class="legend-item"><span>🔢 Each team&#39;s score within 3</span><span class="pts">+2</span></div>
           <div class="legend-item"><span>🎖 Closest prediction of the match</span><span class="pts">+2</span></div>
           <div class="legend-item"><span>🎲 Correctly called an upset</span><span class="pts">+3</span></div>
+          <div class="legend-item"><span>⭐ Bonus question right</span><span class="pts">+3</span></div>
         </div>
       </section>
 
@@ -546,6 +553,7 @@
           <div class="legend-item"><span>🔢 Each team&#39;s score within 3</span><span class="pts">+2</span></div>
           <div class="legend-item"><span>🎖 Closest prediction of the match</span><span class="pts">+2</span></div>
           <div class="legend-item"><span>🎲 Correctly called an upset</span><span class="pts">+3</span></div>
+          <div class="legend-item"><span>⭐ Bonus question right</span><span class="pts">+3</span></div>
         </div>
       </section>
 
@@ -834,9 +842,11 @@ function standings(m){
     // real one, independent of margin/winner — stacks with everything else.
     var nearH = Math.abs(e[1] - f[0]) <= 3;
     var nearA = Math.abs(e[2] - f[1]) <= 3;
+    var bqEntry = m.bq && m.bq.r && m.bq.r[keyFor(e[0])];
+    var bonusQ = !!(bqEntry && bqEntry.correct);
     return { e:e, d:diffTo(f,e), w:pickedWinner(f,e),
-             pts: tier.pts + (nearH ? 2 : 0) + (nearA ? 2 : 0),
-             tierTag:tier.tag, nearH:nearH, nearA:nearA, closest:false, upset:false };
+             pts: tier.pts + (nearH ? 2 : 0) + (nearA ? 2 : 0) + (bonusQ ? 3 : 0),
+             tierTag:tier.tag, nearH:nearH, nearA:nearA, bonusQ:bonusQ, closest:false, upset:false };
   });
   if (list.length) {
     var minD = Infinity;
@@ -869,16 +879,17 @@ function standings(m){
 }
 function leagueTable(){
   var totals = {};
-  state.m.forEach(function(m){
+  state.m.forEach(function(m){          // state.m is kick-off-ordered, so recent[] ends up chronological
     m.p.forEach(function(e){
       var k = e[0].trim().toLowerCase();
-      if (!totals[k]) totals[k] = { name:e[0], pts:0, played:0 };
+      if (!totals[k]) totals[k] = { name:e[0], pts:0, played:0, recent:[] };
     });
     if (!m.f) return;
     standings(m).forEach(function(s){
       var k = s.e[0].trim().toLowerCase();
       totals[k].pts += s.pts;
       totals[k].played += 1;
+      totals[k].recent.push(s.pts);
     });
   });
   var list = Object.keys(totals).map(function(k){ return totals[k]; });
@@ -891,6 +902,22 @@ function leagueTable(){
   for (var i=0;i<list.length;i++) {
     if (i===0 || list[i].pts!==list[i-1].pts || list[i].played!==list[i-1].played) rank = i+1;
     list[i].rank = rank;
+  }
+  // form guide: average points over the last 3 played matches (needs 2+ played)
+  list.forEach(function(t){
+    t.form = "";
+    if (t.played >= 2) {
+      var last = t.recent.slice(-3);
+      var avg = last.reduce(function(a,b){ return a+b; }, 0) / last.length;
+      if (avg >= 7) t.form = "🔥";
+      else if (avg <= 2) t.form = "❄️";
+    }
+  });
+  // wooden spoon: worst rank among players who have actually played
+  var playedList = list.filter(function(t){ return t.played > 0; });
+  if (playedList.length >= 2) {
+    var worst = Math.max.apply(null, playedList.map(function(t){ return t.rank; }));
+    if (worst > 1) list.forEach(function(t){ t.spoon = (t.played > 0 && t.rank === worst); });
   }
   return list;
 }
@@ -974,6 +1001,7 @@ function matchFromDoc(d){
     id: d.id, h:data.h, hf:data.hf, a:data.a, af:data.af,
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
+    bq: data.bq || null,
     p: arr
   };
 }
@@ -1106,6 +1134,22 @@ function fsSetAvatar(name, emoji){
   var patch = {};
   patch[keyFor(name)] = emoji || null;
   setDoc(avatarsRef, patch, { merge:true }).catch(function(){ toast("Couldn't save avatar — try again"); });
+}
+function fsSetBonusQ(matchId, question){
+  updateDoc(doc(db,"matches",matchId), { "bq.q": question }).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsClearBonusQ(matchId){
+  updateDoc(doc(db,"matches",matchId), { bq: deleteField() }).catch(function(){ toast("Couldn't remove — try again"); });
+}
+function fsAnswerBonus(matchId, name, answer){
+  var patch = {};
+  patch["bq.r." + keyFor(name)] = { name:name, ans:answer, correct:false };
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsGradeBonus(matchId, key, correct){
+  var patch = {};
+  patch["bq.r." + key + ".correct"] = correct;
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
 }
 
 /* ================= rendering ================= */
@@ -1314,6 +1358,7 @@ function renderMatch(){
       if (s.nearA) chips += '<span class="pc-chip bonus">🔢 ' + m.af + ' ±3</span>';
       if (s.closest) chips += '<span class="pc-chip bonus">🎖 closest</span>';
       if (s.upset) chips += '<span class="pc-chip bonus">🎲 upset</span>';
+      if (s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
       return '<div class="pred-card' + (s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           '<span class="pc-rank">' + s.rank + '</span>' +
@@ -1397,6 +1442,7 @@ function renderMatch(){
           if (s.nearA) chips += '<span class="pc-chip bonus">🔢 ' + m.af + ' ±3</span>';
           if (s.closest) chips += '<span class="pc-chip bonus">🎖 closest</span>';
           if (s.upset) chips += '<span class="pc-chip bonus">🎲 upset</span>';
+          if (s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
           return '<li>' +
             '<div class="podium-row">' +
               '<span class="podium-name">' + medalFor(s.rank) + " " + esc(s.e[0]) + " (" + s.e[1] + "–" + s.e[2] + ")</span>" +
@@ -1428,8 +1474,99 @@ function renderMatch(){
     : "";
 
   updateAddFormState();
+  renderBonusQ();
   startTicker();
 }
+
+function renderBonusQ(){
+  var m = cm();
+  var body = document.getElementById("bq-body");
+  if (!m) { body.innerHTML = ""; return; }
+  var locked = isLocked(m) || !!m.f;
+  var answers = (m.bq && m.bq.r) ? m.bq.r : {};
+  var answerKeys = Object.keys(answers);
+
+  if (!m.bq || !m.bq.q) {
+    body.innerHTML = locked
+      ? '<div class="card"><p class="hint" style="margin:0">No bonus question was set for this match.</p></div>'
+      : '<button class="btn quiet" data-bq="set">⭐ Set a bonus question</button>' +
+        '<p class="hint">Anything goes — "first try scorer?", "total points over 50?", "yellow card: yes or no?" Correct answers earn +3.</p>';
+    return;
+  }
+
+  var html = '<div class="card">' +
+    '<p style="margin:0 0 4px;font-weight:800;font-size:15px">⭐ ' + esc(m.bq.q) + '</p>';
+
+  if (!locked) {
+    var mine = myName && answers[keyFor(myName)];
+    html += '<div class="scores-row" style="margin-top:10px">' +
+        '<div class="field"><label for="bq-answer">Your answer' + (myName ? " (" + esc(myName) + ")" : "") + '</label>' +
+        '<input id="bq-answer" type="text" maxlength="60" value="' + (mine ? esc(mine.ans) : '') + '" placeholder="Type your answer"></div>' +
+      '</div>' +
+      '<button class="btn" data-bq="save" style="padding:11px">Save my answer</button>' +
+      '<p class="hint">' + answerKeys.length + ' answer' + (answerKeys.length===1?'':'s') + ' in so far — everyone\'s answers are revealed at kick-off.</p>' +
+      '<button class="btn quiet" data-bq="edit" style="padding:9px;font-size:13px">✏️ Edit question</button>' +
+      '<button class="btn quiet" data-bq="remove" style="padding:9px;font-size:13px">🗑 Remove question</button>';
+  } else {
+    if (!answerKeys.length) {
+      html += '<p class="hint" style="margin-top:8px">Nobody answered this one.</p>';
+    } else {
+      html += answerKeys.map(function(k){
+        var a = answers[k];
+        var grade = m.f
+          ? '<button class="pc-chip ' + (a.correct ? 'tier' : 'warn') + '" data-bq-grade="' + esc(k) + '" style="border:0;cursor:pointer">' +
+            (a.correct ? '✓ correct +3' : 'mark correct') + '</button>'
+          : (a.correct ? '<span class="pc-chip tier">✓ correct +3</span>' : '');
+        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)">' +
+          avatarHtml(a.name) +
+          '<span style="flex:1;min-width:0;font-size:13.5px"><strong>' + esc(a.name) + '</strong> — ' + esc(a.ans) + '</span>' +
+          grade +
+        '</div>';
+      }).join("");
+      if (m.f) html += '<p class="hint" style="margin-top:8px">Tap an answer to mark it correct (family PIN needed) — +3 points each.</p>';
+    }
+  }
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+document.getElementById("bq-body").addEventListener("click", function(ev){
+  var m = cm();
+  if (!m) return;
+  var el = ev.target.closest("[data-bq],[data-bq-grade]");
+  if (!el) return;
+  var gradeKey = el.getAttribute("data-bq-grade");
+  if (gradeKey) {
+    var entry = m.bq && m.bq.r && m.bq.r[gradeKey];
+    if (!entry) return;
+    requirePin(function(){ fsGradeBonus(m.id, gradeKey, !entry.correct); });
+    return;
+  }
+  var action = el.getAttribute("data-bq");
+  if (action === "set" || action === "edit") {
+    requirePin(function(){
+      var q = prompt("Bonus question for " + m.h + " vs " + m.a + ":", (m.bq && m.bq.q) || "");
+      if (q === null) return;
+      q = q.trim().slice(0, 120);
+      if (!q) { toast("Question can't be empty"); return; }
+      fsSetBonusQ(m.id, q);
+      toast("Bonus question " + (action === "set" ? "set" : "updated"));
+    });
+  } else if (action === "remove") {
+    requirePin(function(){
+      if (!confirm("Remove the bonus question and all its answers?")) return;
+      fsClearBonusQ(m.id);
+    });
+  } else if (action === "save") {
+    var name = myName || document.getElementById("inp-name").value.trim();
+    if (!name) { toast("Add your score prediction first"); return; }
+    if (!findIn(m, name)) { toast("Add your score prediction first, then answer"); return; }
+    var ans = document.getElementById("bq-answer").value.trim();
+    if (!ans) { toast("Type an answer first"); return; }
+    fsAnswerBonus(m.id, name, ans);
+    toast("Answer saved — revealed at kick-off!");
+  }
+});
 
 function updateAddFormState(){
   var m = cm();
@@ -1455,9 +1592,11 @@ function renderLeague(){
   } else {
     rows.innerHTML = table.map(function(t){
       var medal = medalFor(t.rank);
-      return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + '">' +
+      var badge = (medal && t.pts>0 ? medal + " " : "");
+      var suffix = (t.spoon ? " 🥄" : "") + (t.form ? " " + t.form : "");
+      return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + (t.spoon ? " spoon" : "") + '">' +
         '<span class="pos">' + t.rank + '</span>' +
-        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + (medal && t.pts>0 ? medal + " " : "") + esc(t.name) + '</span></span>' +
+        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + badge + esc(t.name) + suffix + '</span></span>' +
         '<span class="played">' + t.played + '</span>' +
         '<span class="total">' + t.pts + '</span>' +
       '</div>';
@@ -1776,6 +1915,7 @@ document.getElementById("btn-share-results").addEventListener("click", function(
     if (s.nearA) why.push(m.af + " ±3");
     if (s.closest) why.push("🎖 closest");
     if (s.upset) why.push("🎲 upset");
+    if (s.bonusQ) why.push("⭐ bonus q");
     lines.push((medal ? medal + " " : "     ") + s.rank + ". " + s.e[0] +
       " (" + s.e[1] + "–" + s.e[2] + ") — +" + s.pts + " pts, " + s.d + " off (" + why.join(", ") + ")");
   });
@@ -1873,6 +2013,7 @@ function buildResultImage(m){
     var nearCount = (s.nearH ? 1 : 0) + (s.nearA ? 1 : 0);
     if (nearCount) tagLine += (tagLine ? " · " : "") + nearCount + "× score ±3";
     if (s.closest) tagLine += (tagLine ? " · " : "") + "🎖 closest";
+    if (s.bonusQ) tagLine += (tagLine ? " · " : "") + "⭐ bonus q";
     if (tagLine) {
       ctx.fillStyle = "#CDE3D6";
       ctx.font = "600 17px " + FAM;
@@ -1926,9 +2067,15 @@ document.getElementById("btn-share").addEventListener("click", function(){
     var lines = ["🏉 Family Rugby League standings:", ""];
     table.slice(0, 10).forEach(function(t){
       var medal = medalFor(t.rank);
-      lines.push((medal ? medal + " " : "     ") + t.rank + ". " + t.name + " — " + t.pts + " pts (" + t.played + " played)");
+      lines.push((medal ? medal + " " : "     ") + t.rank + ". " + t.name + " — " + t.pts + " pts (" + t.played + " played)" +
+        (t.form ? " " + t.form : "") + (t.spoon ? " 🥄" : ""));
     });
     if (table.length > 10) lines.push("…and " + (table.length - 10) + " more");
+    var spoons = table.filter(function(t){ return t.spoon; });
+    if (spoons.length) {
+      lines.push("");
+      lines.push("🥄 Wooden spoon: " + joinNames(spoons.map(function(t){ return t.name; })));
+    }
     lines.push("");
     lines.push("Join in: " + appUrl());
     shareContent(lines.join("\n"));

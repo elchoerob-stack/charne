@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The predictor is a trusted family app with a shared link — writes are
+    // open, but scoped to exactly the collections the app uses so nothing
+    // else can be stored in this project.
+    match /matches/{matchId} {
+      allow read, write: if true;
+    }
+    match /meta/{docId} {
+      allow read, write: if true;
+    }
+    // Push subscriptions: anyone can register their own device, but browsing
+    // or tampering with the list from the client is pointless — only the
+    // server-side reminder script (Admin SDK, bypasses rules) reads them.
+    match /pushSubs/{subId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}

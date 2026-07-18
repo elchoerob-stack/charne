@@ -535,6 +535,10 @@
         <h2>Season awards</h2>
         <div id="awards-row"></div>
       </section>
+      <section id="sec-stats" hidden>
+        <h2>Stats corner</h2>
+        <div id="stats-row"></div>
+      </section>
       <section>
         <h2>League standings</h2>
         <div class="lg-thead" aria-hidden="true">
@@ -708,9 +712,9 @@ var FIXTURES = [
   {id:"sa-nz2-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,29,15,0),  vn:"Cape Town Stadium"},
   {id:"sa-nz3-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,5,15,0),   vn:"FNB Stadium, Johannesburg"},
   {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,21,0),  vn:"M&T Bank Stadium, Baltimore, USA", tbc:true},
-  {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,14,0),  vn:"Italy", tbc:true},
-  {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,14,19,10),vn:"France", tbc:true},
-  {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,17,40),vn:"Aviva Stadium, Dublin", tbc:true}
+  {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,11,40), vn:"Allianz Stadium, Turin"},
+  {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,13,20,10),vn:"Stade de France, Paris"},
+  {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,16,40),vn:"Aviva Stadium, Dublin"}
 ];
 
 var NAME_KEY = "bok-myname";
@@ -859,6 +863,38 @@ function autoBonusQ(matchId){
   var h = 0;
   for (var i=0;i<matchId.length;i++) h = (h*31 + matchId.charCodeAt(i)) >>> 0;
   return BQ_POOL[h % BQ_POOL.length];
+}
+
+// Bokbot 🤖 — the house bot every family member gets to try beat. Its score is
+// derived from the match id so every phone computes the identical prediction
+// (idempotent writes, no coordination needed). Unashamedly a Springbok homer.
+var BOKBOT_NAME = "Bokbot";
+function bokbotPrediction(m){
+  var s = m.id + "bokbot";
+  var h = 0;
+  for (var i=0;i<s.length;i++) h = (h*33 + s.charCodeAt(i)) >>> 0;
+  var hs = 14 + (h % 20);            // 14–33
+  var as = 10 + ((h >>> 7) % 16);    // 10–25 (unsigned shift — signed >> can go negative)
+  if (m.h === "South Africa") hs += 7;
+  if (m.a === "South Africa") as += 7;
+  return { name: BOKBOT_NAME, hs: hs, as: as };
+}
+var botAvatarEnsured = false;
+function ensureBokbot(){
+  var botKey = keyFor(BOKBOT_NAME);
+  state.m.forEach(function(m){
+    if (m.f || isLocked(m)) return;
+    if (findIn(m, BOKBOT_NAME)) return;
+    var pred = bokbotPrediction(m);
+    var patch = {};
+    patch["p." + botKey] = pred;
+    updateDoc(doc(db,"matches",m.id), patch).catch(function(){});
+  });
+  if (!botAvatarEnsured && state.m.length && (!state.avatars || !state.avatars[botKey])) {
+    botAvatarEnsured = true;   // once per session — avoids redundant writes
+    var av = {}; av[botKey] = "🤖";
+    setDoc(avatarsRef, av, { merge:true }).catch(function(){});
+  }
 }
 function standings(m){
   var f = m.f;
@@ -1059,6 +1095,7 @@ function startLiveSync(){
       curId = (state.m[0] && state.m[0].id) || null;
     }
     render();
+    ensureBokbot();   // idempotent: only writes where the bot has no prediction yet
   }, function(){
     ready = true;
     toast("Connection problem — check your internet");
@@ -1642,6 +1679,66 @@ function renderLeague(){
     }).join("");
   }
   renderAwards();
+  renderStats();
+}
+
+function seasonStats(){
+  var players = {};
+  function ensure(name){
+    var k = keyFor(name);
+    if (!players[k]) players[k] = { name:name, saMargins:[], offs:[], totals:[] };
+    return players[k];
+  }
+  state.m.forEach(function(m){
+    var saHome = m.h === "South Africa", saAway = m.a === "South Africa";
+    m.p.forEach(function(e){
+      var t = ensure(e[0]);
+      t.totals.push(e[1] + e[2]);
+      if (saHome) t.saMargins.push(e[1] - e[2]);
+      else if (saAway) t.saMargins.push(e[2] - e[1]);
+    });
+    if (m.f) {
+      standings(m).forEach(function(s){ ensure(s.e[0]).offs.push(s.d); });
+    }
+  });
+  var list = Object.keys(players).map(function(k){ return players[k]; });
+  function avg(arr){ return arr.reduce(function(a,b){ return a+b; }, 0) / arr.length; }
+  function best(field, minN, highest){
+    var eligible = list.filter(function(t){ return t[field].length >= minN; });
+    if (eligible.length < 2) return null;
+    var winner = null, val = null;
+    eligible.forEach(function(t){
+      var a = avg(t[field]);
+      if (winner === null || (highest ? a > val : a < val)) { winner = t; val = a; }
+    });
+    return { name: winner.name, value: Math.round(val * 10) / 10 };
+  }
+  return {
+    believer: best("saMargins", 2, true),
+    sharp: best("offs", 2, false),
+    wild: best("offs", 2, true),
+    dreamer: best("totals", 2, true)
+  };
+}
+
+function renderStats(){
+  var sec = document.getElementById("sec-stats");
+  var row = document.getElementById("stats-row");
+  var st = seasonStats();
+  var cards = [];
+  function add(icon, label, stat, suffix){
+    if (!stat) return;
+    cards.push('<div class="award-card"><span class="ic">' + icon + '</span>' +
+      '<span class="txt"><span class="lbl">' + label + '</span><br>' +
+      '<span class="who">' + esc(stat.name) + '</span> — ' + stat.value + ' ' + suffix + '</span></div>');
+  }
+  add("💚", "Biggest Bok believer", st.believer, "avg margin for SA");
+  add("🎯", "Sharpest aim", st.sharp, "avg points off");
+  add("🎢", "Wildest guesser", st.wild, "avg points off");
+  add("🍞", "Try-fest dreamer", st.dreamer, "avg total points predicted");
+  if (!cards.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  row.innerHTML = '<div class="awards-row">' + cards.join("") + '</div>';
 }
 
 function renderAwards(){

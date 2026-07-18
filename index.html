@@ -834,6 +834,32 @@ function scoreTier(f, e){
   return { pts:0, tag:"" };
 }
 var UPSET_THRESHOLD = 5;  // crowd's avg predicted margin must clear this to count as a clear favourite
+
+// Auto-assigned bonus questions: one is picked per match by hashing the match
+// id into this pool, so every phone independently agrees on the same question
+// without needing a coordinating write. All are gradeable from the final
+// broadcast — no stats feed needed.
+var BQ_POOL = [
+  "Will there be a yellow or red card?",
+  "Total match points: odd or even?",
+  "Will both teams score a try?",
+  "First score of the match: try, penalty or drop goal?",
+  "Which half will have more points — first or second?",
+  "Will the winning margin be more than 10?",
+  "Will there be 5 or more tries in the match?",
+  "Will a forward score a try?",
+  "Will anyone kick a drop goal?",
+  "Will there be a penalty try?",
+  "Man of the match: forward or back?",
+  "Will a try be scored in the first 10 minutes?",
+  "More successful penalty kicks or conversions?",
+  "Will the losing team score in the last 10 minutes?"
+];
+function autoBonusQ(matchId){
+  var h = 0;
+  for (var i=0;i<matchId.length;i++) h = (h*31 + matchId.charCodeAt(i)) >>> 0;
+  return BQ_POOL[h % BQ_POOL.length];
+}
 function standings(m){
   var f = m.f;
   var list = m.p.map(function(e){
@@ -1065,7 +1091,8 @@ function ensureFixtures(){
       if (!cur) {
         batch.set(doc(db,"matches",fx.id), {
           h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
-          ko:fx.ko, vn:fx.vn, tbc: !!fx.tbc, f:null, p: seedToMap(fx.seed)
+          ko:fx.ko, vn:fx.vn, tbc: !!fx.tbc, f:null, p: seedToMap(fx.seed),
+          bq: (fx.ko && Date.now() > fx.ko) ? null : { q: autoBonusQ(fx.id) }
         });
         any = true;
         return;
@@ -1092,6 +1119,16 @@ function ensureFixtures(){
         batch.set(doc(db,"matches",fx.id), patch, { merge:true });
         any = true;
       }
+    });
+    // auto-assign a bonus question to any match (fixture or user-created) that
+    // hasn't kicked off yet and doesn't have one — unless the organiser removed
+    // it on purpose (bqOff), which always wins.
+    Object.keys(existing).forEach(function(id){
+      var cur = existing[id];
+      if (cur.f || cur.bqOff || (cur.bq && cur.bq.q)) return;
+      if (cur.ko && Date.now() > cur.ko) return;
+      batch.set(doc(db,"matches",id), { bq: { q: autoBonusQ(id) } }, { merge:true });
+      any = true;
     });
     if (any) return batch.commit();
   });
@@ -1121,7 +1158,8 @@ function fsSaveMatchMeta(matchId, patch){
 }
 function fsCreateMatch(data){
   var ref = doc(matchesCol);
-  setDoc(ref, Object.assign({ p:{}, f:null }, data)).catch(function(){ toast("Couldn't create match — try again"); });
+  setDoc(ref, Object.assign({ p:{}, f:null, bq: { q: autoBonusQ(ref.id) } }, data))
+    .catch(function(){ toast("Couldn't create match — try again"); });
   return ref.id;
 }
 function fsDeleteMatch(matchId){
@@ -1136,10 +1174,11 @@ function fsSetAvatar(name, emoji){
   setDoc(avatarsRef, patch, { merge:true }).catch(function(){ toast("Couldn't save avatar — try again"); });
 }
 function fsSetBonusQ(matchId, question){
-  updateDoc(doc(db,"matches",matchId), { "bq.q": question }).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), { "bq.q": question, bqOff: deleteField() }).catch(function(){ toast("Couldn't save — try again"); });
 }
 function fsClearBonusQ(matchId){
-  updateDoc(doc(db,"matches",matchId), { bq: deleteField() }).catch(function(){ toast("Couldn't remove — try again"); });
+  // bqOff stops the auto-assigner from putting a fresh question straight back
+  updateDoc(doc(db,"matches",matchId), { bq: deleteField(), bqOff: true }).catch(function(){ toast("Couldn't remove — try again"); });
 }
 function fsAnswerBonus(matchId, name, answer){
   var patch = {};

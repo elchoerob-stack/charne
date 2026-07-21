@@ -468,7 +468,7 @@
               <button type="button" class="avatar-btn" id="btn-avatar" aria-label="Choose your avatar emoji">🙂</button>
             </div>
           </div>
-          <div class="scores-row">
+          <div class="scores-row" id="score-inputs">
             <div class="field">
               <label for="inp-sa" id="lbl-home">Home</label>
               <input id="inp-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
@@ -476,6 +476,27 @@
             <div class="field">
               <label for="inp-sc" id="lbl-away">Away</label>
               <input id="inp-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
+            </div>
+          </div>
+          <div id="motor-inputs" hidden>
+            <datalist id="grid-list"></datalist>
+            <div class="field" style="margin-top:10px">
+              <label for="mp-pole">🏁 Pole position</label>
+              <input id="mp-pole" type="text" list="grid-list" maxlength="40" placeholder="Who starts P1?">
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label for="mp-p1">🥇 Winner (P1)</label>
+              <input id="mp-p1" type="text" list="grid-list" maxlength="40" placeholder="1st place">
+            </div>
+            <div class="scores-row">
+              <div class="field">
+                <label for="mp-p2">🥈 2nd</label>
+                <input id="mp-p2" type="text" list="grid-list" maxlength="40" placeholder="2nd place">
+              </div>
+              <div class="field">
+                <label for="mp-p3">🥉 3rd</label>
+                <input id="mp-p3" type="text" list="grid-list" maxlength="40" placeholder="3rd place">
+              </div>
             </div>
           </div>
           <button class="btn" id="btn-add">Add my prediction</button>
@@ -503,8 +524,8 @@
         <h2>Final result</h2>
         <div id="final-display"></div>
         <div class="card" id="final-form">
-          <p class="hint" style="margin:0 4px 10px">After the final whistle, enter the real score to crown the winner.</p>
-          <div class="scores-row" style="margin-top:0">
+          <p class="hint" style="margin:0 4px 10px" id="final-hint">After the final whistle, enter the real score to crown the winner.</p>
+          <div class="scores-row" id="score-final" style="margin-top:0">
             <div class="field">
               <label for="fin-sa" id="lbl-fin-home">Home</label>
               <input id="fin-sa" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
@@ -514,7 +535,27 @@
               <input id="fin-sc" type="number" inputmode="numeric" min="0" max="150" placeholder="0">
             </div>
           </div>
-          <button class="btn" id="btn-final">Save final score</button>
+          <div id="motor-final" hidden>
+            <div class="field">
+              <label for="mf-pole">🏁 Pole position</label>
+              <input id="mf-pole" type="text" list="grid-list" maxlength="40" placeholder="Pole sitter">
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label for="mf-p1">🥇 Winner (P1)</label>
+              <input id="mf-p1" type="text" list="grid-list" maxlength="40" placeholder="1st place">
+            </div>
+            <div class="scores-row">
+              <div class="field">
+                <label for="mf-p2">🥈 2nd</label>
+                <input id="mf-p2" type="text" list="grid-list" maxlength="40" placeholder="2nd place">
+              </div>
+              <div class="field">
+                <label for="mf-p3">🥉 3rd</label>
+                <input id="mf-p3" type="text" list="grid-list" maxlength="40" placeholder="3rd place">
+              </div>
+            </div>
+          </div>
+          <button class="btn" id="btn-final">Save result</button>
         </div>
         <button class="btn share" id="btn-share-results" hidden>Share the results</button>
         <button class="btn quiet" id="btn-share-image" hidden>📸 Share as image</button>
@@ -523,15 +564,7 @@
 
       <section>
         <h2>How points work</h2>
-        <div class="legend-grid">
-          <div class="legend-item"><span>🎯 Exact score</span><span class="pts">10</span></div>
-          <div class="legend-item"><span>📏 Right winner, margin within 3</span><span class="pts">7</span></div>
-          <div class="legend-item"><span>✅ Right winner</span><span class="pts">5</span></div>
-          <div class="legend-item"><span>🔢 Each team&#39;s score within 3</span><span class="pts">+2</span></div>
-          <div class="legend-item"><span>🎖 Closest prediction of the match</span><span class="pts">+2</span></div>
-          <div class="legend-item"><span>🎲 Correctly called an upset</span><span class="pts">+3</span></div>
-          <div class="legend-item"><span>⭐ Bonus question right</span><span class="pts">+3</span></div>
-        </div>
+        <div class="legend-grid" id="legend-match"></div>
       </section>
 
       <section>
@@ -571,15 +604,7 @@
 
       <section>
         <h2>How points work</h2>
-        <div class="legend-grid">
-          <div class="legend-item"><span>🎯 Exact score</span><span class="pts">10</span></div>
-          <div class="legend-item"><span>📏 Right winner, margin within 3</span><span class="pts">7</span></div>
-          <div class="legend-item"><span>✅ Right winner</span><span class="pts">5</span></div>
-          <div class="legend-item"><span>🔢 Each team&#39;s score within 3</span><span class="pts">+2</span></div>
-          <div class="legend-item"><span>🎖 Closest prediction of the match</span><span class="pts">+2</span></div>
-          <div class="legend-item"><span>🎲 Correctly called an upset</span><span class="pts">+3</span></div>
-          <div class="legend-item"><span>⭐ Bonus question right</span><span class="pts">+3</span></div>
-        </div>
+        <div class="legend-grid" id="legend-league"></div>
       </section>
 
       <section>
@@ -611,24 +636,38 @@
       <section>
         <h2 id="nm-title">New match</h2>
         <div class="card">
-          <div class="scores-row" style="margin-top:0">
-            <div class="field">
-              <label for="nm-home">Home team</label>
-              <select id="nm-home"></select>
+          <div id="nm-teams">
+            <div class="scores-row" style="margin-top:0">
+              <div class="field">
+                <label for="nm-home">Home team</label>
+                <select id="nm-home"></select>
+              </div>
+              <div class="field">
+                <label for="nm-away">Away team</label>
+                <select id="nm-away"></select>
+              </div>
             </div>
-            <div class="field">
-              <label for="nm-away">Away team</label>
-              <select id="nm-away"></select>
+            <div class="scores-row" id="nm-custom-row" hidden>
+              <div class="field" id="nm-custom-home-wrap" hidden>
+                <label for="nm-custom-home">Home team name</label>
+                <input id="nm-custom-home" type="text" maxlength="24" placeholder="e.g. The Neighbours XV">
+              </div>
+              <div class="field" id="nm-custom-away-wrap" hidden>
+                <label for="nm-custom-away">Away team name</label>
+                <input id="nm-custom-away" type="text" maxlength="24" placeholder="e.g. Uncle Piet's XV">
+              </div>
             </div>
           </div>
-          <div class="scores-row" id="nm-custom-row" hidden>
-            <div class="field" id="nm-custom-home-wrap" hidden>
-              <label for="nm-custom-home">Home team name</label>
-              <input id="nm-custom-home" type="text" maxlength="24" placeholder="e.g. The Neighbours XV">
-            </div>
-            <div class="field" id="nm-custom-away-wrap" hidden>
-              <label for="nm-custom-away">Away team name</label>
-              <input id="nm-custom-away" type="text" maxlength="24" placeholder="e.g. Uncle Piet's XV">
+          <div id="nm-motor" hidden>
+            <div class="scores-row" style="margin-top:0">
+              <div class="field" style="flex:0 0 84px">
+                <label for="nm-flag">Flag</label>
+                <input id="nm-flag" type="text" maxlength="4" placeholder="🏁" style="text-align:center">
+              </div>
+              <div class="field">
+                <label for="nm-race">Race / Grand Prix</label>
+                <input id="nm-race" type="text" maxlength="40" placeholder="e.g. Qatar GP">
+              </div>
             </div>
           </div>
           <div class="field" style="margin-top:10px">
@@ -743,6 +782,19 @@ var FOOTBALL_TEAMS = [
   ["Portugal","🇵🇹"],["Netherlands","🇳🇱"],["Italy","🇮🇹"],["Morocco","🇲🇦"],
   ["USA","🇺🇸"],["Japan","🇯🇵"],["Senegal","🇸🇳"],["Croatia","🇭🇷"]
 ];
+// Motorsport competitor pools are only SUGGESTIONS (datalist), so they don't
+// need to be exhaustive or perfectly current — anyone can type another name.
+var MOTOGP_RIDERS = [
+  "Francesco Bagnaia","Jorge Martin","Marc Marquez","Enea Bastianini","Pedro Acosta",
+  "Brad Binder","Maverick Viñales","Fabio Quartararo","Franco Morbidelli","Marco Bezzecchi",
+  "Aleix Espargaro","Alex Marquez","Fabio Di Giannantonio","Johann Zarco","Miguel Oliveira",
+  "Jack Miller","Raul Fernandez","Augusto Fernandez"
+];
+var F1_DRIVERS = [
+  "Max Verstappen","Lando Norris","Charles Leclerc","Oscar Piastri","Carlos Sainz",
+  "Lewis Hamilton","George Russell","Sergio Perez","Fernando Alonso","Lance Stroll",
+  "Yuki Tsunoda","Alex Albon","Nico Hulkenberg","Esteban Ocon","Pierre Gasly"
+];
 // Each sport supplies a team/competitor pool for the match picker, a default
 // emoji when a name isn't in the pool, and a "playing verb" for copy. All the
 // sports below are two-side SCORE sports, so they reuse the whole prediction
@@ -753,14 +805,19 @@ var SPORTS = {
   football: { label:"Football",    icon:"⚽", teams: FOOTBALL_TEAMS, fallback:"⚽" },
   netball:  { label:"Netball",     icon:"🏐", teams: RUGBY_TEAMS,    fallback:"🏐" },
   cricket:  { label:"Cricket",     icon:"🏏", teams: FOOTBALL_TEAMS, fallback:"🏏" },
+  motogp:   { label:"MotoGP",      icon:"🏍️", type:"motor", competitors: MOTOGP_RIDERS, fallback:"🏁" },
+  f1:       { label:"Formula 1",   icon:"🏎️", type:"motor", competitors: F1_DRIVERS,   fallback:"🏁" },
   other:    { label:"Other / Custom", icon:"🏆", teams: [],          fallback:"🏆" }
 };
-var SPORT_ORDER = ["rugby","u20rugby","football","netball","cricket","other"];
+var SPORT_ORDER = ["rugby","u20rugby","football","netball","cricket","motogp","f1","other"];
+function sportType(sportId){ return (SPORTS[sportId] && SPORTS[sportId].type) || "score"; }
+function competitorsFor(sportId){ return (SPORTS[sportId] && SPORTS[sportId].competitors) || []; }
+function curIsMotor(){ return sportType(sportOf(curLeague)) === "motor"; }
 function sportOf(leagueId){
   var lg = leagueById(leagueId);
   return (lg && SPORTS[lg.sport]) ? lg.sport : "rugby";
 }
-function sportTeams(sportId){ return (SPORTS[sportId] || SPORTS.rugby).teams; }
+function sportTeams(sportId){ return (SPORTS[sportId] && SPORTS[sportId].teams) || []; }
 function flagFor(name, sportId){
   var teams = sportTeams(sportId || sportOf(curLeague));
   for (var i=0;i<teams.length;i++) if (teams[i][0]===name) return teams[i][1];
@@ -851,12 +908,16 @@ function num(v){ v = parseInt(v,10); return isNaN(v) ? 0 : Math.max(0, Math.min(
 function keyFor(name){
   return String(name).trim().toLowerCase().replace(/[.\/\[\]~*]/g, "_").replace(/\s+/g, " ");
 }
+// A prediction entry is a [name,hs,as] array for score matches, or a
+// {name,pole,p1,p2,p3} object for motor matches. predName reads either.
+function predName(e){ return Array.isArray(e) ? e[0] : (e && e.name) || ""; }
 function findIn(match, name){
   var n = String(name).trim().toLowerCase();
   for (var i=0;i<match.p.length;i++)
-    if (match.p[i][0].trim().toLowerCase() === n) return match.p[i];
+    if (predName(match.p[i]).trim().toLowerCase() === n) return match.p[i];
   return null;
 }
+function sameName(a, b){ return a && b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase(); }
 function esc(s){
   return String(s).replace(/[&<>"']/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -1011,7 +1072,42 @@ function ensureBokbot(){
     setDoc(avatarsRef, av, { merge:true }).catch(function(){});
   }
 }
+// Motor scoring: 🏁 pole +3 · 🥇 exact podium spot +5 each · 🎽 right driver wrong
+// spot +2 each · 🏆 perfect podium (all 3 exact) +5 bonus.
+function motorPoints(f, e){
+  var pts = 0, tags = [];
+  if (e.pole && f.pole && sameName(e.pole, f.pole)) { pts += 3; tags.push("🏁 pole"); }
+  var podium = [f.p1, f.p2, f.p3];
+  var picks = [e.p1, e.p2, e.p3];
+  var exact = 0, onPodium = 0;
+  picks.forEach(function(pick, i){
+    if (!pick) return;
+    if (podium[i] && sameName(pick, podium[i])) { pts += 5; exact++; onPodium++; }
+    else if (podium.some(function(x){ return x && sameName(pick, x); })) { pts += 2; onPodium++; }
+  });
+  if (exact === 3) { pts += 5; tags.push("🏆 perfect podium"); }
+  else if (exact > 0) tags.push("🥇 " + exact + " exact");
+  if (onPodium - exact > 0) tags.push("🎽 " + (onPodium - exact) + " on podium");
+  return { pts: pts, tags: tags };
+}
+function motorStandings(m){
+  var list = m.p.map(function(e){
+    var r = motorPoints(m.f, e);
+    return { e:e, pts:r.pts, motorTags:r.tags };
+  });
+  list.sort(function(a,b){
+    if (a.pts !== b.pts) return b.pts - a.pts;
+    return predName(a.e).localeCompare(predName(b.e));
+  });
+  var rank = 0;
+  for (var i=0;i<list.length;i++){
+    if (i===0 || list[i].pts!==list[i-1].pts) rank = i+1;
+    list[i].rank = rank;
+  }
+  return list;
+}
 function standings(m){
+  if (m.type === "motor") return motorStandings(m);
   var f = m.f;
   var list = m.p.map(function(e){
     var tier = scoreTier(f, e);
@@ -1058,12 +1154,12 @@ function leagueTable(){
   var totals = {};
   state.m.forEach(function(m){          // state.m is kick-off-ordered, so recent[] ends up chronological
     m.p.forEach(function(e){
-      var k = e[0].trim().toLowerCase();
-      if (!totals[k]) totals[k] = { name:e[0], pts:0, played:0, recent:[] };
+      var nm = predName(e), k = nm.trim().toLowerCase();
+      if (!totals[k]) totals[k] = { name:nm, pts:0, played:0, recent:[] };
     });
     if (!m.f) return;
     standings(m).forEach(function(s){
-      var k = s.e[0].trim().toLowerCase();
+      var k = predName(s.e).trim().toLowerCase();
       totals[k].pts += s.pts;
       totals[k].played += 1;
       totals[k].recent.push(s.pts);
@@ -1100,6 +1196,7 @@ function leagueTable(){
 }
 
 function seasonAwards(){
+  if (curIsMotor()) return null;   // awards are score-specific
   var completed = state.m.filter(function(m){ return !!m.f; });
   if (!completed.length) return null;
   var totals = {};
@@ -1169,13 +1266,15 @@ function confetti(){
 /* ================= Firestore data layer ================= */
 function matchFromDoc(d){
   var data = d.data();
+  var type = data.type || "score";
   var pMap = data.p || {};
   var arr = Object.keys(pMap).map(function(k){
     var e = pMap[k] || {};
+    if (type === "motor") return { name:e.name, pole:e.pole||"", p1:e.p1||"", p2:e.p2||"", p3:e.p3||"" };
     return [e.name, num(e.hs), num(e.as)];
   });
   return {
-    id: d.id, league: data.league || DEFAULT_LEAGUE, type: data.type || "score",
+    id: d.id, league: data.league || DEFAULT_LEAGUE, type: type,
     h:data.h, hf:data.hf, a:data.a, af:data.af,
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
@@ -1370,6 +1469,20 @@ function fsRenamePrediction(matchId, oldName, newName, hs, as){
   patch["p." + keyFor(newName)] = { name:newName, hs:num(hs), as:num(as) };
   updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
 }
+function motorObj(name, picks){
+  return { name:name, pole:(picks.pole||"").slice(0,40), p1:(picks.p1||"").slice(0,40), p2:(picks.p2||"").slice(0,40), p3:(picks.p3||"").slice(0,40) };
+}
+function fsUpsertMotor(matchId, name, picks){
+  var patch = {};
+  patch["p." + keyFor(name)] = motorObj(name, picks);
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+}
+function fsRenameMotor(matchId, oldName, newName, picks){
+  var patch = {};
+  patch["p." + keyFor(oldName)] = deleteField();
+  patch["p." + keyFor(newName)] = motorObj(newName, picks);
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+}
 function fsDeletePrediction(matchId, name){
   var patch = {};
   patch["p." + keyFor(name)] = deleteField();
@@ -1383,7 +1496,7 @@ function fsSaveMatchMeta(matchId, patch){
 }
 function fsCreateMatch(data){
   var ref = doc(matchesCol);
-  var base = { league: curLeague, type: "score", p:{}, f:null };
+  var base = { league: curLeague, type: sportType(sportOf(curLeague)), p:{}, f:null };
   if (isRugbyLeague(curLeague)) base.bq = { q: autoBonusQ(ref.id) };
   setDoc(ref, Object.assign(base, data))
     .catch(function(){ toast("Couldn't create match — try again"); });
@@ -1440,6 +1553,30 @@ function render(){
   renderReminderBanner();
   renderKnownNames();
   renderLeagueSwitch();
+  renderLegends();
+}
+
+var SCORE_LEGEND = [
+  ["🎯 Exact score","10"],["📏 Right winner, margin within 3","7"],["✅ Right winner","5"],
+  ["🔢 Each team's score within 3","+2"],["🎖 Closest prediction of the match","+2"],
+  ["🎲 Correctly called an upset","+3"],["⭐ Bonus question right","+3"]
+];
+var MOTOR_LEGEND = [
+  ["🏁 Pole position right","+3"],["🥇 Each podium spot exactly right","+5"],
+  ["🎽 Right driver, wrong podium spot","+2"],["🏆 Perfect podium (all 3 exact)","+5"],
+  ["⭐ Bonus question right","+3"]
+];
+function legendHtml(rows){
+  return rows.map(function(r){
+    return '<div class="legend-item"><span>' + esc(r[0]) + '</span><span class="pts">' + r[1] + '</span></div>';
+  }).join("");
+}
+function renderLegends(){
+  var rows = curIsMotor() ? MOTOR_LEGEND : SCORE_LEGEND;
+  var lm = document.getElementById("legend-match");
+  var ll = document.getElementById("legend-league");
+  if (lm) lm.innerHTML = legendHtml(rows);
+  if (ll) ll.innerHTML = legendHtml(rows);
 }
 
 function renderLeagueSwitch(){
@@ -1454,8 +1591,8 @@ function renderKnownNames(){
   var seen = {};
   state.m.forEach(function(m){
     m.p.forEach(function(e){
-      var k = keyFor(e[0]);
-      if (!seen[k]) seen[k] = e[0];
+      var nm = predName(e), k = keyFor(nm);
+      if (!seen[k]) seen[k] = nm;
     });
   });
   dl.innerHTML = Object.keys(seen).map(function(k){
@@ -1463,6 +1600,26 @@ function renderKnownNames(){
   }).join("");
 }
 
+function renderGridList(m){
+  var dl = document.getElementById("grid-list");
+  if (!dl) return;
+  var seen = {};
+  competitorsFor(sportOf(curLeague)).forEach(function(c){ seen[c.toLowerCase()] = c; });
+  // also suggest anyone already named in this race's predictions/result
+  m.p.forEach(function(e){
+    ["pole","p1","p2","p3"].forEach(function(k){ if (e[k]) seen[e[k].toLowerCase()] = e[k]; });
+  });
+  if (m.f) ["pole","p1","p2","p3"].forEach(function(k){ if (m.f[k]) seen[m.f[k].toLowerCase()] = m.f[k]; });
+  dl.innerHTML = Object.keys(seen).map(function(k){ return '<option value="' + esc(seen[k]) + '"></option>'; }).join("");
+}
+function motorPickLine(e){
+  var parts = [];
+  if (e.pole) parts.push("🏁 " + e.pole);
+  if (e.p1) parts.push("🥇 " + e.p1);
+  if (e.p2) parts.push("🥈 " + e.p2);
+  if (e.p3) parts.push("🥉 " + e.p3);
+  return parts.join(" · ");
+}
 function nextUnpredictedSoon(){
   if (!myName) return null;
   var soon = state.m.filter(function(m){
@@ -1529,17 +1686,26 @@ function renderHeader(){
     return;
   }
   var backLabel = cameFrom === "results" ? "Results" : "Fixtures";
-  card.innerHTML =
-    '<button class="back-link" id="btn-back" type="button">‹ ' + backLabel + '</button>' +
-    '<div class="match" role="group" aria-label="' + esc(m.h) + ' versus ' + esc(m.a) + '">' +
-      '<div class="team"><span class="flag" aria-hidden="true">' + m.hf + '</span><span class="name">' + esc(m.h) + '</span></div>' +
-      '<span class="vs">VS</span>' +
-      '<div class="team"><span class="flag" aria-hidden="true">' + m.af + '</span><span class="name">' + esc(m.a) + '</span></div>' +
-    '</div>';
+  if (m.type === "motor") {
+    card.innerHTML =
+      '<button class="back-link" id="btn-back" type="button">‹ ' + backLabel + '</button>' +
+      '<div class="league-head"><div class="big">' + (m.hf || "🏁") + " " + esc(m.h) + '</div></div>';
+  } else {
+    card.innerHTML =
+      '<button class="back-link" id="btn-back" type="button">‹ ' + backLabel + '</button>' +
+      '<div class="match" role="group" aria-label="' + esc(m.h) + ' versus ' + esc(m.a) + '">' +
+        '<div class="team"><span class="flag" aria-hidden="true">' + m.hf + '</span><span class="name">' + esc(m.h) + '</span></div>' +
+        '<span class="vs">VS</span>' +
+        '<div class="team"><span class="flag" aria-hidden="true">' + m.af + '</span><span class="name">' + esc(m.a) + '</span></div>' +
+      '</div>';
+  }
   sub.hidden = false;
+  var tagline = m.type === "motor"
+    ? 'Predict pole &amp; the top 3 — <strong>most points wins</strong>'
+    : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>';
   sub.innerHTML = m.ko
-    ? 'Kick-off: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.tbc ? ' <span class="tbc-tag">provisional</span>' : '') + (m.vn ? ' · ' + esc(m.vn) : '')
-    : (m.vn ? esc(m.vn) : 'Guess the final score — <strong>closest prediction takes the bragging rights</strong>');
+    ? 'Lights out: <strong>' + esc(fmtKo(m.ko)) + '</strong>' + (m.tbc ? ' <span class="tbc-tag">provisional</span>' : '') + (m.vn ? ' · ' + esc(m.vn) : '')
+    : (m.vn ? esc(m.vn) : tagline);
 }
 
 function renderFixturesList(){
@@ -1553,9 +1719,12 @@ function renderFixturesList(){
     var status = m.ko
       ? (isLocked(m) ? "🔒 Locked — awaiting result" : esc(fmtKo(m.ko)) + (m.tbc ? " (provisional)" : ""))
       : "Kick-off TBC";
+    var title = m.type === "motor"
+      ? '<span class="lr-flags">' + (m.hf||"🏁") + '</span>' + esc(m.h)
+      : '<span class="lr-flags">' + m.hf + m.af + '</span>' + esc(m.h) + ' v ' + esc(m.a);
     return '<div class="list-row" data-match="' + esc(m.id) + '">' +
       '<div class="lr-teams">' +
-        '<div class="lr-match"><span class="lr-flags">' + m.hf + m.af + '</span>' + esc(m.h) + ' v ' + esc(m.a) + '</div>' +
+        '<div class="lr-match">' + title + '</div>' +
         '<div class="lr-meta">' + status + ' · ' + m.p.length + ' prediction' + (m.p.length===1?'':'s') + '</div>' +
       '</div>' +
       '<span class="lr-chev">›</span>' +
@@ -1572,19 +1741,26 @@ function renderResultsList(){
     return;
   }
   rows.innerHTML = list.map(function(m){
+    var motor = m.type === "motor";
     var ranked = standings(m);
-    var winners = ranked.filter(function(s){ return s.rank === 1; });
+    var winners = ranked.filter(function(s){ return s.rank === 1 && s.pts > 0; });
     var winLine = winners.length
       ? (winners.length > 1
-          ? "Shared win: " + joinNames(winners.map(function(s){ return esc(s.e[0]); }))
-          : "🏆 " + esc(winners[0].e[0]) + " (+" + winners[0].pts + " pts)")
-      : "No predictions";
+          ? "Shared win: " + joinNames(winners.map(function(s){ return esc(predName(s.e)); }))
+          : "🏆 " + esc(predName(winners[0].e)) + " (+" + winners[0].pts + " pts)")
+      : (m.p.length ? "No points scored" : "No predictions");
+    var title = motor
+      ? '<span class="lr-flags">' + (m.hf||"🏁") + '</span>' + esc(m.h)
+      : '<span class="lr-flags">' + m.hf + m.af + '</span>' + esc(m.h) + ' v ' + esc(m.a);
+    var scoreCell = motor
+      ? '<span class="lr-score" style="font-size:12px">🥇 ' + esc(m.f.p1 || "—") + '</span>'
+      : '<span class="lr-score">' + m.f[0] + '–' + m.f[1] + '</span>';
     return '<div class="list-row" data-match="' + esc(m.id) + '">' +
       '<div class="lr-teams">' +
-        '<div class="lr-match"><span class="lr-flags">' + m.hf + m.af + '</span>' + esc(m.h) + ' v ' + esc(m.a) + '</div>' +
+        '<div class="lr-match">' + title + '</div>' +
         '<div class="lr-meta">' + winLine + '</div>' +
       '</div>' +
-      '<span class="lr-score">' + m.f[0] + '–' + m.f[1] + '</span>' +
+      scoreCell +
       '<span class="lr-chev">›</span>' +
     '</div>';
   }).join("");
@@ -1594,13 +1770,26 @@ function renderMatch(){
   var m = cm();
   if (!m) return;
   var locked = isLocked(m);
+  var motor = m.type === "motor";
 
-  document.getElementById("lbl-home").textContent = m.hf + " " + m.h;
-  document.getElementById("lbl-away").textContent = m.af + " " + m.a;
-  document.getElementById("lbl-fin-home").textContent = m.hf + " " + m.h;
-  document.getElementById("lbl-fin-away").textContent = m.af + " " + m.a;
-  document.getElementById("th-home").textContent = m.hf;
-  document.getElementById("th-away").textContent = m.af;
+  // swap the score inputs for the motor pick inputs (pole + podium)
+  document.getElementById("score-inputs").hidden = motor;
+  document.getElementById("motor-inputs").hidden = !motor;
+  document.getElementById("score-final").hidden = motor;
+  document.getElementById("motor-final").hidden = !motor;
+  document.getElementById("final-hint").textContent = motor
+    ? "After the chequered flag, enter the pole sitter and the top 3."
+    : "After the final whistle, enter the real score to crown the winner.";
+  if (motor) renderGridList(m);
+
+  if (!motor) {
+    document.getElementById("lbl-home").textContent = m.hf + " " + m.h;
+    document.getElementById("lbl-away").textContent = m.af + " " + m.a;
+    document.getElementById("lbl-fin-home").textContent = m.hf + " " + m.h;
+    document.getElementById("lbl-fin-away").textContent = m.af + " " + m.a;
+    document.getElementById("th-home").textContent = m.hf;
+    document.getElementById("th-away").textContent = m.af;
+  }
 
   var st = document.getElementById("sec-status");
   var pill = document.getElementById("status-pill");
@@ -1621,6 +1810,30 @@ function renderMatch(){
 
   if (!m.p.length) {
     rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
+  } else if (motor) {
+    var mlist = ranked || m.p.map(function(e){ return { e:e, rank:0, pts:null, motorTags:[] }; });
+    rows.innerHTML = mlist.map(function(s){
+      var e = s.e;
+      var medal = ranked ? medalFor(s.rank) : "";
+      var chips = (s.motorTags || []).map(function(t){ return '<span class="pc-chip bonus">' + t + '</span>'; }).join("");
+      if (ranked && s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
+      return '<div class="pred-card' + (ranked && s.rank===1 ? ' winner' : '') + '">' +
+        '<div class="pc-head">' +
+          (ranked ? '<span class="pc-rank">' + s.rank + '</span>' : '') +
+          avatarHtml(predName(e)) +
+          '<span class="pc-name">' + (medal ? medal + " " : "") + esc(predName(e)) + '</span>' +
+          (ranked ? '<span class="pc-pts">+' + s.pts + '</span>' : '') +
+        '</div>' +
+        '<div class="pc-detail">' +
+          '<span class="pc-off" style="flex:1">' + esc(motorPickLine(e)) + '</span>' +
+          chips +
+          '<span class="pc-actions">' +
+            '<button class="edit" data-name="' + esc(predName(e)) + '" aria-label="Edit">✎</button>' +
+            '<button class="del" data-name="' + esc(predName(e)) + '" aria-label="Remove">✕</button>' +
+          '</span>' +
+        '</div>' +
+      '</div>';
+    }).join("");
   } else if (ranked) {
     rows.innerHTML = ranked.map(function(s){
       var e = s.e;
@@ -1663,9 +1876,14 @@ function renderMatch(){
     }).join("");
   }
 
+  var theadEl = document.querySelector("#view-match .thead");
+  if (theadEl) theadEl.style.display = motor ? "none" : "";
+
   var cons = document.getElementById("consensus");
   var facts = document.getElementById("facts");
-  if (!m.f && m.p.length >= 3) {
+  if (motor) {
+    cons.innerHTML = ""; facts.innerHTML = "";
+  } else if (!m.f && m.p.length >= 3) {
     var sumH=0, sumA=0;
     m.p.forEach(function(e){ sumH+=e[1]; sumA+=e[2]; });
     cons.innerHTML = '<div class="consensus"><span>The family reckons…</span>' +
@@ -1693,7 +1911,27 @@ function renderMatch(){
   var disp = document.getElementById("final-display");
   var form = document.getElementById("final-form");
   var clearBtn = document.getElementById("btn-clear-final");
-  if (m.f) {
+  if (m.f && motor) {
+    var mchampHtml = "";
+    if (ranked && ranked.length && ranked[0].pts > 0) {
+      var mwinners = ranked.filter(function(s){ return s.rank === 1; });
+      var mnames = mwinners.map(function(s){ return esc(predName(s.e)); });
+      var mpotLine = "";
+      if (leaguePot() > 0) {
+        var mtotal = leaguePot() * m.p.length;
+        mpotLine = mwinners.length > 1 ? " 💰 They split the R" + mtotal + " pot!" : " 💰 " + mnames[0] + " takes the R" + mtotal + " pot!";
+      }
+      mchampHtml = '<div class="champ">🏆 <strong>' + joinNames(mnames) + '</strong> ' +
+        (mwinners.length > 1 ? "share the win" : "wins") + " with " + mwinners[0].pts + " points!" + mpotLine + '</div>';
+    }
+    disp.innerHTML =
+      '<div class="final-banner"><div><div class="label">Race result</div>' +
+      '<div class="score" style="font-size:16px">🏁 ' + esc(m.f.pole || "—") + '</div>' +
+      '<div style="color:#fff;font-size:14px;margin-top:4px">🥇 ' + esc(m.f.p1||"—") + '  🥈 ' + esc(m.f.p2||"—") + '  🥉 ' + esc(m.f.p3||"—") + '</div></div></div>' +
+      mchampHtml;
+    form.hidden = true;
+    clearBtn.hidden = false;
+  } else if (m.f) {
     var champHtml = "";
     if (ranked && ranked.length) {
       var winners = ranked.filter(function(s){ return s.rank === 1; });
@@ -1739,7 +1977,7 @@ function renderMatch(){
     clearBtn.hidden = true;
   }
   document.getElementById("btn-share-results").hidden = !(m.f && m.p.length);
-  document.getElementById("btn-share-image").hidden = !(m.f && m.p.length);
+  document.getElementById("btn-share-image").hidden = !(m.f && m.p.length) || motor;
 
   var potInp = document.getElementById("pot-amount");
   if (document.activeElement !== potInp) potInp.value = leaguePot() || "";
@@ -1847,14 +2085,16 @@ function updateAddFormState(){
   var locked = scoresLocked(m);
   var blockNew = locked && !editingName;
   document.getElementById("btn-add").disabled = blockNew;
-  document.getElementById("inp-sa").disabled = locked;
-  document.getElementById("inp-sc").disabled = locked;
+  ["inp-sa","inp-sc","mp-pole","mp-p1","mp-p2","mp-p3"].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.disabled = locked;
+  });
   var hint = document.getElementById("add-hint");
   if (!hint) return;
+  var thing = (m && m.type === "motor") ? "Picks" : "Scores";
   hint.textContent = !locked
     ? "Predictions update live for the whole family — no need to send anything."
     : editingName
-      ? "Scores are locked — you can still fix the spelling of a name."
+      ? thing + " are locked — you can still fix the spelling of a name."
       : "🔒 Kick-off has passed — tap ✎ next to a name to fix a typo.";
 }
 
@@ -1881,6 +2121,7 @@ function renderLeague(){
 }
 
 function seasonStats(){
+  if (curIsMotor()) return { believer:null, sharp:null, wild:null, dreamer:null };
   var players = {};
   function ensure(name){
     var k = keyFor(name);
@@ -1988,17 +2229,25 @@ function fillTeamSelects(selH, selA){
 function openMatchForm(editId){
   editingMatch = editId || null;
   view = "newmatch";
+  var motor = curIsMotor();
+  document.getElementById("nm-teams").hidden = motor;
+  document.getElementById("nm-motor").hidden = !motor;
   var selH = document.getElementById("nm-home");
   var selA = document.getElementById("nm-away");
   fillTeamSelects(selH, selA);
-  document.getElementById("nm-title").textContent = editingMatch ? "Match settings" : "New match";
+  document.getElementById("nm-title").textContent = editingMatch ? "Match settings" : (motor ? "New race" : "New match");
   document.getElementById("btn-delete-match").hidden = !editingMatch || state.m.length < 2;
   document.getElementById("nm-custom-home").value = "";
   document.getElementById("nm-custom-away").value = "";
-  if (editingMatch) {
-    var m = null;
-    for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
-    if (m) {
+  document.getElementById("nm-race").value = "";
+  document.getElementById("nm-flag").value = motor ? "🏁" : "";
+  var m = null;
+  if (editingMatch) for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
+  if (m) {
+    if (motor) {
+      document.getElementById("nm-race").value = m.h || "";
+      document.getElementById("nm-flag").value = m.hf || "🏁";
+    } else {
       var pool = sportTeams(sportOf(curLeague));
       var isStdH = pool.some(function(t){ return t[0]===m.h; });
       var isStdA = pool.some(function(t){ return t[0]===m.a; });
@@ -2006,15 +2255,17 @@ function openMatchForm(editId){
       selA.value = isStdA ? m.a : "__other";
       if (!isStdH) document.getElementById("nm-custom-home").value = m.h;
       if (!isStdA) document.getElementById("nm-custom-away").value = m.a;
-      if (m.ko) {
-        var d = new Date(m.ko - new Date().getTimezoneOffset()*60000);
-        document.getElementById("nm-ko").value = d.toISOString().slice(0,16);
-      } else document.getElementById("nm-ko").value = "";
     }
-  } else {
+    if (m.ko) {
+      var d = new Date(m.ko - new Date().getTimezoneOffset()*60000);
+      document.getElementById("nm-ko").value = d.toISOString().slice(0,16);
+    } else document.getElementById("nm-ko").value = "";
+  } else if (!motor) {
     var defs = sportTeams(sportOf(curLeague));
     selH.value = defs[0] ? defs[0][0] : "__other";
     selA.value = defs[1] ? defs[1][0] : "__other";
+    document.getElementById("nm-ko").value = "";
+  } else {
     document.getElementById("nm-ko").value = "";
   }
   updateCustomRows();
@@ -2082,26 +2333,38 @@ document.getElementById("nm-home").addEventListener("change", updateCustomRows);
 document.getElementById("nm-away").addEventListener("change", updateCustomRows);
 
 document.getElementById("btn-save-match").addEventListener("click", function(){
-  var hv = document.getElementById("nm-home").value;
-  var av = document.getElementById("nm-away").value;
-  var h = hv === "__other" ? document.getElementById("nm-custom-home").value.trim() : hv;
-  var a = av === "__other" ? document.getElementById("nm-custom-away").value.trim() : av;
-  if (!h || !a) { toast("Give both teams a name"); return; }
-  if (h.toLowerCase() === a.toLowerCase()) { toast("Pick two different teams"); return; }
+  var sp = sportOf(curLeague);
+  var motor = curIsMotor();
   var koVal = document.getElementById("nm-ko").value;
   var ko = koVal ? new Date(koVal).getTime() : null;
+  var data, okToast;
 
-  var sp = sportOf(curLeague);
+  if (motor) {
+    var race = document.getElementById("nm-race").value.trim();
+    var flag = document.getElementById("nm-flag").value.trim() || "🏁";
+    if (!race) { toast("Give the race a name"); return; }
+    data = { h:race, hf:flag, a:"", af:"", ko:ko };
+    okToast = "Race added — get predicting!";
+  } else {
+    var hv = document.getElementById("nm-home").value;
+    var av = document.getElementById("nm-away").value;
+    var h = hv === "__other" ? document.getElementById("nm-custom-home").value.trim() : hv;
+    var a = av === "__other" ? document.getElementById("nm-custom-away").value.trim() : av;
+    if (!h || !a) { toast("Give both teams a name"); return; }
+    if (h.toLowerCase() === a.toLowerCase()) { toast("Pick two different teams"); return; }
+    data = { h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko };
+    okToast = "Match added — get predicting!";
+  }
+
   function finishSave(){
     if (editingMatch) {
-      fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko, koEdited:true, tbc:false });
+      fsSaveMatchMeta(editingMatch, Object.assign({ koEdited:true, tbc:false }, data));
       curId = editingMatch;
-      toast("Match updated");
+      toast("Saved");
     } else {
-      var newId = fsCreateMatch({ h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko });
-      curId = newId;
+      curId = fsCreateMatch(data);
       cameFrom = "fixtures";
-      toast("Match added — get predicting!");
+      toast(okToast);
     }
     editingMatch = null;
     view = "match";
@@ -2148,18 +2411,50 @@ function clearForm(){
   document.getElementById("inp-name").value = myName || "";
   document.getElementById("inp-sa").value = "";
   document.getElementById("inp-sc").value = "";
+  ["mp-pole","mp-p1","mp-p2","mp-p3"].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ""; });
 }
 
 document.getElementById("btn-add").addEventListener("click", function(){
   var m = cm();
   if (!m) return;
+  var motor = m.type === "motor";
   var locked = scoresLocked(m);
   if (locked && !editingName) { toast("Too late to add new predictions — but you can still fix a typo via ✎"); return; }
   var nameEl = document.getElementById("inp-name");
-  var saEl = document.getElementById("inp-sa");
-  var scEl = document.getElementById("inp-sc");
   var name = nameEl.value.trim();
   if (!name) { toast("Type your name first"); nameEl.focus(); return; }
+
+  if (motor) {
+    var picks = {
+      pole: document.getElementById("mp-pole").value.trim(),
+      p1: document.getElementById("mp-p1").value.trim(),
+      p2: document.getElementById("mp-p2").value.trim(),
+      p3: document.getElementById("mp-p3").value.trim()
+    };
+    if (!picks.p1) { toast("At least pick the winner (P1)"); return; }
+    if (editingName) {
+      var mentry = findIn(m, editingName);
+      var mclash = findIn(m, name);
+      if (mclash && mclash !== mentry) { toast("There's already a " + predName(mclash) + " on the list"); return; }
+      var mpicks = (locked && mentry) ? mentry : picks;
+      var doMotorEdit = function(){
+        fsRenameMotor(m.id, editingName, name, mpicks);
+        if (myName && keyFor(myName) === keyFor(editingName)) { myName = name; saveName(); }
+        toast("Saved " + name); setEditMode(null); clearForm();
+      };
+      var elseMotor = !myName || keyFor(myName) !== keyFor(editingName);
+      if (elseMotor) requirePin(doMotorEdit); else doMotorEdit();
+    } else {
+      var mexisting = findIn(m, name);
+      fsUpsertMotor(m.id, name, picks);
+      toast(mexisting ? "Updated " + name + "'s picks" : "Picks in — everyone can see them now!");
+      myName = name; saveName(); clearForm();
+    }
+    return;
+  }
+
+  var saEl = document.getElementById("inp-sa");
+  var scEl = document.getElementById("inp-sc");
   if (saEl.value === "" || scEl.value === "") { toast("Fill in both scores"); return; }
 
   if (editingName) {
@@ -2198,10 +2493,17 @@ document.getElementById("rows").addEventListener("click", function(ev){
   if (editBtn) {
     var entry = findIn(m, editBtn.getAttribute("data-name"));
     if (!entry) return;
-    document.getElementById("inp-name").value = entry[0];
-    document.getElementById("inp-sa").value = entry[1];
-    document.getElementById("inp-sc").value = entry[2];
-    setEditMode(entry[0]);
+    document.getElementById("inp-name").value = predName(entry);
+    if (m.type === "motor") {
+      document.getElementById("mp-pole").value = entry.pole || "";
+      document.getElementById("mp-p1").value = entry.p1 || "";
+      document.getElementById("mp-p2").value = entry.p2 || "";
+      document.getElementById("mp-p3").value = entry.p3 || "";
+    } else {
+      document.getElementById("inp-sa").value = entry[1];
+      document.getElementById("inp-sc").value = entry[2];
+    }
+    setEditMode(predName(entry));
     document.getElementById("inp-name").scrollIntoView({ behavior: "smooth", block: "center" });
     document.getElementById("inp-name").focus();
     return;
@@ -2220,6 +2522,21 @@ document.getElementById("rows").addEventListener("click", function(ev){
 document.getElementById("btn-final").addEventListener("click", function(){
   var m = cm();
   if (!m) return;
+  if (m.type === "motor") {
+    var res = {
+      pole: document.getElementById("mf-pole").value.trim().slice(0,40),
+      p1: document.getElementById("mf-p1").value.trim().slice(0,40),
+      p2: document.getElementById("mf-p2").value.trim().slice(0,40),
+      p3: document.getElementById("mf-p3").value.trim().slice(0,40)
+    };
+    if (!res.p1) { toast("Enter at least the winner (P1)"); return; }
+    requirePin(function(){
+      fsSetFinal(m.id, res);
+      ["mf-pole","mf-p1","mf-p2","mf-p3"].forEach(function(id){ document.getElementById(id).value = ""; });
+      confetti();
+    });
+    return;
+  }
   var sa = document.getElementById("fin-sa").value;
   var sc = document.getElementById("fin-sc").value;
   if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
@@ -2241,6 +2558,22 @@ document.getElementById("btn-share-results").addEventListener("click", function(
   var m = cm();
   if (!m || !m.f || !m.p.length) return;
   var ranked = standings(m);
+  if (m.type === "motor") {
+    var mlines = [
+      (m.hf||"🏁") + " " + m.h + " — RESULT",
+      "🏁 Pole: " + (m.f.pole||"—") + "  🥇 " + (m.f.p1||"—") + "  🥈 " + (m.f.p2||"—") + "  🥉 " + (m.f.p3||"—"),
+      ""
+    ];
+    ranked.slice(0,5).forEach(function(s){
+      var medal = medalFor(s.rank);
+      mlines.push((medal ? medal + " " : "     ") + s.rank + ". " + predName(s.e) + " — +" + s.pts + " pts" +
+        (s.motorTags && s.motorTags.length ? " (" + s.motorTags.join(", ") + ")" : ""));
+    });
+    if (ranked.length > 5) mlines.push("…and " + (ranked.length - 5) + " more");
+    mlines.push(""); mlines.push("See it live: " + appUrl(m.id));
+    shareContent(mlines.join("\n"));
+    return;
+  }
   var lines = [
     "🏉 FULL TIME: " + m.h + " " + m.f[0] + " — " + m.f[1] + " " + m.a,
     ""

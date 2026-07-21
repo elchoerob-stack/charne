@@ -838,14 +838,25 @@ var FIXTURES = [
          ["Clive",38,19],["Alan W",38,15],["Fred D",39,16],["Fred C",44,22],
          ["Tess",36,28],["Nowell",18,18],["Sean",21,17]]},
   {id:"sa-wal-2026", h:"South Africa", a:"Wales",       ko:Date.UTC(2026,6,18,15,40), vn:"Kings Park, Durban"},
-  {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,8,19,0),   vn:"Estadio José Amalfitani, Buenos Aires", tbc:true},
+  {id:"arg-sa-2026", h:"Argentina",    a:"South Africa",ko:Date.UTC(2026,7,9,0,0),    vn:"Estadio José Amalfitani, Buenos Aires"},
   {id:"sa-nz1-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,22,15,0),  vn:"Ellis Park, Johannesburg"},
   {id:"sa-nz2-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,29,15,0),  vn:"Cape Town Stadium"},
   {id:"sa-nz3-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,5,15,0),   vn:"FNB Stadium, Johannesburg"},
   {id:"sa-nz4-2026", h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,8,12,21,0),  vn:"M&T Bank Stadium, Baltimore, USA", tbc:true},
+  {id:"aus-sa-2026", h:"Australia",    a:"South Africa",ko:Date.UTC(2026,8,27,11,30), vn:"Optus Stadium, Perth", tbc:true},
   {id:"ita-sa-2026", h:"Italy",        a:"South Africa",ko:Date.UTC(2026,10,7,11,40), vn:"Allianz Stadium, Turin"},
   {id:"fra-sa-2026", h:"France",       a:"South Africa",ko:Date.UTC(2026,10,13,20,10),vn:"Stade de France, Paris"},
   {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,16,40),vn:"Aviva Stadium, Dublin"}
+];
+
+// 2026 MotoGP calendar — only the rounds with confirmed dates. Race is Sunday;
+// times are best-effort (tbc). Loaded on demand into a MotoGP league.
+var MOTOGP_2026 = [
+  { name:"British GP · Silverstone",   flag:"🇬🇧", ko:Date.UTC(2026,7,9,13,0),  tbc:true },
+  { name:"Aragon GP · MotorLand",      flag:"🇪🇸", ko:Date.UTC(2026,7,30,12,0), tbc:true },
+  { name:"San Marino GP · Misano",     flag:"🇸🇲", ko:Date.UTC(2026,8,13,12,0), tbc:true },
+  { name:"Austrian GP · Red Bull Ring",flag:"🇦🇹", ko:Date.UTC(2026,8,20,12,0), tbc:true },
+  { name:"Japanese GP · Motegi",       flag:"🇯🇵", ko:Date.UTC(2026,9,4,6,0),   tbc:true }
 ];
 
 var NAME_KEY = "bok-myname";
@@ -1712,7 +1723,10 @@ function renderFixturesList(){
   var rows = document.getElementById("fx-rows");
   var list = state.m.filter(function(m){ return !m.f; });
   if (!list.length) {
-    rows.innerHTML = '<div class="empty">No upcoming fixtures — add one with ＋ Match.</div>';
+    var canLoadMotogp = sportOf(curLeague) === "motogp" && !state.m.length;
+    rows.innerHTML = '<div class="empty">No upcoming fixtures — add one with ＋ Match.' +
+      (canLoadMotogp ? '<br><br><button class="btn" id="btn-load-motogp" style="margin-top:0">🏁 Load the 2026 MotoGP calendar</button>' : '') +
+      '</div>';
     return;
   }
   rows.innerHTML = list.map(function(m){
@@ -2299,6 +2313,15 @@ function openMatch(matchId, from){
   render();
 }
 document.getElementById("fx-rows").addEventListener("click", function(ev){
+  if (ev.target.closest("#btn-load-motogp")) {
+    var lid = curLeague;
+    MOTOGP_2026.forEach(function(r){
+      var ref = doc(matchesCol);
+      setDoc(ref, { league:lid, type:"motor", h:r.name, hf:r.flag, a:"", af:"", ko:r.ko, tbc:!!r.tbc, p:{}, f:null }).catch(function(){});
+    });
+    toast("MotoGP calendar loaded!");
+    return;
+  }
   var row = ev.target.closest(".list-row");
   if (!row) return;
   openMatch(row.getAttribute("data-match"), "fixtures");

@@ -7,6 +7,9 @@ service cloud.firestore {
     match /matches/{matchId} {
       allow read, write: if true;
     }
+    match /leagues/{leagueId} {
+      allow read, write: if true;
+    }
     match /meta/{docId} {
       allow read, write: if true;
     }

@@ -43,6 +43,25 @@
     border-bottom:4px solid var(--gold);
   }
   .eyebrow-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
+  .league-switch{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.28);
+    color:#fff;border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:800;
+    cursor:pointer;font-family:inherit;max-width:72%;
+  }
+  .league-switch .lname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .league-switch:active{background:rgba(255,255,255,.22)}
+  .league-item{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+    padding:11px 14px;margin-top:8px;cursor:pointer;font-family:inherit;font-size:14.5px;color:var(--ink);
+  }
+  .league-item.active{border-color:var(--gold);background:#FFF7E0}
+  .league-item .li-ic{font-size:20px;flex:0 0 auto}
+  .league-item .li-body{flex:1;min-width:0}
+  .league-item .li-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .league-item .li-meta{font-size:11.5px;color:var(--ink-soft)}
+  .league-item .li-del{border:0;background:transparent;color:#B9B2A0;font-size:16px;cursor:pointer;padding:4px;flex:0 0 auto}
   .eyebrow{
     font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--gold);font-weight:700;margin:0;
@@ -409,7 +428,9 @@
 
 <header>
   <div class="eyebrow-row">
-    <p class="eyebrow">Family &amp; Friends Score Predictor</p>
+    <button type="button" class="league-switch" id="btn-league-switch">
+      <span id="league-switch-label" class="lname">🏉 Family Rugby</span> <span aria-hidden="true">▾</span>
+    </button>
     <button type="button" class="help-btn" id="btn-help" aria-label="How this app works">❓</button>
   </div>
   <div id="head-card"></div>
@@ -629,6 +650,7 @@
     <div class="step"><span class="ic">📅</span><span><strong>Fixtures</strong> lists every match still to come. Tap one and add your score guess before kick-off.</span></div>
     <div class="step"><span class="ic">✅</span><span><strong>Results</strong> shows finished matches with the final score and who called it closest.</span></div>
     <div class="step"><span class="ic">🏆</span><span><strong>League</strong> is the running scoreboard for the whole season — points add up across every match.</span></div>
+    <div class="step"><span class="ic">🔀</span><span>Tap the <strong>league name</strong> at the top to switch between leagues or start a new one (a work league, U20 rugby, football…) — each has its own scoreboard from zero.</span></div>
     <div class="step"><span class="ic">🔒</span><span>Deleting a prediction, setting a final score, or editing someone else's guess needs the family PIN.</span></div>
     <div class="step"><span class="ic">💰</span><span>Set a pot amount on any match and the season's points leader takes it all.</span></div>
     <button class="btn" id="btn-intro-close" style="margin-top:20px">Got it!</button>
@@ -641,6 +663,32 @@
     <p class="hint" style="margin:4px 0 16px">Point a phone camera at this to open the app instantly.</p>
     <canvas id="qr-canvas" style="max-width:100%;border-radius:10px"></canvas>
     <button class="btn quiet" id="btn-qr-close" style="margin-top:16px">Close</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-leagues" hidden>
+  <div class="modal-card">
+    <div id="leagues-list-mode">
+      <h3>🏆 Your leagues</h3>
+      <p class="hint" style="margin:2px 0 4px">Each league keeps its own matches and its own scoreboard — a new one starts everyone at zero.</p>
+      <div id="league-list"></div>
+      <button class="btn" id="btn-new-league" style="margin-top:14px">＋ New league</button>
+      <button class="btn quiet" id="btn-leagues-close">Close</button>
+    </div>
+    <div id="leagues-create-mode" hidden>
+      <h3>＋ New league</h3>
+      <div class="field" style="margin-top:12px">
+        <label for="nl-name">League name</label>
+        <input id="nl-name" type="text" maxlength="30" placeholder="e.g. Work League">
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="nl-sport">Sport</label>
+        <select id="nl-sport"></select>
+      </div>
+      <p class="hint" id="nl-sport-note" style="margin-top:8px"></p>
+      <button class="btn" id="btn-create-league" style="margin-top:14px">Create league</button>
+      <button class="btn quiet" id="btn-create-cancel">Back</button>
+    </div>
   </div>
 </div>
 
@@ -678,19 +726,45 @@ try {
   db = getFirestore(fbApp);
 }
 var matchesCol = collection(db, "matches");
+var leaguesCol = collection(db, "leagues");
 var metaRef = doc(db, "meta", "app");
 var avatarsRef = doc(db, "meta", "avatars");
 
-/* ================= data ================= */
-var TEAMS = [
+/* ================= sports ================= */
+var RUGBY_TEAMS = [
   ["South Africa","🇿🇦"],["New Zealand","🇳🇿"],["Australia","🇦🇺"],["Argentina","🇦🇷"],
   ["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],["Scotland","🏴󠁧󠁢󠁳󠁣󠁴󠁿"],["Wales","🏴󠁧󠁢󠁷󠁬󠁳󠁿"],["Ireland","🇮🇪"],
   ["France","🇫🇷"],["Italy","🇮🇹"],["Japan","🇯🇵"],["Fiji","🇫🇯"],
   ["Georgia","🇬🇪"],["Portugal","🇵🇹"],["USA","🇺🇸"],["Uruguay","🇺🇾"]
 ];
-function flagFor(name){
-  for (var i=0;i<TEAMS.length;i++) if (TEAMS[i][0]===name) return TEAMS[i][1];
-  return "🏉";
+var FOOTBALL_TEAMS = [
+  ["South Africa","🇿🇦"],["Nigeria","🇳🇬"],["Brazil","🇧🇷"],["Argentina","🇦🇷"],
+  ["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],["France","🇫🇷"],["Germany","🇩🇪"],["Spain","🇪🇸"],
+  ["Portugal","🇵🇹"],["Netherlands","🇳🇱"],["Italy","🇮🇹"],["Morocco","🇲🇦"],
+  ["USA","🇺🇸"],["Japan","🇯🇵"],["Senegal","🇸🇳"],["Croatia","🇭🇷"]
+];
+// Each sport supplies a team/competitor pool for the match picker, a default
+// emoji when a name isn't in the pool, and a "playing verb" for copy. All the
+// sports below are two-side SCORE sports, so they reuse the whole prediction
+// and scoring engine unchanged — only the team list swaps.
+var SPORTS = {
+  rugby:    { label:"Rugby",       icon:"🏉", teams: RUGBY_TEAMS,    fallback:"🏉", rugbyLike:true },
+  u20rugby: { label:"U20 Rugby",   icon:"🐣", teams: RUGBY_TEAMS,    fallback:"🏉", rugbyLike:true },
+  football: { label:"Football",    icon:"⚽", teams: FOOTBALL_TEAMS, fallback:"⚽" },
+  netball:  { label:"Netball",     icon:"🏐", teams: RUGBY_TEAMS,    fallback:"🏐" },
+  cricket:  { label:"Cricket",     icon:"🏏", teams: FOOTBALL_TEAMS, fallback:"🏏" },
+  other:    { label:"Other / Custom", icon:"🏆", teams: [],          fallback:"🏆" }
+};
+var SPORT_ORDER = ["rugby","u20rugby","football","netball","cricket","other"];
+function sportOf(leagueId){
+  var lg = leagueById(leagueId);
+  return (lg && SPORTS[lg.sport]) ? lg.sport : "rugby";
+}
+function sportTeams(sportId){ return (SPORTS[sportId] || SPORTS.rugby).teams; }
+function flagFor(name, sportId){
+  var teams = sportTeams(sportId || sportOf(curLeague));
+  for (var i=0;i<teams.length;i++) if (teams[i][0]===name) return teams[i][1];
+  return (SPORTS[sportId || sportOf(curLeague)] || SPORTS.rugby).fallback;
 }
 
 // 2026 Springbok fixtures. ko is epoch ms (times below are SAST = UTC+2).
@@ -718,8 +792,15 @@ var FIXTURES = [
 ];
 
 var NAME_KEY = "bok-myname";
+var LEAGUE_KEY = "bok-curleague";
+var DEFAULT_LEAGUE = "family-rugby";
 
-var state = { m: [], pot: 0, avatars: {} };
+// state.allM = every match across all leagues (never lost); state.m = only the
+// current league's matches, so every view/aggregation scopes to one league for
+// free and a new league genuinely starts everyone at zero.
+var state = { allM: [], m: [], leagues: [], avatars: {}, legacyPot: 0 };
+var curLeague = DEFAULT_LEAGUE;
+try { curLeague = localStorage.getItem(LEAGUE_KEY) || DEFAULT_LEAGUE; } catch(e){}
 var PIN = "1111";
 var pinUnlocked = false;
 try { pinUnlocked = sessionStorage.getItem("bok-pin-ok") === "1"; } catch(e){}
@@ -738,6 +819,32 @@ function cm(){
   return found || state.m[0] || null;
 }
 function fromForMatch(m){ return (m && m.f) ? "results" : "fixtures"; }
+
+/* ================= leagues ================= */
+function leagueById(id){
+  for (var i=0;i<state.leagues.length;i++) if (state.leagues[i].id===id) return state.leagues[i];
+  return null;
+}
+function curLeagueObj(){
+  return leagueById(curLeague) || { id:DEFAULT_LEAGUE, name:"Family Rugby", sport:"rugby", icon:"🏉", pot:0 };
+}
+function leaguePot(){ return num(curLeagueObj().pot || 0); }
+function refreshLeagueMatches(){
+  state.m = state.allM.filter(function(m){ return (m.league || DEFAULT_LEAGUE) === curLeague; });
+  sortMatches();
+}
+function switchLeague(id){
+  if (curLeague === id) return;
+  curLeague = id;
+  try { localStorage.setItem(LEAGUE_KEY, id); } catch(e){}
+  curId = null;
+  editingName = null; editingMatch = null;
+  refreshLeagueMatches();
+  curId = (state.m[0] && state.m[0].id) || null;
+  view = "league";
+  render();
+  ensureBokbot();
+}
 
 /* ================= helpers ================= */
 function num(v){ v = parseInt(v,10); return isNaN(v) ? 0 : Math.max(0, Math.min(150, v)); }
@@ -821,7 +928,11 @@ function medalFor(rank){
   return rank === 1 ? "🏆" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
 }
 function appUrl(matchId){
-  return location.origin + location.pathname + (matchId ? ("#m=" + encodeURIComponent(matchId)) : "");
+  var base = location.origin + location.pathname;
+  if (matchId) return base + "#m=" + encodeURIComponent(matchId);
+  // land invitees straight in the current league (unless it's the default)
+  if (curLeague && curLeague !== DEFAULT_LEAGUE) return base + "#l=" + encodeURIComponent(curLeague);
+  return base;
 }
 function saveName(){
   try { if (myName) localStorage.setItem(NAME_KEY, myName); } catch(e){}
@@ -881,7 +992,10 @@ function bokbotPrediction(m){
 }
 var botAvatarEnsured = false;
 function ensureBokbot(){
+  // Bokbot is a Springbok homer, so it only enters rugby-sport leagues.
+  if (!isRugbyLeague(curLeague)) return;
   var botKey = keyFor(BOKBOT_NAME);
+  var added = false;
   state.m.forEach(function(m){
     if (m.f || isLocked(m)) return;
     if (findIn(m, BOKBOT_NAME)) return;
@@ -889,8 +1003,9 @@ function ensureBokbot(){
     var patch = {};
     patch["p." + botKey] = pred;
     updateDoc(doc(db,"matches",m.id), patch).catch(function(){});
+    added = true;
   });
-  if (!botAvatarEnsured && state.m.length && (!state.avatars || !state.avatars[botKey])) {
+  if (!botAvatarEnsured && (added || (state.m.some(function(m){ return findIn(m, BOKBOT_NAME); }))) && (!state.avatars || !state.avatars[botKey])) {
     botAvatarEnsured = true;   // once per session — avoids redundant writes
     var av = {}; av[botKey] = "🤖";
     setDoc(avatarsRef, av, { merge:true }).catch(function(){});
@@ -1060,7 +1175,8 @@ function matchFromDoc(d){
     return [e.name, num(e.hs), num(e.as)];
   });
   return {
-    id: d.id, h:data.h, hf:data.hf, a:data.a, af:data.af,
+    id: d.id, league: data.league || DEFAULT_LEAGUE, type: data.type || "score",
+    h:data.h, hf:data.hf, a:data.a, af:data.af,
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
     bq: data.bq || null,
@@ -1072,17 +1188,47 @@ function sortMatches(){
 }
 function applyHashMatch(){
   var mh = location.hash.match(/#m=([^&]+)/);
-  if (!mh) return false;
-  var id = decodeURIComponent(mh[1]);
-  if (!state.m.some(function(m){ return m.id===id; })) return false;
-  curId = id;
-  history.replaceState(null, "", location.pathname + location.search);
-  return true;
+  if (mh) {
+    var id = decodeURIComponent(mh[1]);
+    var found = null;
+    for (var i=0;i<state.allM.length;i++) if (state.allM[i].id===id) { found = state.allM[i]; break; }
+    if (!found) return false;
+    if ((found.league || DEFAULT_LEAGUE) !== curLeague) {
+      curLeague = found.league || DEFAULT_LEAGUE;
+      try { localStorage.setItem(LEAGUE_KEY, curLeague); } catch(e){}
+      refreshLeagueMatches();
+    }
+    curId = id;
+    history.replaceState(null, "", location.pathname + location.search);
+    return true;
+  }
+  var lh = location.hash.match(/#l=([^&]+)/);
+  if (lh) {
+    var lid = decodeURIComponent(lh[1]);
+    if (state.leagues.some(function(l){ return l.id===lid; })) {
+      curLeague = lid;
+      try { localStorage.setItem(LEAGUE_KEY, curLeague); } catch(e){}
+      refreshLeagueMatches();
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+  }
+  return false;
 }
 function startLiveSync(){
+  onSnapshot(leaguesCol, function(snap){
+    state.leagues = snap.docs.map(function(d){
+      var x = d.data();
+      return { id:d.id, name:x.name, sport:x.sport||"rugby", icon:x.icon||"🏆", pot:num(x.pot||0), createdAt:x.createdAt||0 };
+    }).sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
+    if (!state.leagues.some(function(l){ return l.id===curLeague; }) && state.leagues.length) {
+      curLeague = state.leagues[0].id;
+    }
+    refreshLeagueMatches();
+    if (ready) render();
+  }, function(){});
   onSnapshot(matchesCol, function(snap){
-    state.m = snap.docs.map(matchFromDoc);
-    sortMatches();
+    state.allM = snap.docs.map(matchFromDoc);
+    refreshLeagueMatches();
     if (!ready) {
       if (applyHashMatch()) {
         view = "match";
@@ -1102,13 +1248,48 @@ function startLiveSync(){
     render();
   });
   onSnapshot(metaRef, function(snap){
-    state.pot = (snap.exists() && num(snap.data().pot)) || 0;
-    render();
+    state.legacyPot = (snap.exists() && num(snap.data().pot)) || 0;
   }, function(){});
   onSnapshot(avatarsRef, function(snap){
     state.avatars = (snap.exists() && snap.data()) || {};
     render();
   }, function(){});
+}
+function ensureLeagues(){
+  return getDocs(leaguesCol).then(function(lsnap){
+    var have = {};
+    lsnap.forEach(function(d){ have[d.id] = true; });
+    var jobs = [];
+    if (!have[DEFAULT_LEAGUE]) {
+      // migrate the existing global pot into the default league on first creation
+      jobs.push(getDocs(matchesCol).then(function(){
+        return setDoc(doc(db,"leagues",DEFAULT_LEAGUE),
+          { name:"Family Rugby", sport:"rugby", icon:"🏉", pot: state.legacyPot || 0, createdAt: 1 }, { merge:true });
+      }));
+    }
+    return Promise.all(jobs);
+  }).then(function(){
+    // tag any pre-existing (pre-leagues) match with the default league so no
+    // history is ever orphaned. Only writes docs actually missing the field.
+    return getDocs(matchesCol);
+  }).then(function(msnap){
+    var batch = writeBatch(db);
+    var any = false;
+    msnap.forEach(function(d){
+      if (!d.data().league) { batch.set(doc(db,"matches",d.id), { league:DEFAULT_LEAGUE }, { merge:true }); any = true; }
+    });
+    if (any) return batch.commit();
+  });
+}
+function fsCreateLeague(name, sport){
+  var id = "lg-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,6);
+  var sp = SPORTS[sport] ? sport : "other";
+  return setDoc(doc(db,"leagues",id), {
+    name: name, sport: sp, icon: SPORTS[sp].icon, pot: 0, createdAt: Date.now()
+  }).then(function(){ return id; });
+}
+function fsDeleteLeague(id){
+  return deleteDoc(doc(db,"leagues",id));
 }
 function seedToMap(seedArr){
   var m = {};
@@ -1127,7 +1308,8 @@ function ensureFixtures(){
       var cur = existing[fx.id];
       if (!cur) {
         batch.set(doc(db,"matches",fx.id), {
-          h:fx.h, hf:flagFor(fx.h), a:fx.a, af:flagFor(fx.a),
+          league: DEFAULT_LEAGUE, type: "score",
+          h:fx.h, hf:flagFor(fx.h,"rugby"), a:fx.a, af:flagFor(fx.a,"rugby"),
           ko:fx.ko, vn:fx.vn, tbc: !!fx.tbc, f:null, p: seedToMap(fx.seed),
           bq: (fx.ko && Date.now() > fx.ko) ? null : { q: autoBonusQ(fx.id) }
         });
@@ -1157,18 +1339,24 @@ function ensureFixtures(){
         any = true;
       }
     });
-    // auto-assign a bonus question to any match (fixture or user-created) that
-    // hasn't kicked off yet and doesn't have one — unless the organiser removed
-    // it on purpose (bqOff), which always wins.
+    // auto-assign a bonus question to any upcoming rugby-league match that
+    // doesn't have one — unless the organiser removed it (bqOff). The pool is
+    // rugby-specific, so non-rugby leagues just get manual questions instead.
     Object.keys(existing).forEach(function(id){
       var cur = existing[id];
       if (cur.f || cur.bqOff || (cur.bq && cur.bq.q)) return;
       if (cur.ko && Date.now() > cur.ko) return;
+      if (!isRugbyLeague(cur.league || DEFAULT_LEAGUE)) return;
       batch.set(doc(db,"matches",id), { bq: { q: autoBonusQ(id) } }, { merge:true });
       any = true;
     });
     if (any) return batch.commit();
   });
+}
+function isRugbyLeague(leagueId){
+  if (leagueId === DEFAULT_LEAGUE) return true;
+  var lg = leagueById(leagueId);
+  return !!(lg && SPORTS[lg.sport] && SPORTS[lg.sport].rugbyLike);
 }
 
 function fsUpsertPrediction(matchId, name, hs, as){
@@ -1195,7 +1383,9 @@ function fsSaveMatchMeta(matchId, patch){
 }
 function fsCreateMatch(data){
   var ref = doc(matchesCol);
-  setDoc(ref, Object.assign({ p:{}, f:null, bq: { q: autoBonusQ(ref.id) } }, data))
+  var base = { league: curLeague, type: "score", p:{}, f:null };
+  if (isRugbyLeague(curLeague)) base.bq = { q: autoBonusQ(ref.id) };
+  setDoc(ref, Object.assign(base, data))
     .catch(function(){ toast("Couldn't create match — try again"); });
   return ref.id;
 }
@@ -1203,7 +1393,7 @@ function fsDeleteMatch(matchId){
   deleteDoc(doc(db,"matches",matchId)).catch(function(){ toast("Couldn't delete — try again"); });
 }
 function fsSetPot(amount){
-  setDoc(metaRef, { pot: num(amount) }, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
+  setDoc(doc(db,"leagues",curLeague), { pot: num(amount) }, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
 }
 function fsSetAvatar(name, emoji){
   var patch = {};
@@ -1249,6 +1439,13 @@ function render(){
   if (view === "results") renderResultsList();
   renderReminderBanner();
   renderKnownNames();
+  renderLeagueSwitch();
+}
+
+function renderLeagueSwitch(){
+  var lg = curLeagueObj();
+  var el = document.getElementById("league-switch-label");
+  if (el) el.textContent = lg.icon + " " + lg.name;
 }
 
 function renderKnownNames(){
@@ -1302,7 +1499,8 @@ function renderHeader(){
   var card = document.getElementById("head-card");
   var sub = document.getElementById("head-sub");
   if (view === "league") {
-    card.innerHTML = '<div class="league-head"><div class="big">🏆 Family League</div>' +
+    var lg = curLeagueObj();
+    card.innerHTML = '<div class="league-head"><div class="big">' + lg.icon + ' ' + esc(lg.name) + '</div>' +
       '<div class="sub">' + state.m.length + ' match' + (state.m.length===1?'':'es') + ' · points add up all season</div></div>';
     sub.innerHTML = "";
     sub.hidden = true;
@@ -1326,7 +1524,7 @@ function renderHeader(){
   }
   var m = view === "match" ? cm() : null;
   if (!m) {
-    card.innerHTML = '<div class="league-head"><div class="big">🏉 New match</div></div>';
+    card.innerHTML = '<div class="league-head"><div class="big">' + (SPORTS[sportOf(curLeague)] || SPORTS.rugby).icon + ' New match</div></div>';
     sub.hidden = true;
     return;
   }
@@ -1502,8 +1700,8 @@ function renderMatch(){
       var names = winners.map(function(s){ return esc(s.e[0]); });
       var podium = ranked.filter(function(s){ return s.rank <= 3; }).slice(0, 5);
       var potLine = "";
-      if (state.pot > 0) {
-        var total = state.pot * m.p.length;
+      if (leaguePot() > 0) {
+        var total = leaguePot() * m.p.length;
         potLine = winners.length > 1
           ? " 💰 They split the R" + total + " pot!"
           : " 💰 " + names[0] + " takes the R" + total + " pot!";
@@ -1544,9 +1742,9 @@ function renderMatch(){
   document.getElementById("btn-share-image").hidden = !(m.f && m.p.length);
 
   var potInp = document.getElementById("pot-amount");
-  if (document.activeElement !== potInp) potInp.value = state.pot || "";
-  document.getElementById("pot-total").innerHTML = state.pot > 0
-    ? "winner takes<br><strong>R" + (state.pot * m.p.length) + "</strong>"
+  if (document.activeElement !== potInp) potInp.value = leaguePot() || "";
+  document.getElementById("pot-total").innerHTML = leaguePot() > 0
+    ? "winner takes<br><strong>R" + (leaguePot() * m.p.length) + "</strong>"
     : "";
 
   updateAddFormState();
@@ -1783,7 +1981,7 @@ function startTicker(){
 
 /* ================= match form (new/edit) ================= */
 function fillTeamSelects(selH, selA){
-  var opts = TEAMS.map(function(t){ return '<option value="' + esc(t[0]) + '">' + t[1] + " " + esc(t[0]) + "</option>"; }).join("") +
+  var opts = sportTeams(sportOf(curLeague)).map(function(t){ return '<option value="' + esc(t[0]) + '">' + t[1] + " " + esc(t[0]) + "</option>"; }).join("") +
     '<option value="__other">✏️ Other…</option>';
   selH.innerHTML = opts; selA.innerHTML = opts;
 }
@@ -1801,8 +1999,9 @@ function openMatchForm(editId){
     var m = null;
     for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
     if (m) {
-      var isStdH = TEAMS.some(function(t){ return t[0]===m.h; });
-      var isStdA = TEAMS.some(function(t){ return t[0]===m.a; });
+      var pool = sportTeams(sportOf(curLeague));
+      var isStdH = pool.some(function(t){ return t[0]===m.h; });
+      var isStdA = pool.some(function(t){ return t[0]===m.a; });
       selH.value = isStdH ? m.h : "__other";
       selA.value = isStdA ? m.a : "__other";
       if (!isStdH) document.getElementById("nm-custom-home").value = m.h;
@@ -1813,8 +2012,9 @@ function openMatchForm(editId){
       } else document.getElementById("nm-ko").value = "";
     }
   } else {
-    selH.value = "South Africa";
-    selA.value = "New Zealand";
+    var defs = sportTeams(sportOf(curLeague));
+    selH.value = defs[0] ? defs[0][0] : "__other";
+    selA.value = defs[1] ? defs[1][0] : "__other";
     document.getElementById("nm-ko").value = "";
   }
   updateCustomRows();
@@ -1891,13 +2091,14 @@ document.getElementById("btn-save-match").addEventListener("click", function(){
   var koVal = document.getElementById("nm-ko").value;
   var ko = koVal ? new Date(koVal).getTime() : null;
 
+  var sp = sportOf(curLeague);
   function finishSave(){
     if (editingMatch) {
-      fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko, koEdited:true, tbc:false });
+      fsSaveMatchMeta(editingMatch, { h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko, koEdited:true, tbc:false });
       curId = editingMatch;
       toast("Match updated");
     } else {
-      var newId = fsCreateMatch({ h:h, hf:flagFor(h), a:a, af:flagFor(a), ko:ko });
+      var newId = fsCreateMatch({ h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko });
       curId = newId;
       cameFrom = "fixtures";
       toast("Match added — get predicting!");
@@ -2056,10 +2257,10 @@ document.getElementById("btn-share-results").addEventListener("click", function(
       " (" + s.e[1] + "–" + s.e[2] + ") — +" + s.pts + " pts, " + s.d + " off (" + why.join(", ") + ")");
   });
   if (ranked.length > 5) lines.push("…and " + (ranked.length - 5) + " more");
-  if (state.pot > 0) {
+  if (leaguePot() > 0) {
     var winners = ranked.filter(function(s){ return s.rank === 1; });
     lines.push("");
-    lines.push("💰 Pot: R" + (state.pot * m.p.length) +
+    lines.push("💰 Pot: R" + (leaguePot() * m.p.length) +
       (winners.length > 1 ? " — shared!" : " to " + winners[0].e[0] + "!"));
   }
   lines.push("");
@@ -2200,7 +2401,7 @@ document.getElementById("pot-amount").addEventListener("change", function(){
 document.getElementById("btn-share").addEventListener("click", function(){
   if (view === "league") {
     var table = leagueTable();
-    var lines = ["🏉 Family Rugby League standings:", ""];
+    var lines = [curLeagueObj().icon + " " + curLeagueObj().name + " — standings:", ""];
     table.slice(0, 10).forEach(function(t){
       var medal = medalFor(t.rank);
       lines.push((medal ? medal + " " : "     ") + t.rank + ". " + t.name + " — " + t.pts + " pts (" + t.played + " played)" +
@@ -2221,11 +2422,11 @@ document.getElementById("btn-share").addEventListener("click", function(){
     var m = cm();
     if (!m) return;
     shareContent(
-      "🏉 Join our Springbok prediction league! Add your score for " + m.h + " vs " + m.a + ":\n" + appUrl(m.id)
+      curLeagueObj().icon + " Join the " + curLeagueObj().name + " prediction league! Add your score for " + m.h + " vs " + m.a + ":\n" + appUrl(m.id)
     );
     return;
   }
-  shareContent("🏉 Join our Springbok prediction league! Add your scores:\n" + appUrl());
+  shareContent(curLeagueObj().icon + " Join the " + curLeagueObj().name + " prediction league! Add your scores:\n" + appUrl());
 });
 
 /* ================= install (PWA) ================= */
@@ -2276,7 +2477,11 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
 }
 
 window.addEventListener("hashchange", function(){
-  if (applyHashMatch()) { view = "match"; cameFrom = fromForMatch(cm()); render(); }
+  if (location.hash.indexOf("#m=") === 0) {
+    if (applyHashMatch()) { view = "match"; cameFrom = fromForMatch(cm()); render(); }
+  } else if (location.hash.indexOf("#l=") === 0) {
+    applyHashMatch(); view = "league"; curId = (state.m[0] && state.m[0].id) || null; render();
+  }
 });
 
 /* ================= onboarding ================= */
@@ -2288,6 +2493,92 @@ function hideIntro(){
 }
 document.getElementById("btn-help").addEventListener("click", showIntro);
 document.getElementById("btn-intro-close").addEventListener("click", hideIntro);
+
+/* ================= leagues modal ================= */
+function openLeaguesModal(){
+  document.getElementById("leagues-create-mode").hidden = true;
+  document.getElementById("leagues-list-mode").hidden = false;
+  renderLeagueList();
+  document.getElementById("modal-leagues").hidden = false;
+}
+function closeLeaguesModal(){ document.getElementById("modal-leagues").hidden = true; }
+function renderLeagueList(){
+  var wrap = document.getElementById("league-list");
+  var counts = {};
+  state.allM.forEach(function(m){ var l = m.league || DEFAULT_LEAGUE; counts[l] = (counts[l]||0)+1; });
+  wrap.innerHTML = state.leagues.map(function(l){
+    var n = counts[l.id] || 0;
+    var canDelete = l.id !== DEFAULT_LEAGUE;
+    return '<div class="league-item' + (l.id===curLeague ? " active" : "") + '" data-league="' + esc(l.id) + '">' +
+      '<span class="li-ic">' + l.icon + '</span>' +
+      '<span class="li-body"><div class="li-name">' + esc(l.name) + (l.id===curLeague ? " ✓" : "") + '</div>' +
+        '<div class="li-meta">' + (SPORTS[l.sport] ? SPORTS[l.sport].label : l.sport) + ' · ' + n + ' match' + (n===1?'':'es') + '</div></span>' +
+      (canDelete ? '<button class="li-del" data-del-league="' + esc(l.id) + '" aria-label="Delete league">🗑</button>' : '') +
+    '</div>';
+  }).join("");
+}
+function openCreateLeague(){
+  var sel = document.getElementById("nl-sport");
+  sel.innerHTML = SPORT_ORDER.map(function(sp){
+    return '<option value="' + sp + '">' + SPORTS[sp].icon + ' ' + SPORTS[sp].label + '</option>';
+  }).join("");
+  document.getElementById("nl-name").value = "";
+  sel.value = "rugby";
+  updateSportNote();
+  document.getElementById("leagues-list-mode").hidden = true;
+  document.getElementById("leagues-create-mode").hidden = false;
+}
+function updateSportNote(){
+  var sp = document.getElementById("nl-sport").value;
+  var note = document.getElementById("nl-sport-note");
+  note.textContent = sp === "other"
+    ? "You'll type both team names yourself for each match — perfect for a work or custom league."
+    : "Pick from " + SPORTS[sp].label + " teams (or type your own) when adding matches.";
+}
+document.getElementById("btn-league-switch").addEventListener("click", openLeaguesModal);
+document.getElementById("btn-leagues-close").addEventListener("click", closeLeaguesModal);
+document.getElementById("btn-new-league").addEventListener("click", openCreateLeague);
+document.getElementById("btn-create-cancel").addEventListener("click", function(){
+  document.getElementById("leagues-create-mode").hidden = true;
+  document.getElementById("leagues-list-mode").hidden = false;
+});
+document.getElementById("nl-sport").addEventListener("change", updateSportNote);
+document.getElementById("btn-create-league").addEventListener("click", function(){
+  var name = document.getElementById("nl-name").value.trim();
+  var sport = document.getElementById("nl-sport").value;
+  if (!name) { toast("Give the league a name"); return; }
+  requirePin(function(){
+    fsCreateLeague(name, sport).then(function(id){
+      closeLeaguesModal();
+      switchLeague(id);
+      toast("League created — add your first match!");
+    }).catch(function(){ toast("Couldn't create league — try again"); });
+  });
+});
+document.getElementById("league-list").addEventListener("click", function(ev){
+  var del = ev.target.closest("[data-del-league]");
+  if (del) {
+    ev.stopPropagation();
+    var lid = del.getAttribute("data-del-league");
+    var lg = leagueById(lid);
+    var mCount = state.allM.filter(function(m){ return (m.league||DEFAULT_LEAGUE)===lid; }).length;
+    requirePin(function(){
+      if (!confirm("Delete the \"" + (lg?lg.name:"") + "\" league and its " + mCount + " match(es)? This can't be undone.")) return;
+      // delete every match in the league, then the league doc itself
+      Promise.all(state.allM.filter(function(m){ return (m.league||DEFAULT_LEAGUE)===lid; })
+        .map(function(m){ return deleteDoc(doc(db,"matches",m.id)); }))
+        .then(function(){ return fsDeleteLeague(lid); })
+        .then(function(){ if (curLeague===lid) switchLeague(DEFAULT_LEAGUE); else renderLeagueList(); toast("League deleted"); })
+        .catch(function(){ toast("Couldn't delete — try again"); });
+    });
+    return;
+  }
+  var item = ev.target.closest("[data-league]");
+  if (!item) return;
+  var id = item.getAttribute("data-league");
+  closeLeaguesModal();
+  switchLeague(id);
+});
 
 /* ================= QR code ================= */
 document.getElementById("btn-show-qr").addEventListener("click", function(){
@@ -2328,16 +2619,20 @@ function csvCell(v){
 }
 document.getElementById("btn-export").addEventListener("click", function(){
   var today = new Date().toISOString().slice(0, 10);
-  var backup = { exportedAt: new Date().toISOString(), pot: state.pot, matches: state.m, avatars: state.avatars };
+  // full backup: every league's matches, not just the current one
+  var backup = { exportedAt: new Date().toISOString(), leagues: state.leagues, matches: state.allM, avatars: state.avatars };
   downloadBlob(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }), "bok-predictor-backup-" + today + ".json");
 
-  var rows = [["Match", "Kick-off", "Predictor", "Home Score", "Away Score", "Final Home", "Final Away", "Points"]];
-  state.m.forEach(function(m){
+  var leagueName = {};
+  state.leagues.forEach(function(l){ leagueName[l.id] = l.name; });
+  var rows = [["League", "Match", "Kick-off", "Predictor", "Home Score", "Away Score", "Final Home", "Final Away", "Points"]];
+  state.allM.forEach(function(m){
     var ranked = m.f ? standings(m) : null;
     var byName = {};
     if (ranked) ranked.forEach(function(s){ byName[keyFor(s.e[0])] = s.pts; });
     m.p.forEach(function(e){
       rows.push([
+        leagueName[m.league] || m.league || "Family Rugby",
         m.h + " v " + m.a, m.ko ? fmtKo(m.ko) : "TBC", e[0], e[1], e[2],
         m.f ? m.f[0] : "", m.f ? m.f[1] : "", ranked ? byName[keyFor(e[0])] : ""
       ]);
@@ -2392,7 +2687,9 @@ if (myName) {
   if (inpNameEl) inpNameEl.value = myName;
 }
 startLiveSync();
-ensureFixtures().catch(function(){});
+// leagues first (creates the default league + migrates legacy matches/pot),
+// then fixtures (which tag onto the default league).
+ensureLeagues().then(function(){ return ensureFixtures(); }).catch(function(){});
 updateInstallUi();
 updatePushUi();
 try { if (!localStorage.getItem(INTRO_KEY)) showIntro(); } catch(e){}

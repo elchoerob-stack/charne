@@ -287,6 +287,8 @@
 
   /* ---------- points legend ---------- */
   .legend-grid{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .legend-sub{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:12px 2px 2px}
+  .legend-sub:first-child{margin-top:2px}
   .legend-item{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--card);border:1px solid var(--line);border-radius:10px;
@@ -636,6 +638,10 @@
       <section>
         <h2 id="nm-title">New match</h2>
         <div class="card">
+          <div class="field" id="nm-sport-wrap" style="margin-bottom:10px">
+            <label for="nm-sport">Sport</label>
+            <select id="nm-sport"></select>
+          </div>
           <div id="nm-teams">
             <div class="scores-row" style="margin-top:0">
               <div class="field">
@@ -1064,11 +1070,12 @@ function bokbotPrediction(m){
 }
 var botAvatarEnsured = false;
 function ensureBokbot(){
-  // Bokbot is a Springbok homer, so it only enters rugby-sport leagues.
-  if (!isRugbyLeague(curLeague)) return;
   var botKey = keyFor(BOKBOT_NAME);
   var added = false;
   state.m.forEach(function(m){
+    // Bokbot is a Springbok homer, so it only enters rugby matches
+    if (!isRugbyMatch(m) || m.a === undefined) return;
+    if (m.type === "motor") return;
     if (m.f || isLocked(m)) return;
     if (findIn(m, BOKBOT_NAME)) return;
     var pred = bokbotPrediction(m);
@@ -1207,8 +1214,8 @@ function leagueTable(){
 }
 
 function seasonAwards(){
-  if (curIsMotor()) return null;   // awards are score-specific
-  var completed = state.m.filter(function(m){ return !!m.f; });
+  // awards are score-specific — only consider completed score matches
+  var completed = state.m.filter(function(m){ return !!m.f && m.type !== "motor"; });
   if (!completed.length) return null;
   var totals = {};
   function ensure(name){
@@ -1278,6 +1285,7 @@ function confetti(){
 function matchFromDoc(d){
   var data = d.data();
   var type = data.type || "score";
+  var sport = data.sport || (type === "motor" ? "motogp" : "rugby");
   var pMap = data.p || {};
   var arr = Object.keys(pMap).map(function(k){
     var e = pMap[k] || {};
@@ -1285,7 +1293,7 @@ function matchFromDoc(d){
     return [e.name, num(e.hs), num(e.as)];
   });
   return {
-    id: d.id, league: data.league || DEFAULT_LEAGUE, type: type,
+    id: d.id, league: data.league || DEFAULT_LEAGUE, type: type, sport: sport,
     h:data.h, hf:data.hf, a:data.a, af:data.af,
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
@@ -1293,6 +1301,15 @@ function matchFromDoc(d){
     p: arr
   };
 }
+function isRugbyMatch(m){ return !!(m && SPORTS[m.sport] && SPORTS[m.sport].rugbyLike); }
+function isRugbyMatchDoc(d){ var s = d.sport || (d.type === "motor" ? "motogp" : "rugby"); return !!(SPORTS[s] && SPORTS[s].rugbyLike); }
+// motor-flavoured = every match in the league is a race (or empty + motor default)
+function isMotorFlavour(){
+  if (state.m.length) return state.m.every(function(m){ return m.type === "motor"; });
+  return sportType(sportOf(curLeague)) === "motor";
+}
+function leagueHasMotor(){ return state.m.some(function(m){ return m.type === "motor"; }); }
+function leagueHasScore(){ return state.m.some(function(m){ return m.type !== "motor"; }); }
 function sortMatches(){
   state.m.sort(function(a,b){ return (a.ko || 9e15) - (b.ko || 9e15); });
 }
@@ -1507,8 +1524,10 @@ function fsSaveMatchMeta(matchId, patch){
 }
 function fsCreateMatch(data){
   var ref = doc(matchesCol);
-  var base = { league: curLeague, type: sportType(sportOf(curLeague)), p:{}, f:null };
-  if (isRugbyLeague(curLeague)) base.bq = { q: autoBonusQ(ref.id) };
+  var sport = data.sport || sportOf(curLeague);
+  var base = { league: curLeague, sport: sport, type: sportType(sport), p:{}, f:null };
+  // auto bonus question only for rugby-sport matches
+  if (SPORTS[sport] && SPORTS[sport].rugbyLike) base.bq = { q: autoBonusQ(ref.id) };
   setDoc(ref, Object.assign(base, data))
     .catch(function(){ toast("Couldn't create match — try again"); });
   return ref.id;
@@ -1583,11 +1602,20 @@ function legendHtml(rows){
   }).join("");
 }
 function renderLegends(){
-  var rows = curIsMotor() ? MOTOR_LEGEND : SCORE_LEGEND;
+  // a mixed league shows both point systems, each under a small heading
+  var hasScore = leagueHasScore(), hasMotor = leagueHasMotor();
+  if (!hasScore && !hasMotor) { hasScore = !isMotorFlavour(); hasMotor = isMotorFlavour(); }
+  var html = "";
+  if (hasScore && hasMotor) {
+    html = '<div class="legend-sub">🏉 Team sports</div>' + legendHtml(SCORE_LEGEND) +
+           '<div class="legend-sub">🏁 Motorsport</div>' + legendHtml(MOTOR_LEGEND);
+  } else {
+    html = legendHtml(hasMotor ? MOTOR_LEGEND : SCORE_LEGEND);
+  }
   var lm = document.getElementById("legend-match");
   var ll = document.getElementById("legend-league");
-  if (lm) lm.innerHTML = legendHtml(rows);
-  if (ll) ll.innerHTML = legendHtml(rows);
+  if (lm) lm.innerHTML = html;
+  if (ll) ll.innerHTML = html;
 }
 
 function renderLeagueSwitch(){
@@ -1615,7 +1643,7 @@ function renderGridList(m){
   var dl = document.getElementById("grid-list");
   if (!dl) return;
   var seen = {};
-  competitorsFor(sportOf(curLeague)).forEach(function(c){ seen[c.toLowerCase()] = c; });
+  competitorsFor(m.sport).forEach(function(c){ seen[c.toLowerCase()] = c; });
   // also suggest anyone already named in this race's predictions/result
   m.p.forEach(function(e){
     ["pole","p1","p2","p3"].forEach(function(k){ if (e[k]) seen[e[k].toLowerCase()] = e[k]; });
@@ -1653,11 +1681,14 @@ function renderChips(){
   var resCount = state.m.filter(function(m){ return !!m.f; }).length;
   var onFixtures = view === "fixtures" || (view === "match" && cameFrom === "fixtures");
   var onResults = view === "results" || (view === "match" && cameFrom === "results");
+  var motorFlav = isMotorFlavour();
+  var fxLabel = motorFlav ? "🏁 Races" : "📅 Fixtures";
+  var addLabel = motorFlav ? "＋ Race" : "＋ Match";
   var html =
     '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 League</button>' +
-    '<button class="chip' + (onFixtures ? " active" : "") + '" data-chip="fixtures">📅 Fixtures<span class="chip-count">' + fxCount + '</span></button>' +
+    '<button class="chip' + (onFixtures ? " active" : "") + '" data-chip="fixtures">' + fxLabel + '<span class="chip-count">' + fxCount + '</span></button>' +
     '<button class="chip' + (onResults ? " active" : "") + '" data-chip="results">✅ Results<span class="chip-count">' + resCount + '</span></button>' +
-    '<button class="chip gold" data-chip="new">＋ Match</button>';
+    '<button class="chip gold" data-chip="new">' + addLabel + '</button>';
   nav.innerHTML = html;
   var act = nav.querySelector(".chip.active");
   if (act && act.scrollIntoView) act.scrollIntoView({ block:"nearest", inline:"center" });
@@ -1676,8 +1707,10 @@ function renderHeader(){
   }
   if (view === "fixtures") {
     var fxN = state.m.filter(function(m){ return !m.f; }).length;
-    card.innerHTML = '<div class="league-head"><div class="big">📅 Fixtures</div>' +
-      '<div class="sub">' + fxN + ' match' + (fxN===1?'':'es') + ' still to come</div></div>';
+    var mf = isMotorFlavour();
+    var word = mf ? "race" : "match";
+    card.innerHTML = '<div class="league-head"><div class="big">' + (mf ? "🏁 Races" : "📅 Fixtures") + '</div>' +
+      '<div class="sub">' + fxN + ' ' + word + (fxN===1?'':'s') + ' still to come</div></div>';
     sub.innerHTML = "";
     sub.hidden = true;
     return;
@@ -1696,7 +1729,7 @@ function renderHeader(){
     sub.hidden = true;
     return;
   }
-  var backLabel = cameFrom === "results" ? "Results" : "Fixtures";
+  var backLabel = cameFrom === "results" ? "Results" : (isMotorFlavour() ? "Races" : "Fixtures");
   if (m.type === "motor") {
     card.innerHTML =
       '<button class="back-link" id="btn-back" type="button">‹ ' + backLabel + '</button>' +
@@ -1723,8 +1756,9 @@ function renderFixturesList(){
   var rows = document.getElementById("fx-rows");
   var list = state.m.filter(function(m){ return !m.f; });
   if (!list.length) {
+    var mf = isMotorFlavour();
     var canLoadMotogp = sportOf(curLeague) === "motogp" && !state.m.length;
-    rows.innerHTML = '<div class="empty">No upcoming fixtures — add one with ＋ Match.' +
+    rows.innerHTML = '<div class="empty">No upcoming ' + (mf ? "races" : "fixtures") + ' — add one with ' + (mf ? "＋ Race" : "＋ Match") + '.' +
       (canLoadMotogp ? '<br><br><button class="btn" id="btn-load-motogp" style="margin-top:0">🏁 Load the 2026 MotoGP calendar</button>' : '') +
       '</div>';
     return;
@@ -2135,7 +2169,6 @@ function renderLeague(){
 }
 
 function seasonStats(){
-  if (curIsMotor()) return { believer:null, sharp:null, wild:null, dreamer:null };
   var players = {};
   function ensure(name){
     var k = keyFor(name);
@@ -2143,6 +2176,7 @@ function seasonStats(){
     return players[k];
   }
   state.m.forEach(function(m){
+    if (m.type === "motor") return;   // score-only stats
     var saHome = m.h === "South Africa", saAway = m.a === "South Africa";
     m.p.forEach(function(e){
       var t = ensure(e[0]);
@@ -2236,37 +2270,45 @@ function startTicker(){
 
 /* ================= match form (new/edit) ================= */
 function fillTeamSelects(selH, selA){
-  var opts = sportTeams(sportOf(curLeague)).map(function(t){ return '<option value="' + esc(t[0]) + '">' + t[1] + " " + esc(t[0]) + "</option>"; }).join("") +
+  var sel = document.getElementById("nm-sport");
+  var sp = (sel && sel.value) || sportOf(curLeague);
+  var opts = sportTeams(sp).map(function(t){ return '<option value="' + esc(t[0]) + '">' + t[1] + " " + esc(t[0]) + "</option>"; }).join("") +
     '<option value="__other">✏️ Other…</option>';
   selH.innerHTML = opts; selA.innerHTML = opts;
 }
 function openMatchForm(editId){
   editingMatch = editId || null;
   view = "newmatch";
-  var motor = curIsMotor();
-  document.getElementById("nm-teams").hidden = motor;
-  document.getElementById("nm-motor").hidden = !motor;
-  var selH = document.getElementById("nm-home");
-  var selA = document.getElementById("nm-away");
-  fillTeamSelects(selH, selA);
-  document.getElementById("nm-title").textContent = editingMatch ? "Match settings" : (motor ? "New race" : "New match");
+  var m = null;
+  if (editingMatch) for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
+
+  // sport picker: any sport can be added to any league. Defaults to the match's
+  // own sport when editing, otherwise the league's default sport.
+  var sportSel = document.getElementById("nm-sport");
+  sportSel.innerHTML = SPORT_ORDER.map(function(sp){
+    return '<option value="' + sp + '">' + SPORTS[sp].icon + ' ' + SPORTS[sp].label + '</option>';
+  }).join("");
+  sportSel.value = m ? m.sport : sportOf(curLeague);
+  // when editing an existing match you can't switch its sport (predictions exist)
+  document.getElementById("nm-sport-wrap").hidden = !!editingMatch;
+
   document.getElementById("btn-delete-match").hidden = !editingMatch || state.m.length < 2;
   document.getElementById("nm-custom-home").value = "";
   document.getElementById("nm-custom-away").value = "";
   document.getElementById("nm-race").value = "";
-  document.getElementById("nm-flag").value = motor ? "🏁" : "";
-  var m = null;
-  if (editingMatch) for (var i=0;i<state.m.length;i++) if (state.m[i].id===editingMatch) m = state.m[i];
+  document.getElementById("nm-flag").value = "";
+  fillTeamSelects(document.getElementById("nm-home"), document.getElementById("nm-away"));
+
   if (m) {
-    if (motor) {
+    if (m.type === "motor") {
       document.getElementById("nm-race").value = m.h || "";
       document.getElementById("nm-flag").value = m.hf || "🏁";
     } else {
-      var pool = sportTeams(sportOf(curLeague));
+      var pool = sportTeams(m.sport);
       var isStdH = pool.some(function(t){ return t[0]===m.h; });
       var isStdA = pool.some(function(t){ return t[0]===m.a; });
-      selH.value = isStdH ? m.h : "__other";
-      selA.value = isStdA ? m.a : "__other";
+      document.getElementById("nm-home").value = isStdH ? m.h : "__other";
+      document.getElementById("nm-away").value = isStdA ? m.a : "__other";
       if (!isStdH) document.getElementById("nm-custom-home").value = m.h;
       if (!isStdA) document.getElementById("nm-custom-away").value = m.a;
     }
@@ -2274,17 +2316,30 @@ function openMatchForm(editId){
       var d = new Date(m.ko - new Date().getTimezoneOffset()*60000);
       document.getElementById("nm-ko").value = d.toISOString().slice(0,16);
     } else document.getElementById("nm-ko").value = "";
-  } else if (!motor) {
-    var defs = sportTeams(sportOf(curLeague));
-    selH.value = defs[0] ? defs[0][0] : "__other";
-    selA.value = defs[1] ? defs[1][0] : "__other";
-    document.getElementById("nm-ko").value = "";
   } else {
     document.getElementById("nm-ko").value = "";
   }
-  updateCustomRows();
+  syncMatchForm();
   render();
   scrollTo(0,0);
+}
+// reflect the chosen sport: race form for motor sports, team form otherwise
+function syncMatchForm(){
+  var sp = document.getElementById("nm-sport").value;
+  var motor = sportType(sp) === "motor";
+  document.getElementById("nm-teams").hidden = motor;
+  document.getElementById("nm-motor").hidden = !motor;
+  document.getElementById("nm-title").textContent = editingMatch ? "Match settings" : (motor ? "New race" : "New match");
+  if (!document.getElementById("nm-flag").value) document.getElementById("nm-flag").value = motor ? "🏁" : "";
+  if (!motor && !editingMatch) {
+    var selH = document.getElementById("nm-home");
+    var selA = document.getElementById("nm-away");
+    fillTeamSelects(selH, selA);
+    var defs = sportTeams(sp);
+    selH.value = defs[0] ? defs[0][0] : "__other";
+    selA.value = defs[1] ? defs[1][0] : "__other";
+  }
+  updateCustomRows();
 }
 function updateCustomRows(){
   var oh = document.getElementById("nm-home").value === "__other";
@@ -2354,10 +2409,11 @@ document.getElementById("btn-avatar").addEventListener("click", function(){
 
 document.getElementById("nm-home").addEventListener("change", updateCustomRows);
 document.getElementById("nm-away").addEventListener("change", updateCustomRows);
+document.getElementById("nm-sport").addEventListener("change", syncMatchForm);
 
 document.getElementById("btn-save-match").addEventListener("click", function(){
-  var sp = sportOf(curLeague);
-  var motor = curIsMotor();
+  var sp = editingMatch ? cm().sport : document.getElementById("nm-sport").value;
+  var motor = sportType(sp) === "motor";
   var koVal = document.getElementById("nm-ko").value;
   var ko = koVal ? new Date(koVal).getTime() : null;
   var data, okToast;
@@ -2366,7 +2422,7 @@ document.getElementById("btn-save-match").addEventListener("click", function(){
     var race = document.getElementById("nm-race").value.trim();
     var flag = document.getElementById("nm-flag").value.trim() || "🏁";
     if (!race) { toast("Give the race a name"); return; }
-    data = { h:race, hf:flag, a:"", af:"", ko:ko };
+    data = { sport:sp, type:"motor", h:race, hf:flag, a:"", af:"", ko:ko };
     okToast = "Race added — get predicting!";
   } else {
     var hv = document.getElementById("nm-home").value;
@@ -2375,7 +2431,7 @@ document.getElementById("btn-save-match").addEventListener("click", function(){
     var a = av === "__other" ? document.getElementById("nm-custom-away").value.trim() : av;
     if (!h || !a) { toast("Give both teams a name"); return; }
     if (h.toLowerCase() === a.toLowerCase()) { toast("Pick two different teams"); return; }
-    data = { h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko };
+    data = { sport:sp, type:"score", h:h, hf:flagFor(h,sp), a:a, af:flagFor(a,sp), ko:ko };
     okToast = "Match added — get predicting!";
   }
 

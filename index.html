@@ -62,6 +62,7 @@
   .league-item .li-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .league-item .li-meta{font-size:11.5px;color:var(--ink-soft)}
   .league-item .li-del{border:0;background:transparent;color:#B9B2A0;font-size:16px;cursor:pointer;padding:4px;flex:0 0 auto}
+  .tour-added{font-size:12.5px;font-weight:700;color:var(--forest);flex:0 0 auto}
   .eyebrow{
     font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--gold);font-weight:700;margin:0;
@@ -432,6 +433,9 @@
   }
   .lg-thead{padding:4px 14px 8px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
   .lg-thead .r{text-align:right}
+  .lg-thead[hidden]{display:none}
+  .sport-block{margin-bottom:18px}
+  .sport-head{padding:6px 14px 2px;font-size:14px;font-weight:800;color:var(--forest)}
   .lg-row{padding:11px 14px;border-top:1px solid var(--line)}
   .lg-row:first-child{border-top:0}
   .lg-row .pos{font-size:13px;font-weight:800;color:var(--ink-soft);font-variant-numeric:tabular-nums}
@@ -650,8 +654,8 @@
         <div id="stats-row"></div>
       </section>
       <section>
-        <h2>League standings</h2>
-        <div class="lg-thead" aria-hidden="true">
+        <h2 id="lg-standings-title">League standings</h2>
+        <div class="lg-thead" id="lg-thead" aria-hidden="true">
           <span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span>
         </div>
         <div class="rows" id="lg-rows"></div>
@@ -676,6 +680,9 @@
       <section>
         <h2>Upcoming</h2>
         <div class="rows" id="fx-rows"></div>
+      </section>
+      <section>
+        <button class="btn quiet" id="btn-add-tournament">🏆 Add a tournament</button>
       </section>
     </div>
 
@@ -801,6 +808,15 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-tournaments" hidden>
+  <div class="modal-card">
+    <h3>🏆 Add a tournament</h3>
+    <p class="hint" style="margin:2px 0 10px">Drop a ready-made season into this league. Each tournament keeps its own sport — leaderboards stay separate per sport.</p>
+    <div id="tour-list"></div>
+    <button class="btn quiet" id="btn-tour-close" style="margin-top:14px">Close</button>
+  </div>
+</div>
+
 <div class="sharebar">
   <div class="inner">
     <button class="btn share" id="btn-share">Share</button>
@@ -846,11 +862,10 @@ var RUGBY_TEAMS = [
   ["France","🇫🇷"],["Italy","🇮🇹"],["Japan","🇯🇵"],["Fiji","🇫🇯"],
   ["Georgia","🇬🇪"],["Portugal","🇵🇹"],["USA","🇺🇸"],["Uruguay","🇺🇾"]
 ];
-var FOOTBALL_TEAMS = [
-  ["South Africa","🇿🇦"],["Nigeria","🇳🇬"],["Brazil","🇧🇷"],["Argentina","🇦🇷"],
-  ["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],["France","🇫🇷"],["Germany","🇩🇪"],["Spain","🇪🇸"],
-  ["Portugal","🇵🇹"],["Netherlands","🇳🇱"],["Italy","🇮🇹"],["Morocco","🇲🇦"],
-  ["USA","🇺🇸"],["Japan","🇯🇵"],["Senegal","🇸🇳"],["Croatia","🇭🇷"]
+var CRICKET_TEAMS = [
+  ["South Africa","🇿🇦"],["India","🇮🇳"],["Australia","🇦🇺"],["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],
+  ["New Zealand","🇳🇿"],["Pakistan","🇵🇰"],["Sri Lanka","🇱🇰"],["West Indies","🌴"],
+  ["Bangladesh","🇧🇩"],["Afghanistan","🇦🇫"],["Ireland","🇮🇪"],["Zimbabwe","🇿🇼"]
 ];
 // Motorsport competitor pools are only SUGGESTIONS (datalist), so they don't
 // need to be exhaustive or perfectly current — anyone can type another name.
@@ -870,16 +885,13 @@ var F1_DRIVERS = [
 // sports below are two-side SCORE sports, so they reuse the whole prediction
 // and scoring engine unchanged — only the team list swaps.
 var SPORTS = {
-  rugby:    { label:"Rugby",       icon:"🏉", teams: RUGBY_TEAMS,    fallback:"🏉", rugbyLike:true },
-  u20rugby: { label:"U20 Rugby",   icon:"🐣", teams: RUGBY_TEAMS,    fallback:"🏉", rugbyLike:true },
-  football: { label:"Football",    icon:"⚽", teams: FOOTBALL_TEAMS, fallback:"⚽" },
-  netball:  { label:"Netball",     icon:"🏐", teams: RUGBY_TEAMS,    fallback:"🏐" },
-  cricket:  { label:"Cricket",     icon:"🏏", teams: FOOTBALL_TEAMS, fallback:"🏏" },
-  motogp:   { label:"MotoGP",      icon:"🏍️", type:"motor", competitors: MOTOGP_RIDERS, fallback:"🏁" },
-  f1:       { label:"Formula 1",   icon:"🏎️", type:"motor", competitors: F1_DRIVERS,   fallback:"🏁" },
-  other:    { label:"Other / Custom", icon:"🏆", teams: [],          fallback:"🏆" }
+  rugby:    { label:"Springbok Rugby", icon:"🏉", teams: RUGBY_TEAMS,   fallback:"🏉", rugbyLike:true },
+  u20rugby: { label:"U20 Rugby",       icon:"🐣", teams: RUGBY_TEAMS,   fallback:"🏉", rugbyLike:true },
+  f1:       { label:"Formula 1",       icon:"🏎️", type:"motor", competitors: F1_DRIVERS,   fallback:"🏁" },
+  motogp:   { label:"MotoGP",          icon:"🏍️", type:"motor", competitors: MOTOGP_RIDERS, fallback:"🏁" },
+  cricket:  { label:"Cricket",         icon:"🏏", teams: CRICKET_TEAMS, fallback:"🏏" }
 };
-var SPORT_ORDER = ["rugby","u20rugby","football","netball","cricket","motogp","f1","other"];
+var SPORT_ORDER = ["rugby","u20rugby","f1","motogp","cricket"];
 function sportType(sportId){ return (SPORTS[sportId] && SPORTS[sportId].type) || "score"; }
 function competitorsFor(sportId){ return (SPORTS[sportId] && SPORTS[sportId].competitors) || []; }
 function curIsMotor(){ return sportType(sportOf(curLeague)) === "motor"; }
@@ -928,6 +940,49 @@ var MOTOGP_2026 = [
   { name:"Austrian GP · Red Bull Ring",flag:"🇦🇹", ko:Date.UTC(2026,8,20,12,0), tbc:true },
   { name:"Japanese GP · Motegi",       flag:"🇯🇵", ko:Date.UTC(2026,9,4,6,0),   tbc:true }
 ];
+
+// 2026 Formula 1 calendar — a best-effort selection of Grands Prix. Times are
+// provisional and fully editable in match settings.
+var F1_2026 = [
+  { name:"British GP · Silverstone",     flag:"🇬🇧", ko:Date.UTC(2026,6,5,14,0),  tbc:true },
+  { name:"Hungarian GP · Hungaroring",   flag:"🇭🇺", ko:Date.UTC(2026,6,19,13,0), tbc:true },
+  { name:"Belgian GP · Spa",             flag:"🇧🇪", ko:Date.UTC(2026,6,26,13,0), tbc:true },
+  { name:"Dutch GP · Zandvoort",         flag:"🇳🇱", ko:Date.UTC(2026,7,23,13,0), tbc:true },
+  { name:"Italian GP · Monza",           flag:"🇮🇹", ko:Date.UTC(2026,8,6,13,0),  tbc:true },
+  { name:"Singapore GP · Marina Bay",    flag:"🇸🇬", ko:Date.UTC(2026,8,20,12,0), tbc:true },
+  { name:"United States GP · Austin",    flag:"🇺🇸", ko:Date.UTC(2026,9,25,19,0), tbc:true },
+  { name:"Abu Dhabi GP · Yas Marina",    flag:"🇦🇪", ko:Date.UTC(2026,10,29,13,0),tbc:true }
+];
+
+// World Rugby U20 Championship 2026 — Junior Springboks pool + knockout, dates
+// provisional (the tournament is usually mid-year) and editable per match.
+var U20_2026 = [
+  {id:"u20-sa-arg", h:"South Africa", a:"Argentina",  ko:Date.UTC(2026,5,24,17,0), vn:"U20 Championship, Pool", tbc:true},
+  {id:"u20-sa-eng", h:"South Africa", a:"England",     ko:Date.UTC(2026,5,29,17,0), vn:"U20 Championship, Pool", tbc:true},
+  {id:"u20-sa-aus", h:"South Africa", a:"Australia",   ko:Date.UTC(2026,6,4,17,0),  vn:"U20 Championship, Pool", tbc:true},
+  {id:"u20-sf",     h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,6,9,17,0),  vn:"U20 Championship, Semi-final", tbc:true},
+  {id:"u20-final",  h:"South Africa", a:"France",      ko:Date.UTC(2026,6,14,19,0), vn:"U20 Championship, Final", tbc:true}
+];
+
+// Proteas 2026 — a best-effort set of internationals, editable per match.
+var CRICKET_2026 = [
+  {id:"cric-sa-ind1", h:"South Africa", a:"India",       ko:Date.UTC(2026,0,10,7,30),  vn:"ODI Series", tbc:true},
+  {id:"cric-sa-ind2", h:"South Africa", a:"India",       ko:Date.UTC(2026,0,13,7,30),  vn:"ODI Series", tbc:true},
+  {id:"cric-sa-aus",  h:"South Africa", a:"Australia",   ko:Date.UTC(2026,2,7,7,30),   vn:"T20 International", tbc:true},
+  {id:"cric-sa-eng",  h:"South Africa", a:"England",     ko:Date.UTC(2026,5,6,10,0),   vn:"Test Match", tbc:true},
+  {id:"cric-sa-nz",   h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,15,10,0),  vn:"Test Match", tbc:true}
+];
+
+// A "tournament" is a ready-made set of fixtures/races for one sport that can be
+// dropped into any league. Score sports carry `fixtures`; motorsports `races`.
+var TOURNAMENTS = {
+  rugby:    [{ id:"spr-2026",  name:"Springboks 2026",        fixtures: FIXTURES }],
+  u20rugby: [{ id:"u20-2026",  name:"U20 Championship 2026",  fixtures: U20_2026, teamsSport:"u20rugby" }],
+  f1:       [{ id:"f1-2026",   name:"F1 2026 Season",         races: F1_2026 }],
+  motogp:   [{ id:"motogp-2026", name:"MotoGP 2026 Season",   races: MOTOGP_2026 }],
+  cricket:  [{ id:"cric-2026", name:"Proteas 2026",           fixtures: CRICKET_2026, teamsSport:"cricket" }]
+};
+function tournamentsFor(sport){ return TOURNAMENTS[sport] || []; }
 
 var NAME_KEY = "bok-myname";
 var LEAGUE_KEY = "bok-curleague";
@@ -1244,9 +1299,10 @@ function standings(m){
   }
   return list;
 }
-function leagueTable(){
+function leagueTable(matches){
+  var src = matches || state.m;
   var totals = {};
-  state.m.forEach(function(m){          // state.m is kick-off-ordered, so recent[] ends up chronological
+  src.forEach(function(m){              // kick-off-ordered, so recent[] ends up chronological
     m.p.forEach(function(e){
       var nm = predName(e), k = nm.trim().toLowerCase();
       if (!totals[k]) totals[k] = { name:nm, pts:0, played:0, recent:[] };
@@ -1370,6 +1426,7 @@ function matchFromDoc(d){
   });
   return {
     id: d.id, league: data.league || DEFAULT_LEAGUE, type: type, sport: sport,
+    tour: data.tour || null,
     h:data.h, hf:data.hf, a:data.a, af:data.af,
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
@@ -1487,13 +1544,64 @@ function ensureLeagues(){
 }
 function fsCreateLeague(name, sport){
   var id = "lg-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,6);
-  var sp = SPORTS[sport] ? sport : "other";
+  var sp = SPORTS[sport] ? sport : "rugby";
   return setDoc(doc(db,"leagues",id), {
     name: name, sport: sp, icon: SPORTS[sp].icon, pot: 0, createdAt: Date.now()
   }).then(function(){ return id; });
 }
 function fsDeleteLeague(id){
   return deleteDoc(doc(db,"leagues",id));
+}
+// Drop a ready-made tournament's fixtures/races into a league. Every seeded
+// match is tagged with its sport and `tour` id, so leaderboards stay per-sport
+// and we can tell which tournaments a league already has.
+function loadTournament(leagueId, sport, tourId){
+  var tour = tournamentsFor(sport).filter(function(t){ return t.id === tourId; })[0];
+  if (!tour) return Promise.resolve(0);
+  var jobs = [];
+  // a fresh league has no history, so skip fixtures that have already started —
+  // unless they're ALL in the past, in which case load them anyway (better than
+  // an empty league; the organiser can prune or set results).
+  function upcoming(list){
+    var future = list.filter(function(x){ return !x.ko || x.ko > Date.now(); });
+    return future.length ? future : list;
+  }
+  if (tour.races) {
+    upcoming(tour.races).forEach(function(r){
+      jobs.push(setDoc(doc(matchesCol), {
+        league:leagueId, sport:sport, type:"motor", tour:tourId,
+        h:r.name, hf:r.flag || SPORTS[sport].fallback, a:"", af:"", ko:r.ko, tbc:!!r.tbc, p:{}, f:null
+      }).catch(function(){}));
+    });
+  } else if (tour.fixtures) {
+    var ts = tour.teamsSport || sport;
+    upcoming(tour.fixtures).forEach(function(fx){
+      jobs.push(setDoc(doc(matchesCol), {
+        league:leagueId, sport:sport, type:"score", tour:tourId,
+        h:fx.h, hf:flagFor(fx.h,ts), a:fx.a, af:flagFor(fx.a,ts), ko:fx.ko, vn:fx.vn || "", tbc:!!fx.tbc, p:{}, f:null
+      }).catch(function(){}));
+    });
+  }
+  return Promise.all(jobs).then(function(){ return jobs.length; });
+}
+// Which tournament ids are already present in a league. A tournament counts as
+// present if a match carries its `tour` tag, OR — for the built-in fixed-id
+// fixtures like the Springboks — if any of its fixture ids already exist here.
+function leagueTournaments(leagueId){
+  var byTour = {}, ids = {};
+  state.allM.forEach(function(m){
+    if ((m.league||DEFAULT_LEAGUE) !== leagueId) return;
+    if (m.tour) byTour[m.tour] = true;
+    ids[m.id] = true;
+  });
+  var have = Object.assign({}, byTour);
+  SPORT_ORDER.forEach(function(sp){
+    tournamentsFor(sp).forEach(function(t){
+      if (have[t.id]) return;
+      if ((t.fixtures||[]).some(function(fx){ return fx.id && ids[fx.id]; })) have[t.id] = true;
+    });
+  });
+  return have;
 }
 function seedToMap(seedArr){
   var m = {};
@@ -1834,9 +1942,11 @@ function renderFixturesList(){
   var list = state.m.filter(function(m){ return !m.f; });
   if (!list.length) {
     var mf = isMotorFlavour();
-    var canLoadMotogp = sportOf(curLeague) === "motogp" && !state.m.length;
+    // any tournaments for this league's sport not yet loaded?
+    var have = leagueTournaments(curLeague);
+    var canAdd = tournamentsFor(sportOf(curLeague)).some(function(t){ return !have[t.id]; });
     rows.innerHTML = '<div class="empty">No upcoming ' + (mf ? "races" : "fixtures") + ' — add one with ' + (mf ? "＋ Race" : "＋ Match") + '.' +
-      (canLoadMotogp ? '<br><br><button class="btn" id="btn-load-motogp" style="margin-top:0">🏁 Load the 2026 MotoGP calendar</button>' : '') +
+      (canAdd ? '<br><br><button class="btn" id="btn-empty-tournament" style="margin-top:0">🏆 Add a tournament</button>' : '') +
       '</div>';
     return;
   }
@@ -2227,25 +2337,54 @@ function updateAddFormState(){
       : "🔒 Kick-off has passed — tap ✎ next to a name to fix a typo.";
 }
 
+// distinct sports present in the current league, in canonical order
+function sportsInLeague(){
+  var seen = {};
+  state.m.forEach(function(m){ seen[m.sport || "rugby"] = true; });
+  var order = SPORT_ORDER.filter(function(sp){ return seen[sp]; });
+  // include any unknown/legacy sports too so nothing is hidden
+  Object.keys(seen).forEach(function(sp){ if (order.indexOf(sp) < 0) order.push(sp); });
+  return order;
+}
+function standingsRowsHtml(table, allBadges){
+  return table.map(function(t){
+    var medal = medalFor(t.rank);
+    var badge = (medal && t.pts>0 ? medal + " " : "");
+    var suffix = (t.spoon ? " 🥄" : "") + (t.form ? " " + t.form : "");
+    var bg = allBadges[keyFor(t.name)] || [];
+    var badgeHtml = bg.length ? '<div class="badges">' + bg.map(function(b){ return '<span class="badge">' + b + '</span>'; }).join("") + '</div>' : '';
+    return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + (t.spoon ? " spoon" : "") + '">' +
+      '<span class="pos">' + t.rank + '</span>' +
+      '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + badge + esc(t.name) + suffix + badgeHtml + '</span></span>' +
+      '<span class="played">' + t.played + '</span>' +
+      '<span class="total">' + t.pts + '</span>' +
+    '</div>';
+  }).join("");
+}
 function renderLeague(){
   var rows = document.getElementById("lg-rows");
-  var table = leagueTable();
-  if (!table.length) {
-    rows.innerHTML = emptyLeagueHtml();
+  var thead = document.getElementById("lg-thead");
+  var title = document.getElementById("lg-standings-title");
+  var sports = sportsInLeague();
+  var allBadges = computeBadges();
+  if (sports.length <= 1) {
+    // single sport: the classic single scoreboard (leaderboard is that sport)
+    thead.hidden = false;
+    title.textContent = "League standings";
+    var table = leagueTable();
+    rows.innerHTML = table.length ? standingsRowsHtml(table, allBadges) : emptyLeagueHtml();
   } else {
-    var allBadges = computeBadges();
-    rows.innerHTML = table.map(function(t){
-      var medal = medalFor(t.rank);
-      var badge = (medal && t.pts>0 ? medal + " " : "");
-      var suffix = (t.spoon ? " 🥄" : "") + (t.form ? " " + t.form : "");
-      var bg = allBadges[keyFor(t.name)] || [];
-      var badgeHtml = bg.length ? '<div class="badges">' + bg.map(function(b){ return '<span class="badge">' + b + '</span>'; }).join("") + '</div>' : '';
-      return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + (t.spoon ? " spoon" : "") + '">' +
-        '<span class="pos">' + t.rank + '</span>' +
-        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + badge + esc(t.name) + suffix + badgeHtml + '</span></span>' +
-        '<span class="played">' + t.played + '</span>' +
-        '<span class="total">' + t.pts + '</span>' +
-      '</div>';
+    // mixed league: a separate leaderboard per sport, so points never cross sports
+    thead.hidden = true;
+    title.textContent = "League standings — by sport";
+    rows.innerHTML = sports.map(function(sp){
+      var subset = state.m.filter(function(m){ return (m.sport || "rugby") === sp; });
+      var table = leagueTable(subset);
+      var head = '<div class="sport-head">' + (SPORTS[sp] ? SPORTS[sp].icon + " " + SPORTS[sp].label : sp) + '</div>' +
+        '<div class="lg-thead" aria-hidden="true"><span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span></div>';
+      return '<div class="sport-block">' + head +
+        (table.length ? standingsRowsHtml(table, allBadges) : '<div class="empty" style="padding:14px">No predictions on the ' + esc(SPORTS[sp]?SPORTS[sp].label:sp) + ' fixtures yet.</div>') +
+        '</div>';
     }).join("");
   }
   renderHero();
@@ -2678,15 +2817,7 @@ function openMatch(matchId, from){
   render();
 }
 document.getElementById("fx-rows").addEventListener("click", function(ev){
-  if (ev.target.closest("#btn-load-motogp")) {
-    var lid = curLeague;
-    MOTOGP_2026.forEach(function(r){
-      var ref = doc(matchesCol);
-      setDoc(ref, { league:lid, type:"motor", h:r.name, hf:r.flag, a:"", af:"", ko:r.ko, tbc:!!r.tbc, p:{}, f:null }).catch(function(){});
-    });
-    toast("MotoGP calendar loaded!");
-    return;
-  }
+  if (ev.target.closest("#btn-empty-tournament")) { openTournamentsModal(); return; }
   var row = ev.target.closest(".list-row");
   if (!row) return;
   openMatch(row.getAttribute("data-match"), "fixtures");
@@ -3357,10 +3488,48 @@ function openCreateLeague(){
 function updateSportNote(){
   var sp = document.getElementById("nl-sport").value;
   var note = document.getElementById("nl-sport-note");
-  note.textContent = sp === "other"
-    ? "You'll type both team names yourself for each match — perfect for a work or custom league."
+  var tours = tournamentsFor(sp);
+  note.textContent = tours.length
+    ? "We'll load " + tours[0].name + " to get you started — you can add or edit fixtures anytime."
     : "Pick from " + SPORTS[sp].label + " teams (or type your own) when adding matches.";
 }
+
+/* ================= tournaments ================= */
+function openTournamentsModal(){ renderTournamentsModal(); document.getElementById("modal-tournaments").hidden = false; }
+function closeTournamentsModal(){ document.getElementById("modal-tournaments").hidden = true; }
+function renderTournamentsModal(){
+  var wrap = document.getElementById("tour-list");
+  var have = leagueTournaments(curLeague);
+  wrap.innerHTML = SPORT_ORDER.map(function(sp){
+    return tournamentsFor(sp).map(function(t){
+      var added = !!have[t.id];
+      var count = (t.fixtures || t.races || []).length;
+      return '<div class="league-item">' +
+        '<span class="li-ic">' + SPORTS[sp].icon + '</span>' +
+        '<span class="li-body"><div class="li-name">' + esc(t.name) + '</div>' +
+          '<div class="li-meta">' + SPORTS[sp].label + ' · ' + count + (sportType(sp)==="motor"?' races':' matches') + '</div></span>' +
+        (added
+          ? '<span class="tour-added">✓ Added</span>'
+          : '<button class="btn" data-add-tour="' + esc(t.id) + '" data-tour-sport="' + sp + '" style="margin:0;width:auto;padding:8px 14px">Add</button>') +
+      '</div>';
+    }).join("");
+  }).join("");
+}
+document.getElementById("tour-list").addEventListener("click", function(ev){
+  var btn = ev.target.closest("[data-add-tour]");
+  if (!btn) return;
+  var tourId = btn.getAttribute("data-add-tour");
+  var sp = btn.getAttribute("data-tour-sport");
+  requirePin(function(){
+    btn.disabled = true;
+    loadTournament(curLeague, sp, tourId).then(function(n){
+      closeTournamentsModal();
+      toast(n + (sportType(sp)==="motor"?" races":" fixtures") + " added!");
+    }).catch(function(){ btn.disabled = false; toast("Couldn't add — try again"); });
+  });
+});
+document.getElementById("btn-tour-close").addEventListener("click", closeTournamentsModal);
+document.getElementById("btn-add-tournament").addEventListener("click", openTournamentsModal);
 document.getElementById("btn-league-switch").addEventListener("click", openLeaguesModal);
 document.getElementById("btn-leagues-close").addEventListener("click", closeLeaguesModal);
 document.getElementById("btn-new-league").addEventListener("click", openCreateLeague);
@@ -3374,10 +3543,16 @@ document.getElementById("btn-create-league").addEventListener("click", function(
   var sport = document.getElementById("nl-sport").value;
   if (!name) { toast("Give the league a name"); return; }
   requirePin(function(){
+    var newId;
     fsCreateLeague(name, sport).then(function(id){
+      newId = id;
+      // pre-load this sport's tournament so the league opens with fixtures, not blank
+      var tours = tournamentsFor(sport);
+      return tours.length ? loadTournament(id, sport, tours[0].id) : Promise.resolve(0);
+    }).then(function(n){
       closeLeaguesModal();
-      switchLeague(id);
-      toast("League created — add your first match!");
+      switchLeague(newId);
+      toast(n ? "League created — " + n + " fixtures loaded!" : "League created — add your first match!");
     }).catch(function(){ toast("Couldn't create league — try again"); });
   });
 });

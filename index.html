@@ -169,6 +169,48 @@
   input[type=number]{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
   .scores-row{display:flex;gap:10px;margin-top:10px}
   .name-row{display:flex;gap:8px;align-items:center}
+  /* identity chip */
+  .identity{
+    display:flex;align-items:center;gap:8px;
+    background:#E4EFE7;border:1px solid #CFE0D4;border-radius:10px;
+    padding:8px 12px;font-size:13.5px;color:var(--ink);
+  }
+  .identity .who{font-weight:800;color:var(--forest);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .identity .change{border:0;background:transparent;color:var(--grass);font-weight:700;font-size:12.5px;cursor:pointer;padding:2px 4px;font-family:inherit}
+  /* joker toggle */
+  .joker-toggle{
+    width:100%;margin-top:10px;border:1.5px dashed var(--gold-deep);border-radius:12px;
+    background:#FFF7E0;color:var(--gold-deep);font-weight:800;font-size:14px;
+    padding:12px;cursor:pointer;font-family:inherit;
+  }
+  .joker-toggle.on{background:var(--gold);color:var(--forest);border-style:solid}
+  .joker-toggle:disabled{opacity:.5;cursor:not-allowed}
+  /* match-day hero */
+  .hero{
+    background:linear-gradient(150deg,var(--forest),var(--grass));color:#fff;
+    border-radius:16px;padding:16px;margin-bottom:14px;border:1px solid var(--grass);
+  }
+  .hero .tag{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+  .hero .teams{font-size:18px;font-weight:900;margin:6px 0 2px;text-wrap:balance}
+  .hero .cd{font-size:13px;color:#CDE3D6;font-variant-numeric:tabular-nums}
+  .hero .btn{margin-top:12px;background:var(--gold);color:var(--forest)}
+  .hero .done{margin-top:10px;font-size:13px;color:#CDE3D6}
+  /* progress */
+  .progress{
+    font-size:12.5px;color:var(--ink-soft);background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;margin-bottom:8px;
+  }
+  .progress b{color:var(--forest)}
+  /* badges */
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+  .badge{
+    font-size:11px;font-weight:700;background:#EEF4EF;border:1px solid var(--line);
+    border-radius:999px;padding:2px 8px;color:var(--ink);
+  }
+  .lg-row .nm .badges{margin-top:2px}
+  /* who's playing (empty state) */
+  .whoshere{font-size:13px;color:var(--ink-soft);margin-top:10px;line-height:1.5}
+  .whoshere b{color:var(--forest)}
   .name-row input{flex:1}
   .avatar-btn{
     flex:0 0 auto;width:46px;height:46px;border-radius:10px;
@@ -275,6 +317,7 @@
   }
   .pc-chip.tier{background:#E4EFE7;color:var(--grass)}
   .pc-chip.bonus{background:#FFF3D6;color:var(--gold-deep)}
+  .pc-chip.joker{background:var(--gold);color:var(--forest);font-weight:800}
   .pc-chip.warn{background:#F6E7E7;color:#8A2B2B}
   .pc-actions{margin-left:auto;display:flex;gap:2px;flex:0 0 auto}
   .pc-actions button{
@@ -462,7 +505,8 @@
       <section id="sec-add">
         <h2>Add your prediction</h2>
         <div class="card">
-          <div class="field">
+          <div id="identity-bar" hidden></div>
+          <div class="field" id="name-field">
             <label for="inp-name">Your name</label>
             <div class="name-row">
               <input id="inp-name" type="text" autocomplete="name" placeholder="e.g. Charné" maxlength="30" list="known-names">
@@ -501,6 +545,7 @@
               </div>
             </div>
           </div>
+          <button type="button" class="joker-toggle" id="btn-joker" hidden></button>
           <button class="btn" id="btn-add">Add my prediction</button>
           <button class="btn quiet" id="btn-cancel-edit" hidden>Cancel — keep as it was</button>
           <p class="hint" id="add-hint">Predictions update live for the whole family — no need to send anything.</p>
@@ -587,6 +632,15 @@
 
     <!-- ============ LEAGUE VIEW ============ -->
     <div id="view-league" hidden>
+      <section id="sec-hero" hidden><div id="hero-body"></div></section>
+      <section id="sec-progress" hidden><div id="progress-body"></div></section>
+      <section id="sec-predictall" hidden>
+        <button class="btn" id="btn-predict-all">⚡ Predict all open matches</button>
+      </section>
+      <section id="sec-rivals" hidden>
+        <h2>Head to head</h2>
+        <div id="rivals-body"></div>
+      </section>
       <section id="sec-awards" hidden>
         <h2>Season awards</h2>
         <div id="awards-row"></div>
@@ -737,6 +791,16 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-predictall" hidden>
+  <div class="modal-card">
+    <h3>⚡ Predict all open matches</h3>
+    <p class="hint" id="pa-sub" style="margin:2px 0 10px"></p>
+    <div id="pa-list"></div>
+    <button class="btn" id="btn-pa-save" style="margin-top:14px">Save all predictions</button>
+    <button class="btn quiet" id="btn-pa-close">Close</button>
+  </div>
+</div>
+
 <div class="sharebar">
   <div class="inner">
     <button class="btn share" id="btn-share">Share</button>
@@ -883,6 +947,8 @@ var ready = false;
 var myName = null;
 var editingName = null;
 var editingMatch = null;
+var nameExpanded = false;   // show the raw name input instead of the "Predicting as X" chip
+var jokerArmed = false;     // whether the joker toggle is on for the pending prediction
 var view = "league";
 var cameFrom = "fixtures";  // which list ("fixtures" | "results") the current match view was opened from
 var tickTimer = null;
@@ -1108,11 +1174,20 @@ function motorPoints(f, e){
   if (onPodium - exact > 0) tags.push("🎽 " + (onPodium - exact) + " on podium");
   return { pts: pts, tags: tags };
 }
+// 🃏 Joker: double a player's points on the match they staked it on
+function applyJoker(m, list){
+  if (!m.j) return;
+  list.forEach(function(s){
+    if (m.j[keyFor(predName(s.e))] && s.pts > 0) { s.pts *= 2; s.joker = true; }
+    else if (m.j[keyFor(predName(s.e))]) { s.joker = true; }
+  });
+}
 function motorStandings(m){
   var list = m.p.map(function(e){
     var r = motorPoints(m.f, e);
     return { e:e, pts:r.pts, motorTags:r.tags };
   });
+  applyJoker(m, list);
   list.sort(function(a,b){
     if (a.pts !== b.pts) return b.pts - a.pts;
     return predName(a.e).localeCompare(predName(b.e));
@@ -1156,6 +1231,7 @@ function standings(m){
       });
     }
   }
+  applyJoker(m, list);
   list.sort(function(a,b){
     if (a.pts !== b.pts) return b.pts - a.pts;
     if (a.d !== b.d) return a.d - b.d;
@@ -1298,6 +1374,7 @@ function matchFromDoc(d){
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
     bq: data.bq || null,
+    j: data.j || {},
     p: arr
   };
 }
@@ -1589,12 +1666,12 @@ function render(){
 var SCORE_LEGEND = [
   ["🎯 Exact score","10"],["📏 Right winner, margin within 3","7"],["✅ Right winner","5"],
   ["🔢 Each team's score within 3","+2"],["🎖 Closest prediction of the match","+2"],
-  ["🎲 Correctly called an upset","+3"],["⭐ Bonus question right","+3"]
+  ["🎲 Correctly called an upset","+3"],["⭐ Bonus question right","+3"],["🃏 Joker (once a season)","×2"]
 ];
 var MOTOR_LEGEND = [
   ["🏁 Pole position right","+3"],["🥇 Each podium spot exactly right","+5"],
   ["🎽 Right driver, wrong podium spot","+2"],["🏆 Perfect podium (all 3 exact)","+5"],
-  ["⭐ Bonus question right","+3"]
+  ["⭐ Bonus question right","+3"],["🃏 Joker (once a season)","×2"]
 ];
 function legendHtml(rows){
   return rows.map(function(r){
@@ -1865,6 +1942,7 @@ function renderMatch(){
       var medal = ranked ? medalFor(s.rank) : "";
       var chips = (s.motorTags || []).map(function(t){ return '<span class="pc-chip bonus">' + t + '</span>'; }).join("");
       if (ranked && s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
+      if (s.joker) chips += '<span class="pc-chip joker">🃏 Joker ×2</span>';
       return '<div class="pred-card' + (ranked && s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           (ranked ? '<span class="pc-rank">' + s.rank + '</span>' : '') +
@@ -1894,6 +1972,7 @@ function renderMatch(){
       if (s.closest) chips += '<span class="pc-chip bonus">🎖 closest</span>';
       if (s.upset) chips += '<span class="pc-chip bonus">🎲 upset</span>';
       if (s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
+      if (s.joker) chips += '<span class="pc-chip joker">🃏 Joker ×2</span>';
       return '<div class="pred-card' + (s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           '<span class="pc-rank">' + s.rank + '</span>' +
@@ -2034,6 +2113,8 @@ function renderMatch(){
     : "";
 
   updateAddFormState();
+  renderIdentity();
+  renderJoker(m);
   renderBonusQ();
   startTicker();
 }
@@ -2150,22 +2231,251 @@ function renderLeague(){
   var rows = document.getElementById("lg-rows");
   var table = leagueTable();
   if (!table.length) {
-    rows.innerHTML = '<div class="empty">No players yet — add predictions on a match first.</div>';
+    rows.innerHTML = emptyLeagueHtml();
   } else {
+    var allBadges = computeBadges();
     rows.innerHTML = table.map(function(t){
       var medal = medalFor(t.rank);
       var badge = (medal && t.pts>0 ? medal + " " : "");
       var suffix = (t.spoon ? " 🥄" : "") + (t.form ? " " + t.form : "");
+      var bg = allBadges[keyFor(t.name)] || [];
+      var badgeHtml = bg.length ? '<div class="badges">' + bg.map(function(b){ return '<span class="badge">' + b + '</span>'; }).join("") + '</div>' : '';
       return '<div class="lg-row' + (t.rank===1 && t.pts>0 ? " top" : "") + (t.spoon ? " spoon" : "") + '">' +
         '<span class="pos">' + t.rank + '</span>' +
-        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + badge + esc(t.name) + suffix + '</span></span>' +
+        '<span class="nm">' + avatarHtml(t.name) + '<span class="txt">' + badge + esc(t.name) + suffix + badgeHtml + '</span></span>' +
         '<span class="played">' + t.played + '</span>' +
         '<span class="total">' + t.pts + '</span>' +
       '</div>';
     }).join("");
   }
+  renderHero();
+  renderProgress();
+  renderPredictAll();
+  renderRivals();
   renderAwards();
   renderStats();
+}
+
+/* ---------- who's already in the game, across every league ---------- */
+function knownPlayers(){
+  var seen = {}, out = [];
+  state.allM.forEach(function(m){
+    (m.p || []).forEach(function(e){
+      var nm = predName(e); if (!nm) return;
+      var k = keyFor(nm);
+      if (k === keyFor(BOKBOT_NAME)) return;
+      if (!seen[k]) { seen[k] = 1; out.push(nm); }
+    });
+  });
+  return out;
+}
+// Warm, inviting empty state instead of a cold "no players yet".
+function emptyLeagueHtml(){
+  var things = isMotorFlavour() ? "races" : "matches";
+  var fam = knownPlayers().filter(function(n){ return !myName || keyFor(n) !== keyFor(myName); });
+  var who = "";
+  if (fam.length) {
+    who = '<div class="whoshere">Already playing elsewhere: <b>' +
+      fam.slice(0,8).map(esc).join("</b>, <b>") + '</b>' +
+      (fam.length > 8 ? " and more" : "") + ' — be the first to get on the board here.</div>';
+  }
+  var open = state.m.filter(function(m){ return !m.f && !isLocked(m); }).length;
+  var call = open
+    ? (myName ? esc(myName) + ", make the first pick" : "Add the first prediction") + " and you’re instantly top of the table 🏆"
+    : "No open " + things + " right now — check back when the next one is announced.";
+  return '<div class="empty" style="text-align:center">' +
+    '<div style="font-size:34px;line-height:1;margin-bottom:8px">' + curLeagueObj().icon + '</div>' +
+    '<div style="font-weight:800;color:var(--forest);margin-bottom:4px">' + esc(curLeagueObj().name) + '</div>' +
+    '<div>' + call + '</div>' + who + '</div>';
+}
+
+/* ---------- predict-all: enter every open prediction in one scroll ---------- */
+function openMatches(){
+  return state.m.filter(function(m){ return !m.f && !isLocked(m); })
+    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+}
+function renderPredictAll(){
+  var sec = document.getElementById("sec-predictall");
+  var open = openMatches();
+  // only worth showing when there are at least two open matches to breeze through
+  sec.hidden = open.length < 2;
+}
+function openPredictAll(){
+  if (!myName) { toast("Add your name once, then you can predict everything"); return; }
+  var open = openMatches();
+  var gridOpts = competitorsFor(curLeagueObj().sport).map(function(c){ return '<option value="' + esc(c) + '">'; }).join("");
+  var body = open.map(function(m){
+    var mine = findIn(m, myName);
+    var head = '<div style="font-weight:700;color:var(--forest);margin:2px 0 6px">' +
+      (m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af) +
+      (m.ko ? ' <span style="font-weight:500;color:var(--ink-soft);font-size:12px">· ' + esc(fmtKo(m.ko)) + '</span>' : '') +
+      (mine ? ' <span style="color:#0E5C3F;font-size:12px">✓ done</span>' : '') + '</div>';
+    if (m.type === "motor") {
+      var mp = mine || {};
+      return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="motor" style="margin-bottom:14px">' + head +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+        '<input class="pa-pole" list="pa-grid" placeholder="🏁 Pole" value="' + esc(mp.pole||"") + '">' +
+        '<input class="pa-p1" list="pa-grid" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
+        '<input class="pa-p2" list="pa-grid" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
+        '<input class="pa-p3" list="pa-grid" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
+        '</div></div>';
+    }
+    return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score" style="margin-bottom:14px">' + head +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+      '<span style="flex:1;font-size:13px">' + esc(m.h) + '</span>' +
+      '<input class="pa-hs" type="number" inputmode="numeric" min="0" max="150" placeholder="0" style="width:64px" value="' + (mine ? esc(String(mine[1])) : "") + '">' +
+      '<span>–</span>' +
+      '<input class="pa-as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" style="width:64px" value="' + (mine ? esc(String(mine[2])) : "") + '">' +
+      '<span style="flex:1;font-size:13px;text-align:right">' + esc(m.a) + '</span>' +
+      '</div></div>';
+  }).join("");
+  document.getElementById("pa-sub").textContent = "Predicting as " + myName + " — fill in what you like and save. Blank ones are skipped.";
+  document.getElementById("pa-list").innerHTML =
+    '<datalist id="pa-grid">' + gridOpts + '</datalist>' + (body || '<p class="hint">Nothing open right now.</p>');
+  document.getElementById("modal-predictall").hidden = false;
+}
+function savePredictAll(){
+  var items = document.querySelectorAll("#pa-list .pa-item");
+  var saved = 0;
+  items.forEach(function(el){
+    var id = el.getAttribute("data-pa");
+    if (el.getAttribute("data-type") === "motor") {
+      var pole = el.querySelector(".pa-pole").value.trim();
+      var p1 = el.querySelector(".pa-p1").value.trim();
+      var p2 = el.querySelector(".pa-p2").value.trim();
+      var p3 = el.querySelector(".pa-p3").value.trim();
+      if (!p1) return;   // winner is the minimum needed to count
+      fsUpsertMotor(id, myName, { pole:pole, p1:p1, p2:p2, p3:p3 });
+      saved++;
+    } else {
+      var hs = el.querySelector(".pa-hs").value;
+      var as = el.querySelector(".pa-as").value;
+      if (hs === "" || as === "") return;
+      fsUpsertPrediction(id, myName, hs, as);
+      saved++;
+    }
+  });
+  document.getElementById("modal-predictall").hidden = true;
+  toast(saved ? "Saved " + saved + " prediction" + (saved===1?"":"s") + " — good luck! 🍀" : "Nothing filled in yet");
+}
+document.getElementById("btn-predict-all").addEventListener("click", openPredictAll);
+document.getElementById("btn-pa-save").addEventListener("click", savePredictAll);
+document.getElementById("btn-pa-close").addEventListener("click", function(){ document.getElementById("modal-predictall").hidden = true; });
+
+/* ---------- match-day hero: surface the next match to predict ---------- */
+function renderHero(){
+  var sec = document.getElementById("sec-hero");
+  var body = document.getElementById("hero-body");
+  var upcoming = state.m.filter(function(m){ return !m.f && !isLocked(m); })
+    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+  var m = upcoming[0];
+  if (!m) { sec.hidden = true; return; }
+  sec.hidden = false;
+  var motor = m.type === "motor";
+  var title = motor ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
+  var today = m.ko && (new Date(m.ko).toDateString() === new Date().toDateString());
+  var tag = today ? "🔴 Today" : (motor ? "Next race" : "Next up");
+  var when = m.ko ? (today ? "Locks in " + countdownText(m.ko) : fmtKo(m.ko)) : "Kick-off TBC";
+  var mine = myName && findIn(m, myName);
+  body.innerHTML = '<div class="hero"><div class="tag">' + tag + '</div>' +
+    '<div class="teams">' + title + '</div>' +
+    '<div class="cd" id="hero-cd">⏱ ' + esc(when) + '</div>' +
+    (mine
+      ? '<div class="done">✅ You\'re in — good luck!</div>'
+      : '<button class="btn" data-hero="' + esc(m.id) + '">' + (motor ? "Predict this race" : "Predict now") + '</button>') +
+    '</div>';
+}
+document.getElementById("view-league").addEventListener("click", function(ev){
+  var hb = ev.target.closest("[data-hero]");
+  if (hb) { openMatch(hb.getAttribute("data-hero"), "fixtures"); return; }
+  var rv = ev.target.closest("[data-rival]");
+  if (rv) { setRival(rv.getAttribute("data-rival")); return; }
+});
+
+/* ---------- progress: how many predictions you still owe ---------- */
+function renderProgress(){
+  var sec = document.getElementById("sec-progress");
+  var body = document.getElementById("progress-body");
+  if (!myName) { sec.hidden = true; return; }
+  var open = state.m.filter(function(m){ return !m.f && !isLocked(m); });
+  if (!open.length) { sec.hidden = true; return; }
+  var done = open.filter(function(m){ return findIn(m, myName); }).length;
+  sec.hidden = false;
+  if (done >= open.length) {
+    body.innerHTML = '<div class="progress">✅ <b>' + esc(myName) + '</b>, you\'re all caught up — every open ' + (isMotorFlavour()?"race":"match") + ' predicted!</div>';
+  } else {
+    body.innerHTML = '<div class="progress">📋 <b>' + esc(myName) + '</b>, you\'ve predicted <b>' + done + ' of ' + open.length + '</b> open ' + (isMotorFlavour()?"races":"matches") + ' — ' + (open.length-done) + ' to go!</div>';
+  }
+}
+
+/* ---------- head-to-head rivalry (personal, stored locally) ---------- */
+function rivalKey(){ return "bok-rival-" + curLeague; }
+function getRival(){ try { return localStorage.getItem(rivalKey()) || null; } catch(e){ return null; } }
+function setRival(name){
+  try {
+    if (getRival() && keyFor(getRival()) === keyFor(name)) localStorage.removeItem(rivalKey());
+    else localStorage.setItem(rivalKey(), name);
+  } catch(e){}
+  render();
+}
+function renderRivals(){
+  var sec = document.getElementById("sec-rivals");
+  var body = document.getElementById("rivals-body");
+  var table = leagueTable();
+  var others = table.filter(function(t){ return !myName || keyFor(t.name) !== keyFor(myName); });
+  if (!myName || others.length < 1) { sec.hidden = true; return; }
+  sec.hidden = false;
+  var rival = getRival();
+  if (!rival || !table.some(function(t){ return keyFor(t.name)===keyFor(rival); })) {
+    body.innerHTML = '<p class="hint" style="margin:0 0 8px">Pick your rival and I\'ll track your season duel:</p>' +
+      '<div class="badges">' + others.slice(0,12).map(function(t){
+        return '<button class="badge" data-rival="' + esc(t.name) + '" style="cursor:pointer;font-size:12.5px;padding:6px 10px">' + esc(t.name) + '</button>';
+      }).join("") + '</div>';
+    return;
+  }
+  // compute head-to-head over completed matches both predicted
+  var meWins=0, rivalWins=0, draws=0, myPts=0, rivalPts=0;
+  state.m.forEach(function(m){
+    if (!m.f) return;
+    var st = standings(m);
+    var mine=null, theirs=null;
+    st.forEach(function(s){ var k=keyFor(predName(s.e)); if (k===keyFor(myName)) mine=s; if (k===keyFor(rival)) theirs=s; });
+    if (!mine || !theirs) return;
+    myPts += mine.pts; rivalPts += theirs.pts;
+    if (mine.pts > theirs.pts) meWins++; else if (theirs.pts > mine.pts) rivalWins++; else draws++;
+  });
+  body.innerHTML = '<div class="hero" style="background:linear-gradient(150deg,#1B2A4A,#0E5C3F)">' +
+    '<div class="tag">Your duel</div>' +
+    '<div class="teams" style="font-size:16px">' + avatarHtml(myName) + ' ' + esc(myName) + ' &nbsp;<b style="color:var(--gold)">' + meWins + '–' + rivalWins + '</b>&nbsp; ' + esc(rival) + ' ' + avatarHtml(rival) + '</div>' +
+    '<div class="cd">' + (draws?draws + " drawn · ":"") + esc(myName) + ' ' + myPts + ' pts vs ' + esc(rival) + ' ' + rivalPts + ' pts this season</div>' +
+    '<button class="btn quiet" data-rival="' + esc(rival) + '" style="margin-top:10px;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">Change rival</button>' +
+    '</div>';
+}
+
+/* ---------- badges / achievements ---------- */
+function computeBadges(){
+  var out = {};   // nameKey -> [badge strings]
+  function add(name, b){ var k=keyFor(name); (out[k] = out[k] || []); if (out[k].indexOf(b) < 0) out[k].push(b); }
+  state.m.forEach(function(m){
+    if (!m.f) return;
+    var st = standings(m);
+    var botKey = keyFor(BOKBOT_NAME);
+    var botEntry = st.filter(function(s){ return keyFor(predName(s.e))===botKey; })[0];
+    st.forEach(function(s){
+      var e = s.e, nm = predName(e);
+      if (keyFor(nm) === botKey) return;
+      if (m.type === "motor") {
+        if (s.motorTags && s.motorTags.indexOf("🏆 perfect podium") >= 0) add(nm, "🏆 Perfect podium");
+      } else {
+        if (e[1]===m.f[0] && e[2]===m.f[1]) add(nm, "🎯 Bullseye");
+      }
+      if (s.joker) add(nm, "🃏 Joker played");
+      if (botEntry && s.pts > botEntry.pts) add(nm, "🤖 Bot-beater");
+    });
+  });
+  // hot streak badge from the league table form
+  leagueTable().forEach(function(t){ if (t.form === "🔥") add(t.name, "🔥 On fire"); });
+  return out;
 }
 
 function seasonStats(){
@@ -2485,6 +2795,72 @@ function setEditMode(name){
   document.getElementById("btn-add").textContent = name ? "Save changes" : "Add my prediction";
   document.getElementById("btn-cancel-edit").hidden = !name;
   updateAddFormState();
+  renderIdentity();
+}
+
+// "Predicting as Doug · change" chip so nobody re-types (and mis-spells) a name
+function renderIdentity(){
+  var bar = document.getElementById("identity-bar");
+  var field = document.getElementById("name-field");
+  if (!bar || !field) return;
+  var editingOther = editingName && (!myName || keyFor(editingName) !== keyFor(myName));
+  var collapse = myName && !editingOther && !nameExpanded;
+  bar.hidden = !collapse;
+  field.hidden = collapse;
+  if (collapse) {
+    document.getElementById("inp-name").value = myName;   // keep value so the add handler uses it
+    bar.innerHTML = '<div class="identity">' + avatarHtml(myName) +
+      '<span class="who">Predicting as ' + esc(myName) + '</span>' +
+      '<button type="button" class="change" id="btn-change-name">change</button></div>';
+  }
+}
+document.getElementById("identity-bar").addEventListener("click", function(ev){
+  if (!ev.target.closest("#btn-change-name")) return;
+  nameExpanded = true;
+  renderIdentity();
+  var el = document.getElementById("inp-name");
+  el.value = ""; el.focus();
+});
+
+/* ---------- joker (double points, once per league) ---------- */
+function myJokerMatch(){
+  if (!myName) return null;
+  var k = keyFor(myName);
+  for (var i=0;i<state.m.length;i++) if (state.m[i].j && state.m[i].j[k]) return state.m[i];
+  return null;
+}
+function renderJoker(m){
+  var btn = document.getElementById("btn-joker");
+  if (!btn) return;
+  var eligible = myName && findIn(m, myName) && !scoresLocked(m) && !editingName;
+  if (!eligible) { btn.hidden = true; return; }
+  btn.hidden = false;
+  var jm = myJokerMatch();
+  var onThis = jm && jm.id === m.id;
+  btn.classList.toggle("on", !!onThis);
+  if (onThis) btn.textContent = "🃏 Joker active — doubling this match (tap to remove)";
+  else if (jm) btn.textContent = "🃏 Move my Joker here (double points)";
+  else btn.textContent = "🃏 Play my Joker here (double points)";
+}
+document.getElementById("btn-joker").addEventListener("click", function(){
+  var m = cm();
+  if (!m || !myName) return;
+  var k = keyFor(myName);
+  var onThis = m.j && m.j[k];
+  fsSetJoker(m.id, k, !onThis);
+  toast(onThis ? "Joker removed" : "🃏 Joker played on this match!");
+});
+function fsSetJoker(matchId, key, on){
+  // one joker per league: clear it everywhere else, set (or clear) it here
+  state.m.forEach(function(mm){
+    if (mm.id !== matchId && mm.j && mm.j[key]) {
+      var p = {}; p["j." + key] = deleteField();
+      updateDoc(doc(db,"matches",mm.id), p).catch(function(){});
+    }
+  });
+  var patch = {};
+  patch["j." + key] = on ? true : deleteField();
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
 }
 function clearForm(){
   document.getElementById("inp-name").value = myName || "";
@@ -2527,7 +2903,7 @@ document.getElementById("btn-add").addEventListener("click", function(){
       var mexisting = findIn(m, name);
       fsUpsertMotor(m.id, name, picks);
       toast(mexisting ? "Updated " + name + "'s picks" : "Picks in — everyone can see them now!");
-      myName = name; saveName(); clearForm();
+      myName = name; saveName(); nameExpanded = false; clearForm();
     }
     return;
   }
@@ -2555,7 +2931,7 @@ document.getElementById("btn-add").addEventListener("click", function(){
     var existing = findIn(m, name);
     fsUpsertPrediction(m.id, name, saEl.value, scEl.value);
     toast(existing ? "Updated " + name + "'s prediction" : "Added — everyone can see it now!");
-    myName = name; saveName();
+    myName = name; saveName(); nameExpanded = false;
     clearForm();
   }
 });
@@ -2633,10 +3009,37 @@ document.getElementById("btn-clear-final").addEventListener("click", function(){
   requirePin(function(){ fsSetFinal(m.id, null); });
 });
 
+// Cheeky auto-generated one-liner for the results share. Deterministic per
+// match (same result → same banter) but varied across matches.
+function banterLine(m, ranked){
+  var humans = ranked.filter(function(s){ return keyFor(predName(s.e)) !== keyFor(BOKBOT_NAME); });
+  if (!humans.length) return "";
+  var top = humans[0], loser = humans[humans.length - 1];
+  var botKey = keyFor(BOKBOT_NAME);
+  var bot = ranked.filter(function(s){ return keyFor(predName(s.e)) === botKey; })[0];
+  var winName = predName(top.e), lastName = predName(loser.e);
+  var lines = [];
+  var bullseye = m.type === "motor"
+    ? (top.motorTags && top.motorTags.indexOf("🏆 perfect podium") >= 0)
+    : (Array.isArray(top.e) && top.e[1] === m.f[0] && top.e[2] === m.f[1]);
+  if (bullseye) lines.push("🎯 " + winName + " nailed it on the nose — pure witchcraft.");
+  if (bot && top.pts > bot.pts) lines.push("🤖 " + winName + " out-thought the bot. Skynet's crying.");
+  if (bot && bot.pts >= top.pts && humans.length) lines.push("🤖 Bokbot beat the lot of you. Humans, do better.");
+  if (humans.length >= 3 && top.pts - loser.pts >= 8) lines.push("🏆 " + winName + " ran away with it while " + lastName + " read the map upside down.");
+  if (humans.length >= 2 && humans[0].pts === humans[1].pts) lines.push("😮 " + winName + " and " + predName(humans[1].e) + " dead level at the top — steward's enquiry pending.");
+  lines.push("🏆 Bragging rights: " + winName + ". Screenshot saved, no doubt.");
+  lines.push("🔥 " + winName + " tops the pile. The rest of you — homework.");
+  if (humans.length >= 2) lines.push("🥄 Spare a thought for " + lastName + " down the bottom. Bless.");
+  // deterministic pick from the applicable lines
+  var seed = 0, id = String(m.id || winName);
+  for (var i=0;i<id.length;i++) seed = (seed*31 + id.charCodeAt(i)) >>> 0;
+  return lines[seed % lines.length];
+}
 document.getElementById("btn-share-results").addEventListener("click", function(){
   var m = cm();
   if (!m || !m.f || !m.p.length) return;
   var ranked = standings(m);
+  var banter = banterLine(m, ranked);
   if (m.type === "motor") {
     var mlines = [
       (m.hf||"🏁") + " " + m.h + " — RESULT",
@@ -2649,6 +3052,7 @@ document.getElementById("btn-share-results").addEventListener("click", function(
         (s.motorTags && s.motorTags.length ? " (" + s.motorTags.join(", ") + ")" : ""));
     });
     if (ranked.length > 5) mlines.push("…and " + (ranked.length - 5) + " more");
+    if (banter) { mlines.push(""); mlines.push(banter); }
     mlines.push(""); mlines.push("See it live: " + appUrl(m.id));
     shareContent(mlines.join("\n"));
     return;
@@ -2675,6 +3079,7 @@ document.getElementById("btn-share-results").addEventListener("click", function(
     lines.push("💰 Pot: R" + (leaguePot() * m.p.length) +
       (winners.length > 1 ? " — shared!" : " to " + winners[0].e[0] + "!"));
   }
+  if (banter) { lines.push(""); lines.push(banter); }
   lines.push("");
   lines.push("See it live: " + appUrl(m.id));
   shareContent(lines.join("\n"));
@@ -2810,6 +3215,15 @@ document.getElementById("pot-amount").addEventListener("change", function(){
 });
 
 /* ---------- main share ---------- */
+// Personal invite line, in the voice of whoever is sending it (their saved name).
+function inviteFrom(what){
+  var lg = curLeagueObj();
+  if (myName) {
+    return lg.icon + " " + myName + " has challenged you to the " + lg.name + "! " +
+      "Think you can out-predict " + myName + " on " + what + "? Prove it 👇";
+  }
+  return lg.icon + " Join the " + lg.name + " prediction league — " + what + "! 👇";
+}
 document.getElementById("btn-share").addEventListener("click", function(){
   if (view === "league") {
     var table = leagueTable();
@@ -2826,6 +3240,7 @@ document.getElementById("btn-share").addEventListener("click", function(){
       lines.push("🥄 Wooden spoon: " + joinNames(spoons.map(function(t){ return t.name; })));
     }
     lines.push("");
+    if (myName) lines.push(myName + " dares you to climb this table 👇");
     lines.push("Join in: " + appUrl());
     shareContent(lines.join("\n"));
     return;
@@ -2833,12 +3248,11 @@ document.getElementById("btn-share").addEventListener("click", function(){
   if (view === "match") {
     var m = cm();
     if (!m) return;
-    shareContent(
-      curLeagueObj().icon + " Join the " + curLeagueObj().name + " prediction league! Add your score for " + m.h + " vs " + m.a + ":\n" + appUrl(m.id)
-    );
+    var what = m.type === "motor" ? m.h : (m.h + " vs " + m.a);
+    shareContent(inviteFrom(what) + "\n" + appUrl(m.id));
     return;
   }
-  shareContent(curLeagueObj().icon + " Join the " + curLeagueObj().name + " prediction league! Add your scores:\n" + appUrl());
+  shareContent(inviteFrom("every match this season") + "\n" + appUrl());
 });
 
 /* ================= install (PWA) ================= */

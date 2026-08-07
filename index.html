@@ -245,10 +245,20 @@
   .bq-lbl.wait{color:var(--gold-deep)}
   .bq-line .muted{color:var(--ink-soft)}
   .bq-you{font-size:13px;margin-top:8px;font-weight:600;color:var(--forest)}
+  .bq-item .bq-q-text{font-weight:600;margin:0 0 8px}
+  .bq-ans{width:100%;border-radius:8px;border:1px solid var(--line);padding:10px;font-size:15px;box-sizing:border-box}
+  .pts-pill{font-size:11px;font-weight:800;background:var(--gold);color:#3a2c00;border-radius:999px;padding:1px 8px;vertical-align:middle}
   .linkish{background:transparent;border:0;color:var(--forest);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
   /* no-peeking gate on the match view */
   .peek{text-align:center;line-height:1.5}
   .peek b{color:var(--forest)}
+  /* Sprint / Grand Prix badge */
+  .race-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:1px 7px;vertical-align:middle;margin-right:2px}
+  .race-tag.sprint{background:#FFE08A;color:#7a5600}
+  .race-tag.main{background:#DDEBE1;color:#0E5C3F}
+  .hero .race-tag.main{background:rgba(255,255,255,.22);color:#fff}
+  .hero .race-tag.sprint{background:var(--gold);color:#3a2c00}
+  .btn.ghost{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35)}
   .pa-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
   .pa-head{font-weight:700;color:var(--forest);margin:0 0 8px;font-size:14px}
   .pa-when{font-weight:500;color:var(--ink-soft);font-size:12px}
@@ -1076,7 +1086,7 @@ function expandRaces(races, allSprints){
   var out = [];
   (races || []).forEach(function(r){
     if (allSprints || r.sprint) {
-      out.push({ name: sprintName(r.name), flag: r.flag, ko: (r.ko ? r.ko - 86400000 : null), tbc: true });
+      out.push({ name: sprintName(r.name), flag: r.flag, ko: (r.ko ? r.ko - 86400000 : null), tbc: true, sprint: true });
     }
     out.push({ name: r.name, flag: r.flag, ko: r.ko, tbc: !!r.tbc });
   });
@@ -1578,7 +1588,7 @@ function matchFromDoc(d){
   });
   return {
     id: d.id, league: data.league || DEFAULT_LEAGUE, type: type, sport: sport,
-    tour: data.tour || null,
+    tour: data.tour || null, sprint: !!data.sprint,
     h:data.h, hf:data.hf, a:data.a, af:data.af,
     ko: data.ko || null, vn: data.vn || null, tbc: !!data.tbc,
     f: data.f || null,
@@ -1704,41 +1714,48 @@ function fsCreateLeague(name, sport){
 function fsDeleteLeague(id){
   return deleteDoc(doc(db,"leagues",id));
 }
-// Drop a ready-made tournament's fixtures/races into a league. Every seeded
-// match is tagged with its sport and `tour` id, so leaderboards stay per-sport
-// and we can tell which tournaments a league already has.
+// a stable identity for an event (by teams / race name), so we never duplicate
+// one that's already in a league — and can top up ones that are missing
+function eventKey(o){ return keyFor(o.h || o.name || "") + "|" + keyFor(o.a || ""); }
+// the flat list of events a tournament contains (sprints expanded), skipping
+// past ones unless they're all past
+function tournamentEvents(tour){
+  var list = tour.races
+    ? expandRaces(tour.races, tour.sprints).map(function(r){ return { name:r.name, h:r.name, a:"", flag:r.flag, ko:r.ko, tbc:r.tbc, sprint:!!r.sprint, motor:true }; })
+    : (tour.fixtures || []).map(function(fx){ return { h:fx.h, a:fx.a, hf:fx.hf, af:fx.af, ko:fx.ko, tbc:fx.tbc, vn:fx.vn, motor:false }; });
+  var future = list.filter(function(e){ return !e.ko || e.ko > Date.now(); });
+  return future.length ? future : list;
+}
+function leagueEventKeys(leagueId){
+  var have = {};
+  state.allM.forEach(function(m){ if ((m.league||DEFAULT_LEAGUE) === leagueId) have[eventKey(m)] = true; });
+  return have;
+}
+// how many of a tournament's (upcoming) events aren't in the league yet
+function missingTournamentCount(leagueId, tour){
+  var have = leagueEventKeys(leagueId);
+  return tournamentEvents(tour).filter(function(e){ return !have[eventKey(e)]; }).length;
+}
+// Drop a ready-made tournament's fixtures/races into a league. Events already
+// present are skipped, so this both seeds a new league AND tops up missing ones
+// (e.g. adding sprints to a MotoGP league created before sprints existed).
 function loadTournament(leagueId, sport, tourId){
   var tour = tournamentsFor(sport).filter(function(t){ return t.id === tourId; })[0];
   if (!tour) return Promise.resolve(0);
-  var jobs = [];
-  // a fresh league has no history, so skip fixtures that have already started —
-  // unless they're ALL in the past, in which case load them anyway (better than
-  // an empty league; the organiser can prune or set results).
-  function upcoming(list){
-    var future = list.filter(function(x){ return !x.ko || x.ko > Date.now(); });
-    return future.length ? future : list;
-  }
+  var have = leagueEventKeys(leagueId);
+  var ts = tour.teamsSport || sport;
   function bqFor(ref, ko){ return (ko && Date.now() > ko) ? null : { q: autoBonusQ(ref.id, sport) }; }
-  if (tour.races) {
-    upcoming(expandRaces(tour.races, tour.sprints)).forEach(function(r){
-      var ref = doc(matchesCol);
-      jobs.push(setDoc(ref, {
-        league:leagueId, sport:sport, type:"motor", tour:tourId,
-        h:r.name, hf:r.flag || SPORTS[sport].fallback, a:"", af:"", ko:r.ko, tbc:!!r.tbc, p:{}, f:null,
-        bq: bqFor(ref, r.ko)
-      }).catch(function(){}));
-    });
-  } else if (tour.fixtures) {
-    var ts = tour.teamsSport || sport;
-    upcoming(tour.fixtures).forEach(function(fx){
-      var ref = doc(matchesCol);
-      jobs.push(setDoc(ref, {
-        league:leagueId, sport:sport, type:"score", tour:tourId,
-        h:fx.h, hf:fx.hf || flagFor(fx.h,ts), a:fx.a, af:fx.af || flagFor(fx.a,ts), ko:fx.ko, vn:fx.vn || "", tbc:!!fx.tbc, p:{}, f:null,
-        bq: bqFor(ref, fx.ko)
-      }).catch(function(){}));
-    });
-  }
+  var jobs = [];
+  tournamentEvents(tour).forEach(function(e){
+    if (have[eventKey(e)]) return;   // already in this league — don't duplicate
+    var ref = doc(matchesCol);
+    var doc0 = e.motor
+      ? { league:leagueId, sport:sport, type:"motor", tour:tourId,
+          h:e.name, hf:e.flag || SPORTS[sport].fallback, a:"", af:"", ko:e.ko, tbc:!!e.tbc, sprint:!!e.sprint, p:{}, f:null, bq:bqFor(ref,e.ko) }
+      : { league:leagueId, sport:sport, type:"score", tour:tourId,
+          h:e.h, hf:e.hf || flagFor(e.h,ts), a:e.a, af:e.af || flagFor(e.a,ts), ko:e.ko, vn:e.vn || "", tbc:!!e.tbc, p:{}, f:null, bq:bqFor(ref,e.ko) };
+    jobs.push(setDoc(ref, doc0).catch(function(){}));
+  });
   return Promise.all(jobs).then(function(){ return jobs.length; });
 }
 // Which tournament ids are already present in a league. A tournament counts as
@@ -2088,7 +2105,8 @@ function renderHeader(){
   if (m.type === "motor") {
     card.innerHTML =
       '<button class="back-link" id="btn-back" type="button">‹ ' + backLabel + '</button>' +
-      '<div class="league-head"><div class="big">' + (m.hf || "🏁") + " " + esc(m.h) + '</div></div>';
+      '<div class="league-head"><div class="big">' + (m.hf || "🏁") + " " + esc(m.h) + '</div>' +
+      '<div class="sub">' + raceBadge(m) + '</div></div>';
   } else {
     card.innerHTML =
       '<button class="back-link" id="btn-back" type="button">‹ ' + backLabel + '</button>' +
@@ -2125,7 +2143,7 @@ function renderFixturesList(){
       ? (isLocked(m) ? "🔒 Locked — awaiting result" : esc(fmtKo(m.ko)) + (m.tbc ? " (provisional)" : ""))
       : "Kick-off TBC";
     var title = m.type === "motor"
-      ? '<span class="lr-flags">' + (m.hf||"🏁") + '</span>' + esc(m.h)
+      ? '<span class="lr-flags">' + (m.hf||"🏁") + '</span>' + raceBadge(m) + " " + esc(m.h)
       : '<span class="lr-flags">' + m.hf + m.af + '</span>' + esc(m.h) + ' v ' + esc(m.a);
     return '<div class="list-row" data-match="' + esc(m.id) + '">' +
       '<div class="lr-teams">' +
@@ -2616,6 +2634,13 @@ function renderPredictAll(){
   // only worth showing when there are at least two open matches to breeze through
   sec.hidden = open.length < 2;
 }
+// clear Sprint / Grand Prix badge for motorsport events
+function raceBadge(m){
+  if (!m || m.type !== "motor") return "";
+  return m.sprint
+    ? '<span class="race-tag sprint">🔁 SPRINT</span>'
+    : '<span class="race-tag main">🏁 GRAND PRIX</span>';
+}
 // ---- shared editable prediction rows (predict-all sheet AND the home page) ----
 // One editable row for a match. `leagueTag` (optional) labels which league it's
 // in — used on the home page where rows are grouped by date, not by league.
@@ -2623,6 +2648,7 @@ function predictionItemHtml(m, gridId, leagueTag){
   var mine = myName ? findIn(m, myName) : null;
   var head = '<div class="pa-head">' +
     (leagueTag ? '<span class="pa-league">' + leagueTag + '</span> ' : '') +
+    raceBadge(m) +
     (m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af) +
     (m.ko ? ' <span class="pa-when">· ' + esc(fmtKo(m.ko)) + (m.tbc ? " (prov.)" : "") + '</span>' : '') +
     (mine ? ' <span class="pa-done">✓ done</span>' : '') + '</div>';
@@ -2654,7 +2680,7 @@ function gridDatalist(matches, id){
 // save every filled-in row under `root`; returns how many were saved
 function savePredictionItems(root){
   var saved = 0;
-  root.querySelectorAll(".pa-item").forEach(function(el){
+  root.querySelectorAll(".pa-item[data-pa]").forEach(function(el){
     var id = el.getAttribute("data-pa");
     if (el.getAttribute("data-type") === "motor") {
       var pole = el.querySelector(".pa-pole").value.trim();
@@ -2700,7 +2726,16 @@ function outstandingList(){
     return !m.f && !isLocked(m) && !findIn(m, myName) && !isLeagueHidden(m.league || DEFAULT_LEAGUE);
   }).sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
 }
-function outstandingCount(){ return outstandingList().length; }
+// open matches you've predicted but still owe a bonus-question answer on
+function outstandingBonus(){
+  if (!myName) return [];
+  return state.allM.filter(function(m){
+    return !m.f && !isLocked(m) && !isLeagueHidden(m.league || DEFAULT_LEAGUE) &&
+      m.bq && m.bq.q && findIn(m, myName) && !(m.bq.r && m.bq.r[keyFor(myName)]);
+  }).sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+}
+// badge = everything still owed: score/podium predictions + bonus answers
+function outstandingCount(){ return outstandingList().length + outstandingBonus().length; }
 function leagueMeta(){
   var name = {}, icon = {};
   state.leagues.forEach(function(l){ name[l.id] = l.name; icon[l.id] = l.icon; });
@@ -2740,6 +2775,24 @@ function homeCaughtUpHtml(){
         '</div><span class="lr-chev">›</span></div>';
     }).join("");
 }
+// bonus questions you've unlocked (predicted the score) but not answered yet
+function homeBonusHtml(){
+  var list = outstandingBonus();
+  if (!list.length) return "";
+  var meta = leagueMeta();
+  return '<div class="home-group"><div class="home-group-head">⭐ ' + list.length + ' bonus question' + (list.length===1?'':'s') +
+      ' to answer <span class="pts-pill">+3 each</span></div>' +
+    list.map(function(m){
+      var lid = m.league || DEFAULT_LEAGUE;
+      var title = m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
+      return '<div class="pa-item bq-item" data-bqid="' + esc(m.id) + '">' +
+        '<div class="pa-head"><span class="pa-league">' + (meta.icon[lid]||"🏆") + " " + esc(meta.name[lid]||"League") + '</span> ' + raceBadge(m) + title + '</div>' +
+        '<div class="bq-q-text">⭐ ' + esc(m.bq.q) + '</div>' +
+        '<input class="bq-ans" maxlength="60" placeholder="Your answer — hidden until kick-off">' +
+        '</div>';
+    }).join("") +
+    '<button class="btn" id="home-bonus-save">Save bonus answers</button></div>';
+}
 function renderHome(){
   var intro = document.getElementById("home-intro");
   var body = document.getElementById("home-body");
@@ -2759,14 +2812,22 @@ function renderHome(){
   var hiddenN = hiddenLeagueSet().length;
   var manageLink = '<p class="home-manage"><button type="button" class="linkish" id="home-manage-leagues">⚙️ Choose which leagues you follow' +
     (hiddenN ? ' (' + hiddenN + ' hidden)' : '') + '</button></p>';
-  // 2) all caught up
-  if (!open.length) {
+  var bonusHtml = homeBonusHtml();
+  // 2) fully caught up — every score AND every bonus answered
+  if (!open.length && !bonusHtml) {
     intro.innerHTML = '<div class="home-hero caught-up"><div class="hh-title">🎉 All caught up, ' + esc(myName) + '!</div>' +
-      '<p class="hh-sub">You\'ve predicted every open match. New fixtures will show up here the moment they\'re added.</p>' + idLine + '</div>';
+      '<p class="hh-sub">You\'ve predicted every open match and answered every bonus question. New fixtures will show up here the moment they\'re added.</p>' + idLine + '</div>';
     body.innerHTML = homeCaughtUpHtml() + manageLink;
     return;
   }
-  // 3) outstanding predictions, grouped by EVENT DATE (soonest first). Each row
+  // 3) scores all in, but bonus questions still to answer
+  if (!open.length) {
+    intro.innerHTML = '<div class="home-hero"><div class="hh-title">⭐ Just bonus questions left</div>' +
+      '<p class="hh-sub">Your scores are all in — answer these bonus questions for +3 points each.</p>' + idLine + '</div>';
+    body.innerHTML = bonusHtml + manageLink;
+    return;
+  }
+  // 4) outstanding predictions, grouped by EVENT DATE (soonest first). Each row
   //    is tagged with its league since a date can span several leagues.
   var meta = leagueMeta();
   var groups = {}, order = [];
@@ -2788,7 +2849,7 @@ function renderHome(){
         return predictionItemHtml(m, "home-grid", tag);
       }).join("") + '</div>';
   });
-  body.innerHTML = html + '<button class="btn" id="home-save">Save all my predictions</button>' + manageLink;
+  body.innerHTML = html + '<button class="btn" id="home-save">Save all my predictions</button>' + bonusHtml + manageLink;
 }
 document.getElementById("view-home").addEventListener("click", function(ev){
   if (ev.target.closest("#home-manage-leagues")) { openLeaguesModal(); return; }
@@ -2802,6 +2863,17 @@ document.getElementById("view-home").addEventListener("click", function(ev){
   if (ev.target.closest("#home-save")) {
     var saved = savePredictionItems(document.getElementById("home-body"));
     toast(saved ? "Saved " + saved + " prediction" + (saved===1?"":"s") + " — good luck! 🍀" : "Fill in at least one prediction first");
+    return;
+  }
+  if (ev.target.closest("#home-bonus-save")) {
+    var bsaved = 0;
+    document.querySelectorAll("#home-body .bq-item").forEach(function(el){
+      var ans = el.querySelector(".bq-ans").value.trim();
+      if (!ans) return;
+      fsAnswerBonus(el.getAttribute("data-bqid"), myName, ans);
+      bsaved++;
+    });
+    toast(bsaved ? "Saved " + bsaved + " bonus answer" + (bsaved===1?"":"s") + " ⭐" : "Type at least one answer first");
     return;
   }
   var go = ev.target.closest("[data-hgo]");
@@ -2821,16 +2893,18 @@ function renderHero(){
   if (!m) { sec.hidden = true; return; }
   sec.hidden = false;
   var motor = m.type === "motor";
-  var title = motor ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
+  var title = motor ? (m.hf||"🏁") + " " + raceBadge(m) + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
   var today = m.ko && (new Date(m.ko).toDateString() === new Date().toDateString());
   var tag = today ? "🔴 Today" : (motor ? "Next race" : "Next up");
   var when = m.ko ? (today ? "Locks in " + countdownText(m.ko) : fmtKo(m.ko)) : "Kick-off TBC";
   var mine = myName && findIn(m, myName);
+  var others = m.p.filter(function(e){ return !myName || keyFor(predName(e)) !== keyFor(myName); }).length;
   body.innerHTML = '<div class="hero"><div class="tag">' + tag + '</div>' +
     '<div class="teams">' + title + '</div>' +
     '<div class="cd" id="hero-cd">⏱ ' + esc(when) + '</div>' +
     (mine
-      ? '<div class="done">✅ You\'re in — good luck!</div>'
+      ? '<div class="done">✅ You\'re in — good luck!</div>' +
+        '<button class="btn ghost" data-hero="' + esc(m.id) + '" style="margin-top:10px">👀 See everyone\'s picks' + (others ? ' (' + others + ')' : '') + '</button>'
       : '<button class="btn" data-hero="' + esc(m.id) + '">' + (motor ? "Predict this race" : "Predict now") + '</button>') +
     '</div>';
 }
@@ -3868,13 +3942,17 @@ function renderTournamentsModal(){
     return tournamentsFor(sp).map(function(t){
       var added = !!have[t.id];
       var count = tournamentEventCount(t);
+      var missing = added ? missingTournamentCount(curLeague, t) : count;
+      var word = sportType(sp)==="motor" ? " races" : " matches";
+      var action;
+      if (!added) action = '<button class="btn" data-add-tour="' + esc(t.id) + '" data-tour-sport="' + sp + '" style="margin:0;width:auto;padding:8px 14px">Add</button>';
+      else if (missing > 0) action = '<button class="btn" data-add-tour="' + esc(t.id) + '" data-tour-sport="' + sp + '" style="margin:0;width:auto;padding:8px 12px;font-size:13px">＋ Add ' + missing + ' missing</button>';
+      else action = '<span class="tour-added">✓ Added</span>';
       return '<div class="league-item">' +
         '<span class="li-ic">' + SPORTS[sp].icon + '</span>' +
         '<span class="li-body"><div class="li-name">' + esc(t.name) + '</div>' +
-          '<div class="li-meta">' + SPORTS[sp].label + ' · ' + count + (sportType(sp)==="motor"?' races':' matches') + '</div></span>' +
-        (added
-          ? '<span class="tour-added">✓ Added</span>'
-          : '<button class="btn" data-add-tour="' + esc(t.id) + '" data-tour-sport="' + sp + '" style="margin:0;width:auto;padding:8px 14px">Add</button>') +
+          '<div class="li-meta">' + SPORTS[sp].label + ' · ' + count + word + (added && missing>0 ? ' · ' + missing + ' not loaded' : '') + '</div></span>' +
+        action +
       '</div>';
     }).join("");
   }).join("");

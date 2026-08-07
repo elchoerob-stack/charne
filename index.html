@@ -66,6 +66,8 @@
   .league-item.muted{opacity:.55}
   .li-hidden{font-size:10.5px;font-weight:700;color:var(--ink-soft);background:var(--line);border-radius:999px;padding:1px 6px;vertical-align:middle}
   .tour-added{font-size:12.5px;font-weight:700;color:var(--forest);flex:0 0 auto}
+  .lp-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer}
+  .lp-item input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--forest)}
   .eyebrow{
     font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--gold);font-weight:700;margin:0;
@@ -483,6 +485,18 @@
   .pot-total{font-size:13px;color:var(--ink-soft);margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}
   .pot-total strong{color:var(--gold-deep);font-size:15px}
 
+  /* ---------- league tabs (choose which log to view) ---------- */
+  .league-tabs{
+    display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;margin:0 -2px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .league-tabs::-webkit-scrollbar{display:none}
+  .league-tabs .lt{
+    flex:0 0 auto;border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;
+  }
+  .league-tabs .lt.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+  .league-tabs .lt.add{font-weight:800;color:var(--forest);border-style:dashed}
   /* ---------- league ---------- */
   .lg-thead,.lg-row{
     display:grid;grid-template-columns:34px 1fr 56px 64px;
@@ -699,6 +713,7 @@
 
     <!-- ============ LEAGUE VIEW ============ -->
     <div id="view-league" hidden>
+      <nav class="league-tabs" id="league-tabs" aria-label="Choose a league to view"></nav>
       <section id="sec-hero" hidden><div id="hero-body"></div></section>
       <section id="sec-progress" hidden><div id="progress-body"></div></section>
       <section id="sec-predictall" hidden>
@@ -818,13 +833,22 @@
   </div>
 </main>
 
+<div class="modal-overlay" id="modal-league-picker" hidden>
+  <div class="modal-card">
+    <h3>👋 Choose your leagues</h3>
+    <p class="hint" style="margin:2px 0 12px">Tick the leagues you want to follow. You'll only be nudged to predict for these on your home page — and they're the ones shown in your logs. You can change this anytime from the leagues menu.</p>
+    <div id="lp-list"></div>
+    <button class="btn" id="btn-lp-save" style="margin-top:14px">Save my leagues</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-intro" hidden>
   <div class="modal-card">
     <h3>🏉 How this works</h3>
     <div class="step"><span class="ic">📅</span><span><strong>Fixtures</strong> lists every match still to come. Tap one and add your score guess before kick-off.</span></div>
     <div class="step"><span class="ic">✅</span><span><strong>Results</strong> shows finished matches with the final score and who called it closest.</span></div>
     <div class="step"><span class="ic">🏆</span><span><strong>League</strong> is the running scoreboard for the whole season — points add up across every match.</span></div>
-    <div class="step"><span class="ic">🔀</span><span>Tap the <strong>league name</strong> at the top to switch between leagues or start a new one (a work league, U20 rugby, football…) — each has its own scoreboard from zero.</span></div>
+    <div class="step"><span class="ic">🔀</span><span>On the <strong>League</strong> tab, the row of <strong>league buttons</strong> at the top lets you switch between logs or start a new one (motorsport, U20 rugby, cricket…) — each has its own scoreboard from zero.</span></div>
     <div class="step"><span class="ic">🔒</span><span>Deleting a prediction, setting a final score, or editing someone else's guess needs the family PIN.</span></div>
     <div class="step"><span class="ic">💰</span><span>Set a pot amount on any match and the season's points leader takes it all.</span></div>
     <button class="btn" id="btn-intro-close" style="margin-top:20px">Got it!</button>
@@ -1947,6 +1971,7 @@ function render(){
   renderKnownNames();
   renderLeagueSwitch();
   renderLegends();
+  maybeShowLeaguePicker();   // one-off "choose your leagues" prompt (self-guards)
 }
 
 var SCORE_LEGEND = [
@@ -2581,6 +2606,7 @@ function renderLeague(){
         '</div>';
     }).join("");
   }
+  renderLeagueTabs();
   renderHero();
   renderProgress();
   renderPredictAll();
@@ -2589,6 +2615,22 @@ function renderLeague(){
   renderAwards();
   renderStats();
 }
+// the log picker: every league you follow, side by side, choose which to view
+function renderLeagueTabs(){
+  var el = document.getElementById("league-tabs");
+  if (!el) return;
+  // show the leagues you follow (plus the one you're viewing, even if hidden)
+  var shown = state.leagues.filter(function(l){ return l.id === curLeague || !isLeagueHidden(l.id); });
+  if (!shown.length) shown = state.leagues;
+  el.innerHTML = shown.map(function(l){
+    return '<button class="lt' + (l.id===curLeague ? " active" : "") + '" data-lt="' + esc(l.id) + '">' + l.icon + ' ' + esc(l.name) + '</button>';
+  }).join("") + '<button class="lt add" data-lt-manage="1" aria-label="Add or manage leagues">＋</button>';
+}
+document.getElementById("league-tabs").addEventListener("click", function(ev){
+  var t = ev.target.closest("[data-lt]");
+  if (t) { switchLeague(t.getAttribute("data-lt")); return; }
+  if (ev.target.closest("[data-lt-manage]")) openLeaguesModal();
+});
 
 /* ---------- who's already in the game, across every league ---------- */
 function knownPlayers(){
@@ -3871,6 +3913,7 @@ function showIntro(){ document.getElementById("modal-intro").hidden = false; }
 function hideIntro(){
   document.getElementById("modal-intro").hidden = true;
   try { localStorage.setItem(INTRO_KEY, "1"); } catch(e){}
+  maybeShowLeaguePicker();   // after onboarding, offer the one-off league choice
 }
 document.getElementById("btn-help").addEventListener("click", showIntro);
 document.getElementById("btn-intro-close").addEventListener("click", hideIntro);
@@ -3883,6 +3926,42 @@ function openLeaguesModal(){
   document.getElementById("modal-leagues").hidden = false;
 }
 function closeLeaguesModal(){ document.getElementById("modal-leagues").hidden = true; }
+
+/* ===== one-off "choose your leagues" picker (shown once to every user) ===== */
+var LEAGUES_CHOSEN_KEY = "bok-leagues-chosen";
+var leaguePickerShown = false;
+function renderLeaguePicker(){
+  var wrap = document.getElementById("lp-list");
+  wrap.innerHTML = state.leagues.map(function(l){
+    var on = !isLeagueHidden(l.id);
+    var count = state.allM.filter(function(m){ return (m.league||DEFAULT_LEAGUE)===l.id; }).length;
+    return '<label class="lp-item"><input type="checkbox" data-lp="' + esc(l.id) + '"' + (on ? ' checked' : '') + '>' +
+      '<span class="li-ic">' + l.icon + '</span>' +
+      '<span class="li-body"><div class="li-name">' + esc(l.name) + '</div>' +
+        '<div class="li-meta">' + (SPORTS[l.sport] ? SPORTS[l.sport].label : l.sport) + ' · ' + count + ' match' + (count===1?'':'es') + '</div></span>' +
+      '</label>';
+  }).join("");
+}
+function maybeShowLeaguePicker(){
+  if (leaguePickerShown) return;
+  try { if (localStorage.getItem(LEAGUES_CHOSEN_KEY)) return; } catch(e){}
+  if (state.leagues.length < 2) return;                          // nothing to choose between
+  if (!document.getElementById("modal-intro").hidden) return;    // let onboarding finish first
+  if (!document.getElementById("modal-leagues").hidden) return;  // not over the manage modal
+  if (!document.getElementById("modal-league-picker").hidden) return;
+  leaguePickerShown = true;
+  renderLeaguePicker();
+  document.getElementById("modal-league-picker").hidden = false;
+}
+document.getElementById("btn-lp-save").addEventListener("click", function(){
+  document.querySelectorAll("#lp-list [data-lp]").forEach(function(cb){
+    setLeagueHidden(cb.getAttribute("data-lp"), !cb.checked);
+  });
+  try { localStorage.setItem(LEAGUES_CHOSEN_KEY, "1"); } catch(e){}
+  document.getElementById("modal-league-picker").hidden = true;
+  toast("Saved — showing your leagues");
+  render();
+});
 function renderLeagueList(){
   var wrap = document.getElementById("league-list");
   var counts = {};

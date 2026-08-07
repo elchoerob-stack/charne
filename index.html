@@ -977,19 +977,21 @@ var CRICKET_2026 = [
   {id:"cric-sa-nz",   h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,15,10,0),  vn:"Test Match", tbc:true}
 ];
 
-// The All Blacks' games in South Africa — a ready-made mini-league drawn from
-// the Springbok fixtures (same match ids, so it's never seen as a duplicate of
-// the full season). The Baltimore Test is a "home" game played in the USA, so
-// it's left out of the tour-to-SA set.
-var NZ_TOUR_2026 = FIXTURES
-  .filter(function(fx){ return fx.h === "South Africa" && fx.a === "New Zealand" && !/USA/.test(fx.vn || ""); })
-  .map(function(fx){ return { id:fx.id, h:fx.h, a:fx.a, ko:fx.ko, vn:fx.vn, tbc:fx.tbc }; });
+// The 2026 All Blacks tour of South Africa — the midweek games against the URC
+// franchises (the Freedom Cup Tests vs the Springboks live in the main season).
+// Kick-off times are provisional and editable per match.
+var NZ_TOUR_2026 = [
+  {id:"nz-stormers", h:"DHL Stormers",         hf:"⛈️", a:"New Zealand", af:"🇳🇿", ko:Date.UTC(2026,7,7,17,0),  vn:"DHL Stadium, Cape Town", tbc:true},
+  {id:"nz-sharks",   h:"Hollywoodbets Sharks", hf:"🦈", a:"New Zealand", af:"🇳🇿", ko:Date.UTC(2026,7,11,17,0), vn:"Kings Park Stadium, Durban", tbc:true},
+  {id:"nz-bulls",    h:"Vodacom Bulls",        hf:"🐂", a:"New Zealand", af:"🇳🇿", ko:Date.UTC(2026,7,15,17,0), vn:"Loftus Versfeld, Pretoria", tbc:true},
+  {id:"nz-lions",    h:"Emirates Lions",       hf:"🦁", a:"New Zealand", af:"🇳🇿", ko:Date.UTC(2026,7,25,17,0), vn:"Ellis Park Stadium, Johannesburg", tbc:true}
+];
 
 // A "tournament" is a ready-made set of fixtures/races for one sport that can be
 // dropped into any league. Score sports carry `fixtures`; motorsports `races`.
 var TOURNAMENTS = {
   rugby:    [{ id:"spr-2026",  name:"Springboks 2026",        fixtures: FIXTURES },
-            { id:"nztour-2026", name:"All Blacks in SA 2026",  fixtures: NZ_TOUR_2026 }],
+            { id:"nztour-2026", name:"All Blacks Tour of SA 2026", fixtures: NZ_TOUR_2026 }],
   u20rugby: [{ id:"u20-2026",  name:"U20 Championship 2026",  fixtures: U20_2026, teamsSport:"u20rugby" }],
   f1:       [{ id:"f1-2026",   name:"F1 2026 Season",         races: F1_2026 }],
   motogp:   [{ id:"motogp-2026", name:"MotoGP 2026 Season",   races: MOTOGP_2026 }],
@@ -1591,7 +1593,7 @@ function loadTournament(leagueId, sport, tourId){
     upcoming(tour.fixtures).forEach(function(fx){
       jobs.push(setDoc(doc(matchesCol), {
         league:leagueId, sport:sport, type:"score", tour:tourId,
-        h:fx.h, hf:flagFor(fx.h,ts), a:fx.a, af:flagFor(fx.a,ts), ko:fx.ko, vn:fx.vn || "", tbc:!!fx.tbc, p:{}, f:null
+        h:fx.h, hf:fx.hf || flagFor(fx.h,ts), a:fx.a, af:fx.af || flagFor(fx.a,ts), ko:fx.ko, vn:fx.vn || "", tbc:!!fx.tbc, p:{}, f:null
       }).catch(function(){}));
     });
   }

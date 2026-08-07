@@ -261,6 +261,8 @@
   /* no-peeking gate on the match view */
   .peek{text-align:center;line-height:1.5}
   .peek b{color:var(--forest)}
+  .peek-who{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+  .peek-hint{margin-top:8px;font-size:12.5px;color:var(--ink-soft)}
   /* Sprint / Grand Prix badge */
   .race-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:1px 7px;vertical-align:middle;margin-right:2px}
   .race-tag.sprint{background:#FFE08A;color:#7a5600}
@@ -1219,10 +1221,14 @@ function keyFor(name){
 // A prediction entry is a [name,hs,as] array for score matches, or a
 // {name,pole,p1,p2,p3} object for motor matches. predName reads either.
 function predName(e){ return Array.isArray(e) ? e[0] : (e && e.name) || ""; }
+// Match on keyFor — the SAME normalisation every write uses for the document
+// key. Comparing raw text here could miss an entry that is literally this
+// person's slot (e.g. a double space or a "." in the name), which made the app
+// think they hadn't predicted and kept the no-peeking gate shut.
 function findIn(match, name){
-  var n = String(name).trim().toLowerCase();
+  var k = keyFor(name);
   for (var i=0;i<match.p.length;i++)
-    if (predName(match.p[i]).trim().toLowerCase() === n) return match.p[i];
+    if (keyFor(predName(match.p[i])) === k) return match.p[i];
   return null;
 }
 function sameName(a, b){ return a && b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase(); }
@@ -2281,8 +2287,17 @@ function renderMatch(){
   if (!m.p.length) {
     rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
   } else if (!reveal) {
+    // Names only — never the scores. Seeing WHO is in lets someone spot that
+    // they predicted under a different spelling (the usual reason the gate
+    // won't lift) without giving away anybody's actual pick.
+    var whoIn = m.p.map(function(e){ return predName(e); }).filter(Boolean);
     rows.innerHTML = '<div class="empty peek">🙈 <b>' + m.p.length + '</b> prediction' + (m.p.length===1?'':'s') +
-      ' already in — but they\'re hidden until you\'ve made yours.<br>Add your prediction above to reveal everyone else\'s. No peeking!</div>';
+      ' already in — hidden until you\'ve made yours.<br>Add your prediction above to reveal everyone else\'s. No peeking!' +
+      (whoIn.length ? '<div class="peek-who">Already in: <b>' + whoIn.map(esc).join('</b>, <b>') + '</b></div>' : '') +
+      (myName
+        ? '<div class="peek-hint">No pick from <b>' + esc(myName) + '</b> yet. If you predicted under a different name above, tap <b>change</b> and use that spelling — your picks will appear straight away.</div>'
+        : '') +
+      '</div>';
   } else if (motor) {
     var mlist = ranked || m.p.map(function(e){ return { e:e, rank:0, pts:null, motorTags:[] }; });
     rows.innerHTML = mlist.map(function(s){

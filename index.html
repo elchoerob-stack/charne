@@ -989,16 +989,33 @@ var CRICKET_TEAMS = [
 ];
 // Motorsport competitor pools are only SUGGESTIONS (datalist), so they don't
 // need to be exhaustive or perfectly current — anyone can type another name.
+// The full confirmed 2026 grids (22 riders / 22 drivers). Name matching is
+// accent-insensitive, so typing "Marquez" or "Márquez" both score.
 var MOTOGP_RIDERS = [
-  "Francesco Bagnaia","Jorge Martin","Marc Marquez","Enea Bastianini","Pedro Acosta",
-  "Brad Binder","Maverick Viñales","Fabio Quartararo","Franco Morbidelli","Marco Bezzecchi",
-  "Aleix Espargaro","Alex Marquez","Fabio Di Giannantonio","Johann Zarco","Miguel Oliveira",
-  "Jack Miller","Raul Fernandez","Augusto Fernandez"
+  "Marc Márquez","Francesco Bagnaia",            // Ducati Lenovo
+  "Jorge Martín","Marco Bezzecchi",              // Aprilia Racing
+  "Fabio Quartararo","Álex Rins",                // Monster Yamaha
+  "Pedro Acosta","Brad Binder",                  // Red Bull KTM
+  "Joan Mir","Luca Marini",                      // Honda HRC
+  "Álex Márquez","Fermín Aldeguer",              // Gresini Ducati
+  "Fabio Di Giannantonio","Franco Morbidelli",   // VR46 Ducati
+  "Maverick Viñales","Enea Bastianini",          // Tech3 KTM
+  "Jack Miller","Toprak Razgatlioglu",           // Pramac Yamaha
+  "Raúl Fernández","Ai Ogura",                   // Trackhouse Aprilia
+  "Johann Zarco","Diogo Moreira"                 // LCR Honda
 ];
 var F1_DRIVERS = [
-  "Max Verstappen","Lando Norris","Charles Leclerc","Oscar Piastri","Carlos Sainz",
-  "Lewis Hamilton","George Russell","Sergio Perez","Fernando Alonso","Lance Stroll",
-  "Yuki Tsunoda","Alex Albon","Nico Hulkenberg","Esteban Ocon","Pierre Gasly"
+  "Lando Norris","Oscar Piastri",                // McLaren
+  "Charles Leclerc","Lewis Hamilton",            // Ferrari
+  "Max Verstappen","Isack Hadjar",               // Red Bull
+  "George Russell","Kimi Antonelli",             // Mercedes
+  "Fernando Alonso","Lance Stroll",              // Aston Martin
+  "Alex Albon","Carlos Sainz",                   // Williams
+  "Nico Hülkenberg","Gabriel Bortoleto",         // Audi
+  "Pierre Gasly","Franco Colapinto",             // Alpine
+  "Esteban Ocon","Oliver Bearman",               // Haas
+  "Liam Lawson","Arvid Lindblad",                // Racing Bulls
+  "Sergio Pérez","Valtteri Bottas"               // Cadillac
 ];
 // Each sport supplies a team/competitor pool for the match picker, a default
 // emoji when a name isn't in the pool, and a "playing verb" for copy. All the
@@ -1237,7 +1254,15 @@ function findIn(match, name){
     if (keyFor(predName(match.p[i])) === k) return match.p[i];
   return null;
 }
-function sameName(a, b){ return a && b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase(); }
+// Accent-insensitive so a pick typed "Marc Marquez" still scores against a
+// result entered as "Marc Márquez" (and vice versa) — phones rarely produce
+// the accented spelling the suggestion list offers.
+function normName(s){
+  var t = String(s).trim().toLowerCase().replace(/\s+/g, " ");
+  try { t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch(e){}
+  return t;
+}
+function sameName(a, b){ return !!a && !!b && normName(a) === normName(b); }
 function esc(s){
   return String(s).replace(/[&<>"']/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -2797,12 +2822,13 @@ function predictionItemHtml(m, gridId, leagueTag){
     (mine ? "Update this one" : "Save this one") + '</button>';
   if (m.type === "motor") {
     var mp = mine || {};
+    var gl = gridIdFor(gridId, m);   // this race's own sport, not a merged pool
     return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="motor">' + head +
       '<div class="pa-motor">' +
-      '<input class="pa-pole" list="' + gridId + '" placeholder="🏁 Pole" value="' + esc(mp.pole||"") + '">' +
-      '<input class="pa-p1" list="' + gridId + '" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
-      '<input class="pa-p2" list="' + gridId + '" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
-      '<input class="pa-p3" list="' + gridId + '" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
+      '<input class="pa-pole" list="' + gl + '" placeholder="🏁 Pole" value="' + esc(mp.pole||"") + '">' +
+      '<input class="pa-p1" list="' + gl + '" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
+      '<input class="pa-p2" list="' + gl + '" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
+      '<input class="pa-p3" list="' + gl + '" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
       '</div>' + bonus + one + '</div>';
   }
   return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score">' + head +
@@ -2815,10 +2841,22 @@ function predictionItemHtml(m, gridId, leagueTag){
     '</div>' + bonus + one + '</div>';
 }
 // datalist of competitor suggestions across whatever motor matches are shown
-function gridDatalist(matches, id){
-  var seen = {};
-  matches.forEach(function(m){ if (m.type === "motor") competitorsFor(m.sport || "motogp").forEach(function(c){ seen[c] = 1; }); });
-  return '<datalist id="' + id + '">' + Object.keys(seen).map(function(c){ return '<option value="' + esc(c) + '"></option>'; }).join("") + '</datalist>';
+// ONE datalist per sport — a shared list would suggest F1 drivers on a MotoGP
+// race (and vice versa) whenever both appear on the same page.
+function gridIdFor(prefix, m){ return prefix + "-" + (m.sport || "motogp"); }
+function gridDatalist(matches, idPrefix){
+  var bySport = {};
+  matches.forEach(function(m){
+    if (m.type !== "motor") return;
+    var sp = m.sport || "motogp";
+    if (!bySport[sp]) bySport[sp] = {};
+    competitorsFor(sp).forEach(function(c){ bySport[sp][c] = 1; });
+  });
+  return Object.keys(bySport).map(function(sp){
+    return '<datalist id="' + idPrefix + '-' + sp + '">' +
+      Object.keys(bySport[sp]).map(function(c){ return '<option value="' + esc(c) + '"></option>'; }).join("") +
+      '</datalist>';
+  }).join("");
 }
 // save every filled-in row under `root`; returns how many were saved
 // save ONE row; returns true if a prediction was written

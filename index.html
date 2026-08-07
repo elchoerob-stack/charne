@@ -1020,11 +1020,11 @@ var MOTOGP_2026 = [
 var F1_2026 = [
   { name:"British GP · Silverstone",     flag:"🇬🇧", ko:Date.UTC(2026,6,5,14,0),  tbc:true },
   { name:"Hungarian GP · Hungaroring",   flag:"🇭🇺", ko:Date.UTC(2026,6,19,13,0), tbc:true },
-  { name:"Belgian GP · Spa",             flag:"🇧🇪", ko:Date.UTC(2026,6,26,13,0), tbc:true },
+  { name:"Belgian GP · Spa",             flag:"🇧🇪", ko:Date.UTC(2026,6,26,13,0), tbc:true, sprint:true },
   { name:"Dutch GP · Zandvoort",         flag:"🇳🇱", ko:Date.UTC(2026,7,23,13,0), tbc:true },
   { name:"Italian GP · Monza",           flag:"🇮🇹", ko:Date.UTC(2026,8,6,13,0),  tbc:true },
   { name:"Singapore GP · Marina Bay",    flag:"🇸🇬", ko:Date.UTC(2026,8,20,12,0), tbc:true },
-  { name:"United States GP · Austin",    flag:"🇺🇸", ko:Date.UTC(2026,9,25,19,0), tbc:true },
+  { name:"United States GP · Austin",    flag:"🇺🇸", ko:Date.UTC(2026,9,25,19,0), tbc:true, sprint:true },
   { name:"Abu Dhabi GP · Yas Marina",    flag:"🇦🇪", ko:Date.UTC(2026,10,29,13,0),tbc:true }
 ];
 
@@ -1064,10 +1064,28 @@ var TOURNAMENTS = {
             { id:"nztour-2026", name:"All Blacks Tour of SA 2026", fixtures: NZ_TOUR_2026 }],
   u20rugby: [{ id:"u20-2026",  name:"U20 Championship 2026",  fixtures: U20_2026, teamsSport:"u20rugby" }],
   f1:       [{ id:"f1-2026",   name:"F1 2026 Season",         races: F1_2026 }],
-  motogp:   [{ id:"motogp-2026", name:"MotoGP 2026 Season",   races: MOTOGP_2026 }],
+  motogp:   [{ id:"motogp-2026", name:"MotoGP 2026 Season",   races: MOTOGP_2026, sprints:true }],
   cricket:  [{ id:"cric-2026", name:"Proteas 2026",           fixtures: CRICKET_2026, teamsSport:"cricket" }]
 };
 function tournamentsFor(sport){ return TOURNAMENTS[sport] || []; }
+// Motorsport weekends have a Saturday Sprint plus the main event. Expand a race
+// list into its full set of events: a tournament with `sprints:true` gets a
+// sprint for every round; otherwise only rounds flagged `sprint:true` do.
+function sprintName(name){ return name.indexOf(" · ") >= 0 ? name.replace(" · ", " Sprint · ") : name + " Sprint"; }
+function expandRaces(races, allSprints){
+  var out = [];
+  (races || []).forEach(function(r){
+    if (allSprints || r.sprint) {
+      out.push({ name: sprintName(r.name), flag: r.flag, ko: (r.ko ? r.ko - 86400000 : null), tbc: true });
+    }
+    out.push({ name: r.name, flag: r.flag, ko: r.ko, tbc: !!r.tbc });
+  });
+  return out;
+}
+// total predictable events in a tournament, sprints included
+function tournamentEventCount(t){
+  return t.races ? expandRaces(t.races, t.sprints).length : (t.fixtures || []).length;
+}
 
 var NAME_KEY = "bok-myname";
 var LEAGUE_KEY = "bok-curleague";
@@ -1271,10 +1289,40 @@ var BQ_POOL = [
   "More successful penalty kicks or conversions?",
   "Will the losing team score in the last 10 minutes?"
 ];
-function autoBonusQ(matchId){
+var BQ_POOL_MOTOR = [
+  "Will pole position convert to the win?",
+  "Will there be a DNF in the top 5?",
+  "Will the winner also set the fastest lap?",
+  "Will there be a safety car or red flag?",
+  "Winning margin: over or under 3 seconds?",
+  "Will all three podium finishers be from different teams?",
+  "Will the pole-sitter finish on the podium?",
+  "Will a rider/driver lead from lights to flag?",
+  "More than 15 finishers?",
+  "Will the fastest lap come in the final five laps?"
+];
+var BQ_POOL_CRICKET = [
+  "Will there be a century?",
+  "Total sixes: over or under 10?",
+  "Will the team batting first win?",
+  "Will anyone be out for a duck?",
+  "Player of the match: batter or bowler?",
+  "Will any bowler take a five-wicket haul?",
+  "Will the match go to the final over?",
+  "Will there be a run-out?",
+  "More boundaries: fours or sixes?",
+  "Will the top scorer make more than 75?"
+];
+function bqPoolFor(sport){
+  if (SPORTS[sport] && SPORTS[sport].type === "motor") return BQ_POOL_MOTOR;
+  if (sport === "cricket") return BQ_POOL_CRICKET;
+  return BQ_POOL;   // rugby (and anything else)
+}
+function autoBonusQ(matchId, sport){
+  var pool = bqPoolFor(sport);
   var h = 0;
   for (var i=0;i<matchId.length;i++) h = (h*31 + matchId.charCodeAt(i)) >>> 0;
-  return BQ_POOL[h % BQ_POOL.length];
+  return pool[h % pool.length];
 }
 
 // Bokbot 🤖 — the house bot every family member gets to try beat. Its score is
@@ -1342,7 +1390,9 @@ function applyJoker(m, list){
 function motorStandings(m){
   var list = m.p.map(function(e){
     var r = motorPoints(m.f, e);
-    return { e:e, pts:r.pts, motorTags:r.tags };
+    var bqEntry = m.bq && m.bq.r && m.bq.r[keyFor(predName(e))];
+    var bonusQ = !!(bqEntry && bqEntry.correct);
+    return { e:e, pts:r.pts + (bonusQ ? 3 : 0), motorTags:r.tags, bonusQ:bonusQ };
   });
   applyJoker(m, list);
   list.sort(function(a,b){
@@ -1668,19 +1718,24 @@ function loadTournament(leagueId, sport, tourId){
     var future = list.filter(function(x){ return !x.ko || x.ko > Date.now(); });
     return future.length ? future : list;
   }
+  function bqFor(ref, ko){ return (ko && Date.now() > ko) ? null : { q: autoBonusQ(ref.id, sport) }; }
   if (tour.races) {
-    upcoming(tour.races).forEach(function(r){
-      jobs.push(setDoc(doc(matchesCol), {
+    upcoming(expandRaces(tour.races, tour.sprints)).forEach(function(r){
+      var ref = doc(matchesCol);
+      jobs.push(setDoc(ref, {
         league:leagueId, sport:sport, type:"motor", tour:tourId,
-        h:r.name, hf:r.flag || SPORTS[sport].fallback, a:"", af:"", ko:r.ko, tbc:!!r.tbc, p:{}, f:null
+        h:r.name, hf:r.flag || SPORTS[sport].fallback, a:"", af:"", ko:r.ko, tbc:!!r.tbc, p:{}, f:null,
+        bq: bqFor(ref, r.ko)
       }).catch(function(){}));
     });
   } else if (tour.fixtures) {
     var ts = tour.teamsSport || sport;
     upcoming(tour.fixtures).forEach(function(fx){
-      jobs.push(setDoc(doc(matchesCol), {
+      var ref = doc(matchesCol);
+      jobs.push(setDoc(ref, {
         league:leagueId, sport:sport, type:"score", tour:tourId,
-        h:fx.h, hf:fx.hf || flagFor(fx.h,ts), a:fx.a, af:fx.af || flagFor(fx.a,ts), ko:fx.ko, vn:fx.vn || "", tbc:!!fx.tbc, p:{}, f:null
+        h:fx.h, hf:fx.hf || flagFor(fx.h,ts), a:fx.a, af:fx.af || flagFor(fx.a,ts), ko:fx.ko, vn:fx.vn || "", tbc:!!fx.tbc, p:{}, f:null,
+        bq: bqFor(ref, fx.ko)
       }).catch(function(){}));
     });
   }
@@ -1725,7 +1780,7 @@ function ensureFixtures(){
           league: DEFAULT_LEAGUE, type: "score",
           h:fx.h, hf:flagFor(fx.h,"rugby"), a:fx.a, af:flagFor(fx.a,"rugby"),
           ko:fx.ko, vn:fx.vn, tbc: !!fx.tbc, f:null, p: seedToMap(fx.seed),
-          bq: (fx.ko && Date.now() > fx.ko) ? null : { q: autoBonusQ(fx.id) }
+          bq: (fx.ko && Date.now() > fx.ko) ? null : { q: autoBonusQ(fx.id, "rugby") }
         });
         any = true;
         return;
@@ -1753,24 +1808,19 @@ function ensureFixtures(){
         any = true;
       }
     });
-    // auto-assign a bonus question to any upcoming rugby-league match that
-    // doesn't have one — unless the organiser removed it (bqOff). The pool is
-    // rugby-specific, so non-rugby leagues just get manual questions instead.
+    // auto-assign a bonus question to any upcoming match that doesn't have one —
+    // unless the organiser removed it (bqOff). Each sport draws from its own pool
+    // (rugby, motorsport, cricket), so every game gets a fitting question.
     Object.keys(existing).forEach(function(id){
       var cur = existing[id];
       if (cur.f || cur.bqOff || (cur.bq && cur.bq.q)) return;
       if (cur.ko && Date.now() > cur.ko) return;
-      if (!isRugbyLeague(cur.league || DEFAULT_LEAGUE)) return;
-      batch.set(doc(db,"matches",id), { bq: { q: autoBonusQ(id) } }, { merge:true });
+      var sp = cur.sport || (cur.type === "motor" ? "motogp" : "rugby");
+      batch.set(doc(db,"matches",id), { bq: { q: autoBonusQ(id, sp) } }, { merge:true });
       any = true;
     });
     if (any) return batch.commit();
   });
-}
-function isRugbyLeague(leagueId){
-  if (leagueId === DEFAULT_LEAGUE) return true;
-  var lg = leagueById(leagueId);
-  return !!(lg && SPORTS[lg.sport] && SPORTS[lg.sport].rugbyLike);
 }
 
 function fsUpsertPrediction(matchId, name, hs, as){
@@ -1813,8 +1863,8 @@ function fsCreateMatch(data){
   var ref = doc(matchesCol);
   var sport = data.sport || sportOf(curLeague);
   var base = { league: curLeague, sport: sport, type: sportType(sport), p:{}, f:null };
-  // auto bonus question only for rugby-sport matches
-  if (SPORTS[sport] && SPORTS[sport].rugbyLike) base.bq = { q: autoBonusQ(ref.id) };
+  // every sport gets a fitting auto bonus question (unless the match is in the past)
+  if (!(data.ko && Date.now() > data.ko)) base.bq = { q: autoBonusQ(ref.id, sport) };
   setDoc(ref, Object.assign(base, data))
     .catch(function(){ toast("Couldn't create match — try again"); });
   return ref.id;
@@ -3796,7 +3846,7 @@ function fillTournamentSelect(){
   var sel = document.getElementById("nl-tournament");
   var tours = tournamentsFor(sp);
   sel.innerHTML = tours.map(function(t){
-    var count = (t.fixtures || t.races || []).length;
+    var count = tournamentEventCount(t);
     return '<option value="' + t.id + '">' + esc(t.name) + ' (' + count + (sportType(sp)==="motor"?' races':' matches') + ')</option>';
   }).join("") + '<option value="__none">Start empty — I\'ll add fixtures myself</option>';
 }
@@ -3817,7 +3867,7 @@ function renderTournamentsModal(){
   wrap.innerHTML = SPORT_ORDER.map(function(sp){
     return tournamentsFor(sp).map(function(t){
       var added = !!have[t.id];
-      var count = (t.fixtures || t.races || []).length;
+      var count = tournamentEventCount(t);
       return '<div class="league-item">' +
         '<span class="li-ic">' + SPORTS[sp].icon + '</span>' +
         '<span class="li-body"><div class="li-name">' + esc(t.name) + '</div>' +

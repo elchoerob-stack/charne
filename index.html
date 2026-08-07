@@ -62,6 +62,9 @@
   .league-item .li-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .league-item .li-meta{font-size:11.5px;color:var(--ink-soft)}
   .league-item .li-del{border:0;background:transparent;color:#B9B2A0;font-size:16px;cursor:pointer;padding:4px;flex:0 0 auto}
+  .league-item .li-follow{border:0;background:transparent;font-size:17px;cursor:pointer;padding:4px;flex:0 0 auto;line-height:1}
+  .league-item.muted{opacity:.55}
+  .li-hidden{font-size:10.5px;font-weight:700;color:var(--ink-soft);background:var(--line);border-radius:999px;padding:1px 6px;vertical-align:middle}
   .tour-added{font-size:12.5px;font-weight:700;color:var(--forest);flex:0 0 auto}
   .eyebrow{
     font-size:11px;letter-spacing:.18em;text-transform:uppercase;
@@ -228,6 +231,7 @@
   .home-id b{color:var(--gold)}
   .home-id .change{background:transparent;border:0;color:#fff;text-decoration:underline;font-size:13px;cursor:pointer;padding:0 0 0 4px}
   .home-group{margin-bottom:16px}
+  .home-manage{text-align:center;margin:14px 0 0}
   .home-group-head{font-size:14px;font-weight:800;color:var(--forest);padding:2px 2px 8px}
   .home-group-head.date{border-bottom:2px solid var(--line);margin-bottom:10px;padding-bottom:6px}
   .pa-league{display:inline-block;font-size:11px;font-weight:700;background:#EEF4EF;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink);vertical-align:middle}
@@ -989,14 +993,26 @@ var FIXTURES = [
   {id:"ire-sa-2026", h:"Ireland",      a:"South Africa",ko:Date.UTC(2026,10,21,16,40),vn:"Aviva Stadium, Dublin"}
 ];
 
-// 2026 MotoGP calendar — only the rounds with confirmed dates. Race is Sunday;
-// times are best-effort (tbc). Loaded on demand into a MotoGP league.
+// 2026 MotoGP calendar — a best-effort full season. Races are Sundays; times
+// are provisional (tbc) and fully editable per race in match settings.
 var MOTOGP_2026 = [
-  { name:"British GP · Silverstone",   flag:"🇬🇧", ko:Date.UTC(2026,7,9,13,0),  tbc:true },
-  { name:"Aragon GP · MotorLand",      flag:"🇪🇸", ko:Date.UTC(2026,7,30,12,0), tbc:true },
-  { name:"San Marino GP · Misano",     flag:"🇸🇲", ko:Date.UTC(2026,8,13,12,0), tbc:true },
-  { name:"Austrian GP · Red Bull Ring",flag:"🇦🇹", ko:Date.UTC(2026,8,20,12,0), tbc:true },
-  { name:"Japanese GP · Motegi",       flag:"🇯🇵", ko:Date.UTC(2026,9,4,6,0),   tbc:true }
+  { name:"Thai GP · Buriram",           flag:"🇹🇭", ko:Date.UTC(2026,2,1,7,0),   tbc:true },
+  { name:"Argentine GP · Termas",       flag:"🇦🇷", ko:Date.UTC(2026,2,15,18,0), tbc:true },
+  { name:"Americas GP · COTA",          flag:"🇺🇸", ko:Date.UTC(2026,2,29,19,0), tbc:true },
+  { name:"Qatar GP · Lusail",           flag:"🇶🇦", ko:Date.UTC(2026,3,12,17,0), tbc:true },
+  { name:"Spanish GP · Jerez",          flag:"🇪🇸", ko:Date.UTC(2026,3,26,12,0), tbc:true },
+  { name:"French GP · Le Mans",         flag:"🇫🇷", ko:Date.UTC(2026,4,10,12,0), tbc:true },
+  { name:"Catalan GP · Barcelona",      flag:"🇪🇸", ko:Date.UTC(2026,4,24,12,0), tbc:true },
+  { name:"Italian GP · Mugello",        flag:"🇮🇹", ko:Date.UTC(2026,5,7,12,0),  tbc:true },
+  { name:"Dutch GP · Assen",            flag:"🇳🇱", ko:Date.UTC(2026,5,28,12,0), tbc:true },
+  { name:"German GP · Sachsenring",     flag:"🇩🇪", ko:Date.UTC(2026,6,12,12,0), tbc:true },
+  { name:"British GP · Silverstone",    flag:"🇬🇧", ko:Date.UTC(2026,7,9,13,0),  tbc:true },
+  { name:"Aragon GP · MotorLand",       flag:"🇪🇸", ko:Date.UTC(2026,7,30,12,0), tbc:true },
+  { name:"San Marino GP · Misano",      flag:"🇸🇲", ko:Date.UTC(2026,8,13,12,0), tbc:true },
+  { name:"Japanese GP · Motegi",        flag:"🇯🇵", ko:Date.UTC(2026,8,27,6,0),  tbc:true },
+  { name:"Australian GP · Phillip Island", flag:"🇦🇺", ko:Date.UTC(2026,9,18,4,0), tbc:true },
+  { name:"Malaysian GP · Sepang",       flag:"🇲🇾", ko:Date.UTC(2026,10,1,7,0),  tbc:true },
+  { name:"Valencia GP · Ricardo Tormo", flag:"🇪🇸", ko:Date.UTC(2026,10,15,13,0),tbc:true }
 ];
 
 // 2026 Formula 1 calendar — a best-effort selection of Grands Prix. Times are
@@ -1093,6 +1109,18 @@ function leagueById(id){
 function matchById(id){
   for (var i=0;i<state.allM.length;i++) if (state.allM[i].id===id) return state.allM[i];
   return null;
+}
+// Per-device "leagues I follow": a personal list of leagues the user has hidden
+// so they're not nagged about them. Stored locally — it never affects anyone else.
+var HIDDEN_LEAGUES_KEY = "bok-hidden-leagues";
+function hiddenLeagueSet(){
+  try { return JSON.parse(localStorage.getItem(HIDDEN_LEAGUES_KEY) || "[]") || []; } catch(e){ return []; }
+}
+function isLeagueHidden(id){ return hiddenLeagueSet().indexOf(id) >= 0; }
+function setLeagueHidden(id, hidden){
+  var set = hiddenLeagueSet().filter(function(x){ return x !== id; });
+  if (hidden) set.push(id);
+  try { localStorage.setItem(HIDDEN_LEAGUES_KEY, JSON.stringify(set)); } catch(e){}
 }
 function curLeagueObj(){
   return leagueById(curLeague) || { id:DEFAULT_LEAGUE, name:"Family Rugby", sport:"rugby", icon:"🏉", pot:0 };
@@ -2619,7 +2647,7 @@ document.getElementById("btn-pa-close").addEventListener("click", function(){ do
 function outstandingList(){
   if (!myName) return [];
   return state.allM.filter(function(m){
-    return !m.f && !isLocked(m) && !findIn(m, myName);
+    return !m.f && !isLocked(m) && !findIn(m, myName) && !isLeagueHidden(m.league || DEFAULT_LEAGUE);
   }).sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
 }
 function outstandingCount(){ return outstandingList().length; }
@@ -2649,7 +2677,7 @@ function dayLabel(ko){
 }
 function homeCaughtUpHtml(){
   var meta = leagueMeta();
-  var upcoming = state.allM.filter(function(m){ return !m.f && !isLocked(m); })
+  var upcoming = state.allM.filter(function(m){ return !m.f && !isLocked(m) && !isLeagueHidden(m.league || DEFAULT_LEAGUE); })
     .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); }).slice(0, 5);
   if (!upcoming.length) return '<p class="hint" style="text-align:center">No upcoming matches right now — new ones will appear here automatically.</p>';
   return '<div class="home-group-head">⏱ Coming up — you\'re in</div>' +
@@ -2678,11 +2706,14 @@ function renderHome(){
   }
   var open = outstandingList();
   var idLine = '<div class="home-id">Predicting as <b>' + esc(myName) + '</b><button type="button" class="change" id="home-change-name">change</button></div>';
+  var hiddenN = hiddenLeagueSet().length;
+  var manageLink = '<p class="home-manage"><button type="button" class="linkish" id="home-manage-leagues">⚙️ Choose which leagues you follow' +
+    (hiddenN ? ' (' + hiddenN + ' hidden)' : '') + '</button></p>';
   // 2) all caught up
   if (!open.length) {
     intro.innerHTML = '<div class="home-hero caught-up"><div class="hh-title">🎉 All caught up, ' + esc(myName) + '!</div>' +
       '<p class="hh-sub">You\'ve predicted every open match. New fixtures will show up here the moment they\'re added.</p>' + idLine + '</div>';
-    body.innerHTML = homeCaughtUpHtml();
+    body.innerHTML = homeCaughtUpHtml() + manageLink;
     return;
   }
   // 3) outstanding predictions, grouped by EVENT DATE (soonest first). Each row
@@ -2707,9 +2738,10 @@ function renderHome(){
         return predictionItemHtml(m, "home-grid", tag);
       }).join("") + '</div>';
   });
-  body.innerHTML = html + '<button class="btn" id="home-save">Save all my predictions</button>';
+  body.innerHTML = html + '<button class="btn" id="home-save">Save all my predictions</button>' + manageLink;
 }
 document.getElementById("view-home").addEventListener("click", function(ev){
+  if (ev.target.closest("#home-manage-leagues")) { openLeaguesModal(); return; }
   if (ev.target.closest("#home-name-go")) {
     var name = (document.getElementById("home-name-inp").value || "").trim();
     if (!name) { toast("Type your name first"); return; }
@@ -3731,16 +3763,20 @@ function renderLeagueList(){
   var wrap = document.getElementById("league-list");
   var counts = {};
   state.allM.forEach(function(m){ var l = m.league || DEFAULT_LEAGUE; counts[l] = (counts[l]||0)+1; });
-  wrap.innerHTML = state.leagues.map(function(l){
-    var n = counts[l.id] || 0;
-    var canDelete = l.id !== DEFAULT_LEAGUE;
-    return '<div class="league-item' + (l.id===curLeague ? " active" : "") + '" data-league="' + esc(l.id) + '">' +
-      '<span class="li-ic">' + l.icon + '</span>' +
-      '<span class="li-body"><div class="li-name">' + esc(l.name) + (l.id===curLeague ? " ✓" : "") + '</div>' +
-        '<div class="li-meta">' + (SPORTS[l.sport] ? SPORTS[l.sport].label : l.sport) + ' · ' + n + ' match' + (n===1?'':'es') + '</div></span>' +
-      (canDelete ? '<button class="li-del" data-del-league="' + esc(l.id) + '" aria-label="Delete league">🗑</button>' : '') +
-    '</div>';
-  }).join("");
+  wrap.innerHTML =
+    '<p class="hint" style="margin:0 0 10px">👁 Follow the leagues you care about — hidden ones (🙈) stop nudging you on your predictions page. This is just for you.</p>' +
+    state.leagues.map(function(l){
+      var n = counts[l.id] || 0;
+      var canDelete = l.id !== DEFAULT_LEAGUE;
+      var hidden = isLeagueHidden(l.id);
+      return '<div class="league-item' + (l.id===curLeague ? " active" : "") + (hidden ? " muted" : "") + '" data-league="' + esc(l.id) + '">' +
+        '<span class="li-ic">' + l.icon + '</span>' +
+        '<span class="li-body"><div class="li-name">' + esc(l.name) + (l.id===curLeague ? " ✓" : "") + (hidden ? ' <span class="li-hidden">hidden</span>' : '') + '</div>' +
+          '<div class="li-meta">' + (SPORTS[l.sport] ? SPORTS[l.sport].label : l.sport) + ' · ' + n + ' match' + (n===1?'':'es') + '</div></span>' +
+        '<button class="li-follow" data-follow-league="' + esc(l.id) + '" aria-label="' + (hidden ? "Follow this league" : "Hide this league") + '">' + (hidden ? "🙈" : "👁") + '</button>' +
+        (canDelete ? '<button class="li-del" data-del-league="' + esc(l.id) + '" aria-label="Delete league">🗑</button>' : '') +
+      '</div>';
+    }).join("");
 }
 function openCreateLeague(){
   var sel = document.getElementById("nl-sport");
@@ -3835,6 +3871,15 @@ document.getElementById("btn-create-league").addEventListener("click", function(
   });
 });
 document.getElementById("league-list").addEventListener("click", function(ev){
+  var follow = ev.target.closest("[data-follow-league]");
+  if (follow) {
+    ev.stopPropagation();
+    var flid = follow.getAttribute("data-follow-league");
+    setLeagueHidden(flid, !isLeagueHidden(flid));
+    renderLeagueList();
+    render();   // refresh the Predict badge + home list
+    return;
+  }
   var del = ev.target.closest("[data-del-league]");
   if (del) {
     ev.stopPropagation();

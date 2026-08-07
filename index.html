@@ -51,6 +51,10 @@
   }
   .league-switch .lname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .league-switch:active{background:rgba(255,255,255,.22)}
+  .lswitch-tag{
+    font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--gold);
+    background:rgba(0,0,0,.22);border-radius:999px;padding:2px 7px;flex:0 0 auto;
+  }
   .league-item{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
     background:var(--card);border:1.5px solid var(--line);border-radius:12px;
@@ -489,9 +493,14 @@
   .pot-total strong{color:var(--gold-deep);font-size:15px}
 
   /* ---------- league tabs (choose which log to view) ---------- */
+  .league-tabs-wrap{display:flex;align-items:center;gap:8px}
+  .league-tabs-lbl{
+    font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--ink-soft);
+    flex:0 0 auto;padding-bottom:8px;
+  }
   .league-tabs{
     display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;margin:0 -2px;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;
   }
   .league-tabs::-webkit-scrollbar{display:none}
   .league-tabs .lt{
@@ -552,7 +561,8 @@
 <header>
   <div class="eyebrow-row">
     <button type="button" class="help-btn" id="btn-help" aria-label="How this app works">❓</button>
-    <button type="button" class="league-switch" id="btn-league-switch">
+    <button type="button" class="league-switch" id="btn-league-switch" aria-label="Change league">
+      <span class="lswitch-tag">LEAGUE</span>
       <span id="league-switch-label" class="lname">🏉 Family Rugby</span> <span aria-hidden="true">▾</span>
     </button>
   </div>
@@ -716,7 +726,10 @@
 
     <!-- ============ LEAGUE VIEW ============ -->
     <div id="view-league" hidden>
-      <nav class="league-tabs" id="league-tabs" aria-label="Choose a league to view"></nav>
+      <div class="league-tabs-wrap">
+        <span class="league-tabs-lbl">LEAGUE</span>
+        <nav class="league-tabs" id="league-tabs" aria-label="Choose a league to view"></nav>
+      </div>
       <section id="sec-hero" hidden><div id="hero-body"></div></section>
       <section id="sec-progress" hidden><div id="progress-body"></div></section>
       <section id="sec-predictall" hidden>
@@ -735,7 +748,7 @@
         <div id="stats-row"></div>
       </section>
       <section>
-        <h2 id="lg-standings-title">League standings</h2>
+        <h2 id="lg-standings-title">Pool standings</h2>
         <div class="lg-thead" id="lg-thead" aria-hidden="true">
           <span>#</span><span>Name</span><span class="r">Played</span><span class="r">Points</span>
         </div>
@@ -850,7 +863,7 @@
     <h3>🏉 How this works</h3>
     <div class="step"><span class="ic">📅</span><span><strong>Fixtures</strong> lists every match still to come. Tap one and add your score guess before kick-off.</span></div>
     <div class="step"><span class="ic">✅</span><span><strong>Results</strong> shows finished matches with the final score and who called it closest.</span></div>
-    <div class="step"><span class="ic">🏆</span><span><strong>League</strong> is the running scoreboard for the whole season — points add up across every match.</span></div>
+    <div class="step"><span class="ic">🏆</span><span><strong>Pool</strong> is the running scoreboard (the log) for the league you're in — points add up across every match all season.</span></div>
     <div class="step"><span class="ic">🔀</span><span>On the <strong>League</strong> tab, the row of <strong>league buttons</strong> at the top lets you switch between logs or start a new one (motorsport, U20 rugby, cricket…) — each has its own scoreboard from zero.</span></div>
     <div class="step"><span class="ic">🔒</span><span>Deleting a prediction, setting a final score, or editing someone else's guess needs the family PIN.</span></div>
     <div class="step"><span class="ic">💰</span><span>Set a pot amount on any match and the season's points leader takes it all.</span></div>
@@ -1964,7 +1977,7 @@ function render(){
   document.getElementById("view-results").hidden = view !== "results";
   document.getElementById("view-newmatch").hidden = view !== "newmatch";
   var shareBtn = document.getElementById("btn-share");
-  shareBtn.textContent = view === "league" ? "Share league standings" : "Invite family & friends";
+  shareBtn.textContent = view === "league" ? "Share the pool standings" : "Invite family & friends";
   if (view === "home") renderHome();
   if (view === "match") renderMatch();
   if (view === "league") renderLeague();
@@ -2076,11 +2089,14 @@ function renderChips(){
   var fxLabel = motorFlav ? "🏁 Races" : "📅 Fixtures";
   var addLabel = motorFlav ? "＋ Race" : "＋ Match";
   var outN = outstandingCount();
+  // order reads like a season: what you owe → what's coming → what's played →
+  // the log (pool standings) at the end. "Pool" avoids clashing with the
+  // LEAGUE selector, which picks which competition you're looking at.
   var html =
-    '<button class="chip' + (view==="home" ? " active" : "") + '" data-chip="home">🎯 Predict' + (outN ? '<span class="chip-count alert">' + outN + '</span>' : '') + '</button>' +
-    '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 League</button>' +
+    '<button class="chip' + (view==="home" ? " active" : "") + '" data-chip="home">🎯 Predictions' + (outN ? '<span class="chip-count alert">' + outN + '</span>' : '') + '</button>' +
     '<button class="chip' + (onFixtures ? " active" : "") + '" data-chip="fixtures">' + fxLabel + '<span class="chip-count">' + fxCount + '</span></button>' +
     '<button class="chip' + (onResults ? " active" : "") + '" data-chip="results">✅ Results<span class="chip-count">' + resCount + '</span></button>' +
+    '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 Pool</button>' +
     '<button class="chip gold" data-chip="new">' + addLabel + '</button>';
   nav.innerHTML = html;
   var act = nav.querySelector(".chip.active");
@@ -2592,13 +2608,13 @@ function renderLeague(){
   if (sports.length <= 1) {
     // single sport: the classic single scoreboard (leaderboard is that sport)
     thead.hidden = false;
-    title.textContent = "League standings";
+    title.textContent = "Pool standings";
     var table = leagueTable();
     rows.innerHTML = table.length ? standingsRowsHtml(table, allBadges) : emptyLeagueHtml();
   } else {
     // mixed league: a separate leaderboard per sport, so points never cross sports
     thead.hidden = true;
-    title.textContent = "League standings — by sport";
+    title.textContent = "Pool standings — by sport";
     rows.innerHTML = sports.map(function(sp){
       var subset = state.m.filter(function(m){ return (m.sport || "rugby") === sp; });
       var table = leagueTable(subset);

@@ -1764,13 +1764,36 @@ function fsDeleteLeague(id){
 // one that's already in a league — and can top up ones that are missing
 function eventKey(o){ return keyFor(o.h || o.name || "") + "|" + keyFor(o.a || ""); }
 // the flat list of events a tournament contains (sprints expanded), skipping
-// past ones unless they're all past
-function tournamentEvents(tour){
+// past ones unless they're all past. `futureOnly` never falls back to the past
+// list — used by the automatic top-up so a finished season is never resurrected.
+function tournamentEvents(tour, futureOnly){
   var list = tour.races
     ? expandRaces(tour.races, tour.sprints).map(function(r){ return { name:r.name, h:r.name, a:"", flag:r.flag, ko:r.ko, tbc:r.tbc, sprint:!!r.sprint, motor:true }; })
     : (tour.fixtures || []).map(function(fx){ return { h:fx.h, a:fx.a, hf:fx.hf, af:fx.af, ko:fx.ko, tbc:fx.tbc, vn:fx.vn, motor:false }; });
   var future = list.filter(function(e){ return !e.ko || e.ko > Date.now(); });
+  if (futureOnly) return future;
   return future.length ? future : list;
+}
+// Deterministic id for a tournament-seeded event, so two phones adding the same
+// missing race at the same time write the SAME doc instead of duplicating it.
+function slugPart(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+function tourEventId(leagueId, tourId, e){
+  return ("t-" + slugPart(leagueId) + "-" + slugPart(tourId) + "-" +
+          slugPart((e.h || e.name || "") + "-" + (e.a || ""))).slice(0, 120);
+}
+// write one tournament event into a league (shared by the manual add + top-up)
+function writeTournamentEvent(leagueId, sport, tourId, e){
+  var ts = (tournamentsFor(sport).filter(function(t){ return t.id===tourId; })[0] || {}).teamsSport || sport;
+  var id = tourEventId(leagueId, tourId, e);
+  var bq = (e.ko && Date.now() > e.ko) ? null : { q: autoBonusQ(id, sport) };
+  // no p/f here: merge must never wipe predictions or a saved result if this
+  // ever runs against an existing doc (matchFromDoc defaults both anyway)
+  var data = e.motor
+    ? { league:leagueId, sport:sport, type:"motor", tour:tourId,
+        h:e.name, hf:e.flag || SPORTS[sport].fallback, a:"", af:"", ko:e.ko, tbc:!!e.tbc, sprint:!!e.sprint, bq:bq }
+    : { league:leagueId, sport:sport, type:"score", tour:tourId,
+        h:e.h, hf:e.hf || flagFor(e.h,ts), a:e.a, af:e.af || flagFor(e.a,ts), ko:e.ko, vn:e.vn || "", tbc:!!e.tbc, bq:bq };
+  return setDoc(doc(db,"matches",id), data, { merge:true }).catch(function(){});
 }
 function leagueEventKeys(leagueId){
   var have = {};
@@ -1789,20 +1812,42 @@ function loadTournament(leagueId, sport, tourId){
   var tour = tournamentsFor(sport).filter(function(t){ return t.id === tourId; })[0];
   if (!tour) return Promise.resolve(0);
   var have = leagueEventKeys(leagueId);
-  var ts = tour.teamsSport || sport;
-  function bqFor(ref, ko){ return (ko && Date.now() > ko) ? null : { q: autoBonusQ(ref.id, sport) }; }
   var jobs = [];
   tournamentEvents(tour).forEach(function(e){
     if (have[eventKey(e)]) return;   // already in this league — don't duplicate
-    var ref = doc(matchesCol);
-    var doc0 = e.motor
-      ? { league:leagueId, sport:sport, type:"motor", tour:tourId,
-          h:e.name, hf:e.flag || SPORTS[sport].fallback, a:"", af:"", ko:e.ko, tbc:!!e.tbc, sprint:!!e.sprint, p:{}, f:null, bq:bqFor(ref,e.ko) }
-      : { league:leagueId, sport:sport, type:"score", tour:tourId,
-          h:e.h, hf:e.hf || flagFor(e.h,ts), a:e.a, af:e.af || flagFor(e.a,ts), ko:e.ko, vn:e.vn || "", tbc:!!e.tbc, p:{}, f:null, bq:bqFor(ref,e.ko) };
-    jobs.push(setDoc(ref, doc0).catch(function(){}));
+    jobs.push(writeTournamentEvent(leagueId, sport, tourId, e));
   });
   return Promise.all(jobs).then(function(){ return jobs.length; });
+}
+// Automatic top-up: any league that already opted into a built-in tournament
+// picks up events added to it later (e.g. the MotoGP Sprints) without anyone
+// hunting for a button. Only ever ADDS missing UPCOMING events — never touches
+// existing matches, and never resurrects a finished season.
+function ensureTournamentTopUps(){
+  return getDocs(matchesCol).then(function(snap){
+    var leagues = {};
+    snap.forEach(function(d){
+      var m = d.data();
+      var lid = m.league || DEFAULT_LEAGUE;
+      if (!leagues[lid]) leagues[lid] = { tours:{}, keys:{} };
+      if (m.tour) leagues[lid].tours[m.tour] = m.sport || (m.type === "motor" ? "motogp" : "rugby");
+      leagues[lid].keys[eventKey(m)] = true;
+    });
+    var jobs = [];
+    Object.keys(leagues).forEach(function(lid){
+      var info = leagues[lid];
+      Object.keys(info.tours).forEach(function(tourId){
+        var sport = info.tours[tourId];
+        var tour = tournamentsFor(sport).filter(function(t){ return t.id === tourId; })[0];
+        if (!tour) return;
+        tournamentEvents(tour, true).forEach(function(e){
+          if (info.keys[eventKey(e)]) return;
+          jobs.push(writeTournamentEvent(lid, sport, tourId, e));
+        });
+      });
+    });
+    return Promise.all(jobs);
+  });
 }
 // Which tournament ids are already present in a league. A tournament counts as
 // present if a match carries its `tour` tag, OR — for the built-in fixed-id
@@ -4276,7 +4321,9 @@ if (myName) {
 startLiveSync();
 // leagues first (creates the default league + migrates legacy matches/pot),
 // then fixtures (which tag onto the default league).
-ensureLeagues().then(function(){ return ensureFixtures(); }).catch(function(){});
+ensureLeagues().then(function(){ return ensureFixtures(); })
+  .then(function(){ return ensureTournamentTopUps(); })
+  .catch(function(){});
 updateInstallUi();
 updatePushUi();
 try { if (!localStorage.getItem(INTRO_KEY)) showIntro(); } catch(e){}

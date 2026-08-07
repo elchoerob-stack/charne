@@ -260,6 +260,7 @@
     cursor:pointer;font-family:inherit;
   }
   .pa-save-one:active{background:var(--forest);color:#fff}
+  .bq-correct{margin:8px 0 0;font-size:13.5px;color:var(--forest)}
   .bq-item .bq-q-text{font-weight:600;margin:0 0 8px}
   .bq-ans{width:100%;border-radius:8px;border:1px solid var(--line);padding:10px;font-size:15px;box-sizing:border-box}
   .pts-pill{font-size:11px;font-weight:800;background:var(--gold);color:#3a2c00;border-radius:999px;padding:1px 8px;vertical-align:middle}
@@ -703,6 +704,13 @@
                 <input id="mf-p3" type="text" list="grid-list" maxlength="40" placeholder="3rd place">
               </div>
             </div>
+          </div>
+          <div id="final-bq" hidden style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)">
+            <div class="field">
+              <label for="fin-bq" id="lbl-fin-bq">⭐ Bonus question answer</label>
+              <input id="fin-bq" type="text" maxlength="60" placeholder="The correct answer">
+            </div>
+            <p class="hint" style="margin:6px 4px 0">Everyone who answered this gets +3 automatically. You can still tick answers by hand below.</p>
           </div>
           <button class="btn" id="btn-final">Save result</button>
         </div>
@@ -2331,6 +2339,17 @@ function renderMatch(){
     : "After the final whistle, enter the real score to crown the winner.";
   if (motor) renderGridList(m);
 
+  // the bonus question's correct answer goes in with the result, so grading
+  // isn't a separate hunt through the answer list
+  var finBqWrap = document.getElementById("final-bq");
+  var finBqInp = document.getElementById("fin-bq");
+  var hasBq = !!(m.bq && m.bq.q);
+  finBqWrap.hidden = !hasBq;
+  if (hasBq) {
+    document.getElementById("lbl-fin-bq").textContent = "⭐ " + m.bq.q;
+    if (document.activeElement !== finBqInp) finBqInp.value = (m.bq && m.bq.a) || "";
+  }
+
   if (!motor) {
     document.getElementById("lbl-home").textContent = m.hf + " " + m.h;
     document.getElementById("lbl-away").textContent = m.af + " " + m.a;
@@ -2588,22 +2607,24 @@ function renderBonusQ(){
       '<button class="btn quiet" data-bq="edit" style="padding:9px;font-size:13px">✏️ Edit question</button>' +
       '<button class="btn quiet" data-bq="remove" style="padding:9px;font-size:13px">🗑 Remove question</button>';
   } else {
+    // the recorded correct answer, once the organiser has entered it
+    if (m.bq.a) html += '<p class="bq-correct">✅ Correct answer: <strong>' + esc(m.bq.a) + '</strong></p>';
     if (!answerKeys.length) {
       html += '<p class="hint" style="margin-top:8px">Nobody answered this one.</p>';
     } else {
+      // grading is available as soon as the match locks — no need to wait for
+      // the final score to be saved first
       html += answerKeys.map(function(k){
         var a = answers[k];
-        var grade = m.f
-          ? '<button class="pc-chip ' + (a.correct ? 'tier' : 'warn') + '" data-bq-grade="' + esc(k) + '" style="border:0;cursor:pointer">' +
-            (a.correct ? '✓ correct +3' : 'mark correct') + '</button>'
-          : (a.correct ? '<span class="pc-chip tier">✓ correct +3</span>' : '');
+        var grade = '<button class="pc-chip ' + (a.correct ? 'tier' : 'warn') + '" data-bq-grade="' + esc(k) + '" style="border:0;cursor:pointer">' +
+          (a.correct ? '✓ correct +3' : 'mark correct') + '</button>';
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)">' +
           avatarHtml(a.name) +
           '<span style="flex:1;min-width:0;font-size:13.5px"><strong>' + esc(a.name) + '</strong> — ' + esc(a.ans) + '</span>' +
           grade +
         '</div>';
       }).join("");
-      if (m.f) html += '<p class="hint" style="margin-top:8px">Tap an answer to mark it correct (family PIN needed) — +3 points each.</p>';
+      html += '<p class="hint" style="margin-top:8px">Tap an answer to mark it correct (family PIN needed) — +3 points each. Entering the answer with the final result ticks them all at once.</p>';
     }
   }
   html += '</div>';
@@ -3756,8 +3777,10 @@ document.getElementById("btn-final").addEventListener("click", function(){
       p3: document.getElementById("mf-p3").value.trim().slice(0,40)
     };
     if (!res.p1) { toast("Enter at least the winner (P1)"); return; }
+    var rightM = readBonusAnswer();
     requirePin(function(){
       fsSetFinal(m.id, res);
+      saveBonusAnswer(m, rightM);
       ["mf-pole","mf-p1","mf-p2","mf-p3"].forEach(function(id){ document.getElementById(id).value = ""; });
       confetti();
     });
@@ -3766,13 +3789,36 @@ document.getElementById("btn-final").addEventListener("click", function(){
   var sa = document.getElementById("fin-sa").value;
   var sc = document.getElementById("fin-sc").value;
   if (sa === "" || sc === "") { toast("Enter both final scores"); return; }
+  var rightS = readBonusAnswer();
   requirePin(function(){
     fsSetFinal(m.id, [num(sa), num(sc)]);
+    saveBonusAnswer(m, rightS);
     document.getElementById("fin-sa").value = "";
     document.getElementById("fin-sc").value = "";
     confetti();
   });
 });
+// Record the bonus question's correct answer with the result and auto-tick
+// everyone who matched it (accent/case tolerant). Anything ambiguous can still
+// be graded by hand from the answer list.
+function readBonusAnswer(){
+  var inp = document.getElementById("fin-bq");
+  return inp ? inp.value.trim().slice(0, 60) : "";
+}
+function saveBonusAnswer(m, right){
+  if (!right || !m.bq || !m.bq.q) return;
+  var answers = (m.bq && m.bq.r) || {};
+  var patch = { "bq.a": right };
+  var hits = 0;
+  Object.keys(answers).forEach(function(k){
+    var ok = sameName(answers[k].ans, right);
+    patch["bq.r." + k + ".correct"] = ok;
+    if (ok) hits++;
+  });
+  updateDoc(doc(db,"matches",m.id), patch)
+    .then(function(){ if (hits) toast("⭐ " + hits + " got the bonus right (+3 each)"); })
+    .catch(function(){ toast("Couldn't save the bonus answer"); });
+}
 
 document.getElementById("btn-clear-final").addEventListener("click", function(){
   var m = cm();

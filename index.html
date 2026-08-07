@@ -791,6 +791,10 @@
         <label for="nl-sport">Sport</label>
         <select id="nl-sport"></select>
       </div>
+      <div class="field" style="margin-top:12px">
+        <label for="nl-tournament">Starting fixtures</label>
+        <select id="nl-tournament"></select>
+      </div>
       <p class="hint" id="nl-sport-note" style="margin-top:8px"></p>
       <button class="btn" id="btn-create-league" style="margin-top:14px">Create league</button>
       <button class="btn quiet" id="btn-create-cancel">Back</button>
@@ -973,10 +977,19 @@ var CRICKET_2026 = [
   {id:"cric-sa-nz",   h:"South Africa", a:"New Zealand", ko:Date.UTC(2026,7,15,10,0),  vn:"Test Match", tbc:true}
 ];
 
+// The All Blacks' games in South Africa — a ready-made mini-league drawn from
+// the Springbok fixtures (same match ids, so it's never seen as a duplicate of
+// the full season). The Baltimore Test is a "home" game played in the USA, so
+// it's left out of the tour-to-SA set.
+var NZ_TOUR_2026 = FIXTURES
+  .filter(function(fx){ return fx.h === "South Africa" && fx.a === "New Zealand" && !/USA/.test(fx.vn || ""); })
+  .map(function(fx){ return { id:fx.id, h:fx.h, a:fx.a, ko:fx.ko, vn:fx.vn, tbc:fx.tbc }; });
+
 // A "tournament" is a ready-made set of fixtures/races for one sport that can be
 // dropped into any league. Score sports carry `fixtures`; motorsports `races`.
 var TOURNAMENTS = {
-  rugby:    [{ id:"spr-2026",  name:"Springboks 2026",        fixtures: FIXTURES }],
+  rugby:    [{ id:"spr-2026",  name:"Springboks 2026",        fixtures: FIXTURES },
+            { id:"nztour-2026", name:"All Blacks in SA 2026",  fixtures: NZ_TOUR_2026 }],
   u20rugby: [{ id:"u20-2026",  name:"U20 Championship 2026",  fixtures: U20_2026, teamsSport:"u20rugby" }],
   f1:       [{ id:"f1-2026",   name:"F1 2026 Season",         races: F1_2026 }],
   motogp:   [{ id:"motogp-2026", name:"MotoGP 2026 Season",   races: MOTOGP_2026 }],
@@ -3481,16 +3494,26 @@ function openCreateLeague(){
   }).join("");
   document.getElementById("nl-name").value = "";
   sel.value = "rugby";
+  fillTournamentSelect();
   updateSportNote();
   document.getElementById("leagues-list-mode").hidden = true;
   document.getElementById("leagues-create-mode").hidden = false;
 }
+// let the organiser choose which ready-made season (if any) a new league starts with
+function fillTournamentSelect(){
+  var sp = document.getElementById("nl-sport").value;
+  var sel = document.getElementById("nl-tournament");
+  var tours = tournamentsFor(sp);
+  sel.innerHTML = tours.map(function(t){
+    var count = (t.fixtures || t.races || []).length;
+    return '<option value="' + t.id + '">' + esc(t.name) + ' (' + count + (sportType(sp)==="motor"?' races':' matches') + ')</option>';
+  }).join("") + '<option value="__none">Start empty — I\'ll add fixtures myself</option>';
+}
 function updateSportNote(){
   var sp = document.getElementById("nl-sport").value;
   var note = document.getElementById("nl-sport-note");
-  var tours = tournamentsFor(sp);
-  note.textContent = tours.length
-    ? "We'll load " + tours[0].name + " to get you started — you can add or edit fixtures anytime."
+  note.textContent = tournamentsFor(sp).length
+    ? "Its own scoreboard from zero — pick which fixtures to load above, or start empty and add your own."
     : "Pick from " + SPORTS[sp].label + " teams (or type your own) when adding matches.";
 }
 
@@ -3537,18 +3560,18 @@ document.getElementById("btn-create-cancel").addEventListener("click", function(
   document.getElementById("leagues-create-mode").hidden = true;
   document.getElementById("leagues-list-mode").hidden = false;
 });
-document.getElementById("nl-sport").addEventListener("change", updateSportNote);
+document.getElementById("nl-sport").addEventListener("change", function(){ fillTournamentSelect(); updateSportNote(); });
 document.getElementById("btn-create-league").addEventListener("click", function(){
   var name = document.getElementById("nl-name").value.trim();
   var sport = document.getElementById("nl-sport").value;
+  var tourId = document.getElementById("nl-tournament").value;
   if (!name) { toast("Give the league a name"); return; }
   requirePin(function(){
     var newId;
     fsCreateLeague(name, sport).then(function(id){
       newId = id;
-      // pre-load this sport's tournament so the league opens with fixtures, not blank
-      var tours = tournamentsFor(sport);
-      return tours.length ? loadTournament(id, sport, tours[0].id) : Promise.resolve(0);
+      // load the chosen ready-made season so the league opens with fixtures
+      return (tourId && tourId !== "__none") ? loadTournament(id, sport, tourId) : Promise.resolve(0);
     }).then(function(n){
       closeLeaguesModal();
       switchLeague(newId);

@@ -213,6 +213,33 @@
   .whoshere{font-size:13px;color:var(--ink-soft);margin-top:10px;line-height:1.5}
   .whoshere b{color:var(--forest)}
   .name-row input{flex:1}
+  /* home / outstanding predictions */
+  .home-hero{
+    background:linear-gradient(150deg,#0E5C3F,#0A3B2A);color:#fff;border-radius:16px;
+    padding:18px 18px 20px;margin-bottom:12px;box-shadow:0 6px 20px rgba(10,59,42,.25);
+  }
+  .home-hero.caught-up{background:linear-gradient(150deg,#1B7F4F,#0E5C3F)}
+  .hh-title{font-size:22px;font-weight:800;line-height:1.15}
+  .hh-sub{font-size:13.5px;line-height:1.5;margin:8px 0 0;color:rgba(255,255,255,.9)}
+  .home-name{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .home-name input{flex:1;min-width:150px;border-radius:10px;border:0;padding:12px;font-size:16px}
+  .home-name .btn{margin:0;width:auto;flex:0 0 auto}
+  .home-id{font-size:13px;margin-top:12px;color:rgba(255,255,255,.92)}
+  .home-id b{color:var(--gold)}
+  .home-id .change{background:transparent;border:0;color:#fff;text-decoration:underline;font-size:13px;cursor:pointer;padding:0 0 0 4px}
+  .home-group{margin-bottom:16px}
+  .home-group-head{font-size:14px;font-weight:800;color:var(--forest);padding:2px 2px 8px}
+  .pa-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+  .pa-head{font-weight:700;color:var(--forest);margin:0 0 8px;font-size:14px}
+  .pa-when{font-weight:500;color:var(--ink-soft);font-size:12px}
+  .pa-done{color:#0E5C3F;font-size:12px;font-weight:700}
+  .pa-score{display:flex;align-items:center;gap:8px}
+  .pa-score .pa-team{flex:1;font-size:13px}
+  .pa-score .pa-team-a{text-align:right}
+  .pa-score input{width:60px;border-radius:8px;border:1px solid var(--line);padding:9px;font-size:16px;text-align:center}
+  .pa-motor{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .pa-motor input{border-radius:8px;border:1px solid var(--line);padding:9px;font-size:15px}
+  .chip-count.alert{background:var(--gold);color:#3a2c00}
   .avatar-btn{
     flex:0 0 auto;width:46px;height:46px;border-radius:10px;
     border:1.5px solid var(--line);background:#FCFBF7;font-size:20px;
@@ -499,6 +526,12 @@
     <section id="sec-install" hidden>
       <div class="card install-card" id="install-inner"></div>
     </section>
+
+    <!-- ============ HOME / OUTSTANDING PREDICTIONS ============ -->
+    <div id="view-home" hidden>
+      <section id="home-intro"></section>
+      <section><div id="home-body"></div></section>
+    </div>
 
     <!-- ============ MATCH VIEW ============ -->
     <div id="view-match">
@@ -1019,7 +1052,8 @@ var editingName = null;
 var editingMatch = null;
 var nameExpanded = false;   // show the raw name input instead of the "Predicting as X" chip
 var jokerArmed = false;     // whether the joker toggle is on for the pending prediction
-var view = "league";
+var homeEditName = false;   // show the name input on the home page even if a name is saved
+var view = "home";          // landing page: everything you still need to predict, all leagues
 var cameFrom = "fixtures";  // which list ("fixtures" | "results") the current match view was opened from
 var tickTimer = null;
 
@@ -1033,6 +1067,10 @@ function fromForMatch(m){ return (m && m.f) ? "results" : "fixtures"; }
 /* ================= leagues ================= */
 function leagueById(id){
   for (var i=0;i<state.leagues.length;i++) if (state.leagues[i].id===id) return state.leagues[i];
+  return null;
+}
+function matchById(id){
+  for (var i=0;i<state.allM.length;i++) if (state.allM[i].id===id) return state.allM[i];
   return null;
 }
 function curLeagueObj(){
@@ -1767,8 +1805,16 @@ function render(){
   document.getElementById("sec-loading").hidden = ready;
   document.getElementById("app-content").hidden = !ready;
   if (!ready) return;
+  // Don't yank the home page out from under someone mid-entry: if they're typing
+  // into a field there (their name, or a prediction), a live update from another
+  // family member shouldn't wipe what they've filled in. Skip this repaint.
+  if (view === "home") {
+    var ae = document.activeElement;
+    if (ae && ae.tagName === "INPUT" && document.getElementById("view-home").contains(ae)) return;
+  }
   renderChips();
   renderHeader();
+  document.getElementById("view-home").hidden = view !== "home";
   document.getElementById("view-match").hidden = view !== "match";
   document.getElementById("view-league").hidden = view !== "league";
   document.getElementById("view-fixtures").hidden = view !== "fixtures";
@@ -1776,6 +1822,7 @@ function render(){
   document.getElementById("view-newmatch").hidden = view !== "newmatch";
   var shareBtn = document.getElementById("btn-share");
   shareBtn.textContent = view === "league" ? "Share league standings" : "Invite family & friends";
+  if (view === "home") renderHome();
   if (view === "match") renderMatch();
   if (view === "league") renderLeague();
   if (view === "fixtures") renderFixturesList();
@@ -1884,7 +1931,9 @@ function renderChips(){
   var motorFlav = isMotorFlavour();
   var fxLabel = motorFlav ? "🏁 Races" : "📅 Fixtures";
   var addLabel = motorFlav ? "＋ Race" : "＋ Match";
+  var outN = outstandingCount();
   var html =
+    '<button class="chip' + (view==="home" ? " active" : "") + '" data-chip="home">🎯 Predict' + (outN ? '<span class="chip-count alert">' + outN + '</span>' : '') + '</button>' +
     '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 League</button>' +
     '<button class="chip' + (onFixtures ? " active" : "") + '" data-chip="fixtures">' + fxLabel + '<span class="chip-count">' + fxCount + '</span></button>' +
     '<button class="chip' + (onResults ? " active" : "") + '" data-chip="results">✅ Results<span class="chip-count">' + resCount + '</span></button>' +
@@ -1897,6 +1946,13 @@ function renderChips(){
 function renderHeader(){
   var card = document.getElementById("head-card");
   var sub = document.getElementById("head-sub");
+  if (view === "home") {
+    var n = outstandingCount();
+    card.innerHTML = '<div class="league-head"><div class="big">🎯 Your predictions</div>' +
+      '<div class="sub">' + (!myName ? "add your name to begin" : (n ? n + " still to make across your leagues" : "all caught up 🎉")) + '</div></div>';
+    sub.innerHTML = ""; sub.hidden = true;
+    return;
+  }
   if (view === "league") {
     var lg = curLeagueObj();
     card.innerHTML = '<div class="league-head"><div class="big">' + lg.icon + ' ' + esc(lg.name) + '</div>' +
@@ -2454,44 +2510,43 @@ function renderPredictAll(){
   // only worth showing when there are at least two open matches to breeze through
   sec.hidden = open.length < 2;
 }
-function openPredictAll(){
-  if (!myName) { toast("Add your name once, then you can predict everything"); return; }
-  var open = openMatches();
-  var gridOpts = competitorsFor(curLeagueObj().sport).map(function(c){ return '<option value="' + esc(c) + '">'; }).join("");
-  var body = open.map(function(m){
-    var mine = findIn(m, myName);
-    var head = '<div style="font-weight:700;color:var(--forest);margin:2px 0 6px">' +
-      (m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af) +
-      (m.ko ? ' <span style="font-weight:500;color:var(--ink-soft);font-size:12px">· ' + esc(fmtKo(m.ko)) + '</span>' : '') +
-      (mine ? ' <span style="color:#0E5C3F;font-size:12px">✓ done</span>' : '') + '</div>';
-    if (m.type === "motor") {
-      var mp = mine || {};
-      return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="motor" style="margin-bottom:14px">' + head +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
-        '<input class="pa-pole" list="pa-grid" placeholder="🏁 Pole" value="' + esc(mp.pole||"") + '">' +
-        '<input class="pa-p1" list="pa-grid" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
-        '<input class="pa-p2" list="pa-grid" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
-        '<input class="pa-p3" list="pa-grid" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
-        '</div></div>';
-    }
-    return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score" style="margin-bottom:14px">' + head +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-      '<span style="flex:1;font-size:13px">' + esc(m.h) + '</span>' +
-      '<input class="pa-hs" type="number" inputmode="numeric" min="0" max="150" placeholder="0" style="width:64px" value="' + (mine ? esc(String(mine[1])) : "") + '">' +
-      '<span>–</span>' +
-      '<input class="pa-as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" style="width:64px" value="' + (mine ? esc(String(mine[2])) : "") + '">' +
-      '<span style="flex:1;font-size:13px;text-align:right">' + esc(m.a) + '</span>' +
+// ---- shared editable prediction rows (predict-all sheet AND the home page) ----
+// One editable row for a match. `mine` is the user's existing prediction (if any).
+function predictionItemHtml(m, gridId){
+  var mine = myName ? findIn(m, myName) : null;
+  var head = '<div class="pa-head">' +
+    (m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af) +
+    (m.ko ? ' <span class="pa-when">· ' + esc(fmtKo(m.ko)) + (m.tbc ? " (prov.)" : "") + '</span>' : '') +
+    (mine ? ' <span class="pa-done">✓ done</span>' : '') + '</div>';
+  if (m.type === "motor") {
+    var mp = mine || {};
+    return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="motor">' + head +
+      '<div class="pa-motor">' +
+      '<input class="pa-pole" list="' + gridId + '" placeholder="🏁 Pole" value="' + esc(mp.pole||"") + '">' +
+      '<input class="pa-p1" list="' + gridId + '" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
+      '<input class="pa-p2" list="' + gridId + '" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
+      '<input class="pa-p3" list="' + gridId + '" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
       '</div></div>';
-  }).join("");
-  document.getElementById("pa-sub").textContent = "Predicting as " + myName + " — fill in what you like and save. Blank ones are skipped.";
-  document.getElementById("pa-list").innerHTML =
-    '<datalist id="pa-grid">' + gridOpts + '</datalist>' + (body || '<p class="hint">Nothing open right now.</p>');
-  document.getElementById("modal-predictall").hidden = false;
+  }
+  return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score">' + head +
+    '<div class="pa-score">' +
+    '<span class="pa-team">' + esc(m.h) + '</span>' +
+    '<input class="pa-hs" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (mine ? esc(String(mine[1])) : "") + '">' +
+    '<span>–</span>' +
+    '<input class="pa-as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (mine ? esc(String(mine[2])) : "") + '">' +
+    '<span class="pa-team pa-team-a">' + esc(m.a) + '</span>' +
+    '</div></div>';
 }
-function savePredictAll(){
-  var items = document.querySelectorAll("#pa-list .pa-item");
+// datalist of competitor suggestions across whatever motor matches are shown
+function gridDatalist(matches, id){
+  var seen = {};
+  matches.forEach(function(m){ if (m.type === "motor") competitorsFor(m.sport || "motogp").forEach(function(c){ seen[c] = 1; }); });
+  return '<datalist id="' + id + '">' + Object.keys(seen).map(function(c){ return '<option value="' + esc(c) + '"></option>'; }).join("") + '</datalist>';
+}
+// save every filled-in row under `root`; returns how many were saved
+function savePredictionItems(root){
   var saved = 0;
-  items.forEach(function(el){
+  root.querySelectorAll(".pa-item").forEach(function(el){
     var id = el.getAttribute("data-pa");
     if (el.getAttribute("data-type") === "motor") {
       var pole = el.querySelector(".pa-pole").value.trim();
@@ -2509,12 +2564,114 @@ function savePredictAll(){
       saved++;
     }
   });
+  return saved;
+}
+function openPredictAll(){
+  if (!myName) { toast("Add your name once, then you can predict everything"); return; }
+  var open = openMatches();
+  var body = open.map(function(m){ return predictionItemHtml(m, "pa-grid"); }).join("");
+  document.getElementById("pa-sub").textContent = "Predicting as " + myName + " — fill in what you like and save. Blank ones are skipped.";
+  document.getElementById("pa-list").innerHTML =
+    gridDatalist(open, "pa-grid") + (body || '<p class="hint">Nothing open right now.</p>');
+  document.getElementById("modal-predictall").hidden = false;
+}
+function savePredictAll(){
+  var saved = savePredictionItems(document.getElementById("pa-list"));
   document.getElementById("modal-predictall").hidden = true;
   toast(saved ? "Saved " + saved + " prediction" + (saved===1?"":"s") + " — good luck! 🍀" : "Nothing filled in yet");
 }
 document.getElementById("btn-predict-all").addEventListener("click", openPredictAll);
 document.getElementById("btn-pa-save").addEventListener("click", savePredictAll);
 document.getElementById("btn-pa-close").addEventListener("click", function(){ document.getElementById("modal-predictall").hidden = true; });
+
+/* ================= home: outstanding predictions across every league ========= */
+// every open, still-unpredicted match for the current user, across ALL leagues
+function outstandingList(){
+  if (!myName) return [];
+  return state.allM.filter(function(m){
+    return !m.f && !isLocked(m) && !findIn(m, myName);
+  }).sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+}
+function outstandingCount(){ return outstandingList().length; }
+function leagueMeta(){
+  var name = {}, icon = {};
+  state.leagues.forEach(function(l){ name[l.id] = l.name; icon[l.id] = l.icon; });
+  return { name:name, icon:icon };
+}
+function homeCaughtUpHtml(){
+  var meta = leagueMeta();
+  var upcoming = state.allM.filter(function(m){ return !m.f && !isLocked(m); })
+    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); }).slice(0, 5);
+  if (!upcoming.length) return '<p class="hint" style="text-align:center">No upcoming matches right now — new ones will appear here automatically.</p>';
+  return '<div class="home-group-head">⏱ Coming up — you\'re in</div>' +
+    upcoming.map(function(m){
+      var title = m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
+      var lid = m.league || DEFAULT_LEAGUE;
+      return '<div class="list-row" data-hgo="' + esc(m.id) + '"><div class="lr-teams">' +
+        '<div class="lr-match">' + title + '</div>' +
+        '<div class="lr-meta">' + (meta.icon[lid]||"🏆") + " " + esc(meta.name[lid]||"League") + ' · ' + (m.ko ? esc(fmtKo(m.ko)) : "TBC") + ' · ✅ predicted</div>' +
+        '</div><span class="lr-chev">›</span></div>';
+    }).join("");
+}
+function renderHome(){
+  var intro = document.getElementById("home-intro");
+  var body = document.getElementById("home-body");
+  // 1) no name yet (or changing it) → ask once, then everything unlocks
+  if (!myName || homeEditName) {
+    intro.innerHTML = '<div class="home-hero"><div class="hh-title">🎯 Your predictions</div>' +
+      '<p class="hh-sub">Pop in your name and we\'ll gather every match you still need to predict — across all your leagues — right here, so nothing slips by.</p>' +
+      '<div class="home-name"><input id="home-name-inp" placeholder="Your name" maxlength="30" list="known-names" value="' + esc(homeEditName ? (myName||"") : "") + '">' +
+      '<button class="btn" id="home-name-go">Show my predictions</button></div></div>';
+    body.innerHTML = "";
+    var inp = document.getElementById("home-name-inp");
+    if (inp) inp.focus();
+    return;
+  }
+  var open = outstandingList();
+  var idLine = '<div class="home-id">Predicting as <b>' + esc(myName) + '</b><button type="button" class="change" id="home-change-name">change</button></div>';
+  // 2) all caught up
+  if (!open.length) {
+    intro.innerHTML = '<div class="home-hero caught-up"><div class="hh-title">🎉 All caught up, ' + esc(myName) + '!</div>' +
+      '<p class="hh-sub">You\'ve predicted every open match. New fixtures will show up here the moment they\'re added.</p>' + idLine + '</div>';
+    body.innerHTML = homeCaughtUpHtml();
+    return;
+  }
+  // 3) outstanding predictions, grouped by league (kick-off order overall)
+  var meta = leagueMeta();
+  var groups = {}, order = [];
+  open.forEach(function(m){
+    var lid = m.league || DEFAULT_LEAGUE;
+    if (!groups[lid]) { groups[lid] = []; order.push(lid); }
+    groups[lid].push(m);
+  });
+  intro.innerHTML = '<div class="home-hero"><div class="hh-title">🎯 ' + open.length + ' prediction' + (open.length===1?'':'s') + ' to make</div>' +
+    '<p class="hh-sub">Everything you still owe across ' + order.length + ' league' + (order.length===1?'':'s') + '. Fill in what you can and hit save — blanks are skipped, and you can come back anytime.</p>' + idLine + '</div>';
+  var html = gridDatalist(open, "home-grid");
+  order.forEach(function(lid){
+    html += '<div class="home-group"><div class="home-group-head">' + (meta.icon[lid]||"🏆") + ' ' + esc(meta.name[lid]||"League") + '</div>' +
+      groups[lid].map(function(m){ return predictionItemHtml(m, "home-grid"); }).join("") + '</div>';
+  });
+  body.innerHTML = html + '<button class="btn" id="home-save">Save all my predictions</button>';
+}
+document.getElementById("view-home").addEventListener("click", function(ev){
+  if (ev.target.closest("#home-name-go")) {
+    var name = (document.getElementById("home-name-inp").value || "").trim();
+    if (!name) { toast("Type your name first"); return; }
+    myName = name; saveName(); homeEditName = false; render();
+    return;
+  }
+  if (ev.target.closest("#home-change-name")) { homeEditName = true; renderHome(); return; }
+  if (ev.target.closest("#home-save")) {
+    var saved = savePredictionItems(document.getElementById("home-body"));
+    toast(saved ? "Saved " + saved + " prediction" + (saved===1?"":"s") + " — good luck! 🍀" : "Fill in at least one prediction first");
+    return;
+  }
+  var go = ev.target.closest("[data-hgo]");
+  if (go) {
+    var m = matchById(go.getAttribute("data-hgo"));
+    if (m) { if ((m.league||DEFAULT_LEAGUE) !== curLeague) switchLeague(m.league||DEFAULT_LEAGUE); openMatch(m.id, "fixtures"); }
+  }
+});
 
 /* ---------- match-day hero: surface the next match to predict ---------- */
 function renderHero(){
@@ -2818,7 +2975,8 @@ document.getElementById("chips").addEventListener("click", function(ev){
   var chip = ev.target.closest(".chip");
   if (!chip) return;
   var v = chip.getAttribute("data-chip");
-  if (v === "league") { view = "league"; render(); }
+  if (v === "home") { view = "home"; homeEditName = false; render(); }
+  else if (v === "league") { view = "league"; render(); }
   else if (v === "fixtures") { view = "fixtures"; render(); }
   else if (v === "results") { view = "results"; render(); }
   else if (v === "new") { openMatchForm(null); }

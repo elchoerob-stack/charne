@@ -254,6 +254,12 @@
   .pa-bonus{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
   .pa-bonus-q{font-size:12.5px;font-weight:700;color:var(--forest);margin-bottom:6px}
   .pa-bq{width:100%;border-radius:8px;border:1px solid var(--line);padding:9px;font-size:14px;box-sizing:border-box}
+  .pa-save-one{
+    display:block;margin:10px 0 0 auto;border:1.5px solid var(--forest);background:transparent;
+    color:var(--forest);border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:800;
+    cursor:pointer;font-family:inherit;
+  }
+  .pa-save-one:active{background:var(--forest);color:#fff}
   .bq-item .bq-q-text{font-weight:600;margin:0 0 8px}
   .bq-ans{width:100%;border-radius:8px;border:1px solid var(--line);padding:10px;font-size:15px;box-sizing:border-box}
   .pts-pill{font-size:11px;font-weight:800;background:var(--gold);color:#3a2c00;border-radius:999px;padding:1px 8px;vertical-align:middle}
@@ -2785,6 +2791,10 @@ function predictionItemHtml(m, gridId, leagueTag){
     (m.ko ? ' <span class="pa-when">· ' + esc(fmtKo(m.ko)) + (m.tbc ? " (prov.)" : "") + '</span>' : '') +
     (mine ? ' <span class="pa-done">✓ done</span>' : '') + '</div>';
   var bonus = inlineBonusHtml(m);
+  // save just this one, for anyone who'd rather bank them as they go than fill
+  // in the whole page first
+  var one = '<button type="button" class="pa-save-one" data-save-one="' + esc(m.id) + '">' +
+    (mine ? "Update this one" : "Save this one") + '</button>';
   if (m.type === "motor") {
     var mp = mine || {};
     return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="motor">' + head +
@@ -2793,7 +2803,7 @@ function predictionItemHtml(m, gridId, leagueTag){
       '<input class="pa-p1" list="' + gridId + '" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
       '<input class="pa-p2" list="' + gridId + '" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
       '<input class="pa-p3" list="' + gridId + '" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
-      '</div>' + bonus + '</div>';
+      '</div>' + bonus + one + '</div>';
   }
   return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score">' + head +
     '<div class="pa-score">' +
@@ -2802,7 +2812,7 @@ function predictionItemHtml(m, gridId, leagueTag){
     '<span>–</span>' +
     '<input class="pa-as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (mine ? esc(String(mine[2])) : "") + '">' +
     '<span class="pa-team pa-team-a">' + esc(m.a) + '</span>' +
-    '</div>' + bonus + '</div>';
+    '</div>' + bonus + one + '</div>';
 }
 // datalist of competitor suggestions across whatever motor matches are shown
 function gridDatalist(matches, id){
@@ -2811,37 +2821,56 @@ function gridDatalist(matches, id){
   return '<datalist id="' + id + '">' + Object.keys(seen).map(function(c){ return '<option value="' + esc(c) + '"></option>'; }).join("") + '</datalist>';
 }
 // save every filled-in row under `root`; returns how many were saved
+// save ONE row; returns true if a prediction was written
+function savePredictionItem(el){
+  var id = el.getAttribute("data-pa");
+  var predicted = false;
+  if (el.getAttribute("data-type") === "motor") {
+    var pole = el.querySelector(".pa-pole").value.trim();
+    var p1 = el.querySelector(".pa-p1").value.trim();
+    var p2 = el.querySelector(".pa-p2").value.trim();
+    var p3 = el.querySelector(".pa-p3").value.trim();
+    if (p1) {         // winner is the minimum needed to count
+      fsUpsertMotor(id, myName, { pole:pole, p1:p1, p2:p2, p3:p3 });
+      predicted = true;
+    }
+  } else {
+    var hs = el.querySelector(".pa-hs").value;
+    var as = el.querySelector(".pa-as").value;
+    if (hs !== "" && as !== "") {
+      fsUpsertPrediction(id, myName, hs, as);
+      predicted = true;
+    }
+  }
+  // the bonus answer rides along — but only counts once a prediction exists
+  // for this match (either just saved, or made earlier)
+  var bqEl = el.querySelector(".pa-bq");
+  if (bqEl && bqEl.value.trim()) {
+    var mm = matchById(id);
+    if (predicted || (mm && findIn(mm, myName))) fsAnswerBonus(id, myName, bqEl.value.trim());
+  }
+  return predicted;
+}
 function savePredictionItems(root){
   var saved = 0;
   root.querySelectorAll(".pa-item[data-pa]").forEach(function(el){
-    var id = el.getAttribute("data-pa");
-    var predicted = false;
-    if (el.getAttribute("data-type") === "motor") {
-      var pole = el.querySelector(".pa-pole").value.trim();
-      var p1 = el.querySelector(".pa-p1").value.trim();
-      var p2 = el.querySelector(".pa-p2").value.trim();
-      var p3 = el.querySelector(".pa-p3").value.trim();
-      if (p1) {         // winner is the minimum needed to count
-        fsUpsertMotor(id, myName, { pole:pole, p1:p1, p2:p2, p3:p3 });
-        saved++; predicted = true;
-      }
-    } else {
-      var hs = el.querySelector(".pa-hs").value;
-      var as = el.querySelector(".pa-as").value;
-      if (hs !== "" && as !== "") {
-        fsUpsertPrediction(id, myName, hs, as);
-        saved++; predicted = true;
-      }
-    }
-    // the bonus answer rides along — but only counts once a prediction exists
-    // for this match (either just saved, or made earlier)
-    var bqEl = el.querySelector(".pa-bq");
-    if (bqEl && bqEl.value.trim()) {
-      var mm = matchById(id);
-      if (predicted || (mm && findIn(mm, myName))) fsAnswerBonus(id, myName, bqEl.value.trim());
-    }
+    if (savePredictionItem(el)) saved++;
   });
   return saved;
+}
+// "Save this one" — bank a single prediction without filling in the rest
+function saveOneFrom(btn){
+  var el = btn.closest(".pa-item[data-pa]");
+  if (!el) return;
+  // drop focus so the "don't repaint while typing" guard lets the list refresh
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  var m = matchById(el.getAttribute("data-pa"));
+  var had = !!(m && myName && findIn(m, myName));
+  if (savePredictionItem(el)) {
+    toast(had ? "Updated — good luck! 🍀" : "Saved — good luck! 🍀");
+  } else {
+    toast(m && m.type === "motor" ? "Pick at least the winner first" : "Fill in both scores first");
+  }
 }
 function openPredictAll(){
   if (!myName) { toast("Add your name once, then you can predict everything"); return; }
@@ -2857,6 +2886,10 @@ function savePredictAll(){
   document.getElementById("modal-predictall").hidden = true;
   toast(saved ? "Saved " + saved + " prediction" + (saved===1?"":"s") + " — good luck! 🍀" : "Nothing filled in yet");
 }
+document.getElementById("pa-list").addEventListener("click", function(ev){
+  var one = ev.target.closest("[data-save-one]");
+  if (one) saveOneFrom(one);
+});
 document.getElementById("btn-predict-all").addEventListener("click", openPredictAll);
 document.getElementById("btn-pa-save").addEventListener("click", savePredictAll);
 document.getElementById("btn-pa-close").addEventListener("click", function(){ document.getElementById("modal-predictall").hidden = true; });
@@ -3003,6 +3036,8 @@ document.getElementById("view-home").addEventListener("click", function(ev){
     return;
   }
   if (ev.target.closest("#home-change-name")) { homeEditName = true; renderHome(); return; }
+  var one = ev.target.closest("[data-save-one]");
+  if (one) { saveOneFrom(one); return; }
   if (ev.target.closest("#home-save")) {
     var saved = savePredictionItems(document.getElementById("home-body"));
     toast(saved ? "Saved " + saved + " prediction" + (saved===1?"":"s") + " — good luck! 🍀" : "Fill in at least one prediction first");

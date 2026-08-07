@@ -247,6 +247,9 @@
   .bq-lbl.wait{color:var(--gold-deep)}
   .bq-line .muted{color:var(--ink-soft)}
   .bq-you{font-size:13px;margin-top:8px;font-weight:600;color:var(--forest)}
+  .pa-bonus{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .pa-bonus-q{font-size:12.5px;font-weight:700;color:var(--forest);margin-bottom:6px}
+  .pa-bq{width:100%;border-radius:8px;border:1px solid var(--line);padding:9px;font-size:14px;box-sizing:border-box}
   .bq-item .bq-q-text{font-weight:600;margin:0 0 8px}
   .bq-ans{width:100%;border-radius:8px;border:1px solid var(--line);padding:10px;font-size:15px;box-sizing:border-box}
   .pts-pill{font-size:11px;font-weight:800;background:var(--gold);color:#3a2c00;border-radius:999px;padding:1px 8px;vertical-align:middle}
@@ -548,10 +551,10 @@
 
 <header>
   <div class="eyebrow-row">
+    <button type="button" class="help-btn" id="btn-help" aria-label="How this app works">❓</button>
     <button type="button" class="league-switch" id="btn-league-switch">
       <span id="league-switch-label" class="lname">🏉 Family Rugby</span> <span aria-hidden="true">▾</span>
     </button>
-    <button type="button" class="help-btn" id="btn-help" aria-label="How this app works">❓</button>
   </div>
   <div id="head-card"></div>
   <p class="subline" id="head-sub"></p>
@@ -2686,6 +2689,17 @@ function raceBadge(m){
 // ---- shared editable prediction rows (predict-all sheet AND the home page) ----
 // One editable row for a match. `leagueTag` (optional) labels which league it's
 // in — used on the home page where rows are grouped by date, not by league.
+// the bonus question, inline under a prediction row, so it's answered in the
+// same breath as the score instead of needing a second trip to the match page
+function inlineBonusHtml(m){
+  if (!m.bq || !m.bq.q) return "";
+  var ans = (myName && m.bq.r && m.bq.r[keyFor(myName)]) || null;
+  return '<div class="pa-bonus">' +
+    '<div class="pa-bonus-q">⭐ ' + esc(m.bq.q) + ' <span class="pts-pill">+3</span>' +
+      (ans ? ' <span class="pa-done">✓ answered</span>' : '') + '</div>' +
+    '<input class="pa-bq" maxlength="60" placeholder="Your answer — hidden until kick-off" value="' + (ans ? esc(ans.ans) : "") + '">' +
+    '</div>';
+}
 function predictionItemHtml(m, gridId, leagueTag){
   var mine = myName ? findIn(m, myName) : null;
   var head = '<div class="pa-head">' +
@@ -2694,6 +2708,7 @@ function predictionItemHtml(m, gridId, leagueTag){
     (m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af) +
     (m.ko ? ' <span class="pa-when">· ' + esc(fmtKo(m.ko)) + (m.tbc ? " (prov.)" : "") + '</span>' : '') +
     (mine ? ' <span class="pa-done">✓ done</span>' : '') + '</div>';
+  var bonus = inlineBonusHtml(m);
   if (m.type === "motor") {
     var mp = mine || {};
     return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="motor">' + head +
@@ -2702,7 +2717,7 @@ function predictionItemHtml(m, gridId, leagueTag){
       '<input class="pa-p1" list="' + gridId + '" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
       '<input class="pa-p2" list="' + gridId + '" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
       '<input class="pa-p3" list="' + gridId + '" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
-      '</div></div>';
+      '</div>' + bonus + '</div>';
   }
   return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score">' + head +
     '<div class="pa-score">' +
@@ -2711,7 +2726,7 @@ function predictionItemHtml(m, gridId, leagueTag){
     '<span>–</span>' +
     '<input class="pa-as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (mine ? esc(String(mine[2])) : "") + '">' +
     '<span class="pa-team pa-team-a">' + esc(m.a) + '</span>' +
-    '</div></div>';
+    '</div>' + bonus + '</div>';
 }
 // datalist of competitor suggestions across whatever motor matches are shown
 function gridDatalist(matches, id){
@@ -2724,20 +2739,30 @@ function savePredictionItems(root){
   var saved = 0;
   root.querySelectorAll(".pa-item[data-pa]").forEach(function(el){
     var id = el.getAttribute("data-pa");
+    var predicted = false;
     if (el.getAttribute("data-type") === "motor") {
       var pole = el.querySelector(".pa-pole").value.trim();
       var p1 = el.querySelector(".pa-p1").value.trim();
       var p2 = el.querySelector(".pa-p2").value.trim();
       var p3 = el.querySelector(".pa-p3").value.trim();
-      if (!p1) return;   // winner is the minimum needed to count
-      fsUpsertMotor(id, myName, { pole:pole, p1:p1, p2:p2, p3:p3 });
-      saved++;
+      if (p1) {         // winner is the minimum needed to count
+        fsUpsertMotor(id, myName, { pole:pole, p1:p1, p2:p2, p3:p3 });
+        saved++; predicted = true;
+      }
     } else {
       var hs = el.querySelector(".pa-hs").value;
       var as = el.querySelector(".pa-as").value;
-      if (hs === "" || as === "") return;
-      fsUpsertPrediction(id, myName, hs, as);
-      saved++;
+      if (hs !== "" && as !== "") {
+        fsUpsertPrediction(id, myName, hs, as);
+        saved++; predicted = true;
+      }
+    }
+    // the bonus answer rides along — but only counts once a prediction exists
+    // for this match (either just saved, or made earlier)
+    var bqEl = el.querySelector(".pa-bq");
+    if (bqEl && bqEl.value.trim()) {
+      var mm = matchById(id);
+      if (predicted || (mm && findIn(mm, myName))) fsAnswerBonus(id, myName, bqEl.value.trim());
     }
   });
   return saved;

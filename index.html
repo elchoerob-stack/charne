@@ -229,6 +229,22 @@
   .home-id .change{background:transparent;border:0;color:#fff;text-decoration:underline;font-size:13px;cursor:pointer;padding:0 0 0 4px}
   .home-group{margin-bottom:16px}
   .home-group-head{font-size:14px;font-weight:800;color:var(--forest);padding:2px 2px 8px}
+  .home-group-head.date{border-bottom:2px solid var(--line);margin-bottom:10px;padding-bottom:6px}
+  .pa-league{display:inline-block;font-size:11px;font-weight:700;background:#EEF4EF;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink);vertical-align:middle}
+  /* bonus-question participation (league view) */
+  .bq-status{margin-bottom:10px}
+  .bq-status .bq-q{font-size:14px;color:var(--forest)}
+  .bq-status .bq-q-text{font-size:13px;margin:3px 0 8px}
+  .bq-line{font-size:13px;line-height:1.5;margin-top:4px}
+  .bq-lbl{font-weight:700;margin-right:4px}
+  .bq-lbl.done{color:#0E5C3F}
+  .bq-lbl.wait{color:var(--gold-deep)}
+  .bq-line .muted{color:var(--ink-soft)}
+  .bq-you{font-size:13px;margin-top:8px;font-weight:600;color:var(--forest)}
+  .linkish{background:transparent;border:0;color:var(--forest);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+  /* no-peeking gate on the match view */
+  .peek{text-align:center;line-height:1.5}
+  .peek b{color:var(--forest)}
   .pa-item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
   .pa-head{font-weight:700;color:var(--forest);margin:0 0 8px;font-size:14px}
   .pa-when{font-weight:500;color:var(--ink-soft);font-size:12px}
@@ -693,6 +709,11 @@
         </div>
         <div class="rows" id="lg-rows"></div>
         <p class="legend-note">Add more matches to keep the league running all season!</p>
+      </section>
+
+      <section id="sec-bonus-status" hidden>
+        <h2>⭐ Bonus questions</h2>
+        <div id="bonus-status-body"></div>
       </section>
 
       <section>
@@ -2113,9 +2134,15 @@ function renderMatch(){
   var rows = document.getElementById("rows");
   document.getElementById("count").textContent = m.p.length;
   var ranked = m.f ? standings(m) : null;
+  // no peeking: hide everyone else's predictions until you've made yours (or the
+  // match has kicked off / finished, when copying is no longer possible)
+  var reveal = !!(m.f || locked || (myName && findIn(m, myName)));
 
   if (!m.p.length) {
     rows.innerHTML = '<div class="empty">No predictions yet — be the first!</div>';
+  } else if (!reveal) {
+    rows.innerHTML = '<div class="empty peek">🙈 <b>' + m.p.length + '</b> prediction' + (m.p.length===1?'':'s') +
+      ' already in — but they\'re hidden until you\'ve made yours.<br>Add your prediction above to reveal everyone else\'s. No peeking!</div>';
   } else if (motor) {
     var mlist = ranked || m.p.map(function(e){ return { e:e, rank:0, pts:null, motorTags:[] }; });
     rows.innerHTML = mlist.map(function(s){
@@ -2189,7 +2216,7 @@ function renderMatch(){
 
   var cons = document.getElementById("consensus");
   var facts = document.getElementById("facts");
-  if (motor) {
+  if (motor || !reveal) {
     cons.innerHTML = ""; facts.innerHTML = "";
   } else if (!m.f && m.p.length >= 3) {
     var sumH=0, sumA=0;
@@ -2461,6 +2488,7 @@ function renderLeague(){
   renderHero();
   renderProgress();
   renderPredictAll();
+  renderBonusStatus();
   renderRivals();
   renderAwards();
   renderStats();
@@ -2511,10 +2539,12 @@ function renderPredictAll(){
   sec.hidden = open.length < 2;
 }
 // ---- shared editable prediction rows (predict-all sheet AND the home page) ----
-// One editable row for a match. `mine` is the user's existing prediction (if any).
-function predictionItemHtml(m, gridId){
+// One editable row for a match. `leagueTag` (optional) labels which league it's
+// in — used on the home page where rows are grouped by date, not by league.
+function predictionItemHtml(m, gridId, leagueTag){
   var mine = myName ? findIn(m, myName) : null;
   var head = '<div class="pa-head">' +
+    (leagueTag ? '<span class="pa-league">' + leagueTag + '</span> ' : '') +
     (m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af) +
     (m.ko ? ' <span class="pa-when">· ' + esc(fmtKo(m.ko)) + (m.tbc ? " (prov.)" : "") + '</span>' : '') +
     (mine ? ' <span class="pa-done">✓ done</span>' : '') + '</div>';
@@ -2598,6 +2628,25 @@ function leagueMeta(){
   state.leagues.forEach(function(l){ name[l.id] = l.name; icon[l.id] = l.icon; });
   return { name:name, icon:icon };
 }
+// sortable per-day key (local time) and a friendly label for grouping by date
+function dayKey(ko){
+  if (!ko) return "9999-99-99";   // no kick-off yet → sort to the very end
+  var d = new Date(ko);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function dayLabel(ko){
+  if (!ko) return "📆 Date to be confirmed";
+  var WK = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var d = new Date(ko);
+  var today = new Date(); today.setHours(0,0,0,0);
+  var md = new Date(d); md.setHours(0,0,0,0);
+  var diff = Math.round((md - today) / 86400000);
+  var base = WK[d.getDay()] + " " + d.getDate() + " " + MO[d.getMonth()];
+  if (diff === 0) return "🔴 Today · " + base;
+  if (diff === 1) return "Tomorrow · " + base;
+  return base;
+}
 function homeCaughtUpHtml(){
   var meta = leagueMeta();
   var upcoming = state.allM.filter(function(m){ return !m.f && !isLocked(m); })
@@ -2636,20 +2685,27 @@ function renderHome(){
     body.innerHTML = homeCaughtUpHtml();
     return;
   }
-  // 3) outstanding predictions, grouped by league (kick-off order overall)
+  // 3) outstanding predictions, grouped by EVENT DATE (soonest first). Each row
+  //    is tagged with its league since a date can span several leagues.
   var meta = leagueMeta();
   var groups = {}, order = [];
-  open.forEach(function(m){
-    var lid = m.league || DEFAULT_LEAGUE;
-    if (!groups[lid]) { groups[lid] = []; order.push(lid); }
-    groups[lid].push(m);
+  open.forEach(function(m){    // `open` is already kick-off-ordered
+    var k = dayKey(m.ko);
+    if (!groups[k]) { groups[k] = { label: dayLabel(m.ko), items: [] }; order.push(k); }
+    groups[k].items.push(m);
   });
+  order.sort();   // yyyy-mm-dd keys sort chronologically; TBC ("9999…") lands last
   intro.innerHTML = '<div class="home-hero"><div class="hh-title">🎯 ' + open.length + ' prediction' + (open.length===1?'':'s') + ' to make</div>' +
-    '<p class="hh-sub">Everything you still owe across ' + order.length + ' league' + (order.length===1?'':'s') + '. Fill in what you can and hit save — blanks are skipped, and you can come back anytime.</p>' + idLine + '</div>';
+    '<p class="hh-sub">Everything you still owe, in date order with the next events first. Fill in what you can and hit save — blanks are skipped, and you can come back anytime.</p>' + idLine + '</div>';
   var html = gridDatalist(open, "home-grid");
-  order.forEach(function(lid){
-    html += '<div class="home-group"><div class="home-group-head">' + (meta.icon[lid]||"🏆") + ' ' + esc(meta.name[lid]||"League") + '</div>' +
-      groups[lid].map(function(m){ return predictionItemHtml(m, "home-grid"); }).join("") + '</div>';
+  order.forEach(function(k){
+    var g = groups[k];
+    html += '<div class="home-group"><div class="home-group-head date">📅 ' + esc(g.label) + '</div>' +
+      g.items.map(function(m){
+        var lid = m.league || DEFAULT_LEAGUE;
+        var tag = (meta.icon[lid]||"🏆") + " " + esc(meta.name[lid]||"League");
+        return predictionItemHtml(m, "home-grid", tag);
+      }).join("") + '</div>';
   });
   body.innerHTML = html + '<button class="btn" id="home-save">Save all my predictions</button>';
 }
@@ -2701,6 +2757,8 @@ document.getElementById("view-league").addEventListener("click", function(ev){
   if (hb) { openMatch(hb.getAttribute("data-hero"), "fixtures"); return; }
   var rv = ev.target.closest("[data-rival]");
   if (rv) { setRival(rv.getAttribute("data-rival")); return; }
+  var bg = ev.target.closest("[data-bq-go]");
+  if (bg) { openMatch(bg.getAttribute("data-bq-go"), "fixtures"); return; }
 });
 
 /* ---------- progress: how many predictions you still owe ---------- */
@@ -2717,6 +2775,43 @@ function renderProgress(){
   } else {
     body.innerHTML = '<div class="progress">📋 <b>' + esc(myName) + '</b>, you\'ve predicted <b>' + done + ' of ' + open.length + '</b> open ' + (isMotorFlavour()?"races":"matches") + ' — ' + (open.length-done) + ' to go!</div>';
   }
+}
+
+/* ---------- bonus-question participation: who has / hasn't answered ---------- */
+function renderBonusStatus(){
+  var sec = document.getElementById("sec-bonus-status");
+  var body = document.getElementById("bonus-status-body");
+  // only people who've made a score prediction can answer the bonus
+  function humanPredictors(m){
+    return m.p.map(function(e){ return predName(e); })
+      .filter(function(nm){ return keyFor(nm) !== keyFor(BOKBOT_NAME); });
+  }
+  // upcoming matches in this league with a bonus question AND real predictors to chase
+  var withBq = state.m.filter(function(m){
+    return !m.f && !isLocked(m) && m.bq && m.bq.q && humanPredictors(m).length > 0;
+  }).sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+  if (!withBq.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  body.innerHTML = withBq.map(function(m){
+    var answers = (m.bq && m.bq.r) ? m.bq.r : {};
+    var predictors = humanPredictors(m);
+    var answered = [], waiting = [];
+    predictors.forEach(function(nm){ (answers[keyFor(nm)] ? answered : waiting).push(nm); });
+    var title = m.type === "motor" ? (m.hf||"🏁") + " " + esc(m.h) : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
+    var iAnswered = myName && answers[keyFor(myName)];
+    var nudge = (myName && findIn(m, myName) && !iAnswered)
+      ? '<div class="bq-you">👉 You haven\'t answered this one — <button class="linkish" data-bq-go="' + esc(m.id) + '">answer now</button></div>' : '';
+    return '<div class="bq-status card">' +
+      '<div class="bq-q"><b>' + title + '</b>' + (m.ko ? ' <span class="pa-when">· ' + esc(fmtKo(m.ko)) + '</span>' : '') + '</div>' +
+      '<div class="bq-q-text">⭐ ' + esc(m.bq.q) + '</div>' +
+      '<div class="bq-line"><span class="bq-lbl done">✅ Answered (' + answered.length + ')</span>' +
+        (answered.length ? esc(joinNames(answered)) : '<span class="muted">nobody yet</span>') + '</div>' +
+      '<div class="bq-line"><span class="bq-lbl wait">⏳ Still to answer (' + waiting.length + ')</span>' +
+        (waiting.length ? esc(joinNames(waiting)) : '<span class="muted">everyone\'s in!</span>') + '</div>' +
+      nudge +
+      '<p class="hint" style="margin:6px 0 0">Answers stay hidden until kick-off — this only shows who\'s replied.</p>' +
+    '</div>';
+  }).join("");
 }
 
 /* ---------- head-to-head rivalry (personal, stored locally) ---------- */

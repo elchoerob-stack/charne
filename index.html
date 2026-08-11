@@ -441,6 +441,8 @@
     padding:10px 14px;margin:10px 16px 0;font-size:13px;color:var(--ink);
     max-width:528px;margin-left:auto;margin-right:auto;
   }
+  .reminder.blocked{background:#FDE7E7;border-color:#F0B4B4;display:block;line-height:1.55}
+  .reminder.blocked code{background:rgba(0,0,0,.07);border-radius:4px;padding:1px 5px;font-size:12px}
   .reminder strong{color:var(--forest)}
   .reminder-btn{
     margin-left:auto;border:0;background:var(--forest);color:#fff;
@@ -1970,16 +1972,40 @@ function ensureFixtures(){
   });
 }
 
+// Every write funnels its failure through here. A single generic "try again"
+// hides the one thing you need to know: whether the database is refusing
+// writes (expired/'missing security rules), you're offline, or the match is gone.
+var dbBlocked = false;
+function writeFailed(err, fallback){
+  var code = String((err && (err.code || err.message)) || "");
+  try { console.error("Firestore write failed:", code, err); } catch(e){}
+  if (/permission-denied|insufficient permissions|PERMISSION_DENIED/i.test(code)) {
+    dbBlocked = true;
+    toast("🔒 Database is refusing writes — its security rules need publishing");
+    renderReminderBanner();
+    return;
+  }
+  if (/unavailable|network|offline|deadline-exceeded/i.test(code)) {
+    toast("📶 No connection — it'll save once you're back online");
+    return;
+  }
+  if (/not-found/i.test(code)) {
+    toast("That match no longer exists — reload the app");
+    return;
+  }
+  toast(fallback || "Couldn't save — try again");
+}
+
 function fsUpsertPrediction(matchId, name, hs, as){
   var patch = {};
   patch["p." + keyFor(name)] = { name:name, hs:num(hs), as:num(as) };
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function fsRenamePrediction(matchId, oldName, newName, hs, as){
   var patch = {};
   patch["p." + keyFor(oldName)] = deleteField();
   patch["p." + keyFor(newName)] = { name:newName, hs:num(hs), as:num(as) };
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function motorObj(name, picks){
   return { name:name, pole:(picks.pole||"").slice(0,40), p1:(picks.p1||"").slice(0,40), p2:(picks.p2||"").slice(0,40), p3:(picks.p3||"").slice(0,40) };
@@ -1987,24 +2013,24 @@ function motorObj(name, picks){
 function fsUpsertMotor(matchId, name, picks){
   var patch = {};
   patch["p." + keyFor(name)] = motorObj(name, picks);
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function fsRenameMotor(matchId, oldName, newName, picks){
   var patch = {};
   patch["p." + keyFor(oldName)] = deleteField();
   patch["p." + keyFor(newName)] = motorObj(newName, picks);
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function fsDeletePrediction(matchId, name){
   var patch = {};
   patch["p." + keyFor(name)] = deleteField();
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't remove — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e, "Couldn't remove — try again"); });
 }
 function fsSetFinal(matchId, f){
-  updateDoc(doc(db,"matches",matchId), { f: f }).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), { f: f }).catch(function(e){ writeFailed(e); });
 }
 function fsSaveMatchMeta(matchId, patch){
-  setDoc(doc(db,"matches",matchId), patch, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
+  setDoc(doc(db,"matches",matchId), patch, { merge:true }).catch(function(e){ writeFailed(e); });
 }
 function fsCreateMatch(data){
   var ref = doc(matchesCol);
@@ -2013,36 +2039,36 @@ function fsCreateMatch(data){
   // every sport gets a fitting auto bonus question (unless the match is in the past)
   if (!(data.ko && Date.now() > data.ko)) base.bq = { q: autoBonusQ(ref.id, sport) };
   setDoc(ref, Object.assign(base, data))
-    .catch(function(){ toast("Couldn't create match — try again"); });
+    .catch(function(e){ writeFailed(e, "Couldn't create match — try again"); });
   return ref.id;
 }
 function fsDeleteMatch(matchId){
-  deleteDoc(doc(db,"matches",matchId)).catch(function(){ toast("Couldn't delete — try again"); });
+  deleteDoc(doc(db,"matches",matchId)).catch(function(e){ writeFailed(e, "Couldn't delete — try again"); });
 }
 function fsSetPot(amount){
-  setDoc(doc(db,"leagues",curLeague), { pot: num(amount) }, { merge:true }).catch(function(){ toast("Couldn't save — try again"); });
+  setDoc(doc(db,"leagues",curLeague), { pot: num(amount) }, { merge:true }).catch(function(e){ writeFailed(e); });
 }
 function fsSetAvatar(name, emoji){
   var patch = {};
   patch[keyFor(name)] = emoji || null;
-  setDoc(avatarsRef, patch, { merge:true }).catch(function(){ toast("Couldn't save avatar — try again"); });
+  setDoc(avatarsRef, patch, { merge:true }).catch(function(e){ writeFailed(e, "Couldn't save avatar — try again"); });
 }
 function fsSetBonusQ(matchId, question){
-  updateDoc(doc(db,"matches",matchId), { "bq.q": question, bqOff: deleteField() }).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), { "bq.q": question, bqOff: deleteField() }).catch(function(e){ writeFailed(e); });
 }
 function fsClearBonusQ(matchId){
   // bqOff stops the auto-assigner from putting a fresh question straight back
-  updateDoc(doc(db,"matches",matchId), { bq: deleteField(), bqOff: true }).catch(function(){ toast("Couldn't remove — try again"); });
+  updateDoc(doc(db,"matches",matchId), { bq: deleteField(), bqOff: true }).catch(function(e){ writeFailed(e, "Couldn't remove — try again"); });
 }
 function fsAnswerBonus(matchId, name, answer){
   var patch = {};
   patch["bq.r." + keyFor(name)] = { name:name, ans:answer, correct:false };
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function fsGradeBonus(matchId, key, correct){
   var patch = {};
   patch["bq.r." + key + ".correct"] = correct;
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 
 /* ================= rendering ================= */
@@ -2162,6 +2188,15 @@ function nextUnpredictedSoon(){
 }
 function renderReminderBanner(){
   var el = document.getElementById("reminder-banner");
+  // A refused write is worth a sticky notice — a toast disappears long before
+  // anyone can act on it, and nothing will save until the rules are published.
+  if (dbBlocked) {
+    el.innerHTML = '<div class="reminder blocked">🔒 <strong>Predictions aren\'t saving.</strong> ' +
+      'The database is refusing writes — its Firestore security rules need publishing in the ' +
+      'Firebase console (Firestore → Rules → paste <code>firestore.rules</code> → Publish). ' +
+      'Nothing already saved is lost.</div>';
+    return;
+  }
   var m = nextUnpredictedSoon();
   if (!m || (view === "match" && cm() && cm().id === m.id)) { el.innerHTML = ""; return; }
   el.innerHTML = '<div class="reminder">⏰ <strong>' + esc(myName) + '</strong>, you haven\'t predicted ' +
@@ -3652,7 +3687,7 @@ function fsSetJoker(matchId, key, on){
   });
   var patch = {};
   patch["j." + key] = on ? true : deleteField();
-  updateDoc(doc(db,"matches",matchId), patch).catch(function(){ toast("Couldn't save — try again"); });
+  updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function clearForm(){
   document.getElementById("inp-name").value = myName || "";
@@ -3817,7 +3852,7 @@ function saveBonusAnswer(m, right){
   });
   updateDoc(doc(db,"matches",m.id), patch)
     .then(function(){ if (hits) toast("⭐ " + hits + " got the bonus right (+3 each)"); })
-    .catch(function(){ toast("Couldn't save the bonus answer"); });
+    .catch(function(e){ writeFailed(e, "Couldn't save the bonus answer"); });
 }
 
 document.getElementById("btn-clear-final").addEventListener("click", function(){
@@ -4266,7 +4301,7 @@ document.getElementById("tour-list").addEventListener("click", function(ev){
     loadTournament(curLeague, sp, tourId).then(function(n){
       closeTournamentsModal();
       toast(n + (sportType(sp)==="motor"?" races":" fixtures") + " added!");
-    }).catch(function(){ btn.disabled = false; toast("Couldn't add — try again"); });
+    }).catch(function(e){ btn.disabled = false; writeFailed(e, "Couldn't add — try again"); });
   });
 });
 document.getElementById("btn-tour-close").addEventListener("click", closeTournamentsModal);
@@ -4294,7 +4329,7 @@ document.getElementById("btn-create-league").addEventListener("click", function(
       closeLeaguesModal();
       switchLeague(newId);
       toast(n ? "League created — " + n + " fixtures loaded!" : "League created — add your first match!");
-    }).catch(function(){ toast("Couldn't create league — try again"); });
+    }).catch(function(e){ writeFailed(e, "Couldn't create league — try again"); });
   });
 });
 document.getElementById("league-list").addEventListener("click", function(ev){
@@ -4320,7 +4355,7 @@ document.getElementById("league-list").addEventListener("click", function(ev){
         .map(function(m){ return deleteDoc(doc(db,"matches",m.id)); }))
         .then(function(){ return fsDeleteLeague(lid); })
         .then(function(){ if (curLeague===lid) switchLeague(DEFAULT_LEAGUE); else renderLeagueList(); toast("League deleted"); })
-        .catch(function(){ toast("Couldn't delete — try again"); });
+        .catch(function(e){ writeFailed(e, "Couldn't delete — try again"); });
     });
     return;
   }
@@ -4426,7 +4461,7 @@ document.getElementById("btn-enable-push").addEventListener("click", function(){
       var ref = doc(collection(db, "pushSubs"));
       setDoc(ref, { name: myName || null, sub: sub.toJSON(), createdAt: Date.now() })
         .then(function(){ toast("Kick-off alerts enabled!"); updatePushUi(); })
-        .catch(function(){ toast("Couldn't save — try again"); });
+        .catch(function(e){ writeFailed(e); });
     }).catch(function(){ toast("Couldn't enable alerts — try again"); });
   });
 });

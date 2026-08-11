@@ -393,6 +393,7 @@
   }
   .pc-chip.tier{background:#E4EFE7;color:var(--grass)}
   .pc-chip.bonus{background:#FFF3D6;color:var(--gold-deep)}
+  .pc-chip.late{background:#EDE7F6;color:#4527A0}
   .pc-chip.joker{background:var(--gold);color:var(--forest);font-weight:800}
   .pc-chip.warn{background:#F6E7E7;color:#8A2B2B}
   .pc-actions{margin-left:auto;display:flex;gap:2px;flex:0 0 auto}
@@ -1254,6 +1255,8 @@ function keyFor(name){
 // A prediction entry is a [name,hs,as] array for score matches, or a
 // {name,pole,p1,p2,p3} object for motor matches. predName reads either.
 function predName(e){ return Array.isArray(e) ? e[0] : (e && e.name) || ""; }
+// was this pick entered after kick-off (organiser recording a late one)?
+function predLate(e){ return Array.isArray(e) ? !!e[3] : !!(e && e.late); }
 // Match on keyFor — the SAME normalisation every write uses for the document
 // key. Comparing raw text here could miss an entry that is literally this
 // person's slot (e.g. a double space or a "." in the name), which made the app
@@ -1670,8 +1673,8 @@ function matchFromDoc(d){
   var pMap = data.p || {};
   var arr = Object.keys(pMap).map(function(k){
     var e = pMap[k] || {};
-    if (type === "motor") return { name:e.name, pole:e.pole||"", p1:e.p1||"", p2:e.p2||"", p3:e.p3||"" };
-    return [e.name, num(e.hs), num(e.as)];
+    if (type === "motor") return { name:e.name, pole:e.pole||"", p1:e.p1||"", p2:e.p2||"", p3:e.p3||"", late:!!e.late };
+    return [e.name, num(e.hs), num(e.as), !!e.late];
   });
   return {
     id: d.id, league: data.league || DEFAULT_LEAGUE, type: type, sport: sport,
@@ -1996,9 +1999,11 @@ function writeFailed(err, fallback){
   toast(fallback || "Couldn't save — try again");
 }
 
-function fsUpsertPrediction(matchId, name, hs, as){
+function fsUpsertPrediction(matchId, name, hs, as, late){
   var patch = {};
-  patch["p." + keyFor(name)] = { name:name, hs:num(hs), as:num(as) };
+  var entry = { name:name, hs:num(hs), as:num(as) };
+  if (late) entry.late = true;
+  patch["p." + keyFor(name)] = entry;
   updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function fsRenamePrediction(matchId, oldName, newName, hs, as){
@@ -2007,12 +2012,14 @@ function fsRenamePrediction(matchId, oldName, newName, hs, as){
   patch["p." + keyFor(newName)] = { name:newName, hs:num(hs), as:num(as) };
   updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
-function motorObj(name, picks){
-  return { name:name, pole:(picks.pole||"").slice(0,40), p1:(picks.p1||"").slice(0,40), p2:(picks.p2||"").slice(0,40), p3:(picks.p3||"").slice(0,40) };
+function motorObj(name, picks, late){
+  var o = { name:name, pole:(picks.pole||"").slice(0,40), p1:(picks.p1||"").slice(0,40), p2:(picks.p2||"").slice(0,40), p3:(picks.p3||"").slice(0,40) };
+  if (late) o.late = true;
+  return o;
 }
-function fsUpsertMotor(matchId, name, picks){
+function fsUpsertMotor(matchId, name, picks, late){
   var patch = {};
-  patch["p." + keyFor(name)] = motorObj(name, picks);
+  patch["p." + keyFor(name)] = motorObj(name, picks, late);
   updateDoc(doc(db,"matches",matchId), patch).catch(function(e){ writeFailed(e); });
 }
 function fsRenameMotor(matchId, oldName, newName, picks){
@@ -2436,6 +2443,7 @@ function renderMatch(){
       var chips = (s.motorTags || []).map(function(t){ return '<span class="pc-chip bonus">' + t + '</span>'; }).join("");
       if (ranked && s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
       if (s.joker) chips += '<span class="pc-chip joker">🃏 Joker ×2</span>';
+      if (predLate(s.e)) chips += '<span class="pc-chip late">⏱ added late</span>';
       return '<div class="pred-card' + (ranked && s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           (ranked ? '<span class="pc-rank">' + s.rank + '</span>' : '') +
@@ -2466,6 +2474,7 @@ function renderMatch(){
       if (s.upset) chips += '<span class="pc-chip bonus">🎲 upset</span>';
       if (s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
       if (s.joker) chips += '<span class="pc-chip joker">🃏 Joker ×2</span>';
+      if (predLate(s.e)) chips += '<span class="pc-chip late">⏱ added late</span>';
       return '<div class="pred-card' + (s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           '<span class="pc-rank">' + s.rank + '</span>' +
@@ -2487,7 +2496,8 @@ function renderMatch(){
   } else {
     rows.innerHTML = m.p.map(function(e){
       return '<div class="row">' +
-        '<span class="who">' + avatarHtml(e[0]) + '<span class="txt">' + esc(e[0]) + '</span></span>' +
+        '<span class="who">' + avatarHtml(e[0]) + '<span class="txt">' + esc(e[0]) +
+          (predLate(e) ? ' <span class="pc-chip late">⏱ late</span>' : '') + '</span></span>' +
         '<span class="num sa">' + e[1] + '</span>' +
         '<span class="num sc">' + e[2] + '</span>' +
         '<button class="edit" data-name="' + esc(e[0]) + '" aria-label="Edit ' + esc(e[0]) + '">✎</button>' +
@@ -2704,13 +2714,21 @@ document.getElementById("bq-body").addEventListener("click", function(ev){
   }
 });
 
+// After kick-off the organiser can still enter a pick that was made in time but
+// never got saved (someone sent it on WhatsApp, the app was offline...). It
+// needs the family PIN and is marked "added late" so it's never a silent
+// backdoor. Once the final result is in, that door closes for good.
+function canAddLate(m){ return !!m && isLocked(m) && !m.f; }
 function updateAddFormState(){
   var m = cm();
   var locked = scoresLocked(m);
-  var blockNew = locked && !editingName;
-  document.getElementById("btn-add").disabled = blockNew;
+  var late = canAddLate(m);
+  var blockNew = locked && !editingName && !late;
+  var addBtn = document.getElementById("btn-add");
+  addBtn.disabled = blockNew;
+  if (!editingName) addBtn.textContent = late ? "⏱ Add a late prediction" : "Add my prediction";
   ["inp-sa","inp-sc","mp-pole","mp-p1","mp-p2","mp-p3"].forEach(function(id){
-    var el = document.getElementById(id); if (el) el.disabled = locked;
+    var el = document.getElementById(id); if (el) el.disabled = locked && !late;
   });
   var hint = document.getElementById("add-hint");
   if (!hint) return;
@@ -2719,7 +2737,9 @@ function updateAddFormState(){
     ? "Predictions update live for the whole family — no need to send anything."
     : editingName
       ? thing + " are locked — you can still fix the spelling of a name."
-      : "🔒 Kick-off has passed — tap ✎ next to a name to fix a typo.";
+      : late
+        ? "🔒 Kick-off has passed. You can still enter a pick that was made in time — it needs the family PIN and is marked “added late”."
+        : "🔒 The result is in — no more predictions on this one.";
 }
 
 // distinct sports present in the current league, in canonical order
@@ -3701,7 +3721,8 @@ document.getElementById("btn-add").addEventListener("click", function(){
   if (!m) return;
   var motor = m.type === "motor";
   var locked = scoresLocked(m);
-  if (locked && !editingName) { toast("Too late to add new predictions — but you can still fix a typo via ✎"); return; }
+  var lateEntry = !editingName && locked && canAddLate(m);
+  if (locked && !editingName && !lateEntry) { toast("The result is in — no more predictions on this one"); return; }
   var nameEl = document.getElementById("inp-name");
   var name = nameEl.value.trim();
   if (!name) { toast("Type your name first"); nameEl.focus(); return; }
@@ -3728,9 +3749,14 @@ document.getElementById("btn-add").addEventListener("click", function(){
       if (elseMotor) requirePin(doMotorEdit); else doMotorEdit();
     } else {
       var mexisting = findIn(m, name);
-      fsUpsertMotor(m.id, name, picks);
-      toast(mexisting ? "Updated " + name + "'s picks" : "Picks in — everyone can see them now!");
-      myName = name; saveName(); nameExpanded = false; clearForm();
+      var doMotorAdd = function(){
+        fsUpsertMotor(m.id, name, picks, lateEntry);
+        toast(lateEntry ? "⏱ Late pick added for " + name
+                        : (mexisting ? "Updated " + name + "'s picks" : "Picks in — everyone can see them now!"));
+        if (!lateEntry) { myName = name; saveName(); nameExpanded = false; }
+        clearForm();
+      };
+      if (lateEntry) requirePin(doMotorAdd); else doMotorAdd();
     }
     return;
   }
@@ -3756,10 +3782,17 @@ document.getElementById("btn-add").addEventListener("click", function(){
     if (editingSomeoneElse) requirePin(saveEdit); else saveEdit();
   } else {
     var existing = findIn(m, name);
-    fsUpsertPrediction(m.id, name, saEl.value, scEl.value);
-    toast(existing ? "Updated " + name + "'s prediction" : "Added — everyone can see it now!");
-    myName = name; saveName(); nameExpanded = false;
-    clearForm();
+    var hsIn = saEl.value, asIn = scEl.value;
+    var doAdd = function(){
+      fsUpsertPrediction(m.id, name, hsIn, asIn, lateEntry);
+      toast(lateEntry ? "⏱ Late prediction added for " + name
+                      : (existing ? "Updated " + name + "'s prediction" : "Added — everyone can see it now!"));
+      // a late entry is usually the organiser typing someone else's pick, so
+      // don't hijack their own saved identity
+      if (!lateEntry) { myName = name; saveName(); nameExpanded = false; }
+      clearForm();
+    };
+    if (lateEntry) requirePin(doAdd); else doAdd();
   }
 });
 

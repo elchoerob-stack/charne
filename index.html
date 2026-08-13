@@ -393,6 +393,14 @@
   }
   .pc-chip.tier{background:#E4EFE7;color:var(--grass)}
   .pc-chip.bonus{background:#FFF3D6;color:var(--gold-deep)}
+  .bokpred{
+    background:linear-gradient(150deg,#1B2A4A,#0E5C3F);color:#fff;border-radius:14px;
+    padding:14px 16px;margin:0 0 12px;
+  }
+  .bokpred .bp-head{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
+  .bokpred .bp-line{font-size:17px;font-weight:800;margin-top:5px;line-height:1.35}
+  .bokpred .bp-why{font-size:11.5px;color:rgba(255,255,255,.72);margin-top:5px}
+  .pc-chip.avg{background:#E3F2FD;color:#0D47A1}
   .pc-chip.late{background:#EDE7F6;color:#4527A0}
   .pc-chip.joker{background:var(--gold);color:var(--forest);font-weight:800}
   .pc-chip.warn{background:#F6E7E7;color:#8A2B2B}
@@ -660,6 +668,7 @@
 
       <section>
         <h2>Predictions<span class="count-pill" id="count">0</span></h2>
+        <div id="bok-pred"></div>
         <div id="consensus"></div>
         <div id="facts"></div>
         <div class="thead" aria-hidden="true">
@@ -884,6 +893,8 @@
     <div class="step"><span class="ic">✅</span><span><strong>Results</strong> shows finished matches with the final score and who called it closest.</span></div>
     <div class="step"><span class="ic">🏆</span><span><strong>Pool</strong> is the running scoreboard (the log) for the league you're in — points add up across every match all season.</span></div>
     <div class="step"><span class="ic">🔀</span><span>On the <strong>League</strong> tab, the row of <strong>league buttons</strong> at the top lets you switch between logs or start a new one (motorsport, U20 rugby, cricket…) — each has its own scoreboard from zero.</span></div>
+    <div class="step"><span class="ic">🧠</span><span><strong>Bok Prediction</strong> is a calculated forecast on every match — from World Rugby ranking points (plus home advantage) or the 2026 championship order. It's a model estimate, not a player, and never scores.</span></div>
+    <div class="step"><span class="ic">🤖</span><span><strong>Bokbot</strong> waits for kick-off, then locks in the <strong>family average</strong> of everyone's predictions. Beat the bot and you beat the room.</span></div>
     <div class="step"><span class="ic">🔒</span><span>Deleting a prediction, setting a final score, or editing someone else's guess needs the family PIN.</span></div>
     <div class="step"><span class="ic">💰</span><span>Set a pot amount on any match and the season's points leader takes it all.</span></div>
     <button class="btn" id="btn-intro-close" style="margin-top:20px">Got it!</button>
@@ -1428,30 +1439,147 @@ function autoBonusQ(matchId, sport){
 // Bokbot 🤖 — the house bot every family member gets to try beat. Its score is
 // derived from the match id so every phone computes the identical prediction
 // (idempotent writes, no coordination needed). Unashamedly a Springbok homer.
+/* ============ 🧠 Bok Prediction — a calculated forecast ============
+   Not a hunch and not random: team-sport picks come from World Rugby ranking
+   points (Aug 2026) with a home-ground allowance, and motorsport picks from the
+   2026 championship order. Ratings are the model's only inputs, so every
+   fixture — including ones added later — gets a forecast automatically.
+   These are model estimates, not insider knowledge.                        */
+var RATING_NOTE = "World Rugby ranking points, Aug 2026";
+var RUGBY_RATINGS = {
+  "South Africa":93.9, "New Zealand":91.0, "Ireland":89.1, "France":87.5,
+  "Argentina":85.0, "England":83.9, "Scotland":82.9, "Australia":81.5,
+  "Fiji":81.1, "Italy":79.6, "Wales":75.1, "Japan":74.1, "Georgia":72.0,
+  "Portugal":69.6, "Uruguay":69.2, "USA":67.0,
+  // URC franchises on the All Blacks tour — club sides, rated well below a
+  // full international XV
+  "DHL Stormers":75.0, "Hollywoodbets Sharks":74.5, "Vodacom Bulls":76.0, "Emirates Lions":72.5
+};
+// ODI/T20-ish batting strength; cricket needs its own scale, not rugby's
+var CRICKET_RATINGS = {
+  "India":118, "Australia":112, "South Africa":110, "England":106, "New Zealand":102,
+  "Pakistan":98, "Sri Lanka":92, "West Indies":88, "Bangladesh":85, "Afghanistan":84,
+  "Ireland":75, "Zimbabwe":72
+};
+// 2026 championship order — leaders first (MotoGP after Silverstone R12,
+// F1 after Hungary R11). Used for pole/podium forecasts.
+var FORM_ORDER = {
+  motogp: ["Jorge Martín","Marco Bezzecchi","Ai Ogura","Raúl Fernández","Marc Márquez",
+           "Pedro Acosta","Francesco Bagnaia","Fabio Di Giannantonio","Álex Márquez",
+           "Fermín Aldeguer","Fabio Quartararo","Brad Binder","Franco Morbidelli",
+           "Maverick Viñales","Enea Bastianini","Jack Miller","Álex Rins",
+           "Toprak Razgatlioglu","Joan Mir","Luca Marini","Johann Zarco","Diogo Moreira"],
+  f1:     ["Kimi Antonelli","Lewis Hamilton","George Russell","Lando Norris","Oscar Piastri",
+           "Max Verstappen","Charles Leclerc","Isack Hadjar","Carlos Sainz","Alex Albon",
+           "Fernando Alonso","Liam Lawson","Nico Hülkenberg","Gabriel Bortoleto",
+           "Pierre Gasly","Esteban Ocon","Oliver Bearman","Franco Colapinto",
+           "Lance Stroll","Arvid Lindblad","Valtteri Bottas","Sergio Pérez"]
+};
+function ratingFor(team, sport){
+  var table = (sport === "cricket") ? CRICKET_RATINGS : RUGBY_RATINGS;
+  if (table[team] != null) return table[team];
+  // unknown side (a custom fixture) — treat as mid-table so the model still runs
+  return (sport === "cricket") ? 90 : 78;
+}
+// A stable per-match wobble so every fixture isn't the same scoreline; derived
+// from the id, so every phone computes an identical forecast.
+function matchJitter(id, span){
+  var h = 0, s = String(id) + "bokpred";
+  for (var i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+  return (h % (span*2 + 1)) - span;
+}
+function bokPrediction(m){
+  if (!m) return null;
+  if (m.type === "motor") {
+    var order = FORM_ORDER[m.sport] || FORM_ORDER.motogp;
+    if (!order || order.length < 3) return null;
+    // sprints tend to follow the form book more closely than a full race
+    var shuffle = m.sprint ? 0 : matchJitter(m.id, 1);
+    var top = order.slice(0, 5);
+    var p1 = top[Math.max(0, Math.min(2, 0 + (shuffle > 0 ? 1 : 0)))];
+    var rest = top.filter(function(n){ return n !== p1; });
+    return { motor:true, pole: top[0], p1: p1, p2: rest[0], p3: rest[1],
+             why: "2026 championship order" };
+  }
+  var sport = m.sport || "rugby";
+  var rh = ratingFor(m.h, sport), ra = ratingFor(m.a, sport);
+  if (sport === "cricket") {
+    // runs, not points — a different game entirely
+    var cBase = 265, cMargin = Math.round((rh - ra) * 2.2) + matchJitter(m.id, 8);
+    return { motor:false, hs: Math.max(90, cBase + Math.round(cMargin/2)),
+             as: Math.max(90, cBase - Math.round(cMargin/2)),
+             why: "batting strength " + rh + " v " + ra };
+  }
+  var HOME_ADV = 3.5;                       // roughly a converted try of edge
+  var diff = (rh - ra) + HOME_ADV;
+  var margin = Math.round(diff * 1.25) + matchJitter(m.id, 3);
+  margin = Math.max(-42, Math.min(42, margin));
+  var total = 48 + matchJitter(m.id + "t", 6);
+  var hs = Math.max(3, Math.round((total + margin) / 2));
+  var as = Math.max(3, Math.round((total - margin) / 2));
+  return { motor:false, hs: hs, as: as,
+           why: "ratings " + rh.toFixed(1) + " v " + ra.toFixed(1) + " · +" + HOME_ADV + " home" };
+}
+function bokPredictionLine(m){
+  var p = bokPrediction(m);
+  if (!p) return "";
+  if (p.motor) return "🏁 " + p.pole + " on pole · 🥇 " + p.p1 + " · 🥈 " + p.p2 + " · 🥉 " + p.p3;
+  return esc(m.h) + " " + p.hs + " — " + p.as + " " + esc(m.a);
+}
+
 var BOKBOT_NAME = "Bokbot";
-function bokbotPrediction(m){
-  var s = m.id + "bokbot";
-  var h = 0;
-  for (var i=0;i<s.length;i++) h = (h*33 + s.charCodeAt(i)) >>> 0;
-  var hs = 14 + (h % 20);            // 14–33
-  var as = 10 + ((h >>> 7) % 16);    // 10–25 (unsigned shift — signed >> can go negative)
-  if (m.h === "South Africa") hs += 7;
-  if (m.a === "South Africa") as += 7;
-  return { name: BOKBOT_NAME, hs: hs, as: as };
+// Bokbot no longer guesses. When the timer stops it is stamped with the
+// family's consensus — the average scoreline, or the most-picked name in each
+// podium slot — and then frozen, so it is a fixed target everyone can be
+// measured against rather than something that keeps moving.
+function crowdConsensus(m){
+  var botKey = keyFor(BOKBOT_NAME);
+  var people = m.p.filter(function(e){ return keyFor(predName(e)) !== botKey; });
+  if (!people.length) return null;
+  if (m.type === "motor") {
+    function modal(field){
+      var tally = {}, best = "", bestN = 0;
+      people.forEach(function(e){
+        var v = String(e[field] || "").trim();
+        if (!v) return;
+        var k = normName(v);
+        if (!tally[k]) tally[k] = { v:v, n:0 };
+        tally[k].n++;
+        if (tally[k].n > bestN) { bestN = tally[k].n; best = tally[k].v; }
+      });
+      return best;
+    }
+    var picks = { pole: modal("pole"), p1: modal("p1"), p2: modal("p2"), p3: modal("p3") };
+    return picks.p1 ? picks : null;
+  }
+  var sh = 0, sa = 0;
+  people.forEach(function(e){ sh += e[1]; sa += e[2]; });
+  return { hs: Math.round(sh / people.length), as: Math.round(sa / people.length), n: people.length };
 }
 var botAvatarEnsured = false;
 function ensureBokbot(){
   var botKey = keyFor(BOKBOT_NAME);
   var added = false;
   state.m.forEach(function(m){
-    // Bokbot is a Springbok homer, so it only enters rugby matches
-    if (!isRugbyMatch(m) || m.a === undefined) return;
-    if (m.type === "motor") return;
-    if (m.f || isLocked(m)) return;
-    if (findIn(m, BOKBOT_NAME)) return;
-    var pred = bokbotPrediction(m);
+    var existing = findIn(m, BOKBOT_NAME);
+    var locked = isLocked(m) || !!m.f;
+    if (!locked) {
+      // before kick-off Bokbot holds no opinion; clear any pick left by the old
+      // guess-a-score bot so it can\'t be copied or scored
+      if (existing) {
+        var clear = {};
+        clear["p." + botKey] = deleteField();
+        updateDoc(doc(db,"matches",m.id), clear).catch(function(){});
+      }
+      return;
+    }
+    if (existing) return;               // stamped once, then frozen
+    var c = crowdConsensus(m);
+    if (!c) return;                     // nobody predicted — nothing to average
     var patch = {};
-    patch["p." + botKey] = pred;
+    patch["p." + botKey] = (m.type === "motor")
+      ? { name:BOKBOT_NAME, pole:c.pole, p1:c.p1, p2:c.p2, p3:c.p3 }
+      : { name:BOKBOT_NAME, hs:c.hs, as:c.as };
     updateDoc(doc(db,"matches",m.id), patch).catch(function(){});
     added = true;
   });
@@ -2444,6 +2572,7 @@ function renderMatch(){
       if (ranked && s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
       if (s.joker) chips += '<span class="pc-chip joker">🃏 Joker ×2</span>';
       if (predLate(s.e)) chips += '<span class="pc-chip late">⏱ added late</span>';
+      if (keyFor(predName(s.e)) === keyFor(BOKBOT_NAME)) chips += '<span class="pc-chip avg">📊 family average</span>';
       return '<div class="pred-card' + (ranked && s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           (ranked ? '<span class="pc-rank">' + s.rank + '</span>' : '') +
@@ -2475,6 +2604,7 @@ function renderMatch(){
       if (s.bonusQ) chips += '<span class="pc-chip bonus">⭐ bonus q</span>';
       if (s.joker) chips += '<span class="pc-chip joker">🃏 Joker ×2</span>';
       if (predLate(s.e)) chips += '<span class="pc-chip late">⏱ added late</span>';
+      if (keyFor(predName(s.e)) === keyFor(BOKBOT_NAME)) chips += '<span class="pc-chip avg">📊 family average</span>';
       return '<div class="pred-card' + (s.rank===1 ? ' winner' : '') + '">' +
         '<div class="pc-head">' +
           '<span class="pc-rank">' + s.rank + '</span>' +
@@ -2509,6 +2639,16 @@ function renderMatch(){
   var theadEl = document.querySelector("#view-match .thead");
   if (theadEl) theadEl.style.display = motor ? "none" : "";
 
+  // 🧠 the calculated forecast — always shown, it isn't a player and never scores
+  var bp = document.getElementById("bok-pred");
+  if (bp) {
+    var bpred = bokPrediction(m);
+    bp.innerHTML = bpred
+      ? '<div class="bokpred"><div class="bp-head">🧠 Bok Prediction</div>' +
+        '<div class="bp-line">' + bokPredictionLine(m) + '</div>' +
+        '<div class="bp-why">' + esc(bpred.why) + '</div></div>'
+      : "";
+  }
   var cons = document.getElementById("consensus");
   var facts = document.getElementById("facts");
   if (motor || !reveal) {

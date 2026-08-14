@@ -2077,7 +2077,7 @@ function startLiveSync(){
     }
     refreshLeagueMatches();
     if (ready) render();
-  }, function(){});
+  }, function(err){ readFailed(err); });
   onSnapshot(matchesCol, function(snap){
     state.allM = snap.docs.map(matchFromDoc);
     refreshLeagueMatches();
@@ -2094,9 +2094,12 @@ function startLiveSync(){
     }
     render();
     ensureBokbot();   // idempotent: only writes where the bot has no prediction yet
-  }, function(){
+  }, function(err){
+    // Reads fail for the same reasons writes do. Blaming the internet when the
+    // database is actually refusing access sends people to check their wifi
+    // while the real fix sits in the Firebase console.
     ready = true;
-    toast("Connection problem — check your internet");
+    readFailed(err);
     render();
   });
   onSnapshot(metaRef, function(snap){
@@ -2318,6 +2321,21 @@ function ensureFixtures(){
 // hides the one thing you need to know: whether the database is refusing
 // writes (expired/'missing security rules), you're offline, or the match is gone.
 var dbBlocked = false;
+// A refused read means the whole app is locked out, not that the phone is
+// offline — say so once, and raise the same sticky banner as a refused write.
+function readFailed(err){
+  var code = String((err && (err.code || err.message)) || "");
+  try { console.error("Firestore read failed:", code, err); } catch(e){}
+  if (/permission-denied|insufficient permissions|PERMISSION_DENIED/i.test(code)) {
+    if (!dbBlocked) {
+      dbBlocked = true;
+      toast("🔒 Database is locked — its security rules need publishing");
+    }
+    renderReminderBanner();
+    return;
+  }
+  toast("Connection problem — check your internet");
+}
 function writeFailed(err, fallback){
   var code = String((err && (err.code || err.message)) || "");
   try { console.error("Firestore write failed:", code, err); } catch(e){}
@@ -2537,9 +2555,9 @@ function renderReminderBanner(){
   // A refused write is worth a sticky notice — a toast disappears long before
   // anyone can act on it, and nothing will save until the rules are published.
   if (dbBlocked) {
-    el.innerHTML = '<div class="reminder blocked">🔒 <strong>Predictions aren\'t saving.</strong> ' +
-      'The database is refusing writes — its Firestore security rules need publishing in the ' +
-      'Firebase console (Firestore → Rules → paste <code>firestore.rules</code> → Publish). ' +
+    el.innerHTML = '<div class="reminder blocked">🔒 <strong>The app can\'t reach its database.</strong> ' +
+      'This isn\'t your connection — Firestore is refusing access until its security rules are ' +
+      'published: Firebase console → Firestore → Rules → paste <code>firestore.rules</code> → Publish. ' +
       'Nothing already saved is lost.</div>';
     return;
   }

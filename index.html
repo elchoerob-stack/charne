@@ -1488,18 +1488,180 @@ function matchJitter(id, span){
   for (var i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
   return (h % (span*2 + 1)) - span;
 }
+/* ---- per-circuit motorsport model ----------------------------------------
+   Championship order alone is a poor forecast: riders are strong at different
+   tracks. Each circuit carries tags (left-rotation, flowing, stop-go, power),
+   each rider a bike and a set of traits, and known specialists get a per-track
+   bump. So the podium genuinely changes weekend to weekend.
+
+   The headline case: Marc Marquez wins ~70% of anticlockwise races against
+   ~30% clockwise, and takes pole at ~84% of left-hand tracks — so he becomes
+   the favourite at Sachsenring, COTA, Aragon, Phillip Island and Valencia
+   regardless of where he sits in the standings.
+   Bike fit for 2026: Aprilia rules fast, flowing, high-corner-speed tracks
+   (their Silverstone 1-2-3); Ducati is strongest where hard braking and
+   acceleration dominate.                                                    */
+var BIKE_OF = {
+  "Jorge Martín":"aprilia","Marco Bezzecchi":"aprilia","Raúl Fernández":"aprilia","Ai Ogura":"aprilia",
+  "Marc Márquez":"ducati","Francesco Bagnaia":"ducati","Álex Márquez":"ducati","Fermín Aldeguer":"ducati",
+  "Fabio Di Giannantonio":"ducati","Franco Morbidelli":"ducati",
+  "Pedro Acosta":"ktm","Brad Binder":"ktm","Maverick Viñales":"ktm","Enea Bastianini":"ktm",
+  "Fabio Quartararo":"yamaha","Álex Rins":"yamaha","Jack Miller":"yamaha","Toprak Razgatlioglu":"yamaha",
+  "Joan Mir":"honda","Luca Marini":"honda","Johann Zarco":"honda","Diogo Moreira":"honda"
+};
+var BIKE_TRAITS = {
+  aprilia:{ flowing:11, fast:8, degradation:5 },
+  ducati: { stopgo:10, power:8, braking:6 },
+  ktm:    { stopgo:6, braking:5 },
+  yamaha: { flowing:4 },
+  honda:  { braking:3 }
+};
+// rider-specific edges on top of the bike
+var RIDER_TRAITS = {
+  "Marc Márquez":   { left:24, braking:8, stopgo:4 },
+  "Álex Márquez":   { left:6 },
+  "Pedro Acosta":   { stopgo:5, braking:4 },
+  "Marco Bezzecchi":{ flowing:5, wet:6 },
+  "Jorge Martín":   { fast:5, stopgo:3 },
+  "Fabio Quartararo":{ flowing:7 },
+  "Raúl Fernández": { flowing:4 },
+  "Brad Binder":    { braking:5 },
+  "Jack Miller":    { flowing:3 }
+};
+// circuit tags, keyed on a distinctive word in the race name
+var TRACK_TAGS = {
+  "buriram":     ["stopgo","power"],
+  "termas":      ["left","flowing"],
+  "cota":        ["left","stopgo","braking"],
+  "americas":    ["left","stopgo","braking"],
+  "lusail":      ["left","fast","flowing"],
+  "qatar":       ["left","fast","flowing"],
+  "jerez":       ["stopgo","braking","degradation"],
+  "le mans":     ["stopgo","braking"],
+  "barcelona":   ["flowing","degradation"],
+  "catalan":     ["flowing","degradation"],
+  "mugello":     ["flowing","fast","power"],
+  "assen":       ["flowing","fast"],
+  "sachsenring": ["left","flowing"],
+  "silverstone": ["flowing","fast"],
+  "motorland":   ["left","braking"],
+  "aragon":      ["left","braking"],
+  "misano":      ["flowing","stopgo"],
+  "motegi":      ["stopgo","braking","power"],
+  "phillip":     ["left","flowing","fast"],
+  "sepang":      ["power","braking"],
+  "ricardo tormo":["left","stopgo"],
+  "valencia":    ["left","stopgo"]
+};
+// riders with a standout record at a specific circuit
+var TRACK_SPECIALIST = {
+  "sachsenring": { "Marc Márquez":20 },
+  "cota":        { "Marc Márquez":18 },
+  "americas":    { "Marc Márquez":18 },
+  "phillip":     { "Marc Márquez":8, "Marco Bezzecchi":5 },
+  "mugello":     { "Francesco Bagnaia":12, "Marco Bezzecchi":6 },
+  "misano":      { "Francesco Bagnaia":8, "Marco Bezzecchi":6 },
+  "silverstone": { "Raúl Fernández":8, "Jorge Martín":5 },
+  "assen":       { "Fabio Quartararo":6 },
+  "motorland":   { "Marc Márquez":10 },
+  "aragon":      { "Marc Márquez":10 },
+  "jerez":       { "Francesco Bagnaia":5 }
+};
+/* F1 gets a lighter version of the same idea. I have far less public 2026
+   car-characteristic data than for the bikes, so this sticks to what is well
+   established — circuit type and drivers with a genuine record at a venue —
+   rather than inventing per-team numbers.                                   */
+var F1_TRACK_TAGS = {
+  "silverstone":["fast","flowing"], "hungaroring":["downforce","twisty"],
+  "spa":["power","fast"], "zandvoort":["flowing","downforce"],
+  "monza":["power","lowdrag"], "marina bay":["downforce","street","hot"],
+  "singapore":["downforce","street","hot"], "austin":["mixed","braking"],
+  "yas marina":["mixed","braking"], "abu dhabi":["mixed","braking"]
+};
+var F1_AFFINITY = {
+  "silverstone": { "Lewis Hamilton":10, "Lando Norris":6 },
+  "spa":         { "Max Verstappen":9, "Charles Leclerc":6, "Lewis Hamilton":5 },
+  "zandvoort":   { "Max Verstappen":12 },
+  "monza":       { "Charles Leclerc":8, "Lewis Hamilton":5 },
+  "hungaroring": { "Lewis Hamilton":8, "Kimi Antonelli":4 },
+  "singapore":   { "Lando Norris":6, "Max Verstappen":5 },
+  "marina bay":  { "Lando Norris":6, "Max Verstappen":5 },
+  "austin":      { "Max Verstappen":7, "Lewis Hamilton":6 },
+  "yas marina":  { "Max Verstappen":6 },
+  "abu dhabi":   { "Max Verstappen":6 }
+};
+function f1TagsFor(name){
+  var n = normName(name), tags = [];
+  Object.keys(F1_TRACK_TAGS).forEach(function(k){
+    if (n.indexOf(k) >= 0) F1_TRACK_TAGS[k].forEach(function(t){ if (tags.indexOf(t) < 0) tags.push(t); });
+  });
+  return tags;
+}
+function f1AffinityFor(name){
+  var n = normName(name), out = {};
+  Object.keys(F1_AFFINITY).forEach(function(k){
+    if (n.indexOf(k) >= 0) Object.keys(F1_AFFINITY[k]).forEach(function(d){
+      out[d] = Math.max(out[d] || 0, F1_AFFINITY[k][d]);
+    });
+  });
+  return out;
+}
+function trackTagsFor(name){
+  var n = normName(name);
+  var tags = [];
+  Object.keys(TRACK_TAGS).forEach(function(k){
+    if (n.indexOf(k) >= 0) TRACK_TAGS[k].forEach(function(t){ if (tags.indexOf(t) < 0) tags.push(t); });
+  });
+  return tags;
+}
+function specialistFor(name){
+  var n = normName(name), out = {};
+  Object.keys(TRACK_SPECIALIST).forEach(function(k){
+    if (n.indexOf(k) >= 0) Object.keys(TRACK_SPECIALIST[k]).forEach(function(r){
+      out[r] = Math.max(out[r] || 0, TRACK_SPECIALIST[k][r]);
+    });
+  });
+  return out;
+}
+// score every competitor for THIS circuit and return them strongest-first
+function motorRanking(m){
+  var order = FORM_ORDER[m.sport] || FORM_ORDER.motogp;
+  if (!order || order.length < 3) return null;
+  var motogp = (m.sport || "motogp") === "motogp";
+  var tags = motogp ? trackTagsFor(m.h) : f1TagsFor(m.h);
+  var spec = motogp ? specialistFor(m.h) : f1AffinityFor(m.h);
+  var scored = order.map(function(name, idx){
+    var score = 60 - idx * 2.2;                       // championship standing
+    if (motogp) {
+      var bike = BIKE_TRAITS[BIKE_OF[name]] || {};
+      var rider = RIDER_TRAITS[name] || {};
+      tags.forEach(function(t){ score += (bike[t] || 0) + (rider[t] || 0); });
+    }
+    score += spec[name] || 0;
+    // a small, stable per-event wobble so it isn't mechanical
+    score += matchJitter(m.id + name, 3);
+    return { name:name, score:score };
+  });
+  scored.sort(function(a,b){ return b.score - a.score; });
+  return { list: scored, tags: tags };
+}
 function bokPrediction(m){
   if (!m) return null;
   if (m.type === "motor") {
-    var order = FORM_ORDER[m.sport] || FORM_ORDER.motogp;
-    if (!order || order.length < 3) return null;
-    // sprints tend to follow the form book more closely than a full race
-    var shuffle = m.sprint ? 0 : matchJitter(m.id, 1);
-    var top = order.slice(0, 5);
-    var p1 = top[Math.max(0, Math.min(2, 0 + (shuffle > 0 ? 1 : 0)))];
-    var rest = top.filter(function(n){ return n !== p1; });
-    return { motor:true, pole: top[0], p1: p1, p2: rest[0], p3: rest[1],
-             why: "2026 championship order" };
+    var rank = motorRanking(m);
+    if (!rank) return null;
+    var L = rank.list;
+    // qualifying rewards a single flying lap, so a left-track specialist is an
+    // even bigger favourite for pole than for race day
+    var poleList = L.slice(0, 4).map(function(x){
+      var rider = RIDER_TRAITS[x.name] || {};
+      var boost = (rank.tags.indexOf("left") >= 0 ? (rider.left || 0) * 0.5 : 0);
+      return { name:x.name, score:x.score + boost };
+    }).sort(function(a,b){ return b.score - a.score; });
+    var why = rank.tags.length
+      ? "form + circuit: " + rank.tags.join(", ")
+      : "2026 championship order";
+    return { motor:true, pole: poleList[0].name, p1: L[0].name, p2: L[1].name, p3: L[2].name, why: why };
   }
   var sport = m.sport || "rugby";
   var rh = ratingFor(m.h, sport), ra = ratingFor(m.a, sport);

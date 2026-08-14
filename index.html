@@ -251,6 +251,11 @@
   .bq-lbl.wait{color:var(--gold-deep)}
   .bq-line .muted{color:var(--ink-soft)}
   .bq-you{font-size:13px;margin-top:8px;font-weight:600;color:var(--forest)}
+  .pa-guide{
+    margin-top:9px;font-size:12px;color:var(--ink-soft);line-height:1.5;
+    background:#F2F6F3;border:1px solid var(--line);border-radius:8px;padding:6px 10px;
+  }
+  .pa-guide .g-lbl{font-weight:800;color:var(--forest)}
   .pa-bonus{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
   .pa-bonus-q{font-size:12.5px;font-weight:700;color:var(--forest);margin-bottom:6px}
   .pa-bq{width:100%;border-radius:8px;border:1px solid var(--line);padding:9px;font-size:14px;box-sizing:border-box}
@@ -1734,8 +1739,19 @@ function rugbyForecast(m, rh, ra){
 function bokPredictionLine(m){
   var p = bokPrediction(m);
   if (!p) return "";
-  if (p.motor) return "🏁 " + p.pole + " on pole · 🥇 " + p.p1 + " · 🥈 " + p.p2 + " · 🥉 " + p.p3;
+  if (p.motor) return "🏁 " + esc(p.pole) + " on pole · 🥇 " + esc(p.p1) + " · 🥈 " + esc(p.p2) + " · 🥉 " + esc(p.p3);
   return esc(m.h) + " " + p.hs + " — " + p.as + " " + esc(m.a);
+}
+// compact version for the prediction rows, where the team names already sit
+// either side of the inputs
+function bokGuideHtml(m){
+  var p = bokPrediction(m);
+  if (!p) return "";
+  var body = p.motor
+    ? "🏁 " + esc(p.pole) + " · 🥇 " + esc(p.p1) + " · 🥈 " + esc(p.p2) + " · 🥉 " + esc(p.p3)
+    : p.hs + " — " + p.as;
+  return '<div class="pa-guide" title="' + esc(p.why) + '">' +
+    '<span class="g-lbl">🧠 Bok Prediction</span> ' + body + '</div>';
 }
 
 var BOKBOT_NAME = "Bokbot";
@@ -3274,7 +3290,7 @@ function predictionItemHtml(m, gridId, leagueTag){
       '<input class="pa-p1" list="' + gl + '" placeholder="🥇 Winner" value="' + esc(mp.p1||"") + '">' +
       '<input class="pa-p2" list="' + gl + '" placeholder="🥈 2nd" value="' + esc(mp.p2||"") + '">' +
       '<input class="pa-p3" list="' + gl + '" placeholder="🥉 3rd" value="' + esc(mp.p3||"") + '">' +
-      '</div>' + bonus + one + '</div>';
+      '</div>' + bokGuideHtml(m) + bonus + one + '</div>';
   }
   return '<div class="pa-item" data-pa="' + esc(m.id) + '" data-type="score">' + head +
     '<div class="pa-score">' +
@@ -3283,7 +3299,7 @@ function predictionItemHtml(m, gridId, leagueTag){
     '<span>–</span>' +
     '<input class="pa-as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (mine ? esc(String(mine[2])) : "") + '">' +
     '<span class="pa-team pa-team-a">' + esc(m.a) + '</span>' +
-    '</div>' + bonus + one + '</div>';
+    '</div>' + bokGuideHtml(m) + bonus + one + '</div>';
 }
 // datalist of competitor suggestions across whatever motor matches are shown
 // ONE datalist per sport — a shared list would suggest F1 drivers on a MotoGP

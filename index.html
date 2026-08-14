@@ -1638,8 +1638,9 @@ function motorRanking(m){
       tags.forEach(function(t){ score += (bike[t] || 0) + (rider[t] || 0); });
     }
     score += spec[name] || 0;
-    // a small, stable per-event wobble so it isn't mechanical
-    score += matchJitter(m.id + name, 3);
+    // a tiny stable tie-breaker — deliberately too small to overturn a stated
+    // circuit factor, so the reasoning shown always matches the result
+    score += matchJitter(m.id + name, 1) * 0.5;
     return { name:name, score:score };
   });
   scored.sort(function(a,b){ return b.score - a.score; });
@@ -1666,21 +1667,69 @@ function bokPrediction(m){
   var sport = m.sport || "rugby";
   var rh = ratingFor(m.h, sport), ra = ratingFor(m.a, sport);
   if (sport === "cricket") {
-    // runs, not points — a different game entirely
-    var cBase = 265, cMargin = Math.round((rh - ra) * 2.2) + matchJitter(m.id, 8);
-    return { motor:false, hs: Math.max(90, cBase + Math.round(cMargin/2)),
-             as: Math.max(90, cBase - Math.round(cMargin/2)),
-             why: "batting strength " + rh + " v " + ra };
+    // a format sets the scale far more than anything else does
+    var vn0 = normName(m.vn || "");
+    var fmt = vn0.indexOf("t20") >= 0 ? { base:170, label:"T20" }
+            : vn0.indexOf("test") >= 0 ? { base:340, label:"Test innings" }
+            : { base:265, label:"ODI" };
+    var cMargin = Math.round((rh - ra) * 2.2) + matchJitter(m.id, 8);
+    return { motor:false, hs: Math.max(60, fmt.base + Math.round(cMargin/2)),
+             as: Math.max(60, fmt.base - Math.round(cMargin/2)),
+             why: fmt.label + " · batting strength " + rh + " v " + ra };
   }
-  var HOME_ADV = 3.5;                       // roughly a converted try of edge
-  var diff = (rh - ra) + HOME_ADV;
-  var margin = Math.round(diff * 1.25) + matchJitter(m.id, 3);
-  margin = Math.max(-42, Math.min(42, margin));
-  var total = 48 + matchJitter(m.id + "t", 6);
-  var hs = Math.max(3, Math.round((total + margin) / 2));
-  var as = Math.max(3, Math.round((total - margin) / 2));
-  return { motor:false, hs: hs, as: as,
-           why: "ratings " + rh.toFixed(1) + " v " + ra.toFixed(1) + " · +" + HOME_ADV + " home" };
+  return rugbyForecast(m, rh, ra);
+}
+/* ---- match-by-match rugby model ------------------------------------------
+   The ratings gap is only the starting point. Where it's played and what kind
+   of fixture it is move the number just as much:
+     · Highveld altitude (Ellis Park/Loftus/FNB, ~1750m) costs a sea-level side
+       roughly 9% of aerobic capacity, and their second-half tackle success
+       measurably drops — worth a few points, though eight substitutes have
+       shrunk the edge from what it once was.
+     · A touring international playing a midweek franchise game rotates heavily,
+       which flatters the club side far more than the ratings suggest.
+     · SA-NZ is historically far tighter than any ratings gap implies.
+     · A neutral venue removes home advantage altogether.                     */
+var HIGHVELD = ["ellis park", "loftus", "fnb stadium"];
+var SA_SIDES = ["south africa","dhl stormers","hollywoodbets sharks","vodacom bulls","emirates lions"];
+function isSaSide(t){ return SA_SIDES.indexOf(normName(t)) >= 0; }
+function isFranchise(t){ return isSaSide(t) && normName(t) !== "south africa"; }
+function rugbyForecast(m, rh, ra){
+  var vn = normName(m.vn || ""), factors = [], margin = 0;
+  var gap = rh - ra;
+  margin += gap * 1.25;
+  factors.push("ratings " + rh.toFixed(1) + " v " + ra.toFixed(1));
+
+  // home advantage — unless it's a neutral ground
+  // a "home" Test played overseas (the Baltimore fixture) is neutral in practice
+  var neutral = /baltimore/.test(vn);
+  if (!neutral) { margin += 3.5; factors.push("+3.5 home"); }
+  else factors.push("neutral venue");
+
+  // altitude, only when the home side lives there and the visitor doesn't
+  var atAltitude = HIGHVELD.some(function(v){ return vn.indexOf(v) >= 0; });
+  if (atAltitude && isSaSide(m.h) && !isSaSide(m.a)) {
+    margin += 4; factors.push("+4 altitude (~1750m)");
+  }
+
+  // a touring international rests players midweek against a club side
+  if (isFranchise(m.h) && !isSaSide(m.a)) {
+    margin += 9; factors.push("+9 tourists rotate midweek");
+  }
+
+  // the great rivalry runs tighter than the numbers
+  var pair = [normName(m.h), normName(m.a)].sort().join("|");
+  if (pair === "new zealand|south africa") {
+    margin *= 0.65; factors.push("SA–NZ historically tight");
+  }
+
+  margin = Math.max(-42, Math.min(42, Math.round(margin)));
+  // club sides concede more than Test defences do
+  var total = (isFranchise(m.h) || isFranchise(m.a) ? 56 : 48) + matchJitter(m.id + "t", 6);
+  return { motor:false,
+           hs: Math.max(3, Math.round((total + margin) / 2)),
+           as: Math.max(3, Math.round((total - margin) / 2)),
+           why: factors.join(" · ") };
 }
 function bokPredictionLine(m){
   var p = bokPrediction(m);

@@ -5,9 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#31459C">
 <title>All Blacks Tour Predictor</title>
+<meta name="description" content="Pick the scores for every game of the All Blacks tour of South Africa. Closest wins. 30 seconds, no sign-up.">
+<!-- Link preview card — WhatsApp, Teams and Slack all scrape these, and they
+     need absolute URLs, so the live Pages address is spelled out in full. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CMS Systems">
+<meta property="og:title" content="All Blacks Tour Predictor">
+<meta property="og:description" content="🇿🇦 v 🇳🇿 — pick the scores for every game of the tour. Closest wins. 30 seconds, no sign-up.">
+<meta property="og:url" content="https://elchoerob-stack.github.io/charne/tour/">
+<meta property="og:image" content="https://elchoerob-stack.github.io/charne/tour/assets/share-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="All Blacks Tour Predictor — South Africa v New Zealand">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="assets/cms-icon-emblem.png">
-<link rel="apple-touch-icon" href="assets/cms-icon-emblem.png">
+<link rel="icon" href="assets/ball-icon-192.png">
+<link rel="apple-touch-icon" href="assets/ball-icon-192.png">
 <style>
   /* CMS Systems CI — Blue #31459C primary, Turquoise #00AEED accent,
      Red #FD4545 used sparingly, brand black #2E2E2E, built on white. */
@@ -320,6 +333,9 @@ function table(){
     if (!m.f) return;
     standings(m).forEach(function(s){
       var k = key(s.e.name);
+      // A document whose map key doesn't match key(name) would otherwise take
+      // the whole log down with it, so fall back to creating the row.
+      if (!tot[k]) tot[k] = { name:s.e.name, pts:0, played:0 };
       tot[k].pts += s.pts; tot[k].played += 1;
     });
   });
@@ -630,15 +646,48 @@ function renderResults(){
 Array.prototype.forEach.call(document.querySelectorAll("nav button"), function(b){
   b.onclick = function(){ tab = b.getAttribute("data-tab"); render(); };
 });
-document.getElementById("btn-share").onclick = function(){
+/* The share message is written for WhatsApp: *asterisks* render as bold there,
+   and it degrades to plain text everywhere else. A log full of zeros reads
+   flat, so before anyone has scored we show the turnout instead. */
+function shareMessage(){
   var url = location.origin + location.pathname;
   var t = table();
-  var msg = myName
-    ? "🏉 " + myName + " has entered the All Blacks Tour predictor — pick the scores, closest wins!\n" + url
-    : "🏉 All Blacks Tour predictor — pick the scores, closest wins!\n" + url;
-  if (t.length) msg = "🏉 All Blacks Tour predictor\n\n" +
-    t.slice(0,5).map(function(x){ return x.rank + ". " + x.name + " — " + x.pts + " pts"; }).join("\n") +
-    "\n\nJoin in: " + url;
+  var scored = t.filter(function(x){ return x.pts > 0; });
+  var L = [];
+  L.push("*ALL BLACKS TOUR PREDICTOR*");
+  L.push("🇿🇦 South Africa  v  New Zealand 🇳🇿");
+  L.push("━━━━━━━━━━━━━━━");
+  if (scored.length) {
+    L.push("🏆 *THE LOG*");
+    t.slice(0,5).forEach(function(x){
+      var badge = x.rank === 1 ? "🥇" : x.rank === 2 ? "🥈" : x.rank === 3 ? "🥉" : "　" + x.rank + ".";
+      L.push(badge + " " + x.name + " — *" + x.pts + "* pts");
+    });
+    if (t.length > 5) L.push("　 …and " + (t.length - 5) + " more chasing");
+  } else if (t.length) {
+    L.push("👥 *" + t.length + "* " + (t.length === 1 ? "of us is" : "of us are") + " in so far" +
+      (myName ? " — including " + myName : ""));
+    L.push("Nobody's on the board yet. Wide open.");
+  } else {
+    L.push("👀 Not a single pick in yet.");
+    L.push("First one to jump in leads the log.");
+  }
+  var nx = matches.filter(function(m){ return !locked(m); })
+    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); })[0];
+  if (nx) {
+    L.push("");
+    L.push("⏱ *Next up:* " + nx.h + " v " + nx.a);
+    L.push("　 " + fmt(nx.ko));
+  }
+  L.push("");
+  L.push("Pick the scores. *Closest wins.*");
+  L.push("30 seconds, no sign-up, works on your phone.");
+  L.push("");
+  L.push("👉 " + url);
+  return L.join("\n");
+}
+document.getElementById("btn-share").onclick = function(){
+  var msg = shareMessage();
   if (navigator.share) { navigator.share({ text: msg }).catch(function(){}); return; }
   if (navigator.clipboard) navigator.clipboard.writeText(msg).then(function(){ toast("Link copied — paste it in the group"); });
   else prompt("Copy this:", msg);

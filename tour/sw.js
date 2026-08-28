@@ -1,7 +1,8 @@
 // Cache the shell so the app opens instantly and survives a flaky signal.
 // Predictions themselves always come from Firestore, never from this cache.
-var CACHE = "tour-v1";
-var SHELL = ["./", "./index.html", "./manifest.webmanifest"];
+var CACHE = "tour-v2";
+var SHELL = ["./", "./index.html", "./manifest.webmanifest",
+  "./assets/ball-icon-192.png", "./assets/ball-icon-512.png"];
 self.addEventListener("install", function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); }).then(function(){ return self.skipWaiting(); }));
 });

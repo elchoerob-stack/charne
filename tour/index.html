@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A3B2A">
+<title>All Blacks Tour Predictor</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+  :root{
+    --forest:#0E5C3F; --dark:#0A3B2A; --gold:#FFB612; --gold-deep:#8a6200;
+    --paper:#F4F1EA; --card:#FFFFFF; --line:#E3DED2; --ink:#1D2321; --ink-soft:#6C7671;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  header{
+    background:linear-gradient(160deg,var(--dark),var(--forest));
+    color:#fff; padding:18px 16px 20px; border-bottom:4px solid var(--gold);
+  }
+  .wrap{max-width:560px;margin:0 auto}
+  h1{margin:0;font-size:21px;letter-spacing:-.3px}
+  .sub{margin:5px 0 0;font-size:13px;color:rgba(255,255,255,.82);line-height:1.45}
+  nav{display:flex;gap:8px;padding:12px 16px 0;max-width:560px;margin:0 auto}
+  nav button{
+    flex:1;border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:999px;padding:10px 6px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  nav button.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+  nav .n{display:inline-block;min-width:20px;margin-left:5px;background:rgba(0,0,0,.12);
+    border-radius:999px;padding:0 6px;font-size:12px}
+  nav button.on .n{background:rgba(255,255,255,.25)}
+  main{padding:14px 16px 96px;max-width:560px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .hint{font-size:12.5px;color:var(--ink-soft);line-height:1.55;margin:8px 0 0}
+  .btn{
+    display:block;width:100%;border:0;border-radius:12px;background:var(--gold);color:#3a2c00;
+    font-weight:800;font-size:16px;padding:14px;cursor:pointer;font-family:inherit;margin-top:12px;
+  }
+  .btn.quiet{background:transparent;border:1.5px solid var(--forest);color:var(--forest);font-size:14px;padding:11px}
+  .btn:disabled{opacity:.45}
+  input{font-family:inherit;font-size:16px}
+  .name-row{display:flex;gap:8px}
+  .name-row input{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .name-row .btn{width:auto;margin:0;padding:12px 18px;font-size:14px}
+  .who{
+    display:flex;align-items:center;gap:8px;background:#EEF4EF;border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:700;color:var(--forest);
+  }
+  .who button{margin-left:auto;background:none;border:0;color:var(--forest);text-decoration:underline;
+    font:inherit;font-size:13px;cursor:pointer}
+  .m-head{font-weight:800;font-size:15px;color:var(--forest);line-height:1.35}
+  .m-when{display:block;font-weight:500;font-size:12.5px;color:var(--ink-soft);margin-top:3px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;border-radius:999px;
+    padding:2px 8px;vertical-align:middle;margin-right:6px}
+  .tag.test{background:#DDEBE1;color:var(--forest)}
+  .tag.tour{background:#FFF3D6;color:var(--gold-deep)}
+  .score-grid{display:grid;grid-template-columns:1fr 22px 1fr;gap:8px;align-items:end;margin-top:12px}
+  .score-grid .side{min-width:0}
+  .score-grid label{display:block;font-size:12.5px;color:var(--ink-soft);text-align:center;
+    margin-bottom:5px;line-height:1.3}
+  .score-grid input{width:100%;text-align:center;border:1px solid var(--line);border-radius:10px;
+    padding:12px 4px;font-weight:800;font-size:19px}
+  .score-grid .dash{text-align:center;padding-bottom:13px;color:var(--ink-soft)}
+  .locked{font-size:12.5px;color:var(--gold-deep);background:#FFF3D6;border-radius:8px;padding:7px 10px;margin-top:10px}
+  .done{font-size:12.5px;color:var(--forest);font-weight:700;margin-top:10px}
+  .rows{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .r{display:grid;grid-template-columns:30px 1fr 56px 60px;gap:8px;align-items:center;
+     padding:12px 14px;border-top:1px solid var(--line);font-size:14.5px}
+  .r:first-child{border-top:0}
+  .r.top{background:#FFFBF0}
+  .r .pos{font-weight:800;color:var(--ink-soft)}
+  .r .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+  .r .pl,.r .pts{text-align:right;font-variant-numeric:tabular-nums}
+  .r .pts{font-weight:800;color:var(--forest)}
+  .thead{display:grid;grid-template-columns:30px 1fr 56px 60px;gap:8px;padding:4px 14px 8px;
+    font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft)}
+  .thead .pl,.thead .pts{text-align:right}
+  .res{display:flex;align-items:baseline;gap:8px;font-weight:800;font-size:16px;color:var(--forest)}
+  .pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:#EEF4EF;color:var(--forest)}
+  .pill.miss{background:#FDECEC;color:#a12b2b}
+  .empty{padding:22px 16px;text-align:center;color:var(--ink-soft);font-size:14px;line-height:1.55}
+  .peek{text-align:center;padding:16px;color:var(--ink-soft);font-size:13.5px;line-height:1.6}
+  .peek b{color:var(--forest)}
+  .legend{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13.5px}
+  .legend .p{font-weight:800;color:var(--forest);text-align:right}
+  .share{
+    position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,var(--paper) 70%,rgba(244,241,234,0));
+  }
+  .share .btn{max-width:528px;margin:0 auto;background:#2FBF71;color:#fff}
+  #toast{
+    position:fixed;left:50%;bottom:78px;transform:translateX(-50%);background:#1D2321;color:#fff;
+    padding:11px 16px;border-radius:999px;font-size:13.5px;max-width:88%;text-align:center;
+    opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;
+  }
+  #toast.show{opacity:1}
+  .warn{background:#FDE7E7;border:1px solid #F0B4B4;border-radius:12px;padding:11px 14px;
+    font-size:13px;line-height:1.55;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>🏉 All Blacks Tour of South Africa</h1>
+    <p class="sub" id="sub">Pick the scores. Closest wins. That's it.</p>
+  </div>
+</header>
+
+<nav>
+  <button id="tab-predict" class="on" data-tab="predict">Predict<span class="n" id="n-predict">0</span></button>
+  <button id="tab-log" data-tab="log">Log</button>
+  <button id="tab-results" data-tab="results">Results<span class="n" id="n-results">0</span></button>
+</nav>
+
+<main>
+  <div id="warn"></div>
+  <section id="view-predict"></section>
+  <section id="view-log" hidden></section>
+  <section id="view-results" hidden></section>
+</main>
+
+<div class="share"><button class="btn" id="btn-share">Share with the team</button></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import {
+  initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, onSnapshot, updateDoc
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+/* Same Firebase project as the family predictor, but this app only ever reads
+   and writes matches tagged app:"cms" — the two never see each other's data. */
+var app = initializeApp({
+  apiKey: "AIzaSyA2eY7QWAlVMg2zohWVHMWWBZSHK2lMtdE",
+  authDomain: "sa-predictions.firebaseapp.com",
+  projectId: "sa-predictions",
+  storageBucket: "sa-predictions.firebasestorage.app",
+  messagingSenderId: "198757663385",
+  appId: "1:198757663385:web:9cda195986f8a9bb532e08"
+});
+var db;
+try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+catch (e) { db = getFirestore(app); }
+var matchesCol = collection(db, "matches");
+
+var APP_TAG = "cms";
+var PIN = "1111";
+var NAME_KEY = "cms-tour-name";
+
+var matches = [];
+var myName = null;
+var editingName = false;
+var tab = "predict";
+var ready = false;
+var blocked = false;
+try { myName = localStorage.getItem(NAME_KEY) || null; } catch (e) {}
+
+/* ---------- helpers ---------- */
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function key(n){ return String(n).trim().toLowerCase().replace(/[.\/\[\]~*]/g,"_").replace(/\s+/g," "); }
+function num(v){ var n = parseInt(v,10); return isNaN(n) ? 0 : Math.max(0, Math.min(200,n)); }
+function toast(msg){
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+function fmt(ms){
+  if (!ms) return "Date to be confirmed";
+  try { return new Date(ms).toLocaleString([], {weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}); }
+  catch(e){ return new Date(ms).toString().slice(0,21); }
+}
+function locked(m){ return !!(m.ko && Date.now() > m.ko) || !!m.f; }
+function mine(m){ return myName ? m.p[key(myName)] || null : null; }
+
+/* ---------- scoring: four rules, nothing more ---------- */
+function points(m, e){
+  if (!m.f) return null;
+  var fh = m.f[0], fa = m.f[1], out = { pts:0, tags:[] };
+  if (e.hs === fh && e.as === fa) { out.pts = 10; out.tags.push("🎯 exact"); }
+  else {
+    var rightWinner = Math.sign(e.hs - e.as) === Math.sign(fh - fa);
+    if (rightWinner) {
+      var mDiff = Math.abs((e.hs - e.as) - (fh - fa));
+      if (mDiff <= 3) { out.pts = 7; out.tags.push("📏 winner, margin ±3"); }
+      else { out.pts = 5; out.tags.push("✅ right winner"); }
+    } else out.tags.push("❌ wrong winner");
+  }
+  if (Math.abs(e.hs - fh) <= 3) { out.pts += 2; out.tags.push("🔢 home ±3"); }
+  if (Math.abs(e.as - fa) <= 3) { out.pts += 2; out.tags.push("🔢 away ±3"); }
+  out.off = Math.abs(e.hs - fh) + Math.abs(e.as - fa);
+  return out;
+}
+function standings(m){
+  var list = Object.keys(m.p).map(function(k){
+    var e = m.p[k], s = points(m, e) || { pts:0, tags:[], off:0 };
+    return { e:e, pts:s.pts, tags:s.tags, off:s.off };
+  });
+  if (m.f && list.length) {
+    var best = Math.min.apply(null, list.map(function(x){ return x.off; }));
+    list.forEach(function(x){ if (x.off === best) { x.pts += 2; x.tags.push("🎖 closest"); } });
+  }
+  list.sort(function(a,b){ return b.pts - a.pts || a.off - b.off || a.e.name.localeCompare(b.e.name); });
+  var rank = 0;
+  list.forEach(function(x,i){
+    if (i===0 || x.pts !== list[i-1].pts || x.off !== list[i-1].off) rank = i+1;
+    x.rank = rank;
+  });
+  return list;
+}
+function table(){
+  var tot = {};
+  matches.forEach(function(m){
+    Object.keys(m.p).forEach(function(k){
+      if (!tot[k]) tot[k] = { name:m.p[k].name, pts:0, played:0 };
+    });
+    if (!m.f) return;
+    standings(m).forEach(function(s){
+      var k = key(s.e.name);
+      tot[k].pts += s.pts; tot[k].played += 1;
+    });
+  });
+  var list = Object.keys(tot).map(function(k){ return tot[k]; });
+  list.sort(function(a,b){ return b.pts - a.pts || a.played - b.played || a.name.localeCompare(b.name); });
+  var rank = 0;
+  list.forEach(function(t,i){
+    if (i===0 || t.pts !== list[i-1].pts || t.played !== list[i-1].played) rank = i+1;
+    t.rank = rank;
+  });
+  return list;
+}
+
+/* ---------- data ---------- */
+function fromDoc(d){
+  var x = d.data(), p = x.p || {}, out = {};
+  Object.keys(p).forEach(function(k){
+    var e = p[k] || {};
+    if (e.name) out[k] = { name:e.name, hs:num(e.hs), as:num(e.as) };
+  });
+  return {
+    id:d.id, h:x.h, hf:x.hf||"", a:x.a, af:x.af||"", ko:x.ko||null, vn:x.vn||"",
+    tbc:!!x.tbc, kind:x.kind||"test", f:(Array.isArray(x.f) && x.f.length===2) ? [num(x.f[0]),num(x.f[1])] : null,
+    p:out
+  };
+}
+onSnapshot(matchesCol, function(snap){
+  var all = [];
+  snap.forEach(function(d){ if ((d.data()||{}).app === APP_TAG) all.push(fromDoc(d)); });
+  all.sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+  matches = all; ready = true; blocked = false;
+  render();
+}, function(err){
+  ready = true;
+  var code = String((err && (err.code || err.message)) || "");
+  blocked = /permission-denied|insufficient/i.test(code);
+  render();
+});
+function save(m, hs, as){
+  var patch = {};
+  patch["p." + key(myName)] = { name:myName, hs:num(hs), as:num(as) };
+  return updateDoc(doc(db,"matches",m.id), patch).catch(function(err){
+    var code = String((err && (err.code || err.message)) || "");
+    if (/permission-denied|insufficient/i.test(code)) { blocked = true; render(); }
+    else toast("Couldn't save — check your connection");
+    throw err;
+  });
+}
+function saveResult(m, hs, as){
+  return updateDoc(doc(db,"matches",m.id), { f:[num(hs),num(as)] })
+    .catch(function(){ toast("Couldn't save the result"); });
+}
+
+/* ---------- render ---------- */
+function counts(){
+  var open = matches.filter(function(m){ return !locked(m); });
+  var todo = myName ? open.filter(function(m){ return !mine(m); }).length : open.length;
+  document.getElementById("n-predict").textContent = todo;
+  document.getElementById("n-results").textContent = matches.filter(function(m){ return !!m.f; }).length;
+}
+function render(){
+  counts();
+  document.getElementById("warn").innerHTML = blocked
+    ? '<div class="warn">🔒 <strong>Can\'t reach the database.</strong> This isn\'t your connection — the Firestore security rules need publishing. Ask Jacques.</div>'
+    : "";
+  ["predict","log","results"].forEach(function(t){
+    document.getElementById("view-"+t).hidden = (t !== tab);
+    document.getElementById("tab-"+t).classList.toggle("on", t === tab);
+  });
+  if (tab === "predict") renderPredict();
+  if (tab === "log") renderLog();
+  if (tab === "results") renderResults();
+}
+function nameBlockHtml(){
+  if (!myName || editingName) {
+    return '<div class="card"><label for="nm" style="font-size:13px;font-weight:700;color:var(--forest)">Your name</label>' +
+      '<div class="name-row" style="margin-top:8px">' +
+      '<input id="nm" maxlength="30" placeholder="e.g. Thabo M" value="' + esc(editingName ? (myName||"") : "") + '">' +
+      '<button class="btn" id="nm-go">Start</button></div>' +
+      '<p class="hint">Used to label your picks on the log. Nothing else — no sign-up, no password.</p></div>';
+  }
+  return '<div class="card" style="padding:11px 12px"><div class="who">🙋 Predicting as ' + esc(myName) +
+    '<button id="nm-change">change</button></div></div>';
+}
+function matchTitle(m){
+  var tag = m.kind === "test"
+    ? '<span class="tag test">TEST</span>'
+    : '<span class="tag tour">TOUR MATCH</span>';
+  return tag + esc(m.hf) + " " + esc(m.h) + " v " + esc(m.a) + " " + esc(m.af);
+}
+function renderPredict(){
+  var el = document.getElementById("view-predict");
+  if (!ready) { el.innerHTML = '<div class="card"><p class="hint" style="margin:0">Loading fixtures…</p></div>'; return; }
+  var open = matches.filter(function(m){ return !locked(m); });
+  var html = nameBlockHtml();
+  if (!myName || editingName) {
+    html += '<div class="card"><p class="hint" style="margin:0">' + open.length +
+      ' match' + (open.length===1?'':'es') + ' still open. Add your name above to start picking.</p></div>';
+    el.innerHTML = html;
+    wirePredict();
+    return;
+  }
+  if (!open.length) {
+    html += '<div class="card"><div class="empty">All matches are under way or finished — check the <b>Log</b> to see how you\'re doing.</div></div>';
+    el.innerHTML = html; wirePredict(); return;
+  }
+  html += open.map(function(m){
+    var e = mine(m);
+    return '<div class="card" data-m="' + esc(m.id) + '">' +
+      '<div class="m-head">' + matchTitle(m) +
+        '<span class="m-when">' + esc(fmt(m.ko)) + (m.tbc ? " (provisional)" : "") + (m.vn ? " · " + esc(m.vn) : "") + '</span></div>' +
+      '<div class="score-grid">' +
+        '<div class="side"><label>' + esc(m.h) + '</label>' +
+          '<input class="hs" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (e ? e.hs : "") + '"></div>' +
+        '<span class="dash">–</span>' +
+        '<div class="side"><label>' + esc(m.a) + '</label>' +
+          '<input class="as" type="number" inputmode="numeric" min="0" max="150" placeholder="0" value="' + (e ? e.as : "") + '"></div>' +
+      '</div>' +
+      (e ? '<div class="done">✅ Saved — you can change it until kick-off</div>' : '') +
+      '<button class="btn quiet save-one">' + (e ? "Update my pick" : "Save my pick") + '</button>' +
+    '</div>';
+  }).join("");
+  html += '<button class="btn" id="save-all">Save all my picks</button>';
+  el.innerHTML = html;
+  wirePredict();
+}
+function wirePredict(){
+  var go = document.getElementById("nm-go");
+  if (go) go.onclick = function(){
+    var v = (document.getElementById("nm").value || "").trim();
+    if (!v) { toast("Type your name first"); return; }
+    myName = v; editingName = false;
+    try { localStorage.setItem(NAME_KEY, myName); } catch(e){}
+    render();
+  };
+  var ch = document.getElementById("nm-change");
+  if (ch) ch.onclick = function(){ editingName = true; render(); };
+
+  function cardValues(card){
+    return { m: matches.filter(function(x){ return x.id === card.getAttribute("data-m"); })[0],
+             hs: card.querySelector(".hs").value, as: card.querySelector(".as").value };
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".save-one"), function(btn){
+    btn.onclick = function(){
+      var v = cardValues(btn.closest("[data-m]"));
+      if (v.hs === "" || v.as === "") { toast("Fill in both scores first"); return; }
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      save(v.m, v.hs, v.as).then(function(){ toast("Saved — good luck!"); }).catch(function(){});
+    };
+  });
+  var all = document.getElementById("save-all");
+  if (all) all.onclick = function(){
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    var n = 0, jobs = [];
+    Array.prototype.forEach.call(document.querySelectorAll("[data-m]"), function(card){
+      var v = cardValues(card);
+      if (v.hs === "" || v.as === "") return;
+      n++; jobs.push(save(v.m, v.hs, v.as).catch(function(){}));
+    });
+    if (!n) { toast("Fill in at least one match"); return; }
+    Promise.all(jobs).then(function(){ toast("Saved " + n + " pick" + (n===1?"":"s") + " — good luck!"); });
+  };
+}
+function renderLog(){
+  var el = document.getElementById("view-log");
+  var t = table();
+  if (!t.length) {
+    el.innerHTML = '<div class="card"><div class="empty">No picks yet.<br>Be the first — tap <b>Predict</b>.</div></div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="thead"><span>#</span><span>Name</span><span class="pl">Played</span><span class="pts">Points</span></div>' +
+    '<div class="rows">' + t.map(function(x){
+      var medal = x.rank===1 && x.pts>0 ? "🏆 " : x.rank===2 && x.pts>0 ? "🥈 " : x.rank===3 && x.pts>0 ? "🥉 " : "";
+      return '<div class="r' + (x.rank===1 && x.pts>0 ? " top" : "") + '">' +
+        '<span class="pos">' + x.rank + '</span>' +
+        '<span class="nm">' + medal + esc(x.name) + '</span>' +
+        '<span class="pl">' + x.played + '</span>' +
+        '<span class="pts">' + x.pts + '</span></div>';
+    }).join("") + '</div>' +
+    '<div class="card" style="margin-top:14px"><div style="font-weight:800;color:var(--forest);margin-bottom:8px">How points work</div>' +
+    '<div class="legend">' +
+      '<span>🎯 Exact score</span><span class="p">10</span>' +
+      '<span>📏 Right winner, margin within 3</span><span class="p">7</span>' +
+      '<span>✅ Right winner</span><span class="p">5</span>' +
+      '<span>🔢 Each team\'s score within 3</span><span class="p">+2</span>' +
+      '<span>🎖 Closest pick of the match</span><span class="p">+2</span>' +
+    '</div></div>';
+}
+function renderResults(){
+  var el = document.getElementById("view-results");
+  var played = matches.filter(function(m){ return !!m.f; });
+  var awaiting = matches.filter(function(m){ return !m.f && locked(m); });
+  var html = "";
+  if (!played.length && !awaiting.length) {
+    html = '<div class="card"><div class="empty">Nothing played yet.</div></div>';
+  }
+  html += played.map(function(m){
+    var st = standings(m);
+    return '<div class="card">' +
+      '<div class="m-head">' + matchTitle(m) + '<span class="m-when">' + esc(fmt(m.ko)) + '</span></div>' +
+      '<div class="res" style="margin-top:10px">' + esc(m.h) + ' ' + m.f[0] + ' — ' + m.f[1] + ' ' + esc(m.a) + '</div>' +
+      '<div style="margin-top:10px">' + st.slice(0,20).map(function(s){
+        var medal = s.rank===1 ? "🏆 " : s.rank===2 ? "🥈 " : s.rank===3 ? "🥉 " : "";
+        return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px">' +
+          '<span style="flex:1"><strong>' + medal + esc(s.e.name) + '</strong> ' + s.e.hs + '–' + s.e.as + '</span>' +
+          '<span class="pill' + (s.pts ? "" : " miss") + '">+' + s.pts + '</span></div>';
+      }).join("") + '</div></div>';
+  }).join("");
+  html += awaiting.map(function(m){
+    var n = Object.keys(m.p).length;
+    return '<div class="card"><div class="m-head">' + matchTitle(m) +
+      '<span class="m-when">' + esc(fmt(m.ko)) + ' · kicked off</span></div>' +
+      '<p class="hint" style="margin-top:8px">' + n + ' pick' + (n===1?'':'s') + ' in — waiting for the final score.</p>' +
+      '<button class="btn quiet set-final" data-m="' + esc(m.id) + '">Enter the final score</button></div>';
+  }).join("");
+  el.innerHTML = html;
+  Array.prototype.forEach.call(document.querySelectorAll(".set-final"), function(b){
+    b.onclick = function(){
+      var m = matches.filter(function(x){ return x.id === b.getAttribute("data-m"); })[0];
+      if (!m) return;
+      var pin = prompt("Organiser PIN to enter a result:");
+      if (pin === null) return;
+      if (pin.trim() !== PIN) { toast("Wrong PIN"); return; }
+      var hs = prompt(m.h + " final score:");
+      if (hs === null || hs.trim() === "") return;
+      var as = prompt(m.a + " final score:");
+      if (as === null || as.trim() === "") return;
+      saveResult(m, hs, as).then(function(){ toast("Result saved"); });
+    };
+  });
+}
+
+/* ---------- nav + share ---------- */
+Array.prototype.forEach.call(document.querySelectorAll("nav button"), function(b){
+  b.onclick = function(){ tab = b.getAttribute("data-tab"); render(); };
+});
+document.getElementById("btn-share").onclick = function(){
+  var url = location.origin + location.pathname;
+  var t = table();
+  var msg = myName
+    ? "🏉 " + myName + " has entered the All Blacks Tour predictor — pick the scores, closest wins!\n" + url
+    : "🏉 All Blacks Tour predictor — pick the scores, closest wins!\n" + url;
+  if (t.length) msg = "🏉 All Blacks Tour predictor\n\n" +
+    t.slice(0,5).map(function(x){ return x.rank + ". " + x.name + " — " + x.pts + " pts"; }).join("\n") +
+    "\n\nJoin in: " + url;
+  if (navigator.share) { navigator.share({ text: msg }).catch(function(){}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(msg).then(function(){ toast("Link copied — paste it in the group"); });
+  else prompt("Copy this:", msg);
+};
+
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  try { navigator.serviceWorker.register("sw.js").catch(function(){}); } catch(e){}
+}
+render();
+setInterval(function(){ if (ready) counts(); }, 30000);
+</script>
+</body>
+</html>

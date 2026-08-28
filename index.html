@@ -448,6 +448,22 @@
   }
   .list-row .lr-chev{color:var(--ink-soft);font-size:16px;flex:0 0 auto}
 
+  /* ---------- my picks ---------- */
+  .mine-pick{
+    margin-top:5px;font-size:13px;font-weight:700;color:var(--grass);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .mine-pick .mp-lbl{
+    font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);margin-right:5px;
+  }
+  .mine-state{
+    flex:0 0 auto;font-size:11px;font-weight:700;white-space:nowrap;
+    border-radius:999px;padding:4px 9px;border:1px solid var(--line);
+  }
+  .mine-state.open{color:var(--gold-deep);border-color:var(--gold)}
+  .mine-state.lock{color:var(--ink-soft)}
+
   /* ---------- reminder banner ---------- */
   .reminder{
     display:flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -804,6 +820,14 @@
         <button class="btn quiet" id="btn-show-qr">📱 Show QR code</button>
         <button class="btn quiet" id="btn-export">💾 Export season data</button>
         <button class="btn quiet" id="btn-enable-push" hidden>🔔 Enable kick-off alerts</button>
+      </section>
+    </div>
+
+    <!-- ============ MY PICKS VIEW ============ -->
+    <div id="view-mine" hidden>
+      <section>
+        <div id="mine-intro"></div>
+        <div id="mine-body"></div>
       </section>
     </div>
 
@@ -2473,6 +2497,7 @@ function render(){
   document.getElementById("view-home").hidden = view !== "home";
   document.getElementById("view-match").hidden = view !== "match";
   document.getElementById("view-league").hidden = view !== "league";
+  document.getElementById("view-mine").hidden = view !== "mine";
   document.getElementById("view-fixtures").hidden = view !== "fixtures";
   document.getElementById("view-results").hidden = view !== "results";
   document.getElementById("view-newmatch").hidden = view !== "newmatch";
@@ -2481,6 +2506,7 @@ function render(){
   if (view === "home") renderHome();
   if (view === "match") renderMatch();
   if (view === "league") renderLeague();
+  if (view === "mine") renderMine();
   if (view === "fixtures") renderFixturesList();
   if (view === "results") renderResultsList();
   renderReminderBanner();
@@ -2598,11 +2624,13 @@ function renderChips(){
   var fxLabel = motorFlav ? "🏁 Races" : "📅 Fixtures";
   var addLabel = motorFlav ? "＋ Race" : "＋ Match";
   var outN = outstandingCount();
-  // order reads like a season: what you owe → what's coming → what's played →
-  // the log (pool standings) at the end. "Pool" avoids clashing with the
-  // LEAGUE selector, which picks which competition you're looking at.
+  var mineN = myUpcomingList().length;
+  // order reads like a season: what you owe → what you've got riding → what's
+  // coming → what's played → the log (pool standings) at the end. "Pool" avoids
+  // clashing with the LEAGUE selector, which picks which competition you're on.
   var html =
     '<button class="chip' + (view==="home" ? " active" : "") + '" data-chip="home">🎯 Predictions' + (outN ? '<span class="chip-count alert">' + outN + '</span>' : '') + '</button>' +
+    '<button class="chip' + (view==="mine" || (view==="match" && cameFrom==="mine") ? " active" : "") + '" data-chip="mine">⏱ My picks<span class="chip-count">' + mineN + '</span></button>' +
     '<button class="chip' + (onFixtures ? " active" : "") + '" data-chip="fixtures">' + fxLabel + '<span class="chip-count">' + fxCount + '</span></button>' +
     '<button class="chip' + (onResults ? " active" : "") + '" data-chip="results">✅ Results<span class="chip-count">' + resCount + '</span></button>' +
     '<button class="chip' + (view==="league" ? " active" : "") + '" data-chip="league">🏆 Pool</button>' +
@@ -2628,6 +2656,16 @@ function renderHeader(){
       '<div class="sub">' + state.m.length + ' match' + (state.m.length===1?'':'es') + ' · points add up all season</div></div>';
     sub.innerHTML = "";
     sub.hidden = true;
+    return;
+  }
+  if (view === "mine") {
+    var mn = myUpcomingList();
+    var mnOpen = mn.filter(function(m){ return !isLocked(m); }).length;
+    card.innerHTML = '<div class="league-head"><div class="big">⏱ My picks</div>' +
+      '<div class="sub">' + (!myName ? "add your name to begin"
+        : !mn.length ? "nothing riding yet"
+        : mn.length + " still to be played · " + mnOpen + " you can still change") + '</div></div>';
+    sub.innerHTML = ""; sub.hidden = true;
     return;
   }
   if (view === "fixtures") {
@@ -3428,6 +3466,23 @@ function outstandingBonus(){
 }
 // badge = everything still owed: score/podium predictions + bonus answers
 function outstandingCount(){ return outstandingList().length + outstandingBonus().length; }
+/* Once you predict a match it drops off the Predictions page — which is the
+   point, but it left nowhere to see what you'd actually put money on. These are
+   the picks you've made that haven't been played out yet, across every league
+   you follow: still-open ones you can change, and locked ones you can't. */
+function myUpcomingList(){
+  if (!myName) return [];
+  return state.allM.filter(function(m){
+    return !m.f && findIn(m, myName) && !isLeagueHidden(m.league || DEFAULT_LEAGUE);
+  }).sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+}
+// how my own pick reads on a row — a scoreline, or the podium for a race
+function myPickText(m){
+  var e = findIn(m, myName);
+  if (!e) return "";
+  if (Array.isArray(e)) return e[1] + " – " + e[2];
+  return "🏁 " + esc(e.pole||"—") + " · 🥇 " + esc(e.p1||"—") + " · 🥈 " + esc(e.p2||"—") + " · 🥉 " + esc(e.p3||"—");
+}
 function leagueMeta(){
   var name = {}, icon = {};
   state.leagues.forEach(function(l){ name[l.id] = l.name; icon[l.id] = l.icon; });
@@ -3484,6 +3539,58 @@ function homeBonusHtml(){
         '</div>';
     }).join("") +
     '<button class="btn" id="home-bonus-save">Save bonus answers</button></div>';
+}
+function renderMine(){
+  var intro = document.getElementById("mine-intro");
+  var body = document.getElementById("mine-body");
+  if (!myName) {
+    intro.innerHTML = '<div class="home-hero"><div class="hh-title">⏱ My picks</div>' +
+      '<p class="hh-sub">Add your name on the <b>Predictions</b> page and everything you\'ve got riding will collect here.</p></div>';
+    body.innerHTML = "";
+    return;
+  }
+  var list = myUpcomingList();
+  if (!list.length) {
+    intro.innerHTML = '<div class="home-hero"><div class="hh-title">⏱ My picks</div>' +
+      '<p class="hh-sub">Nothing riding on anything just yet. Predictions you make show up here until the match is played and scored.</p></div>';
+    body.innerHTML = '<p class="hint" style="text-align:center">Head to <b>🎯 Predictions</b> to get some in.</p>';
+    return;
+  }
+  var openN = list.filter(function(m){ return !isLocked(m); }).length;
+  var lockedN = list.length - openN;
+  intro.innerHTML = '<div class="home-hero"><div class="hh-title">⏱ ' + list.length + ' pick' + (list.length===1?'':'s') + ' riding</div>' +
+    '<p class="hh-sub">Everything you\'ve predicted that still has to be played, next up first. ' +
+    (openN ? '<b>' + openN + '</b> still open to change' + (lockedN ? ' · ' : '') : '') +
+    (lockedN ? '<b>' + lockedN + '</b> locked in' : '') + '. Tap any one to see it in full.</p></div>';
+  var meta = leagueMeta();
+  var groups = {}, order = [];
+  list.forEach(function(m){
+    var k = dayKey(m.ko);
+    if (!groups[k]) { groups[k] = { label: dayLabel(m.ko), items: [] }; order.push(k); }
+    groups[k].items.push(m);
+  });
+  order.sort();
+  body.innerHTML = order.map(function(k){
+    var g = groups[k];
+    return '<div class="home-group"><div class="home-group-head date">📅 ' + esc(g.label) + '</div>' +
+      g.items.map(function(m){
+        var lid = m.league || DEFAULT_LEAGUE;
+        var locked = isLocked(m);
+        // raceBadge already carries its own 🏁, so no flag prefix for races
+        var title = m.type === "motor"
+          ? raceBadge(m) + " " + esc(m.h)
+          : m.hf + " " + esc(m.h) + " v " + esc(m.a) + " " + m.af;
+        return '<div class="list-row mine-row" data-mgo="' + esc(m.id) + '">' +
+          '<div class="lr-teams">' +
+            '<div class="lr-match">' + title + '</div>' +
+            '<div class="lr-meta">' + (meta.icon[lid]||"🏆") + " " + esc(meta.name[lid]||"League") +
+              ' · ' + (m.ko ? esc(fmtKo(m.ko)) : "Kick-off TBC") + '</div>' +
+            '<div class="mine-pick"><span class="mp-lbl">Your pick</span> ' + myPickText(m) + '</div>' +
+          '</div>' +
+          '<span class="mine-state ' + (locked ? "lock" : "open") + '">' + (locked ? "🔒 Locked" : "✏️ Open") + '</span>' +
+        '</div>';
+      }).join("") + '</div>';
+  }).join("");
 }
 function renderHome(){
   var intro = document.getElementById("home-intro");
@@ -3921,6 +4028,7 @@ document.getElementById("chips").addEventListener("click", function(ev){
   if (!chip) return;
   var v = chip.getAttribute("data-chip");
   if (v === "home") { view = "home"; homeEditName = false; render(); }
+  else if (v === "mine") { view = "mine"; render(); }
   else if (v === "league") { view = "league"; render(); }
   else if (v === "fixtures") { view = "fixtures"; render(); }
   else if (v === "results") { view = "results"; render(); }
@@ -3934,6 +4042,14 @@ function openMatch(matchId, from){
   setEditMode(null); clearForm();
   render();
 }
+document.getElementById("view-mine").addEventListener("click", function(ev){
+  var row = ev.target.closest("[data-mgo]");
+  if (!row) return;
+  var m = matchById(row.getAttribute("data-mgo"));
+  if (!m) return;
+  if ((m.league||DEFAULT_LEAGUE) !== curLeague) switchLeague(m.league||DEFAULT_LEAGUE);
+  openMatch(m.id, "mine");
+});
 document.getElementById("fx-rows").addEventListener("click", function(ev){
   if (ev.target.closest("#btn-empty-tournament")) { openTournamentsModal(); return; }
   var row = ev.target.closest(".list-row");

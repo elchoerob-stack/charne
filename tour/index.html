@@ -66,6 +66,14 @@
   .score-grid input{width:100%;text-align:center;border:1px solid var(--line);border-radius:10px;
     padding:12px 4px;font-weight:800;font-size:19px}
   .score-grid .dash{text-align:center;padding-bottom:13px;color:var(--ink-soft)}
+  .picks{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)}
+  .picks-h{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);margin-bottom:6px}
+  .pick{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:14px}
+  .pick .pn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pick .ps{font-weight:800;color:var(--forest);font-variant-numeric:tabular-nums}
+  .locked-picks{font-size:13px;color:var(--ink-soft);text-align:center;line-height:1.5}
+  .locked-picks b{color:var(--forest)}
   .locked{font-size:12.5px;color:var(--gold-deep);background:#FFF3D6;border-radius:8px;padding:7px 10px;margin-top:10px}
   .done{font-size:12.5px;color:var(--forest);font-weight:700;margin-top:10px}
   .rows{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -108,7 +116,7 @@
 <header>
   <div class="wrap">
     <h1>🏉 All Blacks Tour of South Africa</h1>
-    <p class="sub" id="sub">Pick the scores. Closest wins. That's it.</p>
+    <p class="sub" id="sub">Pick the scores. Closest wins. Everyone’s picks appear once you’ve made yours.</p>
   </div>
 </header>
 
@@ -182,6 +190,28 @@ function fmt(ms){
 }
 function locked(m){ return !!(m.ko && Date.now() > m.ko) || !!m.f; }
 function mine(m){ return myName ? m.p[key(myName)] || null : null; }
+function others(m){
+  var me = myName ? key(myName) : null;
+  return Object.keys(m.p).filter(function(k){ return k !== me; }).map(function(k){ return m.p[k]; })
+    .sort(function(a,b){ return a.name.localeCompare(b.name); });
+}
+/* Nobody sees another pick until they've committed their own — otherwise the
+   last person to enter simply copies the best-looking guess. Once a match has
+   kicked off it's all open, since copying is no longer possible. */
+function picksHtml(m, revealed){
+  var list = others(m);
+  if (!list.length) return revealed
+    ? '<div class="picks"><div class="picks-h">Nobody else has picked yet — you\'re first in.</div></div>' : "";
+  if (!revealed) {
+    return '<div class="picks locked-picks">🙈 <b>' + list.length + '</b> pick' + (list.length===1?'':'s') +
+      ' already in — hidden until you\'ve made yours.</div>';
+  }
+  return '<div class="picks"><div class="picks-h">Everyone else\'s picks</div>' +
+    list.map(function(e){
+      return '<div class="pick"><span class="pn">' + esc(e.name) + '</span>' +
+             '<span class="ps">' + e.hs + ' – ' + e.as + '</span></div>';
+    }).join("") + '</div>';
+}
 
 /* ---------- scoring: four rules, nothing more ---------- */
 function points(m, e){
@@ -347,6 +377,7 @@ function renderPredict(){
       '</div>' +
       (e ? '<div class="done">✅ Saved — you can change it until kick-off</div>' : '') +
       '<button class="btn quiet save-one">' + (e ? "Update my pick" : "Save my pick") + '</button>' +
+      picksHtml(m, !!e) +
     '</div>';
   }).join("");
   html += '<button class="btn" id="save-all">Save all my picks</button>';
@@ -441,6 +472,7 @@ function renderResults(){
     return '<div class="card"><div class="m-head">' + matchTitle(m) +
       '<span class="m-when">' + esc(fmt(m.ko)) + ' · kicked off</span></div>' +
       '<p class="hint" style="margin-top:8px">' + n + ' pick' + (n===1?'':'s') + ' in — waiting for the final score.</p>' +
+      picksHtml(m, true) +
       '<button class="btn quiet set-final" data-m="' + esc(m.id) + '">Enter the final score</button></div>';
   }).join("");
   el.innerHTML = html;

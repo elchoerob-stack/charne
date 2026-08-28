@@ -81,9 +81,20 @@
   .btn.quiet:active{background:var(--turq);color:#fff}
   .btn:disabled{opacity:.45}
   input{font-family:inherit;font-size:16px}
-  .name-row{display:flex;gap:8px}
-  .name-row input{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .name-row{display:flex;gap:8px;flex-wrap:wrap}
+  .name-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:12px}
   .name-row .btn{width:auto;margin:0;padding:12px 18px;font-size:14px}
+  .name-row .btn.ghost{background:none;border:1px solid var(--line);color:var(--grey)}
+  /* Editing shows Save and Cancel, which won't sit beside the field on a
+     narrow phone — give the input its own line and let the pair share the next. */
+  .name-row.two input{flex:1 1 100%}
+  .name-row.two .btn{flex:1}
+  .keeps{
+    margin-top:10px;background:var(--paper);border:1px solid var(--line);
+    border-left:4px solid var(--turq);border-radius:10px;
+    padding:9px 11px;font-size:12.5px;color:var(--grey);line-height:1.45;
+  }
+  .keeps b{color:var(--blue)}
   .who{
     display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);
     border-left:4px solid var(--turq);
@@ -216,7 +227,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
   initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, onSnapshot, updateDoc
+  collection, doc, onSnapshot, updateDoc, deleteField
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 /* Same Firebase project as the family predictor, but this app only ever reads
@@ -384,6 +395,50 @@ function save(m, hs, as){
     throw err;
   });
 }
+/* Renaming has to carry the picks with it. Predictions are stored under a key
+   derived from the name, so simply changing the name locally would orphan
+   everything already saved — the old picks would sit under the old name and
+   the log would show the person twice. Every entry is rewritten under the new
+   key and the old one deleted, match by match, and the new name is only kept
+   once all of those writes have come back. Finished matches move too, so past
+   scores and points travel with you. */
+function myStats(){
+  if (!myName) return { picks:0, pts:0 };
+  var k = key(myName);
+  var row = table().filter(function(x){ return key(x.name) === k; })[0];
+  return { picks: matches.filter(function(m){ return !!m.p[k]; }).length, pts: row ? row.pts : 0 };
+}
+function setName(n){
+  myName = n; editingName = false;
+  try { localStorage.setItem(NAME_KEY, myName); } catch(e){}
+  render();
+}
+function renameMe(newName){
+  if (!myName) { setName(newName); return Promise.resolve(); }
+  var oldKey = key(myName), newKey = key(newName);
+  if (newName === myName) { editingName = false; render(); return Promise.resolve(); }
+  if (oldKey !== newKey && matches.some(function(m){ return !!m.p[newKey]; })) {
+    toast("Someone already predicts as " + newName);
+    return Promise.reject(new Error("name taken"));
+  }
+  var moving = matches.filter(function(m){ return !!m.p[oldKey]; });
+  return Promise.all(moving.map(function(m){
+    var e = m.p[oldKey], patch = {};
+    patch["p." + newKey] = { name:newName, hs:e.hs, as:e.as };
+    if (newKey !== oldKey) patch["p." + oldKey] = deleteField();
+    return updateDoc(doc(db,"matches",m.id), patch);
+  })).then(function(){
+    setName(newName);
+    toast(moving.length
+      ? "Name updated — " + moving.length + " pick" + (moving.length===1?"":"s") + " moved with you"
+      : "Name updated");
+  }).catch(function(err){
+    var code = String((err && (err.code || err.message)) || "");
+    if (/permission-denied|insufficient/i.test(code)) { blocked = true; render(); }
+    else toast("Couldn't update your name — nothing was changed");
+    throw err;
+  });
+}
 function saveResult(m, hs, as){
   return updateDoc(doc(db,"matches",m.id), { f:[num(hs),num(as)] })
     .catch(function(){ toast("Couldn't save the result"); });
@@ -410,17 +465,40 @@ function render(){
   if (tab === "predict") renderPredict();
   if (tab === "log") renderLog();
   if (tab === "results") renderResults();
+  wireName();
 }
 function nameBlockHtml(){
   if (!myName || editingName) {
-    return '<div class="card"><label for="nm" style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em">Your name</label>' +
-      '<div class="name-row" style="margin-top:8px">' +
+    var s = editingName ? myStats() : null;
+    return '<div class="card"><label for="nm" style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em">' +
+      (editingName ? "Edit your name" : "Your name") + '</label>' +
+      '<div class="name-row' + (editingName ? " two" : "") + '" style="margin-top:8px">' +
       '<input id="nm" maxlength="30" placeholder="e.g. Thabo M" value="' + esc(editingName ? (myName||"") : "") + '">' +
-      '<button class="btn" id="nm-go">Start</button></div>' +
-      '<p class="hint">Used to label your picks on the log. Nothing else — no sign-up, no password.</p></div>';
+      '<button class="btn" id="nm-go">' + (editingName ? "Save" : "Start") + '</button>' +
+      (editingName ? '<button class="btn ghost" id="nm-cancel">Cancel</button>' : '') +
+      '</div>' +
+      (editingName
+        ? '<div class="keeps">Nothing is lost. Your <b>' + s.picks + ' pick' + (s.picks===1?"":"s") +
+          '</b> and <b>' + s.pts + ' point' + (s.pts===1?"":"s") + '</b> move across to the new name, ' +
+          'including matches already played.</div>'
+        : '<p class="hint">Used to label your picks on the log. Nothing else — no sign-up, no password.</p>') +
+      '</div>';
   }
   return '<div class="card" style="padding:11px 12px"><div class="who">🙋 Predicting as ' + esc(myName) +
-    '<button id="nm-change">change</button></div></div>';
+    '<button id="nm-change">Edit</button></div></div>';
+}
+function wireName(){
+  var go = document.getElementById("nm-go");
+  if (go) go.onclick = function(){
+    var v = (document.getElementById("nm").value || "").trim().replace(/\s+/g, " ");
+    if (!v) { toast("Type your name first"); return; }
+    go.disabled = true;
+    renameMe(v).catch(function(){}).then(function(){ if (go) go.disabled = false; });
+  };
+  var cancel = document.getElementById("nm-cancel");
+  if (cancel) cancel.onclick = function(){ editingName = false; render(); };
+  var ch = document.getElementById("nm-change");
+  if (ch) ch.onclick = function(){ editingName = true; render(); };
 }
 function matchTitle(m){
   var tag = m.kind === "test"
@@ -452,7 +530,7 @@ function renderToday(){
   var pick = todaysMatch();
   if (!pick) {
     el.innerHTML = '<div class="card"><div class="today-none">No fixtures left in the tour.<br>' +
-      'Check the <b>Log</b> for the final standings.</div></div>';
+      'Check the <b>Log</b> for the final standings.</div></div>' + nameBlockHtml();
     return;
   }
   var m = pick.m, e = mine(m), started = locked(m);
@@ -467,9 +545,9 @@ function renderToday(){
         : started ? '<div class="cd">🔴 Kicked off — picks are locked</div>'
                   : (m.ko ? '<div class="cd">⏱ Kick-off in ' + countdown(m.ko) + '</div>' : '')) +
     '</div>' +
-    (!myName
+    ((!myName || editingName)
       ? nameBlockHtml()
-      : m.f
+      : (m.f
         ? resultCardHtml(m)
         : started
           ? '<div class="card"><div class="m-head">' + matchTitle(m) + '</div>' + picksHtml(m, true) + '</div>'
@@ -484,7 +562,7 @@ function renderToday(){
               (e ? '<div class="done">✅ Saved — you can change it until kick-off</div>' : '') +
               '<button class="btn quiet save-one">' + (e ? "Update my pick" : "Save my pick") + '</button>' +
               picksHtml(m, !!e) +
-            '</div>');
+            '</div>') + nameBlockHtml());
   wirePredict();
 }
 function resultCardHtml(m){
@@ -535,17 +613,6 @@ function renderPredict(){
   wirePredict();
 }
 function wirePredict(){
-  var go = document.getElementById("nm-go");
-  if (go) go.onclick = function(){
-    var v = (document.getElementById("nm").value || "").trim();
-    if (!v) { toast("Type your name first"); return; }
-    myName = v; editingName = false;
-    try { localStorage.setItem(NAME_KEY, myName); } catch(e){}
-    render();
-  };
-  var ch = document.getElementById("nm-change");
-  if (ch) ch.onclick = function(){ editingName = true; render(); };
-
   function cardValues(card){
     return { m: matches.filter(function(x){ return x.id === card.getAttribute("data-m"); })[0],
              hs: card.querySelector(".hs").value, as: card.querySelector(".as").value };

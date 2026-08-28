@@ -1,24 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 132" width="200" height="132">
-  <!-- A rugby ball, not a gridiron one: fuller body, four panels, and stitching
-       running the full length of the seam rather than raised laces in the middle.
-       CMS palette only — white body, Blue #31459C seams, Turquoise #00AEED bands. -->
-  <path d="M8,66 C26,12 66,4 100,4 C134,4 174,12 192,66 C174,120 134,128 100,128 C66,128 26,120 8,66 Z"
-        fill="#FFFFFF" stroke="#31459C" stroke-width="6" stroke-linejoin="round"/>
-  <path d="M34,48 Q100,-2 166,48" fill="none" stroke="#31459C" stroke-width="3.5" opacity=".5" stroke-linecap="round"/>
-  <path d="M34,84 Q100,134 166,84" fill="none" stroke="#31459C" stroke-width="3.5" opacity=".5" stroke-linecap="round"/>
-  <path d="M48,26 Q38,66 48,106" fill="none" stroke="#00AEED" stroke-width="8" stroke-linecap="round"/>
-  <path d="M152,26 Q162,66 152,106" fill="none" stroke="#00AEED" stroke-width="8" stroke-linecap="round"/>
-  <line x1="26" y1="66" x2="174" y2="66" stroke="#31459C" stroke-width="2.5" opacity=".45" stroke-linecap="round"/>
-  <g stroke="#31459C" stroke-width="2.5" opacity=".45" stroke-linecap="round">
-    <line x1="34" y1="61" x2="34" y2="71"/>
-    <line x1="49" y1="59" x2="49" y2="73"/>
-    <line x1="64" y1="58" x2="64" y2="74"/>
-    <line x1="79" y1="57" x2="79" y2="75"/>
-    <line x1="94" y1="57" x2="94" y2="75"/>
-    <line x1="109" y1="57" x2="109" y2="75"/>
-    <line x1="124" y1="58" x2="124" y2="74"/>
-    <line x1="139" y1="59" x2="139" y2="73"/>
-    <line x1="154" y1="61" x2="154" y2="71"/>
-    <line x1="167" y1="63" x2="167" y2="69"/>
+  <!-- Springbok rugby ball: white body with green end caps and gold dash fans,
+       the way a South African ball is decorated. Green #007A4D and Gold #FFB612
+       sit outside the CMS palette by request — this is the ball's own livery,
+       not page colour, and everything around it stays on-brand. -->
+  <defs>
+    <clipPath id="rb">
+      <path d="M8,66 C26,12 66,4 100,4 C134,4 174,12 192,66 C174,120 134,128 100,128 C66,128 26,120 8,66 Z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#rb)">
+    <rect x="0" y="0" width="200" height="132" fill="#FFFFFF"/>
+    <!-- end caps -->
+    <path d="M-20,-20 L30,-20 Q13,66 30,152 L-20,152 Z" fill="#007A4D"/>
+    <path d="M170,-20 Q187,66 170,152 L220,152 L220,-20 Z" fill="#007A4D"/>
+    <!-- gold dash fans running off each cap -->
+    <path d="M40,-14 Q23,66 40,146" fill="none" stroke="#FFB612" stroke-width="8" stroke-dasharray="10 9"/>
+    <path d="M53,-14 Q36,66 53,146" fill="none" stroke="#FFB612" stroke-width="5" stroke-dasharray="6 12"/>
+    <path d="M160,-14 Q177,66 160,146" fill="none" stroke="#FFB612" stroke-width="8" stroke-dasharray="10 9"/>
+    <path d="M147,-14 Q164,66 147,146" fill="none" stroke="#FFB612" stroke-width="5" stroke-dasharray="6 12"/>
+    <!-- panel seams -->
+    <path d="M20,44 Q100,-6 180,44" fill="none" stroke="#0A5C3B" stroke-width="3" opacity=".22"/>
+    <path d="M20,88 Q100,138 180,88" fill="none" stroke="#0A5C3B" stroke-width="3" opacity=".22"/>
+    <!-- centre seam, stitched the full length -->
+    <line x1="14" y1="66" x2="186" y2="66" stroke="#0A5C3B" stroke-width="2.5" opacity=".45"/>
+    <g stroke="#0A5C3B" stroke-width="2.5" opacity=".45" stroke-linecap="round">
+      <line x1="34" y1="61" x2="34" y2="71"/>
+      <line x1="49" y1="59" x2="49" y2="73"/>
+      <line x1="64" y1="58" x2="64" y2="74"/>
+      <line x1="79" y1="57" x2="79" y2="75"/>
+      <line x1="94" y1="57" x2="94" y2="75"/>
+      <line x1="109" y1="57" x2="109" y2="75"/>
+      <line x1="124" y1="58" x2="124" y2="74"/>
+      <line x1="139" y1="59" x2="139" y2="73"/>
+      <line x1="154" y1="61" x2="154" y2="71"/>
+    </g>
   </g>
+  <path d="M8,66 C26,12 66,4 100,4 C134,4 174,12 192,66 C174,120 134,128 100,128 C66,128 26,120 8,66 Z"
+        fill="none" stroke="#0A5C3B" stroke-width="5" stroke-linejoin="round"/>
 </svg>

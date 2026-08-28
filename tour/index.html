@@ -107,6 +107,19 @@
     opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;
   }
   #toast.show{opacity:1}
+  .install{
+    background:linear-gradient(150deg,#0E5C3F,#0A3B2A);color:#fff;border-radius:14px;
+    padding:15px 16px;margin-bottom:12px;
+  }
+  .install h3{margin:0;font-size:15.5px}
+  .install p{margin:6px 0 0;font-size:13px;line-height:1.55;color:rgba(255,255,255,.86)}
+  .install .row{display:flex;gap:8px;margin-top:12px}
+  .install .row .btn{margin:0;flex:1;padding:11px;font-size:14.5px}
+  .install .row .later{
+    flex:0 0 auto;background:transparent;border:1.5px solid rgba(255,255,255,.4);color:#fff;
+    border-radius:12px;padding:11px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .install code{background:rgba(255,255,255,.16);border-radius:4px;padding:1px 5px}
   .warn{background:#FDE7E7;border:1px solid #F0B4B4;border-radius:12px;padding:11px 14px;
     font-size:13px;line-height:1.55;margin-bottom:12px}
 </style>
@@ -128,6 +141,7 @@
 
 <main>
   <div id="warn"></div>
+  <div id="install"></div>
   <section id="view-predict"></section>
   <section id="view-log" hidden></section>
   <section id="view-results" hidden></section>
@@ -319,6 +333,7 @@ function counts(){
 }
 function render(){
   counts();
+  renderInstall();
   document.getElementById("warn").innerHTML = blocked
     ? '<div class="warn">🔒 <strong>Can\'t reach the database.</strong> This isn\'t your connection — the Firestore security rules need publishing. Ask Jacques.</div>'
     : "";
@@ -510,9 +525,62 @@ document.getElementById("btn-share").onclick = function(){
   else prompt("Copy this:", msg);
 };
 
+/* ---------- install to home screen ----------
+   Offered on the first open so colleagues end up with an icon rather than a
+   link buried in a chat thread. Chrome/Android hands us a real prompt;
+   iOS Safari never fires the event, so it gets the manual steps instead. */
+var deferredInstall = null;
+var INSTALL_DISMISSED = "cms-tour-install-dismissed";
+function standalone(){
+  return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone;
+}
+function dismissed(){
+  try { return localStorage.getItem(INSTALL_DISMISSED) === "1"; } catch(e){ return false; }
+}
+function renderInstall(){
+  var el = document.getElementById("install");
+  if (!el) return;
+  if (standalone() || dismissed()) { el.innerHTML = ""; return; }
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+  if (deferredInstall) {
+    el.innerHTML = '<div class="install"><h3>📲 Add this to your home screen</h3>' +
+      '<p>One tap to open, works offline, and you\'ll get it back without hunting for the link.</p>' +
+      '<div class="row"><button class="btn" id="btn-install">Install</button>' +
+      '<button class="later" id="btn-install-later">Not now</button></div></div>';
+  } else if (ios) {
+    el.innerHTML = '<div class="install"><h3>📲 Add this to your home screen</h3>' +
+      '<p>Tap the <strong>Share</strong> button below, then <strong>Add to Home Screen</strong>. ' +
+      'It then opens like a normal app.</p>' +
+      '<div class="row"><button class="later" id="btn-install-later" style="flex:1">Got it</button></div></div>';
+  } else { el.innerHTML = ""; return; }
+  var go = document.getElementById("btn-install");
+  if (go) go.onclick = function(){
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); });
+  };
+  var later = document.getElementById("btn-install-later");
+  if (later) later.onclick = function(){
+    try { localStorage.setItem(INSTALL_DISMISSED, "1"); } catch(e){}
+    renderInstall();
+  };
+}
+window.addEventListener("beforeinstallprompt", function(e){
+  e.preventDefault();
+  deferredInstall = e;
+  renderInstall();
+});
+window.addEventListener("appinstalled", function(){
+  deferredInstall = null;
+  try { localStorage.removeItem(INSTALL_DISMISSED); } catch(e){}
+  renderInstall();
+  toast("Installed — look for 🏉 on your home screen");
+});
+
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   try { navigator.serviceWorker.register("sw.js").catch(function(){}); } catch(e){}
 }
+renderInstall();
 render();
 setInterval(function(){ if (ready) counts(); }, 30000);
 </script>

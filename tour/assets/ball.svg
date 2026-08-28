@@ -21,30 +21,6 @@
     <!-- panel seams -->
     <path d="M20,44 Q100,-6 180,44" fill="none" stroke="#0A5C3B" stroke-width="3" opacity=".22"/>
     <path d="M20,88 Q100,138 180,88" fill="none" stroke="#0A5C3B" stroke-width="3" opacity=".22"/>
-  <!-- Leaping springbok. Drawn here rather than taken from SA Rugby's mark. -->
-  <g transform="translate(54.4,38.2) scale(0.86)" stroke="#FFB612" fill="#FFB612"
-     stroke-linecap="round" stroke-linejoin="round">
-    <g fill="none" stroke-width="3">
-      <path d="M46,40 C41,47 35,52 28,55"/>
-      <path d="M51,42 C48,50 43,56 36,60"/>
-      <path d="M78,38 C84,45 90,50 97,53"/>
-      <path d="M73,40 C76,49 82,55 89,59"/>
-    </g>
-    <path fill="none" stroke-width="2.2" d="M85,33 C90,30 92,26 91,22"/>
-    <path fill="none" stroke-width="13" d="M45,29 C43,27 42,26 41,25"/>
-    <path fill="none" stroke-width="9.5" d="M43,27 C40,24 38,22 36,20"/>
-    <path fill="none" stroke-width="6.5" d="M37,21 C34,18 32,16 30,14.5"/>
-    <path stroke="none" d="M44,26 C54,22 66,21 76,24 C83,26 87,30 86,35
-      C85,40 81,43 77,43 C71,42 65,38 60,36 C54,37 49,41 46,45
-      C42,47 39,44 39,38 C39,32 41,28 44,26 Z"/>
-    <path stroke="none" d="M30,10 C27,9 23,11.5 19,17 C18,18.5 19,20 21,19
-      C24,18 27,17 30,15.5 C32,14.5 32,11 30,10 Z"/>
-    <path stroke="none" d="M31,12.5 C33.5,11 36,11.5 36.5,13 C35,14.5 32.5,14 31,13.5 Z"/>
-    <g fill="none" stroke-width="2.2">
-      <path d="M29,11 C30,5 33,1 38,0.5 C41,0.5 42,2.5 41,4.5"/>
-      <path d="M26.5,12 C27.5,6 30.5,2 35.5,1.5 C38.5,1.5 39.5,3.5 38.5,5.5"/>
-    </g>
-  </g>
   </g>
   <path d="M8,66 C26,12 66,4 100,4 C134,4 174,12 192,66 C174,120 134,128 100,128 C66,128 26,120 8,66 Z"
         fill="none" stroke="#0A5C3B" stroke-width="5" stroke-linejoin="round"/>

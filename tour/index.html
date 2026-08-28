@@ -124,6 +124,13 @@
   .pick .ps{font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
   .locked-picks{font-size:13px;color:var(--grey);text-align:center;line-height:1.5}
   .locked-picks b{color:var(--blue)}
+  .avg{margin-top:11px;padding-top:11px;border-top:1px solid var(--line);text-align:center}
+  .avg-h{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--turq)}
+  .avg-s{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;
+    margin-top:5px;font-size:13px;color:var(--grey)}
+  .avg-s b{font-size:22px;color:var(--blue);font-variant-numeric:tabular-nums}
+  .avg-c{margin-top:4px;font-size:12.5px;color:var(--grey)}
+  .avg-c b{color:var(--blue)}
   .locked{font-size:12.5px;color:var(--blue);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-top:10px}
   .done{font-size:12.5px;color:var(--turq);font-weight:700;margin-top:10px}
   .rows{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;
@@ -285,19 +292,48 @@ function others(m){
 /* Nobody sees another pick until they've committed their own — otherwise the
    last person to enter simply copies the best-looking guess. Once a match has
    kicked off it's all open, since copying is no longer possible. */
+/* Once a match kicks off nobody can change a pick, so the bottom of the list
+   shows where the whole office landed — everyone's picks, mine included,
+   averaged. Deliberately hidden until then: before kick-off it would give the
+   room away to anyone still choosing. */
+function teamAverage(m){
+  var all = Object.keys(m.p).map(function(k){ return m.p[k]; });
+  if (!all.length) return null;
+  var h = 0, a = 0;
+  all.forEach(function(e){ h += e.hs; a += e.as; });
+  return { hs: h/all.length, as: a/all.length, n: all.length };
+}
+function avgHtml(m){
+  if (!locked(m)) return "";
+  var t = teamAverage(m);
+  if (!t) return "";
+  var hs = Math.round(t.hs), as = Math.round(t.as);
+  var call = hs === as ? "a draw"
+    : esc(hs > as ? m.h : m.a) + " by " + Math.abs(hs - as);
+  return '<div class="avg">' +
+    '<div class="avg-h">Team average · ' + t.n + ' pick' + (t.n===1?'':'s') + '</div>' +
+    '<div class="avg-s"><span>' + esc(m.h) + '</span><b>' + hs + ' – ' + as + '</b><span>' + esc(m.a) + '</span></div>' +
+    '<div class="avg-c">Team call: <b>' + call + '</b></div>' +
+  '</div>';
+}
 function picksHtml(m, revealed){
   var list = others(m);
-  if (!list.length) return revealed
-    ? '<div class="picks"><div class="picks-h">Nobody else has picked yet — you\'re first in.</div></div>' : "";
   if (!revealed) {
-    return '<div class="picks locked-picks">🙈 <b>' + list.length + '</b> pick' + (list.length===1?'':'s') +
-      ' already in — hidden until you\'ve made yours.</div>';
+    return list.length
+      ? '<div class="picks locked-picks">🙈 <b>' + list.length + '</b> pick' + (list.length===1?'':'s') +
+        ' already in — hidden until you\'ve made yours.</div>'
+      : "";
+  }
+  if (!list.length) {
+    return '<div class="picks"><div class="picks-h">' +
+      (locked(m) ? 'No other picks were in for this one.' : 'Nobody else has picked yet — you\'re first in.') +
+      '</div>' + avgHtml(m) + '</div>';
   }
   return '<div class="picks"><div class="picks-h">Everyone else\'s picks</div>' +
     list.map(function(e){
       return '<div class="pick"><span class="pn">' + esc(e.name) + '</span>' +
              '<span class="ps">' + e.hs + ' – ' + e.as + '</span></div>';
-    }).join("") + '</div>';
+    }).join("") + avgHtml(m) + '</div>';
 }
 
 /* ---------- scoring: four rules, nothing more ---------- */
@@ -573,7 +609,7 @@ function resultCardHtml(m){
       return '<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:14px">' +
         '<span style="flex:1"><strong>' + medal + esc(s.e.name) + '</strong> ' + s.e.hs + '–' + s.e.as + '</span>' +
         '<span class="pill' + (s.pts ? "" : " miss") + '">+' + s.pts + '</span></div>';
-    }).join("") + '</div></div>';
+    }).join("") + avgHtml(m) + '</div></div>';
 }
 function renderPredict(){
   var el = document.getElementById("view-predict");
@@ -682,7 +718,7 @@ function renderResults(){
         return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px">' +
           '<span style="flex:1"><strong>' + medal + esc(s.e.name) + '</strong> ' + s.e.hs + '–' + s.e.as + '</span>' +
           '<span class="pill' + (s.pts ? "" : " miss") + '">+' + s.pts + '</span></div>';
-      }).join("") + '</div></div>';
+      }).join("") + avgHtml(m) + '</div></div>';
   }).join("");
   html += awaiting.map(function(m){
     var n = Object.keys(m.p).length;

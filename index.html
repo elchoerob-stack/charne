@@ -2590,8 +2590,8 @@ function renderReminderBanner(){
 
 function renderChips(){
   var nav = document.getElementById("chips");
-  var fxCount = state.m.filter(function(m){ return !m.f; }).length;
-  var resCount = state.m.filter(function(m){ return !!m.f; }).length;
+  var fxCount = state.m.filter(function(m){ return !m.f && !isLocked(m); }).length;
+  var resCount = state.m.filter(function(m){ return !!m.f || isLocked(m); }).length;
   var onFixtures = view === "fixtures" || (view === "match" && cameFrom === "fixtures");
   var onResults = view === "results" || (view === "match" && cameFrom === "results");
   var motorFlav = isMotorFlavour();
@@ -2631,7 +2631,7 @@ function renderHeader(){
     return;
   }
   if (view === "fixtures") {
-    var fxN = state.m.filter(function(m){ return !m.f; }).length;
+    var fxN = state.m.filter(function(m){ return !m.f && !isLocked(m); }).length;
     var mf = isMotorFlavour();
     var word = mf ? "race" : "match";
     card.innerHTML = '<div class="league-head"><div class="big">' + (mf ? "🏁 Races" : "📅 Fixtures") + '</div>' +
@@ -2641,7 +2641,7 @@ function renderHeader(){
     return;
   }
   if (view === "results") {
-    var resN = state.m.filter(function(m){ return !!m.f; }).length;
+    var resN = state.m.filter(function(m){ return !!m.f || isLocked(m); }).length;
     card.innerHTML = '<div class="league-head"><div class="big">✅ Results</div>' +
       '<div class="sub">' + resN + ' match' + (resN===1?'':'es') + ' played</div></div>';
     sub.innerHTML = "";
@@ -2680,7 +2680,7 @@ function renderHeader(){
 
 function renderFixturesList(){
   var rows = document.getElementById("fx-rows");
-  var list = state.m.filter(function(m){ return !m.f; });
+  var list = state.m.filter(function(m){ return !m.f && !isLocked(m); });
   if (!list.length) {
     var mf = isMotorFlavour();
     // any tournaments for this league's sport not yet loaded?
@@ -2712,11 +2712,24 @@ function renderResultsList(){
   var rows = document.getElementById("res-rows");
   var list = state.m.filter(function(m){ return !!m.f; })
     .sort(function(a,b){ return (b.ko || 0) - (a.ko || 0); });
-  if (!list.length) {
+  // kicked off but never scored — surfaced here so the organiser can still
+  // enter the result instead of it lingering in Fixtures forever
+  var awaiting = state.m.filter(function(m){ return !m.f && isLocked(m); })
+    .sort(function(a,b){ return (b.ko || 0) - (a.ko || 0); });
+  if (!list.length && !awaiting.length) {
     rows.innerHTML = '<div class="empty">No results yet — check back after the first match!</div>';
     return;
   }
-  rows.innerHTML = list.map(function(m){
+  var awaitHtml = awaiting.map(function(m){
+    var mo = m.type === "motor";
+    var t = mo ? '<span class="lr-flags">' + (m.hf||"🏁") + '</span>' + esc(m.h)
+               : '<span class="lr-flags">' + m.hf + m.af + '</span>' + esc(m.h) + ' v ' + esc(m.a);
+    return '<div class="list-row" data-match="' + esc(m.id) + '">' +
+      '<div class="lr-teams"><div class="lr-match">' + t + '</div>' +
+      '<div class="lr-meta">⏳ Awaiting result · ' + m.p.length + ' prediction' + (m.p.length===1?'':'s') + '</div></div>' +
+      '<span class="lr-chev">›</span></div>';
+  }).join("");
+  rows.innerHTML = awaitHtml + list.map(function(m){
     var motor = m.type === "motor";
     var ranked = standings(m);
     var winners = ranked.filter(function(s){ return s.rank === 1 && s.pts > 0; });

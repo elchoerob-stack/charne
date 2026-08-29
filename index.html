@@ -4352,9 +4352,26 @@ document.getElementById("rows").addEventListener("click", function(ev){
 });
 
 /* ---------- final score ---------- */
+/* A result is what takes a match off Fixtures, Predictions and My picks, so
+   putting one on a game that hasn't kicked off quietly deletes it from the
+   week. That is exactly how the second Springbok–All Blacks Test vanished:
+   the first Test's score was entered on both, two minutes apart, because the
+   two fixtures read identically in the list. Ask first. */
+function confirmEarlyResult(m){
+  if (!m || !m.ko || isLocked(m)) return true;
+  var mins = Math.round((m.ko - Date.now()) / 60000);
+  var away = mins >= 1440 ? Math.round(mins/1440) + " day" + (Math.round(mins/1440)===1?"":"s")
+           : mins >= 60   ? Math.round(mins/60) + " hour" + (Math.round(mins/60)===1?"":"s")
+           : mins + " minute" + (mins===1?"":"s");
+  var who = m.type === "motor" ? m.h : m.h + " v " + m.a;
+  return confirm("⚠️ " + who + " hasn't kicked off yet — it starts in " + away +
+    " (" + fmtKo(m.ko) + ").\n\nSaving a final score now marks it as played and " +
+    "removes it from everyone's predictions.\n\nAre you sure this is the right match?");
+}
 document.getElementById("btn-final").addEventListener("click", function(){
   var m = cm();
   if (!m) return;
+  if (!confirmEarlyResult(m)) return;
   if (m.type === "motor") {
     var res = {
       pole: document.getElementById("mf-pole").value.trim().slice(0,40),

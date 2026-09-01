@@ -13,6 +13,7 @@
   --r:10px;
   --p-agent:#C49A2F; --p-buyer:#3A6EA5; --p-seller:#2E8B57; --p-conveyancer:#7B3068; --p-principal:#3C4A66;
   --viz:#2F4A7C; --viz-soft:#DDE3EE;
+  --gold-ink:#8A6100; --btn-p-bg:#0F2040; --btn-p-fg:#FFFFFF; --toast-bg:#0F2040; --toast-fg:#FFFFFF; --tip-bg:#0F2040; --tip-fg:#FFFFFF;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -23,6 +24,7 @@
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
     --p-agent:#E0B44F; --p-buyer:#5D9BE8; --p-seller:#3FB37E; --p-conveyancer:#E2739F; --p-principal:#9AA8C4;
     --viz:#D9AE45; --viz-soft:#26334D;
+    --gold-ink:#E0B44F; --btn-p-bg:#C49A2F; --btn-p-fg:#10182B; --toast-bg:#C49A2F; --toast-fg:#10182B; --tip-bg:#25334F; --tip-fg:#ECE9E2;
   }
 }
 :root[data-theme="dark"]{
@@ -33,6 +35,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
     --p-agent:#E0B44F; --p-buyer:#5D9BE8; --p-seller:#3FB37E; --p-conveyancer:#E2739F; --p-principal:#9AA8C4;
     --viz:#D9AE45; --viz-soft:#26334D;
+    --gold-ink:#E0B44F; --btn-p-bg:#C49A2F; --btn-p-fg:#10182B; --toast-bg:#C49A2F; --toast-fg:#10182B; --tip-bg:#25334F; --tip-fg:#ECE9E2;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--t1);font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -128,8 +131,7 @@ a{color:inherit}
 .c-wait{background:var(--wait-bg);color:var(--wait)}
 .c-stop{background:var(--stop-bg);color:var(--stop)}
 .c-mute{background:var(--surface-2);color:var(--t3);border:1px solid var(--line)}
-.c-gold{background:var(--gold-soft);color:#8A6100}
-:root[data-theme="dark"] .c-gold,:root:not([data-theme="light"]) .c-gold{color:var(--gold)}
+.c-gold{background:var(--gold-soft);color:var(--gold-ink)}
 .stripe{width:3px;border-radius:99px;align-self:stretch;flex:none}
 
 /* ── Tiles ──────────────────────────────── */
@@ -147,11 +149,9 @@ a{color:inherit}
 .act-t b{display:block;font-size:13.5px;font-weight:600}
 .act-t span{display:block;font-size:12px;color:var(--t2);margin-top:1px}
 .btn{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-.btn:hover{border-color:var(--gold);color:#8A6100}
-:root[data-theme="dark"] .btn:hover,:root:not([data-theme="light"]) .btn:hover{color:var(--gold)}
-.btn-p{background:var(--ink);color:#fff;border-color:var(--ink)}
-.btn-p:hover{background:var(--ink-2);color:#fff;border-color:var(--ink-2)}
-:root[data-theme="dark"] .btn-p,:root:not([data-theme="light"]) .btn-p{background:var(--gold);color:#10182B;border-color:var(--gold)}
+.btn:hover{border-color:var(--gold);color:var(--gold-ink)}
+.btn-p{background:var(--btn-p-bg);color:var(--btn-p-fg);border-color:var(--btn-p-bg)}
+.btn-p:hover{filter:brightness(1.12)}
 .btn-g{background:var(--gold);color:#10182B;border-color:var(--gold)}
 .btn-g:hover{color:#10182B;filter:brightness(1.07)}
 .btn-s{padding:5px 10px;font-size:11.5px}
@@ -165,8 +165,7 @@ a{color:inherit}
 .node{display:flex;flex-direction:column;align-items:center}
 .bead{width:30px;height:30px;border-radius:50%;border:2px solid var(--line-2);background:var(--surface);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--t3);font-family:"IBM Plex Mono",monospace;flex:none;z-index:1}
 .stage.done .bead{background:var(--go);border-color:var(--go);color:#fff}
-.stage.now .bead{border-color:var(--gold);color:#8A6100;box-shadow:0 0 0 4px var(--gold-soft)}
-:root[data-theme="dark"] .stage.now .bead,:root:not([data-theme="light"]) .stage.now .bead{color:var(--gold)}
+.stage.now .bead{border-color:var(--gold);color:var(--gold-ink);box-shadow:0 0 0 4px var(--gold-soft)}
 .line{flex:1;width:2px;background:var(--line);margin:4px 0}
 .stage.done .line{background:var(--go)}
 .stage-c{padding-bottom:16px;min-width:0}
@@ -196,10 +195,8 @@ a{color:inherit}
 .doc-f{font-size:11px;color:var(--t2);border-top:1px dashed var(--line);padding-top:8px;word-break:break-all}
 .doc-a{display:flex;gap:7px;margin-top:auto;flex-wrap:wrap}
 .link-box{border:1px solid var(--gold);background:var(--gold-soft);border-radius:8px;padding:9px 11px;font-size:11px}
-:root[data-theme="dark"] .link-box,:root:not([data-theme="light"]) .link-box{background:#241D0C}
 .link-box .u{display:block;word-break:break-all;color:var(--t2);margin:4px 0 6px;font-size:10.5px;line-height:1.4}
-.cd{font-weight:700;color:#8A6100}
-:root[data-theme="dark"] .cd,:root:not([data-theme="light"]) .cd{color:var(--gold)}
+.cd{font-weight:700;color:var(--gold-ink)}
 .cd.exp{color:var(--stop)}
 
 /* ── Thread ─────────────────────────────── */
@@ -242,9 +239,8 @@ select{width:auto;max-width:100%;padding:7px 10px;font-size:12.5px}
 /* ── Misc ───────────────────────────────── */
 .note{display:flex;gap:10px;padding:11px 13px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);font-size:12px;color:var(--t2);line-height:1.5}
 .note b{color:var(--t1)}
-.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);z-index:80;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:12.5px;font-weight:500;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw}
+.toast{background:var(--toast-bg);color:var(--toast-fg);position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);z-index:80;padding:10px 16px;border-radius:99px;font-size:12.5px;font-weight:500;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-:root[data-theme="dark"] .toast,:root:not([data-theme="light"]) .toast{background:var(--gold);color:#10182B}
 .foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;font-size:11px;color:var(--t3);line-height:1.6}
 .foot a{color:var(--t2)}
 svg{display:block}
@@ -297,8 +293,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .cbar i{display:block;height:100%;background:var(--viz);border-radius:0 4px 4px 0;min-width:2px}
 .crow .cv{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
 .crow[data-empty="1"] .cv{color:var(--t3);font-weight:400}
-.tip{position:fixed;z-index:90;background:var(--ink);color:#fff;border-radius:8px;padding:8px 11px;font-size:11.5px;line-height:1.45;max-width:250px;pointer-events:none;box-shadow:0 10px 30px -8px rgba(0,0,0,.5)}
-:root[data-theme="dark"] .tip,:root:not([data-theme="light"]) .tip{background:#25334F;border:1px solid var(--line-2)}
+.tip{position:fixed;z-index:90;background:var(--tip-bg);color:var(--tip-fg);border:1px solid var(--line-2);border-radius:8px;padding:8px 11px;font-size:11.5px;line-height:1.45;max-width:250px;pointer-events:none;box-shadow:0 10px 30px -8px rgba(0,0,0,.5)}
 .tip b{display:block;margin-bottom:3px}
 @media (max-width:560px){.crow{grid-template-columns:108px 1fr 26px;gap:8px}.crow .cl{font-size:11px}}
 
@@ -320,7 +315,6 @@ fieldset{border:0;padding:0;margin:0}
 .person .pi b{display:block;font-size:13.5px;font-weight:600}
 .person .pi span{display:block;font-size:11.5px;color:var(--t2)}
 .joinlink{grid-column:1/-1;width:100%;margin-top:2px;border:1px dashed var(--gold);border-radius:8px;padding:9px 11px;font-size:11px;background:var(--gold-soft)}
-:root[data-theme="dark"] .joinlink,:root:not([data-theme="light"]) .joinlink{background:#241D0C}
 .joinlink .u{display:block;word-break:break-all;color:var(--t2);margin:4px 0 7px;font-size:10.5px}
 </style>
 <header class="bar">
@@ -354,6 +348,7 @@ fieldset{border:0;padding:0;margin:0}
 const I = (d, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICON = {
   home:  I('<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/>'),
+  house: I('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>'),
   deals: I('<rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/>'),
   team:  I('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 5.2A3.2 3.2 0 0 1 16 11"/><path d="M18 20c0-2.6-1-4.4-2.6-5.3"/>'),
   track: I('<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M11 6h9"/><path d="M11 18h9"/>'),
@@ -392,6 +387,17 @@ const P = {
   dawid:     { name:"Dawid Steyn",     ini:"DS", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"083 555 0155", email:"dsteyn@gmail.com" },
   nomsa:     { name:"Nomsa Khumalo",   ini:"NK", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"072 555 0111", email:"nomsak@webmail.co.za" },
   gerhard:   { name:"Gerhard Botha",   ini:"GB", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"081 555 0109", email:"gbotha@gmail.com" },
+  riana:     { name:"Riana Beukes",     ini:"RB", kind:"Seller", role:"seller", org:"Registered owner", mobile:"082 555 0301", email:"riana.b@webmail.co.za" },
+  douglas:   { name:"Douglas Whitfield", ini:"DW", kind:"Seller", role:"seller", org:"Registered owner", mobile:"083 555 0302", email:"dwhitfield@gmail.com" },
+  yolanda:   { name:"Yolanda Mbeki",    ini:"YM", kind:"Seller", role:"seller", org:"Registered owner", mobile:"071 555 0303", email:"y.mbeki@gmail.com" },
+  frik:      { name:"Frik van Wyk",     ini:"FW", kind:"Seller", role:"seller", org:"Registered owner", mobile:"082 555 0304", email:"frikvw@webmail.co.za" },
+  sizwe:     { name:"Sizwe Dlamini",    ini:"SD", kind:"Prospective buyer", role:"buyer", org:"Interested buyer", mobile:"073 555 0311", email:"sizwe.dlamini@gmail.com" },
+  elandri:   { name:"Elandri Coetzee",  ini:"EC", kind:"Prospective buyer", role:"buyer", org:"Interested buyer", mobile:"084 555 0312", email:"elandri.c@gmail.com" },
+  ruan:      { name:"Ruan Naudé",       ini:"RN", kind:"Prospective buyer", role:"buyer", org:"Interested buyer", mobile:"082 555 0313", email:"ruan.naude@outlook.com" },
+  precious:  { name:"Precious Modise",  ini:"PM", kind:"Prospective buyer", role:"buyer", org:"Interested buyer", mobile:"076 555 0314", email:"pmodise@gmail.com" },
+  jaco:      { name:"Jaco Steenkamp",   ini:"JS", kind:"Prospective buyer", role:"buyer", org:"Interested buyer", mobile:"083 555 0315", email:"jaco.s@webmail.co.za" },
+  natasha:   { name:"Natasha Mokoena",  ini:"NM", kind:"Co-purchaser", role:"buyer", org:"Co-purchaser", mobile:"073 555 0321", email:"n.mokoena@gmail.com" },
+  wayne:     { name:"Wayne Fourie",     ini:"WF", kind:"Bond originator", role:"buyer", org:"BetterBond, Menlyn", mobile:"082 555 0322", email:"wayne@betterbond.co.za" },
   willem:    { name:"Willem Barnard",  ini:"WB", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"083 555 0171", email:"wbarnard@gmail.com" },
   elize:     { name:"Elize Fourie",    ini:"EF", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"082 555 0138", email:"elizef@webmail.co.za" },
   karin:     { name:"Karin Smit",      ini:"KS", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"079 555 0159", email:"karin.smit@gmail.com" },
@@ -399,6 +405,7 @@ const P = {
   susan:     { name:"Susan Meyer",     ini:"SM", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"082 555 0192", email:"susanm@gmail.com" },
 };
 const COL = r => `var(--p-${r})`;
+const isPrincipal = id => !!P[id] && P[id].kind === "Principal";
 const STAFF = ["charne", "riaan", "lerato"];
 [["hendrik","Hendrik Meyer","Buyer"],["annelie","Annelie Roux","Seller"],
  ["zanele","Zanele Mthembu","Buyer"],["kobus","Kobus Grobler","Seller"],
@@ -508,7 +515,8 @@ const SEED_DEALS = [
     price:2990000, deposit:299000, beds:3, baths:2, garages:2, erf:481, type:"House",
     agent:"charne", buyer:"thabo", seller:"marietjie", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/olympus-ah-house-for-sale-2501216",
-    otpAgo:46, bondIn:12, stage:1, extra:["t1b","t1d","t1f"], lastAct:2, hero:"linear-gradient(145deg,#0C2E18,#2E8B57)" },
+    otpAgo:46, bondIn:12, stage:1, extra:["t1b","t1d","t1f"], lastAct:2,
+    extras:[["natasha","copurchaser","joined"],["wayne","originator","joined"]], hero:"linear-gradient(145deg,#0C2E18,#2E8B57)" },
   { id:"d2", ref:"PTA-2502487", file:"VZK/T/4390", address:"12 Willow Grove", area:"Equestria", city:"Pretoria East",
     price:2099900, deposit:210000, beds:3, baths:2, garages:2, erf:null, type:"Townhouse",
     agent:"charne", buyer:"johan", seller:"ayesha", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
@@ -608,6 +616,7 @@ function buildDeal(D){
   const meta = { ...D };
   const st = { meta, done:{}, docs:{}, links:{}, msgs:[], log:[], open:{}, seen:{},
     access:{ buyer:"joined", seller:"joined", conveyancer:"joined" },
+    extra:(D.extras || []).map(([person, preset, status]) => ({ person, preset, status, token:token() })),
     otpDate:iso(d0(-D.otpAgo)), bondDue:D.bondIn === null ? null : iso(d0(D.bondIn)) };
   const span = Math.max(1, D.otpAgo - D.lastAct);
   const at = frac => iso(d0(-(D.otpAgo - span * frac)));
@@ -637,13 +646,81 @@ function buildDeal(D){
   return st;
 }
 
+/* ══ The house: what a prospective buyer may be shown ═══════════════ */
+const PACK = [
+  { id:"gallery", name:"Photo gallery & brochure",       hint:"Marketing pack" },
+  { id:"floor",   name:"Floor plan",                     hint:"Layout and dimensions" },
+  { id:"rates",   name:"Municipal rates & taxes",        hint:"What the monthly account runs at" },
+  { id:"levy",    name:"Levy statement & complex rules",  hint:"Sectional title only" },
+  { id:"cocs",    name:"Existing compliance certificates",hint:"Electrical, gas, beetle if already done" },
+  { id:"erf",     name:"Title deed & erf diagram",        hint:"Boundaries and servitudes" },
+];
+const PACKD = Object.fromEntries(PACK.map(d => [d.id, d]));
+
+/* Anyone else the agent lets into a house or a file, and how far they see */
+const EXTRA_ROLES = {
+  copurchaser:{ label:"Co-purchaser / spouse", as:"buyer",     cats:null,        note:"Sees exactly what the purchaser sees" },
+  originator: { label:"Bond originator",       as:"buyer",     cats:["Finance"], note:"Finance documents and progress only" },
+  coagent:    { label:"Co-agent",              as:"agent",     cats:null,        note:"Works the file alongside you" },
+  sellerlaw:  { label:"Seller's attorney",     as:"seller",    cats:null,        note:"Sees what the seller sees" },
+  observer:   { label:"Observer",              as:"principal", cats:[],          note:"Progress and messages only — no documents" },
+};
+
+/* ══ Listings ═══════════════════════════════════════════════════════ */
+const SEED_LISTINGS = [
+  { id:"l1", ref:"RB-2503118", address:"8 Kiepersol Avenue", area:"Faerie Glen", city:"Pretoria East",
+    price:1895000, type:"House", beds:3, baths:2, garages:2, erf:702, agent:"charne", seller:"riana", listedAgo:23,
+    desc:"North-facing family home in a quiet cul-de-sac. Open-plan living onto a covered patio and built-in braai, established garden, solar geyser and a double garage with direct access.",
+    hero:"linear-gradient(145deg,#0C2E18,#2E8B57)", listing:"https://www.rbbrandrealestate.co.za/",
+    shared:["gallery","floor","rates","erf"],
+    prospects:[["sizwe","joined",12,"copurchaser"],["elandri","joined",6,null],["ruan","invited",2,null]],
+    viewings:[[-9,"sizwe"],[-4,"elandri"],[3,null],[6,null]],
+    offers:[["sizwe",1830000,183000,"submitted",2,"Subject to bond approval of R1 647 000 within 21 days. Occupation on registration."]] },
+  { id:"l2", ref:"RB-2502904", address:"Unit 7, Silver Oaks", area:"Equestria", city:"Pretoria East",
+    price:1090000, type:"Townhouse", beds:2, baths:1, garages:1, erf:null, agent:"charne", seller:"douglas", listedAgo:11,
+    desc:"Low-maintenance ground-floor unit in a secure complex with a communal pool. Ideal first purchase or rental investment, walking distance from Equestria shops.",
+    hero:"linear-gradient(145deg,#5A2D0C,#B86830)", listing:"https://www.rbbrandrealestate.co.za/",
+    shared:["gallery","floor","levy"],
+    prospects:[["precious","joined",4,null]],
+    viewings:[[-2,"precious"],[4,null]], offers:[] },
+  { id:"l3", ref:"RB-2503240", address:"15 Duiker Street", area:"Garsfontein", city:"Pretoria East",
+    price:3150000, type:"House", beds:4, baths:3, garages:3, erf:1240, agent:"charne", seller:"yolanda", listedAgo:5,
+    desc:"Substantial family home on 1 240m², flatlet with its own entrance, borehole and full solar backup. Walking distance from Garsfontein Primary.",
+    hero:"linear-gradient(145deg,#0F2840,#1E5080)", listing:"https://www.rbbrandrealestate.co.za/",
+    shared:["gallery"],
+    prospects:[["jaco","invited",1,null]], viewings:[[2,null],[5,null]], offers:[] },
+  { id:"l4", ref:"RB-2450016", address:"3 Melkbos Street", area:"Wapadrand", city:"Pretoria East",
+    price:2450000, type:"House", beds:3, baths:2, garages:2, erf:880, agent:"lerato", seller:"frik", listedAgo:34,
+    desc:"Ridge-facing home with mountain views, open-plan kitchen and a self-contained cottage let on a month-to-month basis.",
+    hero:"linear-gradient(145deg,#1A2A10,#3A5A20)", listing:"https://www.rbbrandrealestate.co.za/",
+    shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
+];
+function buildListing(L){
+  const st = { meta:{ ...L }, status:"active", dealId:null, pack:{}, log:[],
+    prospects:L.prospects.map(([person, status, agoD, preset]) => ({ person, status, preset:preset || null,
+      ts:iso(d0(-agoD)), token:token() })),
+    viewings:L.viewings.map(([inD, person], i) => ({ id:L.id + "v" + i, when:iso(d0(inD)), person:person || null })),
+    offers:L.offers.map(([person, amount, deposit, status, agoD, cond], i) => ({ id:L.id + "o" + i, person, amount,
+      deposit, status, cond, ts:iso(d0(-agoD)) })) };
+  PACK.forEach((d, i) => {
+    if (d.id === "levy" && !["Townhouse", "Apartment"].includes(L.type)) return;
+    st.pack[d.id] = { file:d.name.replace(/[^A-Za-z]+/g, "_") + ".pdf", size:(240 + i * 110) + " KB",
+      ts:iso(d0(-L.listedAgo + i)), shared:L.shared.includes(d.id) }; });
+  st.log = [{ ts:iso(d0(-L.listedAgo)), who:L.agent, act:"Listing created", det:`${L.address}, ${L.area} · ${L.ref}` },
+    ...st.prospects.map(pr => ({ ts:pr.ts, who:L.agent, act:"Buyer given access", det:`${P[pr.person].name} may view this house` })),
+    ...st.offers.map(o => ({ ts:o.ts, who:o.person, act:"Offer submitted", det:`${R(o.amount)} · awaiting the seller` }))
+  ].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  return st;
+}
+
 /* ══ State ══════════════════════════════════════════════════════════ */
 const KEY = "rb_dealroom_v4";
 let S;
-const fresh = () => ({ me:"charne", view:"portfolio", deal:null, agentFilter:null, people:{},
-  deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])), nextRef:2600001 });
+const fresh = () => ({ me:"charne", view:"portfolio", deal:null, listing:null, agentFilter:null, people:{},
+  deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])),
+  listings:Object.fromEntries(SEED_LISTINGS.map(L => [L.id, buildListing(L)])), nextRef:2600001 });
 function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r) : fresh(); } catch { S = fresh(); }
-  if (!S || !S.deals || !Object.keys(S.deals).length) S = fresh();
+  if (!S || !S.deals || !Object.keys(S.deals).length || !S.listings) S = fresh();
   if (!S.people) S.people = {};
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
@@ -657,9 +734,33 @@ const roleIn = (d, person) => {
   if (!d) return null;
   if (d.meta.agent === person) return "agent";
   for (const r of ["buyer", "seller", "conveyancer"]) if (d.meta[r] === person) return r;
-  return P[person].role === "principal" ? "principal" : null;
+  return isPrincipal(person) ? "principal" : null;
 };
-const myRole = () => roleIn(D(), S.me);
+const extraIn = (d, person) => (d && d.extra || []).find(e => e.person === person && e.status === "joined");
+function accessIn(d, person){
+  const r = roleIn(d, person);
+  if (r) return { role:r, cats:null, core:true };
+  const x = extraIn(d, person);
+  if (x){ const pr = EXTRA_ROLES[x.preset]; return { role:pr.as, cats:pr.cats, core:false, preset:x.preset }; }
+  return null;
+}
+const myAccess = () => accessIn(D(), S.me);
+const myRole = () => { const a = myAccess(); return a ? a.role : null; };
+
+/* ── listings ─────────────────────────────────────────────────────── */
+const L = () => S.listings[S.listing];
+const prospectIn = (l, person) => l.prospects.find(x => x.person === person);
+const listingRole = (l, person) => l.meta.agent === person ? "agent"
+  : l.meta.seller === person ? "seller"
+  : isPrincipal(person) ? "principal"
+  : (prospectIn(l, person) || {}).status === "joined" ? "prospect" : null;
+const myListings = () => {
+  const list = Object.values(S.listings), r = me().role;
+  if (isPrincipal(S.me)) return list;
+  if (r === "agent") return list.filter(l => l.meta.agent === S.me);
+  return list.filter(l => { const lr = listingRole(l, S.me); return lr === "prospect" || lr === "seller"; });
+};
+const openOffers = l => l.offers.filter(o => o.status === "submitted");
 const stageDone = (d, s) => s.tasks.every(t => d.done[t.id]);
 const current = d => STAGES.find(s => !stageDone(d, s)) || STAGES[6];
 const isClosed = d => STAGES.every(s => stageDone(d, s));
@@ -671,13 +772,18 @@ const bondRisk = d => d.bondDue && !d.done.t2c ? daysTo(d.bondDue) : null;
 const atRisk = d => !isClosed(d) && (stalled(d) || (bondRisk(d) !== null && bondRisk(d) < 7));
 const docState = (d, id) => { const rec = d.docs[id]; if (!rec) return "awaiting";
   return stageDone(d, STAGES[DOC[id].stage - 1]) ? "locked" : rec.verified ? "verified" : "uploaded"; };
-const canSee = (d, doc) => { const r = myRole(); return r ? doc.see.includes(r) : false; };
+const canSee = (d, doc) => { const a = myAccess();
+  if (!a) return false;
+  if (a.cats && !a.cats.includes(doc.cat)) return false;
+  return doc.see.includes(a.role); };
 const unread = (d, person) => d.msgs.filter(m => m.by !== person && new Date(m.ts) > new Date(d.seen[person] || 0)).length;
 const myDeals = () => {
   const list = Object.values(S.deals), r = me().role;
-  if (r === "principal") return list;
+  if (isPrincipal(S.me)) return list;
   if (r === "agent") return list.filter(d => d.meta.agent === S.me);
-  return list.filter(d => { const rl = roleIn(d, S.me); return rl && d.access[rl] === "joined"; });
+  return list.filter(d => { const rl = roleIn(d, S.me);
+    if (rl) return d.access[rl] === "joined";
+    return !!extraIn(d, S.me); });
 };
 const agencyAgents = () => [...new Set(Object.values(S.deals).map(d => d.meta.agent))];
 
@@ -696,16 +802,21 @@ const DEAL_VIEWS = [
   { id:"people",label:"Access",    ic:"people" },
   { id:"log",   label:"Audit log", ic:"log" },
 ];
-const homeView = () => me().role === "principal" ? "team" : "portfolio";
+const homeView = () => isPrincipal(S.me) ? "team" : myDeals().length ? "portfolio" : "listings";
 function navItems(){
   if (S.deal) return DEAL_VIEWS;
-  const v = [];
-  if (me().role === "principal") v.push({ id:"team", label:"Team overview", ic:"team" }, { id:"portfolio", label:"All deals", ic:"deals" });
-  else v.push({ id:"portfolio", label:me().role === "agent" ? "My deals" : "My transfers", ic:"deals" });
-  if (me().role === "agent") v.push({ id:"new", label:"New deal room", ic:"plus" });
+  if (S.listing) return [{ id:"house", label:"The house", short:"House", ic:"house" }];
+  const v = [], r = me().role;
+  if (r === "principal") v.push({ id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  else {
+    if (myListings().length) v.push({ id:"listings", label:r === "agent" ? "My houses" : "Houses", short:"Houses", ic:"house" });
+    if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
+  }
+  if (r === "agent") v.push({ id:"new", label:"New deal room", short:"New", ic:"plus" });
   return v;
 }
 function badgeFor(v){
+  if (v === "house"){ const l = L(); return l && listingRole(l, S.me) === "agent" ? openOffers(l).length : 0; }
   const d = D(); if (!d) return 0;
   if (v === "chat") return unread(d, S.me);
   if (v === "track") return myRole() ? openFor(d, myRole()).length : 0;
@@ -722,9 +833,15 @@ function renderChrome(){
   document.getElementById("rolekind").textContent = S.deal && myRole() ? P[S.me].kind : p.kind;
 
   const d = D();
-  document.getElementById("strip").innerHTML = d ? `
+  const lst = L();
+  document.getElementById("strip").innerHTML = lst ? `
     <div style="min-width:0">
-      <div class="crumb"><button data-act="home">${ICON.back} ${me().role === "principal" ? "Team overview" : "All deals"}</button><span>·</span><span>${esc(d.meta.area)}, ${esc(d.meta.city)}</span></div>
+      <div class="crumb"><button data-act="home">${ICON.back} ${isPrincipal(S.me) ? "All houses" : myListings().length > 1 || me().role === "agent" ? "My houses" : "Back"}</button><span>·</span><span>${esc(lst.meta.area)}, ${esc(lst.meta.city)}</span></div>
+      <h1>${esc(lst.meta.address)}</h1>
+      <div class="ref mono">${lst.meta.ref} · ${R(lst.meta.price)} · ${LSTATUS[lst.status].txt}</div>
+    </div>` : d ? `
+    <div style="min-width:0">
+      <div class="crumb"><button data-act="home">${ICON.back} ${isPrincipal(S.me) ? "Team overview" : "All deals"}</button><span>·</span><span>${esc(d.meta.area)}, ${esc(d.meta.city)}</span></div>
       <h1>${esc(d.meta.address)}</h1>
       <div class="ref mono">${d.meta.ref} · ${d.meta.erf ? "Erf " + d.meta.erf + " · " : ""}Transfer file ${d.meta.file}</div>
     </div>
@@ -733,7 +850,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${me().role === "principal" ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
+      <h1>${isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
 
@@ -747,7 +864,7 @@ function renderChrome(){
   document.getElementById("tabs").style.gridTemplateColumns = `repeat(${tabs.length},1fr)`;
   document.getElementById("tabs").innerHTML = tabs.map(v => {
     const b = badgeFor(v.id);
-    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label.split(" ")[0]}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.short || v.label.split(" ")[0]}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
   }).join("");
 
   document.getElementById("foot").innerHTML =
@@ -761,7 +878,7 @@ let popOpen = false;
 function renderPop(){
   document.querySelectorAll(".pop").forEach(e => e.remove());
   if (!popOpen) return;
-  const d = D();
+  const d = D(), l = L();
   const row = (id, note, disabled) => `<button class="pop-i" data-act="signin" data-p="${id}" aria-current="${S.me === id}" ${disabled ? "disabled" : ""} role="menuitem">
       ${avatar(id, 32)}<span class="n"><b>${P[id].name}</b><span>${note}</span></span>
       ${disabled ? `<span class="chip c-mute">Not joined</span>` : ""}</button>`;
@@ -770,7 +887,11 @@ function renderPop(){
   el.innerHTML = `<div class="pop-h eyebrow">RB Brand team</div>`
     + STAFF.map(id => row(id, `${P[id].kind} · ${Object.values(S.deals).filter(x => x.meta.agent === id).length || "all"} deal rooms`)).join("")
     + (d ? `<div class="pop-group eyebrow">In this deal room</div>`
-        + ["buyer", "seller", "conveyancer"].map(r => row(d.meta[r], `${P[d.meta[r]].kind} · ${d.access[r] === "joined" ? "joined" : d.access[r] === "invited" ? "invite sent" : "not invited"}`, d.access[r] !== "joined")).join("") : "");
+        + ["buyer", "seller", "conveyancer"].map(r => row(d.meta[r], `${P[d.meta[r]].kind} · ${d.access[r] === "joined" ? "joined" : d.access[r] === "invited" ? "invite sent" : "not invited"}`, d.access[r] !== "joined")).join("")
+        + (d.extra || []).map(x => row(x.person, `${EXTRA_ROLES[x.preset].label} · ${x.status === "joined" ? "joined" : "invite sent"}`, x.status !== "joined")).join("") : "")
+    + (l ? `<div class="pop-group eyebrow">At this house</div>`
+        + row(l.meta.seller, "Seller · owner of this house")
+        + l.prospects.map(pr => row(pr.person, `${pr.preset ? EXTRA_ROLES[pr.preset].label : "Prospective buyer"} · ${pr.status === "joined" ? "has access" : "invite sent"}`, pr.status !== "joined")).join("") : "");
   document.body.appendChild(el);
 }
 
@@ -800,7 +921,7 @@ function vPortfolio(){
   const mineCount = list.reduce((n, d) => n + (roleIn(d, S.me) ? openFor(d, roleIn(d, S.me)).length : 0), 0);
   const filtered = S.agentFilter ? list.filter(d => d.meta.agent === S.agentFilter) : list;
   return `<div class="stack">
-    <div class="sec-h"><h2>${me().role === "principal" ? "Every deal room in the agency" : me().role === "agent" ? "Good day, " + me().name.split(" ")[0] : "Your transfers"}</h2>
+    <div class="sec-h"><h2>${isPrincipal(S.me) ? "Every deal room in the agency" : me().role === "agent" ? "Good day, " + me().name.split(" ")[0] : "Your transfers"}</h2>
       <p>${active.length} active · ${mineCount ? mineCount + " item" + (mineCount > 1 ? "s" : "") + " waiting on you" : "nothing waiting on you"}</p></div>
     ${S.agentFilter ? `<div class="note">${ICON.team}<div>Filtered to <b>${P[S.agentFilter].name}</b>'s deal rooms. <button class="btn btn-s" data-act="clearfilter" style="margin-left:8px">Show all</button></div></div>` : ""}
     <div class="tiles">
@@ -979,12 +1100,38 @@ function vPeople(){
           <span class="chip c-go">${ICON.check} Owner of this file</span>
         </div>
         ${rows}
+        ${(d.extra || []).map(x => `<div class="person">
+          ${avatar(x.person, 38)}
+          <div class="pi"><b>${esc(P[x.person].name)}</b><span>${EXTRA_ROLES[x.preset].label} · ${EXTRA_ROLES[x.preset].note.toLowerCase()}</span>
+            <span class="mono" style="font-size:11px">${esc(P[x.person].mobile)} · ${esc(P[x.person].email)}</span></div>
+          ${x.status === "joined" ? `<span class="chip c-go">${ICON.check} Joined</span>` : `<span class="chip c-wait">Invitation sent</span>`}
+          ${can ? (x.status === "invited"
+            ? `<button class="btn btn-s" data-act="xjoin" data-x="${x.person}">Simulate: they open the link</button>`
+            : `<button class="btn btn-s" data-act="xrevoke" data-x="${x.person}">Revoke access</button>`) : ""}
+          ${x.status === "invited" ? `<div class="joinlink">
+            <div class="eyebrow" style="color:inherit">Personal invitation link — ${esc(P[x.person].name)}</div>
+            <span class="u mono">https://deal.rbbrand.co.za/join/${d.meta.id}-${x.token}</span>
+            <span style="color:var(--t2)">${esc(EXTRA_ROLES[x.preset].note)}. This room only, and revocable.</span></div>` : ""}
+        </div>`).join("")}
         <div class="person">
           ${avatar("riaan", 38)}
           <div class="pi"><b>${esc(P.riaan.name)}</b><span>Principal · oversight only</span>
             <span class="mono" style="font-size:11px">Progress and compliance documents · no FICA, no finance</span></div>
           <span class="chip c-mute">${ICON.eye} Read-only</span>
         </div>
+
+        ${can ? `<form id="extraform" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+          <div class="subhead" style="border:0;padding:0;margin:0 0 4px">Let someone else into this file</div>
+          <p style="margin:0 0 12px;font-size:12.5px;color:var(--t2)">A co-purchaser, the bond originator, a co-agent — anyone the sale genuinely needs. What they may open is fixed by the role you choose here.</p>
+          <div class="form">
+            <div class="field"><label for="x_name">Full name</label><input type="text" id="x_name" required placeholder="Natasha Mokoena"></div>
+            <div class="field"><label for="x_mob">Mobile</label><input type="tel" id="x_mob" placeholder="082 000 0000"></div>
+            <div class="field"><label for="x_mail">Email</label><input type="email" id="x_mail" placeholder="name@email.co.za"></div>
+            <div class="field"><label for="x_role">Their role</label>
+              <select id="x_role" style="width:100%">${Object.entries(EXTRA_ROLES).map(([k, v]) => `<option value="${k}">${v.label} — ${v.note.toLowerCase()}</option>`).join("")}</select></div>
+          </div>
+          <button type="submit" class="btn btn-g" style="margin-top:13px">${ICON.send} Send them an invitation</button>
+        </form>` : ""}
       </div>
     </div>
     <div class="note">${ICON.shield}<div><b>Access is per deal room, never account-wide.</b> ${esc(P[d.meta.buyer].name)} can open this file and no other — not the agent's other sales, not another buyer's documents. Revoke someone here and their link dies immediately, which is what POPIA expects when a party falls away.</div></div>
@@ -1116,7 +1263,7 @@ function vVault(){
   const cats = [...new Set(DOCS.map(x => x.cat))];
   return `<div class="stack">
     <div class="sec-h"><h2>Document vault</h2><p>Role-based access · links expire after 15 minutes</p></div>
-    <div class="note">${ICON.shield}<div><b>You are viewing as ${esc(me().name)} (${r === "principal" ? "Principal" : P[S.me].kind}).</b> ${hidden
+    <div class="note">${ICON.shield}<div><b>You are viewing as ${esc(me().name)} (${esc(P[S.me].kind)}).</b> ${hidden
       ? `${hidden} document${hidden === 1 ? " is" : "s are"} hidden from this role under POPIA's minimality principle — you can see that they exist and whether they are in, but you cannot open them.`
       : "As the transferring attorney you may open every document in this file. That wider access is itself recorded in the audit log."}</div></div>
     ${cats.map(cat => `<div>
@@ -1194,10 +1341,188 @@ function vLog(){
   </div>`;
 }
 
+/* ══ View: houses ═══════════════════════════════════════════════════ */
+const LSTATUS = { active:{ cls:"c-go", txt:"On the market" }, under_offer:{ cls:"c-gold", txt:"Under offer" }, sold:{ cls:"c-mute", txt:"Transferred" } };
+function listingCard(l){
+  const joined = l.prospects.filter(x => x.status === "joined").length, offers = openOffers(l).length;
+  const booked = l.viewings.filter(v => v.person).length;
+  return `<button class="deal ${l.status === "under_offer" ? "closed" : ""}" data-act="openhouse" data-l="${l.meta.id}">
+    <div class="deal-h"><b>${esc(l.meta.address)}</b><span class="sub">${esc(l.meta.area)}, ${esc(l.meta.city)} · ${l.meta.type}</span></div>
+    <div class="deal-m"><span class="amt">${R(l.meta.price)}</span><span class="chip ${LSTATUS[l.status].cls}">${LSTATUS[l.status].txt}</span></div>
+    <div class="deal-p"><div class="lbl"><span>${joined} buyer${joined === 1 ? "" : "s"} with access · ${booked} viewing${booked === 1 ? "" : "s"} booked</span>
+      <span class="mono">${offers ? offers + " offer" + (offers > 1 ? "s" : "") : "—"}</span></div>
+      <div class="track"><i style="width:${Math.min(100, joined * 25 + booked * 15 + offers * 30)}%;background:${offers ? "var(--gold)" : "var(--go)"}"></i></div></div>
+    <div class="deal-f"><span class="faces">${avatar(l.meta.agent, 22)}${avatar(l.meta.seller, 22)}${l.prospects.filter(x => x.status === "joined").slice(0, 3).map(x => avatar(x.person, 22)).join("")}</span>
+      <span>${P[l.meta.agent].name}</span><span style="flex:1"></span>
+      <span>${offers ? `<b style="color:var(--stop)">${offers} to answer</b>` : "Listed " + ago(iso(d0(-l.meta.listedAgo)))}</span></div>
+  </button>`;
+}
+function vListings(){
+  const list = myListings(), r = me().role;
+  const active = list.filter(l => l.status === "active");
+  const offers = list.reduce((n, l) => n + openOffers(l).length, 0);
+  return `<div class="stack">
+    <div class="sec-h"><h2>${r === "agent" ? "Houses I'm marketing" : r === "principal" ? "Every house on the books" : "Houses you have access to"}</h2>
+      <p>${active.length} on the market${offers ? ` · ${offers} offer${offers > 1 ? "s" : ""} waiting on you` : ""}</p></div>
+    ${r === "agent" || isPrincipal(S.me) ? `<div class="tiles">
+      <div class="tile"><div class="k">On the market</div><div class="v">${active.length}</div><div class="s">${list.length - active.length} under offer</div></div>
+      <div class="tile"><div class="k">Asking value</div><div class="v">${Rm(active.reduce((n, l) => n + l.meta.price, 0))}</div><div class="s">Across ${active.length} houses</div></div>
+      <div class="tile"><div class="k">Buyers with access</div><div class="v">${list.reduce((n, l) => n + l.prospects.filter(x => x.status === "joined").length, 0)}</div><div class="s">Invited by you, revocable</div></div>
+      <div class="tile"><div class="k">Offers to answer</div><div class="v" style="color:${offers ? "var(--stop)" : "inherit"}">${offers}</div><div class="s">Awaiting the seller</div></div>
+    </div>` : ""}
+    <div class="deals">${list.map(listingCard).join("")}</div>
+    ${list.length ? "" : `<div class="empty"><b>No houses yet</b>Houses you are marketing appear here.</div>`}
+  </div>`;
+}
+
+/* ══ View: one house ════════════════════════════════════════════════ */
+function vHouse(){
+  const l = L(), r = listingRole(l, S.me), isAgent = r === "agent", mine = prospectIn(l, S.me);
+  const myOffer = l.offers.filter(o => o.person === S.me).slice(-1)[0];
+  const shared = PACK.filter(d => l.pack[d.id] && l.pack[d.id].shared);
+  const visible = isAgent || r === "seller" || r === "principal" ? PACK.filter(d => l.pack[d.id]) : shared;
+  const openSlots = l.viewings.filter(v => !v.person), myView = l.viewings.find(v => v.person === S.me);
+
+  return `<div class="stack">
+    ${l.status === "under_offer" && l.dealId ? `<div class="card"><div class="card-b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">
+      <span class="stripe" style="background:var(--go);height:38px"></span>
+      <div style="flex:1;min-width:190px"><div class="eyebrow">Under offer</div>
+        <div style="font-size:13.5px;margin-top:2px">An offer was accepted on this house. The transfer is running in its own deal room.</div></div>
+      <button class="btn btn-p btn-s" data-act="open" data-d="${l.dealId}">Open the deal room</button></div></div>` : ""}
+
+    <div class="hero">
+      <div class="hero-img" style="background:${l.meta.hero}"><span class="pill">${esc(l.meta.area)}, ${esc(l.meta.city)}</span></div>
+      <div style="padding:16px">
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <h3 style="font-size:19px;flex:1;min-width:180px">${esc(l.meta.address)}</h3>
+          <span style="font-family:Spectral,serif;font-size:20px;font-weight:600">${R(l.meta.price)}</span>
+        </div>
+        <p style="margin:8px 0 0;font-size:13px;color:var(--t2);max-width:62ch">${esc(l.meta.desc)}</p>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px">
+          <span class="chip ${LSTATUS[l.status].cls}">${LSTATUS[l.status].txt}</span>
+          <span class="chip c-mute">${l.meta.ref}</span>
+          <span class="chip c-mute">Listed ${ago(iso(d0(-l.meta.listedAgo)))}</span>
+        </div>
+        ${l.meta.listing ? `<a class="btn btn-s" style="display:inline-block;margin-top:12px;text-decoration:none" href="${esc(l.meta.listing)}" target="_blank" rel="noopener">View the live listing ↗</a>` : ""}
+      </div>
+      <div class="specs">${l.meta.beds ? `<span><b>${l.meta.beds}</b> beds</span><span><b>${l.meta.baths}</b> baths</span><span><b>${l.meta.garages}</b> garages</span>` : ""}${l.meta.erf ? `<span><b>${l.meta.erf}</b> m² erf</span>` : ""}<span>Sold by <b>${esc(P[l.meta.seller].name)}</b></span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.vault}<h2>Information pack</h2>
+        <span class="chip c-mute">${isAgent ? `${shared.length} of ${PACK.filter(d => l.pack[d.id]).length} shared` : `${visible.length} document${visible.length === 1 ? "" : "s"}`}</span></div>
+      <div class="card-b">
+        ${isAgent ? `<p style="margin:0 0 13px;font-size:12.5px;color:var(--t2)">You decide, document by document, what an interested buyer may open. Anything marked private stays with you and the seller.</p>` : ""}
+        <div class="docs">${PACK.map(doc => {
+          const rec = l.pack[doc.id], canOpen = isAgent || r === "seller" || r === "principal" || (rec && rec.shared);
+          if (!rec) return isAgent ? `<div class="doc restricted">
+            <div class="doc-t"><span class="ic">${ICON.up}</span><div><b>${esc(doc.name)}</b><span>${esc(doc.hint)}</span></div></div>
+            <div class="doc-a"><span class="chip c-wait">Not loaded</span><button class="btn btn-g btn-s" data-act="packup" data-d="${doc.id}">${ICON.up} Add</button></div></div>` : "";
+          if (!canOpen) return `<div class="doc restricted">
+            <div class="doc-t"><span class="ic">${ICON.lock}</span><div><b>${esc(doc.name)}</b><span>Not shared with buyers</span></div></div>
+            <div class="doc-a"><span class="chip c-mute">${ICON.lock} Private</span></div></div>`;
+          return `<div class="doc">
+            <div class="doc-t"><span class="ic">${ICON.file}</span><div><b>${esc(doc.name)}</b><span>${esc(doc.hint)}</span></div></div>
+            <div class="doc-f mono">${esc(rec.file)}<br>${esc(rec.size)} · added ${ago(rec.ts)}</div>
+            <div class="doc-a">
+              <span class="chip ${rec.shared ? "c-go" : "c-mute"}">${rec.shared ? ICON.eye + " Shared with buyers" : ICON.lock + " Private"}</span>
+              ${isAgent ? `<button class="btn btn-s" data-act="packshare" data-d="${doc.id}">${rec.shared ? "Make private" : "Share with buyers"}</button>` : ""}
+            </div></div>`;
+        }).join("")}</div>
+      </div>
+    </div>
+
+    ${isAgent || r === "principal" ? `<div class="card">
+      <div class="card-h">${ICON.people}<h2>Buyers with access</h2><span class="chip c-mute">${l.prospects.filter(x => x.status === "joined").length} in</span></div>
+      <div class="card-b">
+        ${l.prospects.length ? l.prospects.map(pr => `<div class="person">
+          ${avatar(pr.person, 38)}
+          <div class="pi"><b>${esc(P[pr.person].name)}</b><span>${pr.preset ? EXTRA_ROLES[pr.preset].label : "Prospective buyer"}${l.offers.some(o => o.person === pr.person) ? " · has made an offer" : ""}</span>
+            <span class="mono" style="font-size:11px">${esc(P[pr.person].mobile)} · ${esc(P[pr.person].email)}</span></div>
+          ${pr.status === "joined" ? `<span class="chip c-go">${ICON.check} Has access</span>` : `<span class="chip c-wait">Invitation sent</span>`}
+          ${isAgent ? (pr.status === "invited"
+            ? `<button class="btn btn-s" data-act="pjoin" data-x="${pr.person}">Simulate: they open the link</button>`
+            : `<button class="btn btn-s" data-act="prevoke" data-x="${pr.person}">Revoke access</button>`) : ""}
+          ${pr.status === "invited" ? `<div class="joinlink">
+            <div class="eyebrow" style="color:inherit">Personal link — ${esc(P[pr.person].name)}</div>
+            <span class="u mono">https://houses.rbbrand.co.za/${l.meta.id}/${pr.token}</span>
+            <span style="color:var(--t2)">Opens this house only. Not the asking history, not your other houses, not another buyer's offer.</span></div>` : ""}
+        </div>`).join("") : `<div class="empty"><b>Nobody has access yet</b>Give an interested buyer access below and they can view the pack, book a viewing and make an offer.</div>`}
+
+        ${isAgent ? `<form id="pinvite" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+          <div class="subhead" style="border:0;padding:0;margin:0 0 11px">Give someone access to this house</div>
+          <div class="form">
+            <div class="field"><label for="p_name">Full name</label><input type="text" id="p_name" required placeholder="Nadia Pretorius"></div>
+            <div class="field"><label for="p_mob">Mobile</label><input type="tel" id="p_mob" placeholder="082 000 0000"></div>
+            <div class="field"><label for="p_mail">Email</label><input type="email" id="p_mail" placeholder="name@email.co.za"></div>
+            <div class="field"><label for="p_role">They are</label>
+              <select id="p_role" style="width:100%">
+                <option value="">A prospective buyer</option>
+                ${Object.entries(EXTRA_ROLES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("")}
+              </select><span class="hint">Sets how much of the file they see later, if this becomes a sale.</span></div>
+          </div>
+          <button type="submit" class="btn btn-g" style="margin-top:13px">${ICON.send} Send them access</button>
+        </form>` : ""}
+      </div>
+    </div>` : ""}
+
+    <div class="card">
+      <div class="card-h">${ICON.log}<h2>Viewings</h2></div>
+      <div class="card-b">
+        ${l.viewings.length ? l.viewings.map(v => `<div class="act">
+          <span class="stripe" style="background:${v.person ? COL(P[v.person].role) : "var(--line-2)"}"></span>
+          <div class="act-t"><b>${new Date(v.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</b>
+            <span>${v.person ? (v.person === S.me ? "Booked by you" : "Booked by " + P[v.person].name) : "Open slot"}</span></div>
+          ${r === "prospect" && !v.person && daysTo(v.when) >= 0 ? `<button class="btn btn-g btn-s" data-act="book" data-v="${v.id}">Book this slot</button>`
+            : v.person === S.me ? `<button class="btn btn-s" data-act="unbook" data-v="${v.id}">Cancel</button>`
+            : `<span class="chip ${v.person ? "c-go" : "c-mute"}">${v.person ? "Booked" : "Open"}</span>`}
+        </div>`).join("") : `<div class="empty"><b>No viewing slots yet</b></div>`}
+        ${r === "prospect" && !openSlots.length && !myView ? `<p style="margin:12px 0 0;font-size:12.5px;color:var(--t2)">No open slots — message ${P[l.meta.agent].name.split(" ")[0]} and she'll add one.</p>` : ""}
+      </div>
+    </div>
+
+    ${r === "prospect" || isAgent || r === "seller" || r === "principal" ? `<div class="card">
+      <div class="card-h">${ICON.key}<h2>Offers</h2>${openOffers(l).length ? `<span class="chip c-stop">${openOffers(l).length} to answer</span>` : ""}</div>
+      <div class="card-b">
+        ${l.offers.length ? l.offers.map(o => (r === "prospect" && o.person !== S.me) ? "" : `<div class="act">
+          <span class="stripe" style="background:${o.status === "accepted" ? "var(--go)" : o.status === "declined" ? "var(--stop)" : "var(--gold)"}"></span>
+          <div class="act-t"><b>${R(o.amount)}${o.amount < l.meta.price ? ` <span style="font-weight:400;color:var(--t3)">— ${R(l.meta.price - o.amount)} under asking</span>` : ""}</b>
+            <span>${esc(P[o.person].name)} · deposit ${R(o.deposit)} · ${ago(o.ts)}</span>
+            ${o.cond ? `<span style="color:var(--t2);margin-top:3px;display:block">${esc(o.cond)}</span>` : ""}</div>
+          ${o.status === "submitted" && isAgent
+            ? `<span style="display:flex;gap:7px"><button class="btn btn-g btn-s" data-act="accept" data-o="${o.id}">Accept</button><button class="btn btn-s" data-act="decline" data-o="${o.id}">Decline</button></span>`
+            : `<span class="chip ${o.status === "accepted" ? "c-go" : o.status === "declined" ? "c-stop" : "c-wait"}">${o.status === "accepted" ? "Accepted" : o.status === "declined" ? "Declined" : "With the seller"}</span>`}
+        </div>`).join("") : `<div class="empty"><b>No offers yet</b>${isAgent ? "Offers made by buyers you gave access to land here." : ""}</div>`}
+
+        ${r === "prospect" && l.status === "active" && !(myOffer && myOffer.status === "submitted") ? `<form id="offerform" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+          <div class="subhead" style="border:0;padding:0;margin:0 0 11px">Make an offer</div>
+          <div class="form">
+            <div class="field"><label for="o_amt">Your offer (R)</label><input type="number" id="o_amt" required min="0" step="1000" placeholder="${l.meta.price}"></div>
+            <div class="field"><label for="o_dep">Deposit (R)</label><input type="number" id="o_dep" min="0" step="1000" placeholder="${Math.round(l.meta.price * .1)}"></div>
+            <div class="field wide"><label for="o_cond">Conditions</label><input type="text" id="o_cond" placeholder="Subject to bond approval within 21 days"></div>
+          </div>
+          <button type="submit" class="btn btn-g" style="margin-top:13px">${ICON.send} Send this offer to ${esc(P[l.meta.agent].name.split(" ")[0])}</button>
+          <p style="margin:10px 0 0;font-size:11.5px;color:var(--t3)">This is an expression of interest inside the concept — a real Offer to Purchase is a signed document.</p>
+        </form>` : ""}
+      </div>
+    </div>` : ""}
+
+    <div class="note">${ICON.shield}<div><b>Access to a house is granted one buyer at a time.</b> ${isAgent
+      ? "Each buyer sees only the documents you shared and only their own offer — never what anyone else offered. Revoke a link and it stops working immediately."
+      : `You are seeing ${esc(l.meta.address)} because ${esc(P[l.meta.agent].name)} gave you access to it. You cannot see other buyers, their offers, or any other house on her books.`}</div></div>
+  </div>`;
+}
+
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { portfolio:vPortfolio, team:vTeam, new:vNew, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
+  if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
+  if (S.listing && !listingRole(S.listings[S.listing], S.me)) { S.listing = null; S.view = homeView(); }
+  if (S.deal) S.listing = null;
+  if (S.listing && S.view !== "house") S.view = "house";
+  if (!S.listing && S.view === "house") S.view = homeView();
+  if (!S.deal && !S.listing && S.view === "listings" && !myListings().length) S.view = homeView();
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
   if (S.deal && !DEAL_VIEWS.some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && me().role !== "principal") S.view = "portfolio";
@@ -1214,7 +1539,8 @@ document.body.appendChild(fileInput);
 let pending = null;
 fileInput.addEventListener("change", () => {
   const f = fileInput.files && fileInput.files[0];
-  if (f && pending) storeDoc(pending.doc, pending.task, f.name, f.size);
+  if (f && pending && pending.pack) storePack(pending.pack, f.name, f.size);
+  else if (f && pending) storeDoc(pending.doc, pending.task, f.name, f.size);
   fileInput.value = ""; pending = null;
 });
 function storeDoc(docId, taskId, name, size){
@@ -1226,6 +1552,45 @@ function storeDoc(docId, taskId, name, size){
   logit(d, "Document uploaded", `${doc.name} · ${name} · visible to ${doc.see.map(r => r === "principal" ? "Principal" : P[partyOf(d, r)].kind).join(", ")}`);
   toast(`${doc.name} added to this file`);
   render();
+}
+function storePack(packId, name, size){
+  const l = L();
+  l.pack[packId] = { file:name, size:size / 1024 > 1024 ? (size / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(size / 1024)) + " KB",
+    ts:new Date().toISOString(), shared:false };
+  l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Document added", det:`${PACKD[packId].name} — private until you share it` });
+  toast(`${PACKD[packId].name} added — private until you share it`);
+  render();
+}
+function newPerson(prefix, name, mobile, email, kind, role, org){
+  const pid = prefix + Date.now() + Math.floor(Math.random() * 99);
+  S.people[pid] = P[pid] = { name, ini:name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+    kind, role, org, mobile:mobile || "—", email:email || "—" };
+  return pid;
+}
+function acceptOffer(offerId){
+  const l = L(), o = l.offers.find(x => x.id === offerId);
+  if (!confirm(`Accept ${R(o.amount)} from ${P[o.person].name}?\n\nThis opens a transfer deal room for this house, with the buyer already in it.`)) return;
+  o.status = "accepted";
+  l.offers.filter(x => x.id !== offerId && x.status === "submitted").forEach(x => x.status = "declined");
+  const pr = prospectIn(l, o.person);
+  const id = "n" + Date.now();
+  const conveyancer = newPerson("c_", "Elmarie van Zyl", "012 555 0140", "elmarie@vzk.co.za", "Conveyancer", "conveyancer", "Van Zyl Kruger Inc., Menlyn");
+  const meta = { id, ref:l.meta.ref.replace("RB-", "PTA-"), file:"NEW/T/" + String(S.nextRef++).slice(-4),
+    address:l.meta.address, area:l.meta.area, city:l.meta.city, price:o.amount, deposit:o.deposit,
+    beds:l.meta.beds, baths:l.meta.baths, garages:l.meta.garages, erf:l.meta.erf, type:l.meta.type,
+    firm:"Van Zyl Kruger Inc., Menlyn", listing:l.meta.listing, agent:l.meta.agent, hero:l.meta.hero,
+    buyer:o.person, seller:l.meta.seller, conveyancer };
+  S.deals[id] = { meta, done:{}, docs:{}, links:{}, msgs:[], open:{}, seen:{},
+    extra:pr && pr.preset ? [] : [],
+    access:{ buyer:"joined", seller:"none", conveyancer:"none" },
+    otpDate:new Date().toISOString(), bondDue:iso(d0(21)),
+    log:[{ ts:new Date().toISOString(), who:S.me, act:"Deal room opened", det:`Offer of ${R(o.amount)} accepted on ${l.meta.address}` },
+         { ts:new Date().toISOString(), who:S.me, act:"Party joined", det:`${P[o.person].name} carried across from the house — already has access` }] };
+  l.status = "under_offer"; l.dealId = id;
+  l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Offer accepted", det:`${R(o.amount)} from ${P[o.person].name} — deal room opened` });
+  S.listing = null; S.deal = id; S.view = "people";
+  toast("Offer accepted — now invite the seller and the attorney");
+  render(); window.scrollTo({ top:0 });
 }
 function markDone(d, id, quiet){
   const t = TASK[id];
@@ -1263,14 +1628,55 @@ document.addEventListener("click", e => {
   const a = btn.dataset.act, d = D();
 
   if (a === "view"){ S.view = btn.dataset.v; if (S.view === "chat" && d) d.seen[S.me] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
-  else if (a === "home"){ S.deal = null; S.agentFilter = null; S.view = homeView(); render(); window.scrollTo({ top:0 }); }
+  else if (a === "home"){ S.deal = null; S.listing = null; S.agentFilter = null; S.view = homeView(); render(); window.scrollTo({ top:0 }); }
+  else if (a === "openhouse"){ S.listing = btn.dataset.l; S.deal = null; S.view = "house"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "packshare"){ const l = L(), rec = l.pack[btn.dataset.d];
+    rec.shared = !rec.shared;
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:rec.shared ? "Document shared" : "Document made private",
+      det:`${PACKD[btn.dataset.d].name} — ${rec.shared ? "buyers with access can now open it" : "no longer visible to buyers"}` });
+    toast(rec.shared ? "Shared with buyers who have access" : "Made private"); render(); }
+  else if (a === "packup"){ pending = { pack:btn.dataset.d }; fileInput.click(); }
+  else if (a === "pjoin"){ const l = L(), pr = prospectIn(l, btn.dataset.x);
+    pr.status = "joined";
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Buyer opened the link", det:`${P[pr.person].name} now has access to this house` });
+    toast(`${P[pr.person].name.split(" ")[0]} has access`); render(); }
+  else if (a === "prevoke"){ const l = L(), x = btn.dataset.x;
+    if (!confirm(`Revoke ${P[x].name}'s access to this house?`)) return;
+    l.prospects = l.prospects.filter(pr => pr.person !== x);
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Access revoked", det:`${P[x].name} can no longer view this house` });
+    if (S.me === x){ S.listing = null; S.view = homeView(); }
+    toast("Access revoked"); render(); }
+  else if (a === "book"){ const l = L(), v = l.viewings.find(x => x.id === btn.dataset.v);
+    l.viewings.filter(x => x.person === S.me).forEach(x => x.person = null);
+    v.person = S.me;
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Viewing booked", det:new Date(v.when).toLocaleString("en-ZA") });
+    toast("Viewing booked — the agent has been told"); render(); }
+  else if (a === "unbook"){ const l = L(), v = l.viewings.find(x => x.id === btn.dataset.v);
+    v.person = null;
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Viewing cancelled", det:new Date(v.when).toLocaleString("en-ZA") });
+    toast("Viewing cancelled"); render(); }
+  else if (a === "decline"){ const l = L(), o = l.offers.find(x => x.id === btn.dataset.o);
+    o.status = "declined";
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Offer declined", det:`${R(o.amount)} from ${P[o.person].name}` });
+    toast("Offer declined"); render(); }
+  else if (a === "accept"){ acceptOffer(btn.dataset.o); }
+  else if (a === "xjoin"){ const d2 = D(), x = (d2.extra || []).find(e => e.person === btn.dataset.x);
+    x.status = "joined"; logit(d2, "Party joined", `${P[x.person].name} (${EXTRA_ROLES[x.preset].label}) opened the link`);
+    toast(`${P[x.person].name.split(" ")[0]} has joined`); render(); }
+  else if (a === "xrevoke"){ const d2 = D(), x = btn.dataset.x;
+    if (!confirm(`Revoke ${P[x].name}'s access to this deal room?`)) return;
+    d2.extra = d2.extra.filter(e => e.person !== x);
+    logit(d2, "Access revoked", `${P[x].name} can no longer open this file`);
+    if (S.me === x){ S.deal = null; S.view = homeView(); }
+    toast("Access revoked"); render(); }
   else if (a === "open"){ S.deal = btn.dataset.d; S.view = "dash"; render(); window.scrollTo({ top:0 }); }
   else if (a === "filter"){ S.agentFilter = btn.dataset.p; S.view = "portfolio"; render(); window.scrollTo({ top:0 }); }
   else if (a === "clearfilter"){ S.agentFilter = null; render(); }
   else if (a === "signin"){
     S.me = btn.dataset.p; popOpen = false;
     document.getElementById("rolebtn").setAttribute("aria-expanded", "false");
-    if (S.deal && !roleIn(S.deals[S.deal], S.me)) { S.deal = null; S.view = homeView(); }
+    if (S.deal && !accessIn(S.deals[S.deal], S.me)) { S.deal = null; S.view = homeView(); }
+    if (S.listing && !listingRole(S.listings[S.listing], S.me)) { S.listing = null; S.view = homeView(); }
     else if (S.deal) { if (S.view === "chat") S.deals[S.deal].seen[S.me] = new Date().toISOString(); }
     else S.view = homeView();
     S.agentFilter = null;
@@ -1325,9 +1731,39 @@ document.getElementById("rolebtn").addEventListener("click", e => {
   e.currentTarget.setAttribute("aria-expanded", String(popOpen)); renderPop();
 });
 document.addEventListener("submit", e => {
+  const g = id => (document.getElementById(id) || {}).value || "";
+  if (e.target.id === "pinvite"){
+    e.preventDefault();
+    const l = L(), preset = g("p_role") || null;
+    const kind = preset ? EXTRA_ROLES[preset].label : "Prospective buyer";
+    const pid = newPerson("p_", g("p_name"), g("p_mob"), g("p_mail"), kind, preset ? EXTRA_ROLES[preset].as : "buyer", preset ? kind : "Interested buyer");
+    l.prospects.push({ person:pid, status:"invited", preset, ts:new Date().toISOString(), token:token() });
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Buyer given access", det:`${g("p_name")} invited to view this house` });
+    toast(`Access link sent to ${g("p_name").split(" ")[0]}`); render();
+    return;
+  }
+  if (e.target.id === "offerform"){
+    e.preventDefault();
+    const l = L(), amt = +g("o_amt");
+    if (!amt){ toast("Enter your offer amount"); return; }
+    l.offers.push({ id:"o" + Date.now(), person:S.me, amount:amt, deposit:+g("o_dep") || 0,
+      cond:g("o_cond"), status:"submitted", ts:new Date().toISOString() });
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Offer submitted", det:`${R(amt)} · awaiting the seller` });
+    toast("Offer sent to the agent"); render();
+    return;
+  }
+  if (e.target.id === "extraform"){
+    e.preventDefault();
+    const d2 = D(), preset = g("x_role");
+    const pid = newPerson("x_", g("x_name"), g("x_mob"), g("x_mail"), EXTRA_ROLES[preset].label, EXTRA_ROLES[preset].as, EXTRA_ROLES[preset].label);
+    d2.extra = d2.extra || [];
+    d2.extra.push({ person:pid, preset, status:"invited", token:token() });
+    logit(d2, "Invitation sent", `${g("x_name")} (${EXTRA_ROLES[preset].label}) invited to this deal room only`);
+    toast(`Invitation sent to ${g("x_name").split(" ")[0]}`); render();
+    return;
+  }
   if (e.target.id !== "newdeal") return;
   e.preventDefault();
-  const g = id => (document.getElementById(id) || {}).value || "";
   createDeal({ addr:g("f_addr"), area:g("f_area"), city:g("f_city"), price:g("f_price"), dep:g("f_dep"), url:g("f_url"),
     otp:g("f_otp"), bond:g("f_bond"), bname:g("f_bname"), bmob:g("f_bmob"), bmail:g("f_bmail"),
     sname:g("f_sname"), smob:g("f_smob"), smail:g("f_smail"), cname:g("f_cname"), cfirm:g("f_cfirm"), cmail:g("f_cmail") });

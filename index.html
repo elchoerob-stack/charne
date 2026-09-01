@@ -1,0 +1,1368 @@
+<title>Charné Deal Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#0F2040; --ink-2:#1B2E52; --gold:#C49A2F; --gold-soft:#F2E7CC;
+  --paper:#F7F5F1; --surface:#FFFFFF; --surface-2:#FBFAF7; --line:#E5E0D8; --line-2:#D6CFC2;
+  --t1:#16203A; --t2:#4E5468; --t3:#7C7A78;
+  --go:#1A6B3A; --go-bg:#E9F3EC; --wait:#8A6100; --wait-bg:#FBF1DC; --stop:#8B1A1A; --stop-bg:#F8EAEA;
+  --chrome:#0F2040; --chrome-t:#FFFFFF; --chrome-t2:rgba(255,255,255,.62); --chrome-line:rgba(255,255,255,.14);
+  --shadow:0 1px 2px rgba(15,32,64,.05), 0 8px 24px -12px rgba(15,32,64,.18);
+  --r:10px;
+  --p-agent:#C49A2F; --p-buyer:#3A6EA5; --p-seller:#2E8B57; --p-conveyancer:#7B3068; --p-principal:#3C4A66;
+  --viz:#2F4A7C; --viz-soft:#DDE3EE;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0A1122; --surface:#111B31; --surface-2:#16223B; --line:#22304C; --line-2:#2C3C5C;
+    --t1:#ECE9E2; --t2:#A9B2C6; --t3:#7C879E; --gold-soft:#3A2F14;
+    --go:#5FBF87; --go-bg:#12301F; --wait:#D9A93C; --wait-bg:#332715; --stop:#E28080; --stop-bg:#331919;
+    --chrome:#101C36; --chrome-line:rgba(255,255,255,.10);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+    --p-agent:#E0B44F; --p-buyer:#5D9BE8; --p-seller:#3FB37E; --p-conveyancer:#E2739F; --p-principal:#9AA8C4;
+    --viz:#D9AE45; --viz-soft:#26334D;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0A1122; --surface:#111B31; --surface-2:#16223B; --line:#22304C; --line-2:#2C3C5C;
+  --t1:#ECE9E2; --t2:#A9B2C6; --t3:#7C879E; --gold-soft:#3A2F14;
+  --go:#5FBF87; --go-bg:#12301F; --wait:#D9A93C; --wait-bg:#332715; --stop:#E28080; --stop-bg:#331919;
+  --chrome:#101C36; --chrome-line:rgba(255,255,255,.10);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+    --p-agent:#E0B44F; --p-buyer:#5D9BE8; --p-seller:#3FB37E; --p-conveyancer:#E2739F; --p-principal:#9AA8C4;
+    --viz:#D9AE45; --viz-soft:#26334D;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--t1);font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:Spectral,Georgia,"Times New Roman",serif;font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── Chrome ─────────────────────────────── */
+.bar{position:sticky;top:0;z-index:40;background:var(--chrome);color:var(--chrome-t);border-bottom:1px solid var(--chrome-line)}
+.bar-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:32px;height:32px;border-radius:7px;background:linear-gradient(150deg,var(--gold),#8E6B14);display:grid;place-items:center;font-family:Spectral,serif;font-weight:700;color:#0F2040;font-size:15px;flex:none}
+.brand-t{min-width:0}
+.brand-t b{display:block;font-family:Spectral,serif;font-weight:600;font-size:15px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-t span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-t2)}
+.bar-sp{flex:1}
+.rolebtn{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.07);border:1px solid var(--chrome-line);border-radius:999px;padding:5px 12px 5px 5px;color:var(--chrome-t)}
+.rolebtn:hover{background:rgba(255,255,255,.13)}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#0F2040;flex:none;letter-spacing:.02em}
+.rolebtn .rt{text-align:left;line-height:1.15}
+.rolebtn .rt b{display:block;font-size:12.5px;font-weight:600}
+.rolebtn .rt span{display:block;font-size:10px;color:var(--chrome-t2);letter-spacing:.08em;text-transform:uppercase}
+.caret{opacity:.6}
+.pop{position:absolute;top:56px;right:16px;z-index:60;width:296px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.pop-h{padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.pop-i{display:flex;gap:11px;align-items:center;width:100%;padding:11px 14px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left}
+.pop-i:last-child{border-bottom:0}
+.pop-i:hover{background:var(--surface-2)}
+.pop-i[aria-current="true"]{background:var(--gold-soft)}
+.pop-i .n{flex:1;min-width:0}
+.pop-i .n b{display:block;font-size:13px;font-weight:600}
+.pop-i .n span{display:block;font-size:11px;color:var(--t2)}
+.dot-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--stop-bg);color:var(--stop);font-size:11px;font-weight:700;display:grid;place-items:center}
+.dot-0{background:var(--go-bg);color:var(--go)}
+
+/* ── Deal strip ─────────────────────────── */
+.strip{background:var(--chrome);color:var(--chrome-t);border-bottom:1px solid var(--chrome-line)}
+.strip-in{max-width:1180px;margin:0 auto;padding:0 16px 14px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px}
+.strip h1{font-size:21px;color:#fff}
+.strip .ref{font-size:11px;color:var(--chrome-t2);letter-spacing:.06em}
+.prog{flex:1;min-width:220px}
+.prog-l{display:flex;justify-content:space-between;font-size:11px;color:var(--chrome-t2);margin-bottom:5px}
+.track{height:5px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#E4C878);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ── Shell ──────────────────────────────── */
+.shell{max-width:1180px;margin:0 auto;padding:20px 16px 96px;display:grid;grid-template-columns:216px minmax(0,1fr);gap:26px;align-items:start}
+.shell>main{min-width:0}
+.rail{position:sticky;top:60px;display:flex;flex-direction:column;gap:2px}
+.rail button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;background:none;border:0;border-radius:8px;color:var(--t2);font-size:13.5px;font-weight:500;text-align:left}
+.rail button:hover{background:var(--surface);color:var(--t1)}
+.rail button[aria-current="true"]{background:var(--surface);color:var(--t1);font-weight:600;box-shadow:var(--shadow)}
+.rail button[aria-current="true"] svg{color:var(--gold)}
+.rail .cnt{margin-left:auto;font-size:11px;font-weight:600;color:var(--t3);font-family:"IBM Plex Mono",monospace}
+.rail-note{margin-top:14px;padding:11px;border:1px dashed var(--line-2);border-radius:9px;font-size:11px;color:var(--t3);line-height:1.45}
+.tabs{display:none}
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr);padding:16px 12px 84px;gap:0}
+  .rail{display:none}
+  .tabs{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 9px;background:none;border:0;color:var(--t3);font-size:10px;font-weight:600;position:relative}
+  .tabs button[aria-current="true"]{color:var(--gold)}
+  .tabs .cnt{position:absolute;top:4px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:99px;background:var(--stop);color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+  .strip h1{font-size:18px}
+  .strip .ref{font-size:10.5px}
+  .sec-h{flex-direction:column;gap:1px;align-items:flex-start;margin-bottom:14px}
+}
+@media (max-width:560px){
+  .brand-t{display:none}
+  .rolebtn .rt b{max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+
+/* ── Cards ──────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-h{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card-h h2{font-size:16px;flex:1;min-width:0}
+.card-b{padding:16px}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.stack>*{min-width:0}
+.grid2>*{min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin:2px 0 12px}
+.sec-h h2{font-size:19px}
+.sec-h p{margin:0;font-size:12.5px;color:var(--t2)}
+
+/* ── Chips / states ─────────────────────── */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2.5px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.c-go{background:var(--go-bg);color:var(--go)}
+.c-wait{background:var(--wait-bg);color:var(--wait)}
+.c-stop{background:var(--stop-bg);color:var(--stop)}
+.c-mute{background:var(--surface-2);color:var(--t3);border:1px solid var(--line)}
+.c-gold{background:var(--gold-soft);color:#8A6100}
+:root[data-theme="dark"] .c-gold,:root:not([data-theme="light"]) .c-gold{color:var(--gold)}
+.stripe{width:3px;border-radius:99px;align-self:stretch;flex:none}
+
+/* ── Tiles ──────────────────────────────── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px}
+.tile .k{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.tile .v{font-family:Spectral,serif;font-size:22px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:11.5px;color:var(--t2);margin-top:2px}
+
+/* ── Action list ────────────────────────── */
+.act{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line)}
+.act:last-child{border-bottom:0;padding-bottom:0}
+.act:first-child{padding-top:0}
+.act-t{flex:1;min-width:0}
+.act-t b{display:block;font-size:13.5px;font-weight:600}
+.act-t span{display:block;font-size:12px;color:var(--t2);margin-top:1px}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{border-color:var(--gold);color:#8A6100}
+:root[data-theme="dark"] .btn:hover,:root:not([data-theme="light"]) .btn:hover{color:var(--gold)}
+.btn-p{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-p:hover{background:var(--ink-2);color:#fff;border-color:var(--ink-2)}
+:root[data-theme="dark"] .btn-p,:root:not([data-theme="light"]) .btn-p{background:var(--gold);color:#10182B;border-color:var(--gold)}
+.btn-g{background:var(--gold);color:#10182B;border-color:var(--gold)}
+.btn-g:hover{color:#10182B;filter:brightness(1.07)}
+.btn-s{padding:5px 10px;font-size:11.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.empty{text-align:center;padding:26px 16px;color:var(--t2);font-size:13px}
+.empty b{display:block;font-family:Spectral,serif;font-size:15px;color:var(--t1);margin-bottom:3px}
+
+/* ── Stage spine ────────────────────────── */
+.spine{display:flex;flex-direction:column}
+.stage{display:grid;grid-template-columns:34px 1fr;gap:14px}
+.node{display:flex;flex-direction:column;align-items:center}
+.bead{width:30px;height:30px;border-radius:50%;border:2px solid var(--line-2);background:var(--surface);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--t3);font-family:"IBM Plex Mono",monospace;flex:none;z-index:1}
+.stage.done .bead{background:var(--go);border-color:var(--go);color:#fff}
+.stage.now .bead{border-color:var(--gold);color:#8A6100;box-shadow:0 0 0 4px var(--gold-soft)}
+:root[data-theme="dark"] .stage.now .bead,:root:not([data-theme="light"]) .stage.now .bead{color:var(--gold)}
+.line{flex:1;width:2px;background:var(--line);margin:4px 0}
+.stage.done .line{background:var(--go)}
+.stage-c{padding-bottom:16px;min-width:0}
+.stage-hd{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:4px 0 0;text-align:left}
+.stage-hd h3{font-size:15.5px;flex:1;min-width:0}
+.stage.locked .stage-hd h3{color:var(--t3)}
+.stage-sub{font-size:12px;color:var(--t2);margin:3px 0 0}
+.stage-body{margin-top:11px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.task{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:0}
+.tick{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line-2);background:var(--surface);display:grid;place-items:center;flex:none;margin-top:1px;padding:0}
+.task.on .tick{background:var(--go);border-color:var(--go);color:#fff}
+.task .tx{flex:1;min-width:0}
+.task .tx b{display:block;font-size:13px;font-weight:600}
+.task.on .tx b{color:var(--t2)}
+.task .tx span{display:block;font-size:11.5px;color:var(--t3);margin-top:2px}
+.owner{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── Vault ──────────────────────────────── */
+.docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
+.doc{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:13px 14px;display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden}
+.doc.restricted{background:repeating-linear-gradient(135deg,var(--surface-2),var(--surface-2) 9px,var(--surface) 9px,var(--surface) 18px);border-style:dashed}
+.doc-t{display:flex;gap:9px;align-items:flex-start}
+.doc-t .ic{width:30px;height:30px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--t3);flex:none}
+.doc-t b{display:block;font-size:13px;font-weight:600;line-height:1.3}
+.doc-t span{display:block;font-size:11px;color:var(--t3);margin-top:2px}
+.doc-f{font-size:11px;color:var(--t2);border-top:1px dashed var(--line);padding-top:8px;word-break:break-all}
+.doc-a{display:flex;gap:7px;margin-top:auto;flex-wrap:wrap}
+.link-box{border:1px solid var(--gold);background:var(--gold-soft);border-radius:8px;padding:9px 11px;font-size:11px}
+:root[data-theme="dark"] .link-box,:root:not([data-theme="light"]) .link-box{background:#241D0C}
+.link-box .u{display:block;word-break:break-all;color:var(--t2);margin:4px 0 6px;font-size:10.5px;line-height:1.4}
+.cd{font-weight:700;color:#8A6100}
+:root[data-theme="dark"] .cd,:root:not([data-theme="light"]) .cd{color:var(--gold)}
+.cd.exp{color:var(--stop)}
+
+/* ── Thread ─────────────────────────────── */
+.msg{display:flex;gap:11px;padding:14px 0;border-bottom:1px solid var(--line)}
+.msg:last-of-type{border-bottom:0}
+.msg-b{flex:1;min-width:0}
+.msg-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.msg-h b{font-size:13px;font-weight:600}
+.msg-h .tm{font-size:10.5px;color:var(--t3)}
+.msg-x{font-size:13.5px;color:var(--t1);margin:4px 0 0;white-space:pre-wrap}
+.tagref{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);font-size:11px;color:var(--t2);font-weight:500}
+.comp{border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+textarea,select,input[type=text]{width:100%;font:inherit;font-size:13.5px;color:var(--t1);background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:10px 11px}
+textarea{resize:vertical;min-height:74px}
+.comp-r{display:flex;gap:9px;align-items:center;margin-top:9px;flex-wrap:wrap}
+select{width:auto;max-width:100%;padding:7px 10px;font-size:12.5px}
+
+/* ── Audit ──────────────────────────────── */
+.log{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.logrow{display:grid;grid-template-columns:132px 92px 1fr;gap:12px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:12px;background:var(--surface)}
+.logrow:nth-child(even){background:var(--surface-2)}
+.logrow:last-child{border-bottom:0}
+.logrow .ts{color:var(--t3);font-size:11px}
+.logrow .who{font-weight:600;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.logrow{grid-template-columns:1fr;gap:2px}.logrow .ts{order:3}}
+
+/* ── Property ───────────────────────────── */
+.hero{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.hero-img{height:170px;position:relative;display:flex;align-items:flex-end;padding:14px;overflow:hidden;
+  background:linear-gradient(145deg,#0C2E18 0%,#1E6B3E 55%,#2E8B57 100%)}
+.hero-img::before{content:"";position:absolute;inset:0;opacity:.20;
+  background-image:linear-gradient(135deg,rgba(255,255,255,.9) 1px,transparent 1px),linear-gradient(225deg,rgba(255,255,255,.9) 1px,transparent 1px);
+  background-size:46px 46px;background-position:0 12px}
+.hero-img::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 78% 8%,rgba(196,154,47,.34),transparent 62%)}
+.hero-img .pill{position:relative;z-index:1}
+.hero-img .pill{background:rgba(15,32,64,.72);color:#fff;border-radius:999px;padding:4px 11px;font-size:11px;font-weight:600;backdrop-filter:blur(4px)}
+.specs{display:flex;gap:18px;flex-wrap:wrap;padding:13px 16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--t2)}
+.specs b{color:var(--t1);font-weight:600}
+
+/* ── Misc ───────────────────────────────── */
+.note{display:flex;gap:10px;padding:11px 13px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);font-size:12px;color:var(--t2);line-height:1.5}
+.note b{color:var(--t1)}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);z-index:80;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:12.5px;font-weight:500;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+:root[data-theme="dark"] .toast,:root:not([data-theme="light"]) .toast{background:var(--gold);color:#10182B}
+.foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;font-size:11px;color:var(--t3);line-height:1.6}
+.foot a{color:var(--t2)}
+svg{display:block}
+
+/* ── Breadcrumb / context bar ───────────── */
+.crumb{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;color:var(--chrome-t2)}
+.crumb button{background:none;border:0;color:var(--chrome-t2);padding:2px 0;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.crumb button:hover{color:#fff;text-decoration:underline}
+.pop-group{padding:9px 14px 5px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.pop-i:disabled{opacity:.55;cursor:not-allowed}
+.pop-i:disabled:hover{background:none}
+
+/* ── Deal cards ─────────────────────────── */
+.deals{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.deal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:0;text-align:left;display:flex;flex-direction:column;gap:0;overflow:hidden;border-left:3px solid var(--line-2)}
+.deal:hover{border-color:var(--gold);border-left-color:var(--gold)}
+.deal.risk{border-left-color:var(--stop)}
+.deal.closed{border-left-color:var(--go)}
+.deal-h{padding:13px 15px 0}
+.deal-h b{display:block;font-family:Spectral,serif;font-size:15.5px;font-weight:600;line-height:1.25}
+.deal-h .sub{display:block;font-size:11.5px;color:var(--t2);margin-top:2px}
+.deal-m{display:flex;align-items:baseline;gap:10px;padding:9px 15px 0;flex-wrap:wrap}
+.deal-m .amt{font-family:Spectral,serif;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.deal-p{padding:11px 15px 13px}
+.deal-p .track{height:4px}
+.deal-p .lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:5px;gap:8px}
+.deal-f{border-top:1px solid var(--line);background:var(--surface-2);padding:9px 15px;font-size:11.5px;color:var(--t2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.faces{display:flex}
+.faces .av{margin-left:-7px;border:2px solid var(--surface)}
+.faces .av:first-child{margin-left:0}
+
+/* ── Table ──────────────────────────────── */
+.tblwrap{overflow-x:auto;max-width:100%;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+th{text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2)}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface-2)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.who-cell{display:flex;align-items:center;gap:9px}
+.minibar{height:5px;border-radius:99px;background:var(--viz-soft);overflow:hidden;min-width:64px}
+.minibar i{display:block;height:100%;background:var(--viz)}
+
+/* ── Stage chart ────────────────────────── */
+.chart{display:flex;flex-direction:column;gap:3px;position:relative}
+.crow{display:grid;grid-template-columns:150px 1fr 30px;gap:11px;align-items:center;padding:4px 2px;border:0;background:none;width:100%;text-align:left;border-radius:6px}
+.crow:hover,.crow:focus-visible{background:var(--surface-2)}
+.crow .cl{font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbar{height:15px;background:var(--viz-soft);border-radius:0 4px 4px 0;position:relative}
+.cbar i{display:block;height:100%;background:var(--viz);border-radius:0 4px 4px 0;min-width:2px}
+.crow .cv{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.crow[data-empty="1"] .cv{color:var(--t3);font-weight:400}
+.tip{position:fixed;z-index:90;background:var(--ink);color:#fff;border-radius:8px;padding:8px 11px;font-size:11.5px;line-height:1.45;max-width:250px;pointer-events:none;box-shadow:0 10px 30px -8px rgba(0,0,0,.5)}
+:root[data-theme="dark"] .tip,:root:not([data-theme="light"]) .tip{background:#25334F;border:1px solid var(--line-2)}
+.tip b{display:block;margin-bottom:3px}
+@media (max-width:560px){.crow{grid-template-columns:108px 1fr 26px;gap:8px}.crow .cl{font-size:11px}}
+
+/* ── Forms ──────────────────────────────── */
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(214px,1fr));gap:13px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
+.field .hint{font-size:11px;color:var(--t3)}
+input[type=date],input[type=number],input[type=email],input[type=tel]{width:100%;font:inherit;font-size:13.5px;color:var(--t1);background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:9px 11px}
+.field.wide{grid-column:1/-1}
+fieldset{border:0;padding:0;margin:0}
+.subhead{font-family:Spectral,serif;font-size:14.5px;font-weight:600;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.subhead:first-of-type{border-top:0;padding-top:0;margin-top:0}
+
+/* ── People & access ────────────────────── */
+.person{display:flex;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.person:last-child{border-bottom:0}
+.person .pi{flex:1;min-width:170px}
+.person .pi b{display:block;font-size:13.5px;font-weight:600}
+.person .pi span{display:block;font-size:11.5px;color:var(--t2)}
+.joinlink{grid-column:1/-1;width:100%;margin-top:2px;border:1px dashed var(--gold);border-radius:8px;padding:9px 11px;font-size:11px;background:var(--gold-soft)}
+:root[data-theme="dark"] .joinlink,:root:not([data-theme="light"]) .joinlink{background:#241D0C}
+.joinlink .u{display:block;word-break:break-all;color:var(--t2);margin:4px 0 7px;font-size:10.5px}
+</style>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <div class="mark">RB</div>
+      <div class="brand-t"><b>Deal Room</b><span>RB Brand Real Estate</span></div>
+    </div>
+    <div class="bar-sp"></div>
+    <button class="rolebtn" id="rolebtn" aria-haspopup="menu" aria-expanded="false">
+      <span class="av" id="roleav">CS</span>
+      <span class="rt"><b id="rolename">Charné Snyman</b><span id="rolekind">Agent</span></span>
+      <svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="strip"><div class="strip-in" id="strip"></div></div>
+
+<div class="shell">
+  <nav class="rail" id="rail"></nav>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" id="tabs"></nav>
+<footer class="foot" id="foot"></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ══ Icons ══════════════════════════════════════════════════════════ */
+const I = (d, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON = {
+  home:  I('<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/>'),
+  deals: I('<rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/>'),
+  team:  I('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 5.2A3.2 3.2 0 0 1 16 11"/><path d="M18 20c0-2.6-1-4.4-2.6-5.3"/>'),
+  track: I('<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M11 6h9"/><path d="M11 18h9"/>'),
+  vault: I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><circle cx="12" cy="14" r="2.5"/>'),
+  chat:  I('<path d="M20 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/>'),
+  people:I('<circle cx="12" cy="7.5" r="3.4"/><path d="M4.5 20c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>'),
+  log:   I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),
+  plus:  I('<path d="M12 5v14"/><path d="M5 12h14"/>'),
+  back:  I('<path d="M15 5l-7 7 7 7"/>', 14),
+  check: I('<path d="M4 12.5 9.5 18 20 6.5"/>', 13),
+  lock:  I('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>', 14),
+  eye:   I('<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/>', 14),
+  up:    I('<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/><path d="M4 21h16"/>', 14),
+  tag:   I('<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.2"/>', 13),
+  shield:I('<path d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>', 14),
+  file:  I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>', 15),
+  key:   I('<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8 3 3-2 2-2-2-3 3"/>', 14),
+  send:  I('<path d="M4 12l16-7-6.5 16-2.5-6.5z"/>', 14),
+  warn:  I('<path d="M12 4.5 21 19H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/>', 14),
+};
+
+/* ══ People ═════════════════════════════════════════════════════════ */
+const P = {
+  charne:    { name:"Charné Snyman",   ini:"CS", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0114", email:"charne@rbbrand.co.za" },
+  riaan:     { name:"Riaan Brand",     ini:"RB", kind:"Principal",   role:"principal",   org:"RB Brand Real Estate", mobile:"083 555 0100", email:"riaan@rbbrand.co.za" },
+  lerato:    { name:"Lerato Dube",     ini:"LD", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"071 555 0127", email:"lerato@rbbrand.co.za" },
+  pieter:    { name:"Pieter Naudé",    ini:"PN", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0143", email:"pieter@rbbrand.co.za" },
+  thabo:     { name:"Thabo Mokoena",   ini:"TM", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"073 555 0198", email:"t.mokoena@gmail.com" },
+  marietjie: { name:"Marietjie du Toit",ini:"MT",kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"082 555 0176", email:"mdutoit@webmail.co.za" },
+  elmarie:   { name:"Elmarie van Zyl", ini:"EV", kind:"Conveyancer", role:"conveyancer", org:"Van Zyl Kruger Inc., Menlyn", mobile:"012 555 0140", email:"elmarie@vzk.co.za" },
+  johan:     { name:"Johan Pretorius", ini:"JP", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"084 555 0122", email:"johanp@outlook.com" },
+  ayesha:    { name:"Ayesha Patel",    ini:"AP", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"076 555 0165", email:"ayesha.p@gmail.com" },
+  sipho:     { name:"Sipho Ndlovu",    ini:"SN", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"082 555 0187", email:"sndlovu@gmail.com" },
+  hannes:    { name:"Hannes Kruger",   ini:"HK", kind:"Conveyancer", role:"conveyancer", org:"Kruger & Botha, Centurion", mobile:"012 555 0190", email:"hannes@kbattorneys.co.za" },
+  linda:     { name:"Linda Mahlangu",  ini:"LM", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"079 555 0133", email:"linda.m@gmail.com" },
+  dawid:     { name:"Dawid Steyn",     ini:"DS", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"083 555 0155", email:"dsteyn@gmail.com" },
+  nomsa:     { name:"Nomsa Khumalo",   ini:"NK", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"072 555 0111", email:"nomsak@webmail.co.za" },
+  gerhard:   { name:"Gerhard Botha",   ini:"GB", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"081 555 0109", email:"gbotha@gmail.com" },
+  willem:    { name:"Willem Barnard",  ini:"WB", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"083 555 0171", email:"wbarnard@gmail.com" },
+  elize:     { name:"Elize Fourie",    ini:"EF", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"082 555 0138", email:"elizef@webmail.co.za" },
+  karin:     { name:"Karin Smit",      ini:"KS", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"079 555 0159", email:"karin.smit@gmail.com" },
+  andre:     { name:"André Venter",    ini:"AV", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"081 555 0182", email:"aventer@gmail.com" },
+  susan:     { name:"Susan Meyer",     ini:"SM", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"082 555 0192", email:"susanm@gmail.com" },
+};
+const COL = r => `var(--p-${r})`;
+const STAFF = ["charne", "riaan", "lerato"];
+[["hendrik","Hendrik Meyer","Buyer"],["annelie","Annelie Roux","Seller"],
+ ["zanele","Zanele Mthembu","Buyer"],["kobus","Kobus Grobler","Seller"],
+ ["fatima","Fatima Ismail","Buyer"],["deon","Deon Swanepoel","Seller"],
+ ["lindiwe","Lindiwe Zulu","Buyer"],["marius","Marius Coetzee","Seller"],
+ ["chantal","Chantal Adams","Buyer"],["themba","Themba Sithole","Seller"]
+].forEach(([id, name, kind], i) => {
+  P[id] = { name, ini:name.split(" ").map(w => w[0]).join(""), kind, role:kind.toLowerCase(),
+    org:kind === "Buyer" ? "Purchaser" : "Registered owner",
+    mobile:"08" + (i % 4) + " 555 0" + (200 + i), email:name.toLowerCase().replace(/[^a-z]/g, ".") + "@email.co.za" };
+});
+
+/* ══ Documents & stages (the SA transfer sequence) ══════════════════ */
+const DOCS = [
+  { id:"otp",    name:"Offer to Purchase (signed)",  cat:"Contract",   owner:"agent",       see:["agent","buyer","seller","conveyancer","principal"], stage:1 },
+  { id:"b_id",   name:"Buyer — ID document",         cat:"FICA",       owner:"buyer",       see:["agent","buyer","conveyancer"],                      stage:1 },
+  { id:"b_poa",  name:"Buyer — proof of address",    cat:"FICA",       owner:"buyer",       see:["agent","buyer","conveyancer"],                      stage:1 },
+  { id:"s_id",   name:"Seller — ID document",        cat:"FICA",       owner:"seller",      see:["agent","seller","conveyancer"],                     stage:1 },
+  { id:"s_poa",  name:"Seller — proof of address",   cat:"FICA",       owner:"seller",      see:["agent","seller","conveyancer"],                     stage:1 },
+  { id:"s_rates",name:"Seller — latest rates account",cat:"FICA",      owner:"seller",      see:["agent","seller","conveyancer"],                     stage:1 },
+  { id:"dep",    name:"Proof of deposit — trust account", cat:"Finance",owner:"buyer",      see:["agent","buyer","conveyancer"],                      stage:2 },
+  { id:"grant",  name:"Bond grant letter",           cat:"Finance",    owner:"buyer",       see:["agent","buyer","conveyancer"],                      stage:2 },
+  { id:"coc_e",  name:"Electrical CoC",              cat:"Compliance", owner:"seller",      see:["agent","buyer","seller","conveyancer","principal"], stage:3 },
+  { id:"coc_g",  name:"Gas CoC",                     cat:"Compliance", owner:"seller",      see:["agent","buyer","seller","conveyancer","principal"], stage:3 },
+  { id:"coc_p",  name:"Plumbing certificate",        cat:"Compliance", owner:"seller",      see:["agent","buyer","seller","conveyancer","principal"], stage:3 },
+  { id:"coc_b",  name:"Borer beetle certificate",    cat:"Compliance", owner:"seller",      see:["agent","buyer","seller","conveyancer","principal"], stage:3 },
+  { id:"coc_f",  name:"Electric fence CoC",          cat:"Compliance", owner:"seller",      see:["agent","buyer","seller","conveyancer","principal"], stage:3 },
+  { id:"rates_c",name:"Municipal rates clearance",   cat:"Clearance",  owner:"conveyancer", see:["agent","buyer","seller","conveyancer","principal"], stage:4 },
+  { id:"sars",   name:"SARS transfer duty receipt",  cat:"Clearance",  owner:"conveyancer", see:["agent","buyer","seller","conveyancer","principal"], stage:4 },
+  { id:"draft",  name:"Draft deed of transfer",      cat:"Transfer",   owner:"conveyancer", see:["agent","buyer","seller","conveyancer","principal"], stage:5 },
+  { id:"lodge",  name:"Deeds Office lodgement cover",cat:"Transfer",   owner:"conveyancer", see:["agent","buyer","seller","conveyancer","principal"], stage:6 },
+  { id:"title",  name:"Registered title deed",       cat:"Transfer",   owner:"conveyancer", see:["agent","buyer","seller","conveyancer","principal"], stage:7 },
+];
+const DOC = Object.fromEntries(DOCS.map(d => [d.id, d]));
+const FNAME = { otp:"OTP_signed.pdf", b_id:"Buyer_ID.pdf", b_poa:"Buyer_proof_of_address.pdf", s_id:"Seller_ID.pdf",
+  s_poa:"Seller_proof_of_address.pdf", s_rates:"Rates_account.pdf", dep:"Deposit_EFT_confirmation.pdf", grant:"Bond_grant_letter.pdf",
+  coc_e:"Electrical_CoC.pdf", coc_g:"Gas_CoC.pdf", coc_p:"Plumbing_certificate.pdf", coc_b:"Beetle_certificate.pdf", coc_f:"Fence_CoC.pdf",
+  rates_c:"Rates_clearance.pdf", sars:"SARS_transfer_duty.pdf", draft:"Deed_of_transfer_draft.pdf", lodge:"Lodgement_cover.pdf", title:"Title_deed_registered.pdf" };
+
+const STAGES = [
+  { n:1, name:"OTP & FICA", days:"3–7 days",
+    blurb:"The signed offer becomes binding and both parties are FICA-verified before the file opens at the attorney.",
+    tasks:[
+      { id:"t1a", owner:"agent",  label:"Upload the fully signed Offer to Purchase", doc:"otp" },
+      { id:"t1b", owner:"buyer",  label:"Upload FICA — ID document", doc:"b_id" },
+      { id:"t1c", owner:"buyer",  label:"Upload FICA — proof of address (under 3 months)", doc:"b_poa" },
+      { id:"t1d", owner:"seller", label:"Upload FICA — ID document", doc:"s_id" },
+      { id:"t1e", owner:"seller", label:"Upload FICA — proof of address (under 3 months)", doc:"s_poa" },
+      { id:"t1f", owner:"seller", label:"Upload latest municipal rates account", doc:"s_rates" },
+      { id:"t1g", owner:"agent",  label:"Verify FICA pack and instruct the transferring attorney", note:"Locks the FICA files against further edits" },
+    ]},
+  { n:2, name:"Bond & Deposit", days:"14–30 days",
+    blurb:"The suspensive bond condition must be met by the date in the OTP, or the sale lapses.",
+    tasks:[
+      { id:"t2a", owner:"buyer", label:"Pay the deposit into the attorney's trust account", doc:"dep" },
+      { id:"t2b", owner:"buyer", label:"Upload the bank's bond grant letter", doc:"grant" },
+      { id:"t2c", owner:"agent", label:"Confirm the suspensive condition is met", note:"Releases the sale from the bond clause" },
+      { id:"t2d", owner:"conveyancer", label:"Acknowledge deposit received in trust" },
+    ]},
+  { n:3, name:"Compliance Certificates", days:"7–14 days",
+    blurb:"The seller carries the cost of all statutory certificates. Nothing lodges without them.",
+    tasks:[
+      { id:"t3a", owner:"seller", label:"Electrical CoC (valid 2 years)", doc:"coc_e" },
+      { id:"t3b", owner:"seller", label:"Gas CoC — built-in braai / gas hob", doc:"coc_g" },
+      { id:"t3c", owner:"seller", label:"Plumbing certificate", doc:"coc_p" },
+      { id:"t3d", owner:"seller", label:"Borer beetle certificate", doc:"coc_b" },
+      { id:"t3e", owner:"seller", label:"Electric fence CoC", doc:"coc_f" },
+      { id:"t3f", owner:"agent",  label:"Review all five certificates and sign off" },
+    ]},
+  { n:4, name:"Rates & SARS Clearances", days:"14–45 days",
+    blurb:"The attorney pays rates in advance and files for transfer duty. This is usually the slowest stretch.",
+    tasks:[
+      { id:"t4a", owner:"conveyancer", label:"Apply for rates clearance figures at the municipality" },
+      { id:"t4b", owner:"conveyancer", label:"Rates clearance certificate issued", doc:"rates_c" },
+      { id:"t4c", owner:"conveyancer", label:"SARS transfer duty receipt obtained", doc:"sars" },
+      { id:"t4d", owner:"seller", label:"Settle the outstanding levy / rates shortfall" },
+    ]},
+  { n:5, name:"Drafting & Signature", days:"5–10 days",
+    blurb:"Both parties sign at the attorney's office. Bond documents are signed with the bank's attorney.",
+    tasks:[
+      { id:"t5a", owner:"conveyancer", label:"Draft the deed of transfer and power of attorney", doc:"draft" },
+      { id:"t5b", owner:"seller", label:"Sign transfer documents at the attorney's office" },
+      { id:"t5c", owner:"buyer",  label:"Sign transfer documents and pay transfer costs" },
+      { id:"t5d", owner:"buyer",  label:"Sign bond documents with the bank's attorney" },
+    ]},
+  { n:6, name:"Deeds Office Lodgement", days:"7–12 days",
+    blurb:"Transfer, bond and cancellation attorneys lodge as one batch at the Deeds Office.",
+    tasks:[
+      { id:"t6a", owner:"conveyancer", label:"Obtain bond cancellation figures from the seller's bank" },
+      { id:"t6b", owner:"conveyancer", label:"Lodge the batch at the Deeds Office", doc:"lodge" },
+      { id:"t6c", owner:"conveyancer", label:"Clear examiner queries (prep)" },
+    ]},
+  { n:7, name:"Registration & Handover", days:"1–3 days",
+    blurb:"Ownership passes on registration. Proceeds pay out and the keys change hands.",
+    tasks:[
+      { id:"t7a", owner:"conveyancer", label:"Registration recorded at the Deeds Office", doc:"title" },
+      { id:"t7b", owner:"conveyancer", label:"Pay the nett proceeds to the seller" },
+      { id:"t7c", owner:"agent", label:"Hand over the keys and close the file" },
+    ]},
+];
+const TASK = {}; STAGES.forEach(s => s.tasks.forEach(t => TASK[t.id] = { ...t, stage:s.n }));
+const ALL_TASKS = STAGES.flatMap(s => s.tasks);
+
+/* ══ The agency's live files ════════════════════════════════════════ */
+const SEED_DEALS = [
+  { id:"d1", ref:"PTA-2501216", file:"VZK/T/4471", address:"34 Heron Street", area:"Olympus AH", city:"Pretoria East",
+    price:2990000, deposit:299000, beds:3, baths:2, garages:2, erf:481, type:"House",
+    agent:"charne", buyer:"thabo", seller:"marietjie", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/olympus-ah-house-for-sale-2501216",
+    otpAgo:46, bondIn:12, stage:1, extra:["t1b","t1d","t1f"], lastAct:2, hero:"linear-gradient(145deg,#0C2E18,#2E8B57)" },
+  { id:"d2", ref:"PTA-2502487", file:"VZK/T/4390", address:"12 Willow Grove", area:"Equestria", city:"Pretoria East",
+    price:2099900, deposit:210000, beds:3, baths:2, garages:2, erf:null, type:"Townhouse",
+    agent:"charne", buyer:"johan", seller:"ayesha", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2502487",
+    otpAgo:74, bondIn:null, stage:3, extra:["t3a","t3c"], lastAct:3, hero:"linear-gradient(145deg,#5A3A0A,#C49A2F)" },
+  { id:"d3", ref:"HBP-2487416", file:"KB/T/2210", address:"7 Dam View Drive", area:"Kosmos", city:"Hartbeespoort",
+    price:3690000, deposit:500000, beds:4, baths:2, garages:2, erf:1085, type:"House",
+    agent:"charne", buyer:"sipho", seller:"linda", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
+    listing:"https://www.rbbrandrealestate.co.za/kosmos-house-for-sale-2487416",
+    otpAgo:118, bondIn:null, stage:5, extra:["t5a","t5b"], lastAct:5, hero:"linear-gradient(145deg,#0F2840,#1E5080)" },
+  { id:"d4", ref:"CEN-2495173", file:"KB/T/2178", address:"22 Wierda Crest", area:"Rooihuiskraal North", city:"Centurion",
+    price:1295000, deposit:130000, beds:2, baths:1, garages:2, erf:null, type:"Townhouse",
+    agent:"lerato", buyer:"dawid", seller:"nomsa", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
+    listing:"https://www.rbbrandrealestate.co.za/rooihuiskraal-north-townhouse-for-sale-2495173",
+    otpAgo:141, bondIn:null, stage:6, extra:["t6a","t6b"], lastAct:4, hero:"linear-gradient(145deg,#0A2E2B,#1A6B64)" },
+  { id:"d5", ref:"PTA-2475568", file:"VZK/T/4455", address:"Stand 118, The Hills", area:"The Hills Estate", city:"Pretoria East",
+    price:2000000, deposit:200000, beds:0, baths:0, garages:0, erf:940, type:"Vacant Land",
+    agent:"lerato", buyer:"gerhard", seller:"susan", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475568",
+    otpAgo:39, bondIn:-3, stage:2, extra:[], lastAct:17, hero:"linear-gradient(145deg,#0F3018,#1A6030)" },
+  { id:"d6", ref:"PTA-2487360", file:"KB/T/2195", address:"Unit 14, Glevera", area:"Rietvalleirand", city:"Pretoria East",
+    price:1150000, deposit:115000, beds:1, baths:1, garages:0, erf:null, type:"Apartment",
+    agent:"pieter", buyer:"willem", seller:"elize", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
+    listing:"https://www.rbbrandrealestate.co.za/rietvalleirand-apartment-for-sale-2487360",
+    otpAgo:96, bondIn:null, stage:4, extra:["t4a"], lastAct:11, hero:"linear-gradient(145deg,#1A3530,#3A7060)" },
+  { id:"d7", ref:"PTA-2489107", file:"VZK/T/4301", address:"5 Acacia Close", area:"Equestria", city:"Pretoria East",
+    price:1250000, deposit:125000, beds:2, baths:2, garages:2, erf:null, type:"Townhouse",
+    agent:"charne", buyer:"karin", seller:"andre", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2489107",
+    otpAgo:132, bondIn:null, stage:8, extra:[], lastAct:9, hero:"linear-gradient(145deg,#2E1A10,#6B4028)" },
+  { id:"d8", ref:"PTA-2500406", file:"VZK/T/4372", address:"9 Rooibos Lane", area:"Equestria", city:"Pretoria East",
+    price:1220000, deposit:122000, beds:2, baths:1, garages:1, erf:null, type:"Townhouse",
+    agent:"charne", buyer:"hendrik", seller:"annelie", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500406",
+    otpAgo:88, bondIn:null, stage:4, extra:["t4a","t4b"], lastAct:6, hero:"linear-gradient(145deg,#5A2D0C,#B86830)" },
+  { id:"d9", ref:"PTA-2500347", file:"KB/T/2203", address:"3 Aloe Corner", area:"Equestria", city:"Pretoria East",
+    price:860000, deposit:86000, beds:2, baths:1, garages:1, erf:null, type:"Townhouse",
+    agent:"pieter", buyer:"zanele", seller:"kobus", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
+    listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500347",
+    otpAgo:79, bondIn:null, stage:4, extra:["t4a"], lastAct:19, hero:"linear-gradient(145deg,#1A2E5A,#3A5A9A)" },
+  { id:"d10", ref:"PTA-2496042", file:"VZK/T/4418", address:"27 Fiscal Street", area:"Equestria", city:"Pretoria East",
+    price:1450000, deposit:145000, beds:2, baths:2, garages:0, erf:null, type:"Townhouse",
+    agent:"lerato", buyer:"fatima", seller:"deon", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2496042",
+    otpAgo:63, bondIn:null, stage:3, extra:["t3a","t3b","t3c"], lastAct:2, hero:"linear-gradient(145deg,#3A1035,#7B3068)" },
+  { id:"d11", ref:"PTA-2475037", file:"VZK/T/4344", address:"Stand 96, The Hills", area:"The Hills Estate", city:"Pretoria East",
+    price:2200000, deposit:220000, beds:0, baths:0, garages:0, erf:863, type:"Vacant Land",
+    agent:"charne", buyer:"lindiwe", seller:"marius", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    listing:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475037",
+    otpAgo:102, bondIn:null, stage:4, extra:["t4a","t4b","t4c"], lastAct:8, hero:"linear-gradient(145deg,#1A2A10,#3A5A20)" },
+  { id:"d12", ref:"PTA-2479682", file:"KB/T/2231", address:"41 Simon Vermooten Road", area:"Equestria", city:"Pretoria East",
+    price:2800000, deposit:280000, beds:3, baths:3, garages:2, erf:null, type:"House",
+    agent:"lerato", buyer:"chantal", seller:"themba", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
+    listing:"https://www.rbbrandrealestate.co.za/equestria-house-for-sale-2479682",
+    otpAgo:11, bondIn:26, stage:1, extra:["t1a","t1b"], lastAct:1, hero:"linear-gradient(145deg,#3A1E05,#7A4515)" },
+];
+
+/* ══ Format ═════════════════════════════════════════════════════════ */
+const DAY = 864e5;
+const d0 = n => new Date(Date.now() + n * DAY);
+const iso = d => new Date(d).toISOString();
+const R = n => "R " + Math.round(n).toLocaleString("en-ZA");
+const Rm = n => n >= 1e6 ? "R " + (n / 1e6).toFixed(2).replace(/\.00$/, "") + "m" : R(n);
+const dstr = d => new Date(d).toLocaleDateString("en-ZA", { day:"numeric", month:"short", year:"numeric" });
+const stampf = d => new Date(d).toLocaleString("en-ZA", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(",", "");
+const daysTo = d => Math.round((new Date(d) - Date.now()) / DAY);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const ago = t => { const m = (Date.now() - new Date(t)) / 6e4;
+  if (m < 1) return "just now"; if (m < 60) return Math.floor(m) + " min ago";
+  if (m < 1440) return Math.floor(m / 60) + " hr ago";
+  const d = Math.floor(m / 1440); return d === 1 ? "yesterday" : d + " days ago"; };
+const avatar = (personId, s = 28) => { const p = P[personId];
+  return `<span class="av" style="width:${s}px;height:${s}px;background:${COL(p.role)};font-size:${Math.round(s * .39)}px">${p.ini}</span>`; };
+const token = () => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+
+/* ══ Building a deal's own, isolated file ═══════════════════════════ */
+const THREADS = {
+  1:[["agent","Offer accepted and signed by both parties. I've opened the deal room so every document and decision lives in one place instead of a WhatsApp thread."],
+     ["seller","Thank you. I'll load my ID and the rates account today."],
+     ["buyer","My municipal bill is in my father's name — will a bank statement with my address work for FICA?"],
+     ["agent","Yes, as long as it is under three months old and shows your name and the physical address. Load it here and I'll check it before it goes to the attorney."]],
+  2:[["conveyancer","File opened at our offices. Trust account details sent to the purchaser by secure link — please never accept banking details from an email."],
+     ["buyer","Bond application is in with the bank, the assessor was here on Tuesday."]],
+  3:[["agent","Bond approved — well done everyone. Next up is the certificates, which are for the seller's account."],
+     ["seller","Electrician is booked for Thursday. The gas certificate I already have from last year, is that still valid?"],
+     ["agent","Gas certificates stay valid unless the installation changes, so please load it and I'll check the date."]],
+  4:[["conveyancer","Rates clearance figures applied for at the municipality. This is the part that takes the longest — I'll update here the moment the figures come back."],
+     ["agent","Thank you Elmarie. I've let both parties know not to expect movement for two to three weeks."]],
+  5:[["conveyancer","Transfer documents are drafted. Please both book a slot at my office this week to sign."],
+     ["seller","I can come Thursday morning."]],
+  6:[["conveyancer","Lodged at the Deeds Office this morning as a batch with the bond and cancellation attorneys. Prep is running about eight working days."],
+     ["agent","Wonderful news — I'll prepare the parties for a registration date in about two weeks."]],
+  7:[["conveyancer","Registered. Ownership has passed and the proceeds are paid out."],
+     ["agent","Congratulations to both of you. I'll bring the keys through this afternoon."]],
+};
+function buildDeal(D){
+  const meta = { ...D };
+  const st = { meta, done:{}, docs:{}, links:{}, msgs:[], log:[], open:{}, seen:{},
+    access:{ buyer:"joined", seller:"joined", conveyancer:"joined" },
+    otpDate:iso(d0(-D.otpAgo)), bondDue:D.bondIn === null ? null : iso(d0(D.bondIn)) };
+  const span = Math.max(1, D.otpAgo - D.lastAct);
+  const at = frac => iso(d0(-(D.otpAgo - span * frac)));
+  const done = [];
+  STAGES.filter(s => s.n < D.stage).forEach((s, i, arr) => {
+    const base = (i + 1) / (arr.length + 1);
+    s.tasks.forEach((t, j) => {
+      st.done[t.id] = true;
+      const ts = at(base - .04 + (j / s.tasks.length) * .07);
+      if (t.doc) st.docs[t.doc] = { file:FNAME[t.doc], size:(120 + j * 97) + " KB", by:t.owner, ts, verified:true };
+      done.push({ ts, who:D[t.owner], act:t.doc ? "Document uploaded" : "Task completed", det:t.doc ? `${DOC[t.doc].name} · ${FNAME[t.doc]}` : `Stage ${s.n} · ${t.label}` });
+    });
+    done.push({ ts:at(base + .05), who:D.agent, act:"Stage complete", det:`${s.name} — documents from this stage are now locked` });
+  });
+  (D.extra || []).forEach((id, k) => {
+    const t = TASK[id]; st.done[id] = true;
+    const ts = iso(d0(-(D.lastAct + (D.extra.length - k))));
+    if (t.doc) st.docs[t.doc] = { file:FNAME[t.doc], size:(180 + k * 64) + " KB", by:D[t.owner], ts, verified:k % 2 === 0 };
+    done.push({ ts, who:D[t.owner], act:t.doc ? "Document uploaded" : "Task completed", det:t.doc ? `${DOC[t.doc].name} · ${FNAME[t.doc]}` : `Stage ${t.stage} · ${t.label}` });
+  });
+  st.log = [{ ts:iso(d0(-D.otpAgo)), who:D.agent, act:"Deal room opened", det:`${D.address}, ${D.area} · ${D.ref}` },
+            { ts:iso(d0(-D.otpAgo + .2)), who:D.agent, act:"Parties invited", det:"Purchaser, seller and transferring attorney granted access" },
+            ...done].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  const thread = THREADS[Math.min(7, D.stage)] || THREADS[1];
+  st.msgs = thread.map(([role, body], i) => ({ id:`${D.id}m${i}`, by:D[role] || D.agent,
+    ts:iso(d0(-(D.lastAct + (thread.length - i) * 1.4))), body, tag:{ k:"stage", v:Math.min(7, D.stage) } }));
+  return st;
+}
+
+/* ══ State ══════════════════════════════════════════════════════════ */
+const KEY = "rb_dealroom_v4";
+let S;
+const fresh = () => ({ me:"charne", view:"portfolio", deal:null, agentFilter:null, people:{},
+  deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])), nextRef:2600001 });
+function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r) : fresh(); } catch { S = fresh(); }
+  if (!S || !S.deals || !Object.keys(S.deals).length) S = fresh();
+  if (!S.people) S.people = {};
+  Object.assign(P, S.people);                      // parties added on new deals survive a reload
+  if (!P[S.me]) S.me = "charne"; }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+load();
+
+/* ══ Derived ════════════════════════════════════════════════════════ */
+const me = () => P[S.me];
+const D = () => S.deals[S.deal];
+const roleIn = (d, person) => {
+  if (!d) return null;
+  if (d.meta.agent === person) return "agent";
+  for (const r of ["buyer", "seller", "conveyancer"]) if (d.meta[r] === person) return r;
+  return P[person].role === "principal" ? "principal" : null;
+};
+const myRole = () => roleIn(D(), S.me);
+const stageDone = (d, s) => s.tasks.every(t => d.done[t.id]);
+const current = d => STAGES.find(s => !stageDone(d, s)) || STAGES[6];
+const isClosed = d => STAGES.every(s => stageDone(d, s));
+const pctOf = d => Math.round(ALL_TASKS.filter(t => d.done[t.id]).length / ALL_TASKS.length * 100);
+const openFor = (d, role) => current(d).tasks.filter(t => t.owner === role && !d.done[t.id]);
+const lastTouch = d => d.log.length ? d.log[0].ts : d.otpDate;
+const stalled = d => !isClosed(d) && (Date.now() - new Date(lastTouch(d))) / DAY > 14;
+const bondRisk = d => d.bondDue && !d.done.t2c ? daysTo(d.bondDue) : null;
+const atRisk = d => !isClosed(d) && (stalled(d) || (bondRisk(d) !== null && bondRisk(d) < 7));
+const docState = (d, id) => { const rec = d.docs[id]; if (!rec) return "awaiting";
+  return stageDone(d, STAGES[DOC[id].stage - 1]) ? "locked" : rec.verified ? "verified" : "uploaded"; };
+const canSee = (d, doc) => { const r = myRole(); return r ? doc.see.includes(r) : false; };
+const unread = (d, person) => d.msgs.filter(m => m.by !== person && new Date(m.ts) > new Date(d.seen[person] || 0)).length;
+const myDeals = () => {
+  const list = Object.values(S.deals), r = me().role;
+  if (r === "principal") return list;
+  if (r === "agent") return list.filter(d => d.meta.agent === S.me);
+  return list.filter(d => { const rl = roleIn(d, S.me); return rl && d.access[rl] === "joined"; });
+};
+const agencyAgents = () => [...new Set(Object.values(S.deals).map(d => d.meta.agent))];
+
+/* ══ Audit & toast ══════════════════════════════════════════════════ */
+function logit(d, act, det){ d.log.unshift({ ts:new Date().toISOString(), who:S.me, act, det }); }
+let toastT;
+function toast(msg){ const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2800); }
+
+/* ══ Navigation model ═══════════════════════════════════════════════ */
+const DEAL_VIEWS = [
+  { id:"dash",  label:"Overview",  ic:"home" },
+  { id:"track", label:"Tracker",   ic:"track" },
+  { id:"vault", label:"Vault",     ic:"vault" },
+  { id:"chat",  label:"Messages",  ic:"chat" },
+  { id:"people",label:"Access",    ic:"people" },
+  { id:"log",   label:"Audit log", ic:"log" },
+];
+const homeView = () => me().role === "principal" ? "team" : "portfolio";
+function navItems(){
+  if (S.deal) return DEAL_VIEWS;
+  const v = [];
+  if (me().role === "principal") v.push({ id:"team", label:"Team overview", ic:"team" }, { id:"portfolio", label:"All deals", ic:"deals" });
+  else v.push({ id:"portfolio", label:me().role === "agent" ? "My deals" : "My transfers", ic:"deals" });
+  if (me().role === "agent") v.push({ id:"new", label:"New deal room", ic:"plus" });
+  return v;
+}
+function badgeFor(v){
+  const d = D(); if (!d) return 0;
+  if (v === "chat") return unread(d, S.me);
+  if (v === "track") return myRole() ? openFor(d, myRole()).length : 0;
+  if (v === "people") return Object.values(d.access).filter(a => a !== "joined").length;
+  return 0;
+}
+
+/* ══ Chrome ═════════════════════════════════════════════════════════ */
+function renderChrome(){
+  const p = me();
+  document.getElementById("roleav").textContent = p.ini;
+  document.getElementById("roleav").style.background = COL(p.role);
+  document.getElementById("rolename").textContent = p.name;
+  document.getElementById("rolekind").textContent = S.deal && myRole() ? P[S.me].kind : p.kind;
+
+  const d = D();
+  document.getElementById("strip").innerHTML = d ? `
+    <div style="min-width:0">
+      <div class="crumb"><button data-act="home">${ICON.back} ${me().role === "principal" ? "Team overview" : "All deals"}</button><span>·</span><span>${esc(d.meta.area)}, ${esc(d.meta.city)}</span></div>
+      <h1>${esc(d.meta.address)}</h1>
+      <div class="ref mono">${d.meta.ref} · ${d.meta.erf ? "Erf " + d.meta.erf + " · " : ""}Transfer file ${d.meta.file}</div>
+    </div>
+    <div class="prog">
+      <div class="prog-l"><span>${isClosed(d) ? "Registered — transfer complete" : `Stage ${current(d).n} of 7 — ${current(d).name}`}</span><span class="mono">${pctOf(d)}%</span></div>
+      <div class="track"><i style="width:${pctOf(d)}%"></i></div>
+    </div>`
+  : `<div style="min-width:0">
+      <h1>${me().role === "principal" ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
+      <div class="ref mono">${me().name} · ${esc(me().org)}</div>
+    </div>`;
+
+  const items = navItems();
+  document.getElementById("rail").innerHTML = items.map(v => {
+    const b = badgeFor(v.id);
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
+  }).join("") + `<div class="rail-note"><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
+
+  const tabs = items.slice(0, 5);
+  document.getElementById("tabs").style.gridTemplateColumns = `repeat(${tabs.length},1fr)`;
+  document.getElementById("tabs").innerHTML = tabs.map(v => {
+    const b = badgeFor(v.id);
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label.split(" ")[0]}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
+  }).join("");
+
+  document.getElementById("foot").innerHTML =
+    `<b>RB Brand Deal Room</b> — a working concept for a multi-party property transfer portal: an agent's deal rooms, a principal's team view, and one shared file per sale for the purchaser, seller and transferring attorney.
+     Built around the South African conveyancing sequence and POPIA (Act 4 of 2013, as amended April 2025): role-based document access, expiring document links and an append-only audit trail.
+     Parties, figures and documents are illustrative; the property links point to live RB Brand listings.`;
+}
+
+/* ══ Identity menu ══════════════════════════════════════════════════ */
+let popOpen = false;
+function renderPop(){
+  document.querySelectorAll(".pop").forEach(e => e.remove());
+  if (!popOpen) return;
+  const d = D();
+  const row = (id, note, disabled) => `<button class="pop-i" data-act="signin" data-p="${id}" aria-current="${S.me === id}" ${disabled ? "disabled" : ""} role="menuitem">
+      ${avatar(id, 32)}<span class="n"><b>${P[id].name}</b><span>${note}</span></span>
+      ${disabled ? `<span class="chip c-mute">Not joined</span>` : ""}</button>`;
+  const el = document.createElement("div");
+  el.className = "pop"; el.setAttribute("role", "menu");
+  el.innerHTML = `<div class="pop-h eyebrow">RB Brand team</div>`
+    + STAFF.map(id => row(id, `${P[id].kind} · ${Object.values(S.deals).filter(x => x.meta.agent === id).length || "all"} deal rooms`)).join("")
+    + (d ? `<div class="pop-group eyebrow">In this deal room</div>`
+        + ["buyer", "seller", "conveyancer"].map(r => row(d.meta[r], `${P[d.meta[r]].kind} · ${d.access[r] === "joined" ? "joined" : d.access[r] === "invited" ? "invite sent" : "not invited"}`, d.access[r] !== "joined")).join("") : "");
+  document.body.appendChild(el);
+}
+
+/* ══ View: portfolio ════════════════════════════════════════════════ */
+function dealCard(d){
+  const c = current(d), closed = isClosed(d), risk = atRisk(d), br = bondRisk(d);
+  const faces = ["agent", "buyer", "seller", "conveyancer"].map(r => avatar(d.meta[r], 22)).join("");
+  const r = roleIn(d, S.me), mine = r && r !== "principal" ? openFor(d, r) : [];
+  const flag = closed ? `<span class="chip c-go">${ICON.check} Registered</span>`
+    : br !== null && br < 7 ? `<span class="chip c-stop">${ICON.warn} Bond ${br < 0 ? Math.abs(br) + " days overdue" : "due in " + br + " days"}</span>`
+    : stalled(d) ? `<span class="chip c-stop">${ICON.warn} No movement in ${Math.round((Date.now() - new Date(lastTouch(d))) / DAY)} days</span>`
+    : `<span class="chip c-gold">Stage ${c.n} · ${c.name}</span>`;
+  return `<button class="deal ${closed ? "closed" : risk ? "risk" : ""}" data-act="open" data-d="${d.meta.id}">
+    <div class="deal-h"><b>${esc(d.meta.address)}</b><span class="sub">${esc(d.meta.area)}, ${esc(d.meta.city)} · ${d.meta.type}</span></div>
+    <div class="deal-m"><span class="amt">${R(d.meta.price)}</span>${flag}</div>
+    <div class="deal-p">
+      <div class="lbl"><span>${closed ? "Complete" : `${ALL_TASKS.filter(t => d.done[t.id]).length} of ${ALL_TASKS.length} steps done`}</span><span class="mono">${pctOf(d)}%</span></div>
+      <div class="track"><i style="width:${pctOf(d)}%;background:${closed ? "var(--go)" : "linear-gradient(90deg,var(--gold),#E4C878)"}"></i></div>
+    </div>
+    <div class="deal-f"><span class="faces">${faces}</span><span>${P[d.meta.agent].name}</span><span style="flex:1"></span>
+      <span>${mine.length ? `<b style="color:var(--stop)">${mine.length} for you</b>` : "Updated " + ago(lastTouch(d))}</span></div>
+  </button>`;
+}
+function vPortfolio(){
+  const list = myDeals().sort((a, b) => (isClosed(a) - isClosed(b)) || (atRisk(b) - atRisk(a)) || new Date(lastTouch(b)) - new Date(lastTouch(a)));
+  const active = list.filter(d => !isClosed(d));
+  const mineCount = list.reduce((n, d) => n + (roleIn(d, S.me) ? openFor(d, roleIn(d, S.me)).length : 0), 0);
+  const filtered = S.agentFilter ? list.filter(d => d.meta.agent === S.agentFilter) : list;
+  return `<div class="stack">
+    <div class="sec-h"><h2>${me().role === "principal" ? "Every deal room in the agency" : me().role === "agent" ? "Good day, " + me().name.split(" ")[0] : "Your transfers"}</h2>
+      <p>${active.length} active · ${mineCount ? mineCount + " item" + (mineCount > 1 ? "s" : "") + " waiting on you" : "nothing waiting on you"}</p></div>
+    ${S.agentFilter ? `<div class="note">${ICON.team}<div>Filtered to <b>${P[S.agentFilter].name}</b>'s deal rooms. <button class="btn btn-s" data-act="clearfilter" style="margin-left:8px">Show all</button></div></div>` : ""}
+    <div class="tiles">
+      <div class="tile"><div class="k">Active files</div><div class="v">${active.length}</div><div class="s">${list.length - active.length} registered</div></div>
+      <div class="tile"><div class="k">Pipeline value</div><div class="v">${Rm(active.reduce((n, d) => n + d.meta.price, 0))}</div><div class="s">Across ${active.length} sales</div></div>
+      <div class="tile"><div class="k">Needs attention</div><div class="v" style="color:${active.filter(atRisk).length ? "var(--stop)" : "inherit"}">${active.filter(atRisk).length}</div><div class="s">Stalled or bond date near</div></div>
+      <div class="tile"><div class="k">In lodgement</div><div class="v">${active.filter(d => current(d).n >= 6).length}</div><div class="s">Stage 6 or later</div></div>
+    </div>
+    ${me().role === "agent" ? `<div><button class="btn btn-g" data-act="view" data-v="new">${ICON.plus} Open a new deal room</button></div>` : ""}
+    <div class="deals">${filtered.map(dealCard).join("")}</div>
+    ${filtered.length ? "" : `<div class="empty"><b>No deal rooms yet</b>Open one from a signed offer and invite the parties to it.</div>`}
+  </div>`;
+}
+
+/* ══ View: team overview (principal) ════════════════════════════════ */
+function vTeam(){
+  const all = Object.values(S.deals), active = all.filter(d => !isClosed(d));
+  const byStage = STAGES.map(s => ({ s, deals:active.filter(d => current(d).n === s.n) }));
+  const max = Math.max(1, ...byStage.map(b => b.deals.length));
+  const attention = active.filter(atRisk).sort((a, b) => (bondRisk(a) ?? 99) - (bondRisk(b) ?? 99));
+  const agents = agencyAgents().map(a => {
+    const ds = all.filter(d => d.meta.agent === a), act = ds.filter(d => !isClosed(d));
+    return { a, ds, act, pipeline:act.reduce((n, d) => n + d.meta.price, 0),
+      prog:act.length ? Math.round(act.reduce((n, d) => n + pctOf(d), 0) / act.length) : 0,
+      risk:act.filter(atRisk).length, closed:ds.length - act.length };
+  }).sort((x, y) => y.pipeline - x.pipeline);
+  const avgDays = Math.round(active.reduce((n, d) => n + -daysTo(d.otpDate), 0) / (active.length || 1));
+
+  return `<div class="stack">
+    <div class="sec-h"><h2>Team overview</h2><p>${agents.length} agents · ${active.length} active transfers</p></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Active transfers</div><div class="v">${active.length}</div><div class="s">${all.length - active.length} registered to date</div></div>
+      <div class="tile"><div class="k">Pipeline value</div><div class="v">${Rm(active.reduce((n, d) => n + d.meta.price, 0))}</div><div class="s">Average ${Rm(active.reduce((n, d) => n + d.meta.price, 0) / (active.length || 1))} per sale</div></div>
+      <div class="tile"><div class="k">Needs attention</div><div class="v" style="color:${attention.length ? "var(--stop)" : "inherit"}">${attention.length}</div><div class="s">Stalled or bond date near</div></div>
+      <div class="tile"><div class="k">Average age</div><div class="v">${avgDays} days</div><div class="s">Since offer signed</div></div>
+    </div>
+
+    ${attention.length ? `<div class="card">
+      <div class="card-h" style="color:var(--stop)">${ICON.warn}<h2 style="color:var(--t1)">Files that need a nudge</h2><span class="chip c-stop">${attention.length}</span></div>
+      <div class="card-b">${attention.map(d => { const br = bondRisk(d);
+        return `<div class="act">
+          <span class="stripe" style="background:var(--stop)"></span>
+          <div class="act-t"><b>${esc(d.meta.address)}, ${esc(d.meta.area)}</b>
+            <span>${P[d.meta.agent].name} · ${br !== null && br < 7 ? (br < 0 ? `bond condition lapsed ${Math.abs(br)} days ago` : `bond condition due in ${br} days`) : `no movement in ${Math.round((Date.now() - new Date(lastTouch(d))) / DAY)} days`} · stage ${current(d).n}</span></div>
+          <button class="btn btn-s" data-act="open" data-d="${d.meta.id}">Open file</button>
+        </div>`; }).join("")}</div>
+    </div>` : ""}
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h">${ICON.track}<h2>Where the work is sitting</h2></div>
+        <div class="card-b">
+          <p style="margin:0 0 12px;font-size:12px;color:var(--t2)">Active transfers by stage. Hover a row to see which files.</p>
+          <div class="chart">${byStage.map(b => `
+            <button class="crow" data-empty="${b.deals.length ? 0 : 1}" data-tip="${esc(b.deals.length ? b.deals.map(d => `${d.meta.address} — ${P[d.meta.agent].name.split(" ")[0]}`).join(" • ") : "No files at this stage")}" data-tiptitle="${esc(b.s.n + ". " + b.s.name)}">
+              <span class="cl">${b.s.n}. ${b.s.name}</span>
+              <span class="cbar"><i style="width:${b.deals.length / max * 100}%"></i></span>
+              <span class="cv">${b.deals.length}</span>
+            </button>`).join("")}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">${ICON.log}<h2>Latest movement</h2></div>
+        <div class="card-b" style="padding:6px 16px 14px">
+          ${all.flatMap(d => d.log.slice(0, 2).map(e => ({ ...e, d }))).sort((a, b) => new Date(b.ts) - new Date(a.ts)).slice(0, 6)
+            .map(e => `<div class="act" style="padding:11px 0">
+              <span class="stripe" style="background:${COL(P[e.who].role)}"></span>
+              <div class="act-t"><b>${esc(e.act)}</b><span>${esc(e.d.meta.address)} · ${P[e.who].name.split(" ")[0]} · ${ago(e.ts)}</span></div></div>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.team}<h2>Agents</h2></div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Agent</th><th>Active</th><th>Pipeline</th><th>Average progress</th><th>Attention</th><th>Registered</th><th></th></tr></thead>
+        <tbody>${agents.map(a => `<tr>
+          <td><span class="who-cell">${avatar(a.a, 26)}<b>${P[a.a].name}</b></span></td>
+          <td class="num">${a.act.length}</td>
+          <td class="num">${Rm(a.pipeline)}</td>
+          <td><div style="display:flex;align-items:center;gap:9px"><div class="minibar" style="flex:1"><i style="width:${a.prog}%"></i></div><span class="num" style="font-size:12px;color:var(--t2)">${a.prog}%</span></div></td>
+          <td>${a.risk ? `<span class="chip c-stop">${a.risk} file${a.risk > 1 ? "s" : ""}</span>` : `<span class="chip c-go">Clear</span>`}</td>
+          <td class="num">${a.closed}</td>
+          <td><button class="btn btn-s" data-act="filter" data-p="${a.a}">See deals</button></td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+
+    <div class="note">${ICON.shield}<div><b>Oversight without oversharing.</b> As principal you can see every file's progress, but the purchasers' and sellers' FICA and finance documents stay closed to you — POPIA asks that people only reach the personal information they actually need. Your access is written to each file's audit log like everyone else's.</div></div>
+  </div>`;
+}
+
+/* ══ View: open a new deal room ═════════════════════════════════════ */
+function vNew(){
+  const t = new Date().toISOString().slice(0, 10), b = d0(21).toISOString().slice(0, 10);
+  return `<div class="stack">
+    <div class="sec-h"><h2>Open a new deal room</h2><p>One sale, one room — sealed off from every other file</p></div>
+    <div class="card"><div class="card-b">
+      <form id="newdeal">
+        <div class="subhead">The property</div>
+        <div class="form">
+          <div class="field wide"><label for="f_addr">Street address</label><input type="text" id="f_addr" required placeholder="18 Protea Avenue"></div>
+          <div class="field"><label for="f_area">Suburb</label><input type="text" id="f_area" required placeholder="Faerie Glen"></div>
+          <div class="field"><label for="f_city">Town or city</label><input type="text" id="f_city" required value="Pretoria East"></div>
+          <div class="field"><label for="f_price">Purchase price (R)</label><input type="number" id="f_price" required min="0" step="1000" placeholder="2450000"></div>
+          <div class="field"><label for="f_dep">Deposit (R)</label><input type="number" id="f_dep" min="0" step="1000" placeholder="245000"></div>
+          <div class="field wide"><label for="f_url">Listing link</label><input type="text" id="f_url" placeholder="https://www.rbbrandrealestate.co.za/..."><span class="hint">Optional — the buyer and seller can open the live listing from inside the room.</span></div>
+          <div class="field"><label for="f_otp">Offer signed on</label><input type="date" id="f_otp" value="${t}"></div>
+          <div class="field"><label for="f_bond">Bond condition due</label><input type="date" id="f_bond" value="${b}"><span class="hint">The suspensive date in the OTP.</span></div>
+        </div>
+
+        <div class="subhead">The purchaser</div>
+        <div class="form">
+          <div class="field"><label for="f_bname">Full name</label><input type="text" id="f_bname" required placeholder="Thandi Nkosi"></div>
+          <div class="field"><label for="f_bmob">Mobile</label><input type="tel" id="f_bmob" placeholder="082 000 0000"></div>
+          <div class="field"><label for="f_bmail">Email</label><input type="email" id="f_bmail" placeholder="name@email.co.za"></div>
+        </div>
+
+        <div class="subhead">The seller</div>
+        <div class="form">
+          <div class="field"><label for="f_sname">Full name</label><input type="text" id="f_sname" required placeholder="Pieter en Anna Botha"></div>
+          <div class="field"><label for="f_smob">Mobile</label><input type="tel" id="f_smob" placeholder="082 000 0000"></div>
+          <div class="field"><label for="f_smail">Email</label><input type="email" id="f_smail" placeholder="name@email.co.za"></div>
+        </div>
+
+        <div class="subhead">The transferring attorney</div>
+        <div class="form">
+          <div class="field"><label for="f_cname">Conveyancer</label><input type="text" id="f_cname" required placeholder="Elmarie van Zyl"></div>
+          <div class="field"><label for="f_cfirm">Firm</label><input type="text" id="f_cfirm" placeholder="Van Zyl Kruger Inc., Menlyn"></div>
+          <div class="field"><label for="f_cmail">Email</label><input type="email" id="f_cmail" placeholder="name@firm.co.za"></div>
+        </div>
+
+        <div class="note" style="margin-top:18px">${ICON.shield}<div><b>Nobody is let in yet.</b> Creating the room only sets up the file and its seven stages. The purchaser, seller and attorney see nothing until you send each of them an invitation on the next screen.</div></div>
+        <div class="comp-r" style="margin-top:16px">
+          <button type="submit" class="btn btn-g">${ICON.plus} Create the deal room</button>
+          <button type="button" class="btn" data-act="home">Cancel</button>
+        </div>
+      </form>
+    </div></div>
+  </div>`;
+}
+
+/* ══ View: people & access ══════════════════════════════════════════ */
+function vPeople(){
+  const d = D(), can = myRole() === "agent";
+  const rows = ["buyer", "seller", "conveyancer"].map(r => {
+    const id = d.meta[r], st = d.access[r], link = d.links["join_" + r];
+    return `<div class="person">
+      ${avatar(id, 38)}
+      <div class="pi"><b>${esc(P[id].name)}</b><span>${P[id].kind} · ${esc(P[id].org)}</span>
+        <span class="mono" style="font-size:11px">${esc(P[id].mobile)} · ${esc(P[id].email)}</span></div>
+      ${st === "joined" ? `<span class="chip c-go">${ICON.check} Joined</span>`
+        : st === "invited" ? `<span class="chip c-wait">Invitation sent</span>`
+        : `<span class="chip c-mute">No access</span>`}
+      ${can ? (st === "none" ? `<button class="btn btn-g btn-s" data-act="invite" data-r="${r}">${ICON.send} Send invitation</button>`
+        : st === "invited" ? `<button class="btn btn-s" data-act="joined" data-r="${r}">Simulate: they open the link</button>`
+        : `<button class="btn btn-s" data-act="revoke" data-r="${r}">Revoke access</button>`) : ""}
+      ${link && st === "invited" ? `<div class="joinlink">
+        <div class="eyebrow" style="color:inherit">Personal invitation link — ${esc(P[id].name)}</div>
+        <span class="u mono">https://deal.rbbrand.co.za/join/${d.meta.id}-${link}</span>
+        <span style="color:var(--t2)">Opens this one room only, on this person's device. It cannot be forwarded to anyone else and it expires in 7 days.</span>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+  return `<div class="stack">
+    <div class="sec-h"><h2>People &amp; access</h2><p>Who may open this file — and nothing else</p></div>
+    <div class="card">
+      <div class="card-h">${ICON.people}<h2>${esc(d.meta.address)}</h2><span class="chip c-mute">${d.meta.ref}</span></div>
+      <div class="card-b">
+        <div class="person">
+          ${avatar(d.meta.agent, 38)}
+          <div class="pi"><b>${esc(P[d.meta.agent].name)}</b><span>Agent · ${esc(P[d.meta.agent].org)}</span>
+            <span class="mono" style="font-size:11px">${esc(P[d.meta.agent].mobile)} · ${esc(P[d.meta.agent].email)}</span></div>
+          <span class="chip c-go">${ICON.check} Owner of this file</span>
+        </div>
+        ${rows}
+        <div class="person">
+          ${avatar("riaan", 38)}
+          <div class="pi"><b>${esc(P.riaan.name)}</b><span>Principal · oversight only</span>
+            <span class="mono" style="font-size:11px">Progress and compliance documents · no FICA, no finance</span></div>
+          <span class="chip c-mute">${ICON.eye} Read-only</span>
+        </div>
+      </div>
+    </div>
+    <div class="note">${ICON.shield}<div><b>Access is per deal room, never account-wide.</b> ${esc(P[d.meta.buyer].name)} can open this file and no other — not the agent's other sales, not another buyer's documents. Revoke someone here and their link dies immediately, which is what POPIA expects when a party falls away.</div></div>
+  </div>`;
+}
+
+/* ══ Shared deal partials ═══════════════════════════════════════════ */
+const partyOf = (d, role) => role === "agent" ? d.meta.agent : d.meta[role] || d.meta.agent;
+const ownerChip = (d, role) => `<span class="chip c-mute"><span class="stripe" style="background:${COL(role)};width:3px;height:11px"></span>${P[partyOf(d, role)].kind}</span>`;
+const DOCSTATE = { awaiting:{ cls:"c-wait", txt:"Awaiting upload" }, uploaded:{ cls:"c-gold", txt:"Uploaded" },
+  verified:{ cls:"c-go", txt:"Verified" }, locked:{ cls:"c-go", txt:"Locked" } };
+function taskAction(d, t, live){
+  if (!live) return `<span class="chip c-mute">${ICON.lock} Locked</span>`;
+  if (d.done[t.id]) return `<span class="chip c-go">${ICON.check} Done</span>`;
+  if (t.owner !== myRole()) return `<span class="chip c-wait">Waiting on ${P[partyOf(d, t.owner)].name.split(" ")[0]}</span>`;
+  return t.doc
+    ? `<button class="btn btn-g btn-s" data-act="upload" data-d="${t.doc}" data-t="${t.id}">${ICON.up} Upload</button>`
+    : `<button class="btn btn-p btn-s" data-act="task" data-t="${t.id}">Mark done</button>`;
+}
+
+/* ══ View: deal overview ════════════════════════════════════════════ */
+function vDash(){
+  const d = D(), c = current(d), r = myRole(), closed = isClosed(d);
+  const mine = r ? openFor(d, r) : [], others = c.tasks.filter(t => t.owner !== r && !d.done[t.id]);
+  const br = bondRisk(d), notJoined = Object.entries(d.access).filter(([, v]) => v !== "joined");
+  const est = d0(-daysTo(d.otpDate) * -1 + 0);
+  return `<div class="stack">
+    <div class="sec-h"><h2>${r === "principal" ? "File overview" : "Good day, " + me().name.split(" ")[0]}</h2>
+      <p>${r === "principal" ? "Read-only view for the principal" : mine.length ? `${mine.length} item${mine.length > 1 ? "s" : ""} need${mine.length > 1 ? "" : "s"} you` : "Nothing on your desk in this file"}</p></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Purchase price</div><div class="v">${R(d.meta.price)}</div><div class="s">Offer signed ${dstr(d.otpDate)}</div></div>
+      <div class="tile"><div class="k">Deposit</div><div class="v">${R(d.meta.deposit || 0)}</div><div class="s">${d.docs.dep ? "Received in trust" : "Due to trust account"}</div></div>
+      <div class="tile"><div class="k">In transfer</div><div class="v">${-daysTo(d.otpDate)} days</div><div class="s">${closed ? "Registered" : "Expected " + dstr(d0(-daysTo(d.otpDate) > 92 ? 14 : 92 + daysTo(d.otpDate)))}</div></div>
+      <div class="tile"><div class="k">Progress</div><div class="v">${pctOf(d)}%</div><div class="s">Stage ${c.n} of 7 · ${c.name}</div></div>
+    </div>
+
+    ${closed ? `<div class="card"><div class="card-b" style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <span class="stripe" style="background:var(--go);height:52px"></span>
+      <div style="flex:1;min-width:210px"><div class="eyebrow" style="color:var(--go)">Registered</div>
+        <h3 style="font-size:17px;margin-top:3px">Ownership passed to ${esc(P[d.meta.buyer].name)}</h3>
+        <p style="margin:5px 0 0;font-size:12.5px;color:var(--t2)">Proceeds paid to the seller, keys handed over, file closed. The full record stays available to every party in the audit log.</p></div>
+      <span class="chip c-go">${ICON.key} Keys handed over</span></div></div>` : ""}
+
+    ${notJoined.length && r === "agent" ? `<div class="card"><div class="card-b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">
+      <span class="stripe" style="background:var(--wait);height:38px"></span>
+      <div style="flex:1;min-width:190px"><div class="eyebrow">Access</div>
+        <div style="font-size:13.5px;margin-top:2px">${notJoined.map(([k]) => P[d.meta[k]].name).join(" and ")} ${notJoined.length > 1 ? "have" : "has"} not joined this room yet.</div></div>
+      <button class="btn btn-g btn-s" data-act="view" data-v="people">${ICON.send} Invite them</button></div></div>` : ""}
+
+    ${br !== null && !closed ? `<div class="card"><div class="card-b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">
+      <span class="stripe" style="background:${br < 7 ? "var(--stop)" : "var(--wait)"};height:38px"></span>
+      <div style="flex:1;min-width:190px"><div class="eyebrow">Suspensive condition</div>
+        <div style="font-size:13.5px;margin-top:2px">Bond approval must be confirmed by <b>${dstr(d.bondDue)}</b>, or the sale lapses.</div></div>
+      <span class="chip ${br < 7 ? "c-stop" : "c-wait"}">${br < 0 ? Math.abs(br) + " days overdue" : br + " days left"}</span></div></div>` : ""}
+
+    ${r === "principal" ? "" : `<div class="card">
+      <div class="card-h">${ICON.check}<h2>Your next steps</h2><span class="chip c-mute">Stage ${c.n} · ${c.name}</span></div>
+      <div class="card-b">
+        ${mine.length ? mine.map(t => `<div class="act">
+            <span class="stripe" style="background:${COL(r)}"></span>
+            <div class="act-t"><b>${esc(t.label)}</b><span>${t.doc ? "Adds " + esc(DOC[t.doc].name) + " to the vault" : esc(t.note || "Confirm to advance the file")}</span></div>
+            ${taskAction(d, t, true)}</div>`).join("")
+          : `<div class="empty"><b>You're clear</b>${others.length ? `This stage is waiting on ${[...new Set(others.map(t => P[partyOf(d, t.owner)].name.split(" ")[0]))].join(" and ")}.` : "Every task in this stage is complete."}</div>`}
+      </div></div>`}
+
+    ${others.length && !closed ? `<div class="card">
+      <div class="card-h">${ICON.log}<h2>Waiting on others</h2></div>
+      <div class="card-b">${others.map(t => `<div class="act">
+        <span class="stripe" style="background:${COL(t.owner)}"></span>
+        <div class="act-t"><b>${esc(t.label)}</b><span>${esc(P[partyOf(d, t.owner)].name)} · ${P[partyOf(d, t.owner)].kind}</span></div>
+        ${r === "agent" || r === "conveyancer" ? `<button class="btn btn-s" data-act="nudge" data-t="${t.id}">Send a reminder</button>` : `<span class="chip c-wait">Outstanding</span>`}
+      </div>`).join("")}</div></div>` : ""}
+
+    <div class="grid2">
+      <div class="hero">
+        <div class="hero-img" style="background:${d.meta.hero}"><span class="pill">${esc(d.meta.area)}, ${esc(d.meta.city)}</span></div>
+        <div style="padding:14px 16px">
+          <div class="eyebrow">The property</div>
+          <h3 style="font-size:17px;margin-top:3px">${esc(d.meta.address)}</h3>
+          <p style="margin:6px 0 0;font-size:12.5px;color:var(--t2)">${d.meta.type} · sold by ${esc(P[d.meta.seller].name)} to ${esc(P[d.meta.buyer].name)} · transfer handled by ${esc(d.meta.firm)}.</p>
+          ${d.meta.listing ? `<a class="btn btn-s" style="display:inline-block;margin-top:11px;text-decoration:none" href="${esc(d.meta.listing)}" target="_blank" rel="noopener">View the live listing ↗</a>` : ""}
+        </div>
+        <div class="specs">${d.meta.beds ? `<span><b>${d.meta.beds}</b> beds</span><span><b>${d.meta.baths}</b> baths</span><span><b>${d.meta.garages}</b> garages</span>` : ""}${d.meta.erf ? `<span><b>${d.meta.erf}</b> m² erf</span>` : ""}<span><b>${d.meta.ref}</b></span></div>
+      </div>
+      <div class="card">
+        <div class="card-h">${ICON.log}<h2>Latest activity</h2></div>
+        <div class="card-b" style="padding:6px 16px 14px">
+          ${d.log.slice(0, 5).map(e => `<div class="act" style="padding:11px 0">
+            <span class="stripe" style="background:${COL(P[e.who].role)}"></span>
+            <div class="act-t"><b>${esc(e.act)}</b><span>${P[e.who].name.split(" ")[0]} · ${ago(e.ts)}</span></div></div>`).join("")}
+          <button class="btn btn-s" data-act="view" data-v="log" style="margin-top:12px">Open the full audit log</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ══ View: tracker ══════════════════════════════════════════════════ */
+function vTrack(){
+  const d = D();
+  return `<div class="stack">
+    <div class="sec-h"><h2>Transfer tracker</h2><p>The standard South African sequence, from signature to registration</p></div>
+    <div class="spine">${STAGES.map(s => {
+      const st = stageDone(d, s) ? "done" : s.n === current(d).n ? "now" : "locked";
+      const open = d.open[s.n] ?? (st === "now");
+      const doneN = s.tasks.filter(t => d.done[t.id]).length;
+      return `<div class="stage ${st}">
+        <div class="node"><span class="bead">${st === "done" ? ICON.check : s.n}</span>${s.n < 7 ? '<span class="line"></span>' : ""}</div>
+        <div class="stage-c">
+          <button class="stage-hd" data-act="stage" data-s="${s.n}" aria-expanded="${open}">
+            <h3>${s.name}</h3>
+            ${st === "now" ? '<span class="chip c-gold">In progress</span>' : st === "done" ? '<span class="chip c-go">Complete</span>' : '<span class="chip c-mute">Upcoming</span>'}
+            <span class="chip c-mute mono">${doneN}/${s.tasks.length}</span>
+          </button>
+          <p class="stage-sub">${s.blurb} <span class="mono" style="color:var(--t3)">· typically ${s.days}</span></p>
+          ${open ? `<div class="stage-body">${s.tasks.map(t => `<div class="task ${d.done[t.id] ? "on" : ""}">
+              <span class="tick">${d.done[t.id] ? ICON.check : ""}</span>
+              <div class="tx"><b>${esc(t.label)}</b><span>${ownerChip(d, t.owner)} ${d.done[t.id] && t.doc && d.docs[t.doc] ? "· " + esc(d.docs[t.doc].file) : t.note ? "· " + esc(t.note) : ""}</span></div>
+              ${taskAction(d, t, st === "now")}</div>`).join("")}</div>` : ""}
+        </div></div>`;
+    }).join("")}</div>
+  </div>`;
+}
+
+/* ══ View: vault ════════════════════════════════════════════════════ */
+function vVault(){
+  const d = D(), hidden = DOCS.filter(x => !canSee(d, x)).length, r = myRole();
+  const cats = [...new Set(DOCS.map(x => x.cat))];
+  return `<div class="stack">
+    <div class="sec-h"><h2>Document vault</h2><p>Role-based access · links expire after 15 minutes</p></div>
+    <div class="note">${ICON.shield}<div><b>You are viewing as ${esc(me().name)} (${r === "principal" ? "Principal" : P[S.me].kind}).</b> ${hidden
+      ? `${hidden} document${hidden === 1 ? " is" : "s are"} hidden from this role under POPIA's minimality principle — you can see that they exist and whether they are in, but you cannot open them.`
+      : "As the transferring attorney you may open every document in this file. That wider access is itself recorded in the audit log."}</div></div>
+    ${cats.map(cat => `<div>
+      <div class="eyebrow" style="margin:4px 0 9px">${cat}</div>
+      <div class="docs">${DOCS.filter(x => x.cat === cat).map(x => docCard(d, x)).join("")}</div>
+    </div>`).join("")}
+  </div>`;
+}
+function docCard(d, doc){
+  const st = docState(d, doc.id), rec = d.docs[doc.id], vis = canSee(d, doc), link = d.links[doc.id], r = myRole();
+  if (!vis) return `<div class="doc restricted">
+    <div class="doc-t"><span class="ic">${ICON.lock}</span><div><b>${esc(doc.name)}</b><span>Restricted — ${P[partyOf(d, doc.owner)].kind}'s private file</span></div></div>
+    <div class="doc-f" style="border:0;padding-top:2px">Your role cannot open this document. The status is shared so the deal can move; the file itself is not.</div>
+    <div class="doc-a"><span class="chip ${DOCSTATE[st].cls}">${DOCSTATE[st].txt}</span></div></div>`;
+  return `<div class="doc">
+    <div class="doc-t"><span class="ic">${ICON.file}</span><div><b>${esc(doc.name)}</b><span>${P[partyOf(d, doc.owner)].kind} provides · stage ${doc.stage}</span></div></div>
+    ${rec ? `<div class="doc-f mono">${esc(rec.file)}<br>${esc(rec.size)} · uploaded ${ago(rec.ts)} by ${P[rec.by] ? P[rec.by].name.split(" ")[0] : "party"}</div>` : ""}
+    <div class="doc-a">
+      <span class="chip ${DOCSTATE[st].cls}">${st === "locked" ? ICON.lock : ""} ${DOCSTATE[st].txt}</span>
+      ${st === "awaiting" && doc.owner === r && doc.stage === current(d).n ? `<button class="btn btn-g btn-s" data-act="upload" data-d="${doc.id}">${ICON.up} Upload</button>` : ""}
+      ${rec && !rec.verified && (r === "agent" || r === "conveyancer") && st !== "locked" ? `<button class="btn btn-s" data-act="verify" data-d="${doc.id}">${ICON.check} Verify</button>` : ""}
+      ${rec ? `<button class="btn btn-s" data-act="link" data-d="${doc.id}">${ICON.eye} Secure link</button>` : ""}
+    </div>
+    ${link ? `<div class="link-box">
+      <div class="eyebrow" style="color:inherit">Temporary access link</div>
+      <span class="u mono">https://vault.rbbrand.co.za/${d.meta.id}/${doc.id}?sig=${link.sig}</span>
+      <span class="mono cd" data-cd="${doc.id}">15:00</span> <span style="color:var(--t2)">until this link expires · single use · view logged</span>
+    </div>` : ""}
+  </div>`;
+}
+
+/* ══ View: messages ═════════════════════════════════════════════════ */
+function vChat(){
+  const d = D(), r = myRole();
+  const tagLabel = t => !t ? "" : t.k === "stage" ? `${ICON.tag} Stage ${t.v} — ${STAGES[t.v - 1].name}` : `${ICON.tag} ${esc(DOC[t.v] ? DOC[t.v].name : t.v)}`;
+  const others = ["agent", "buyer", "seller", "conveyancer"].filter(x => x !== r).map(x => P[partyOf(d, x)].name.split(" ")[0]);
+  return `<div class="stack">
+    <div class="sec-h"><h2>Deal room</h2><p>${["agent", "buyer", "seller"].map(x => P[partyOf(d, x)].name.split(" ")[0]).join(" · ")}, with ${P[d.meta.conveyancer].name.split(" ")[0]} linked in from the attorney</p></div>
+    <div class="card"><div class="card-b">
+      ${d.msgs.map(m => `<div class="msg">${avatar(m.by, 34)}
+        <div class="msg-b">
+          <div class="msg-h"><b>${esc(P[m.by].name)}</b><span class="chip c-mute">${P[m.by].kind}</span><span class="tm mono">${ago(m.ts)}</span></div>
+          <p class="msg-x">${esc(m.body)}</p>
+          ${m.tag ? `<span class="tagref">${tagLabel(m.tag)}</span>` : ""}
+        </div></div>`).join("")}
+      <div class="comp">
+        <textarea id="composer" placeholder="Write to ${others.join(", ")}…" aria-label="Your message"></textarea>
+        <div class="comp-r">
+          ${avatar(S.me, 26)}<span style="font-size:12px;color:var(--t2)">Posting as <b style="color:var(--t1)">${esc(me().name)}</b></span>
+          <select id="tagsel" aria-label="Tag this message">
+            <option value="">No tag</option>
+            ${STAGES.map(s => `<option value="stage:${s.n}">Stage ${s.n} — ${s.name}</option>`).join("")}
+            ${DOCS.filter(x => canSee(d, x)).map(x => `<option value="doc:${x.id}">Doc — ${x.name}</option>`).join("")}
+          </select>
+          <span style="flex:1"></span>
+          <button class="btn btn-p" data-act="post">Send to the deal room</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="note">${ICON.shield}<div><b>One thread, not four.</b> Every message here is visible to all parties in <em>this</em> file only, tagged to the stage or document it belongs to — so nothing important lives in a private chat that cannot be produced later.</div></div>
+  </div>`;
+}
+
+/* ══ View: audit log ════════════════════════════════════════════════ */
+function vLog(){
+  const d = D();
+  return `<div class="stack">
+    <div class="sec-h"><h2>Audit log</h2><p>${d.log.length} entries for ${esc(d.meta.address)} · append-only</p></div>
+    <div class="note">${ICON.shield}<div><b>Append-only, per file.</b> Every upload, verification, sign-off, document view, invitation and message in this room is written here with the actor and a timestamp. Entries cannot be edited or deleted by any party, and no other deal room can see them.</div></div>
+    <div class="log">${d.log.map(e => `<div class="logrow">
+      <span class="ts mono">${stampf(e.ts)}</span>
+      <span class="who" style="color:${COL(P[e.who].role)}">${esc(P[e.who].name.split(" ")[0])}</span>
+      <span><b style="font-weight:600">${esc(e.act)}</b>${e.det ? ` — <span style="color:var(--t2)">${esc(e.det)}</span>` : ""}</span>
+    </div>`).join("")}</div>
+  </div>`;
+}
+
+/* ══ Render ═════════════════════════════════════════════════════════ */
+const RENDER = { portfolio:vPortfolio, team:vTeam, new:vNew, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+function render(){
+  if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
+  if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
+  if (S.deal && !DEAL_VIEWS.some(v => v.id === S.view)) S.view = "dash";
+  if (!S.deal && S.view === "team" && me().role !== "principal") S.view = "portfolio";
+  if (!S.deal && S.view === "new" && me().role !== "agent") S.view = "portfolio";
+  renderChrome();
+  document.getElementById("view").innerHTML = RENDER[S.view]();
+  renderPop();
+  save();
+}
+
+/* ══ Actions ════════════════════════════════════════════════════════ */
+const fileInput = Object.assign(document.createElement("input"), { type:"file", accept:".pdf,.jpg,.jpeg,.png,.heic", hidden:true });
+document.body.appendChild(fileInput);
+let pending = null;
+fileInput.addEventListener("change", () => {
+  const f = fileInput.files && fileInput.files[0];
+  if (f && pending) storeDoc(pending.doc, pending.task, f.name, f.size);
+  fileInput.value = ""; pending = null;
+});
+function storeDoc(docId, taskId, name, size){
+  const d = D(), doc = DOC[docId];
+  d.docs[docId] = { file:name, size:size / 1024 > 1024 ? (size / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(size / 1024)) + " KB",
+    by:S.me, ts:new Date().toISOString(), verified:false };
+  const t = taskId ? TASK[taskId] : ALL_TASKS.find(x => x.doc === docId);
+  if (t) markDone(d, t.id, true);
+  logit(d, "Document uploaded", `${doc.name} · ${name} · visible to ${doc.see.map(r => r === "principal" ? "Principal" : P[partyOf(d, r)].kind).join(", ")}`);
+  toast(`${doc.name} added to this file`);
+  render();
+}
+function markDone(d, id, quiet){
+  const t = TASK[id];
+  d.done[id] = true;
+  if (!quiet) logit(d, "Task completed", `Stage ${t.stage} · ${t.label}`);
+  const s = STAGES[t.stage - 1];
+  if (stageDone(d, s)){
+    logit(d, "Stage complete", `${s.name} — documents from this stage are now locked`);
+    if (!quiet) toast(s.n < 7 ? `Stage ${s.n} complete — ${STAGES[s.n].name} is now open` : "Registered. Transfer complete.");
+  } else if (!quiet) toast("Marked done");
+}
+function createDeal(f){
+  const id = "n" + Date.now(), mk = (base, name, mobile, email, kind, role) => {
+    const pid = base + id; S.people[pid] = P[pid] = { name, ini:name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), kind, role, org:kind === "Conveyancer" ? (f.cfirm || "Transferring attorney") : kind === "Buyer" ? "Purchaser" : "Registered owner", mobile:mobile || "—", email:email || "—" };
+    return pid;
+  };
+  const meta = { id, ref:"PTA-" + (S.nextRef++), file:"NEW/T/" + String(S.nextRef).slice(-4),
+    address:f.addr, area:f.area, city:f.city, price:+f.price || 0, deposit:+f.dep || 0,
+    beds:0, baths:0, garages:0, erf:null, type:"Property", firm:f.cfirm || "Transferring attorney",
+    listing:f.url || "", agent:S.me, hero:"linear-gradient(145deg,#14243F,#3C5C8A)",
+    buyer:mk("b_", f.bname, f.bmob, f.bmail, "Buyer", "buyer"),
+    seller:mk("s_", f.sname, f.smob, f.smail, "Seller", "seller"),
+    conveyancer:mk("c_", f.cname, "", f.cmail, "Conveyancer", "conveyancer") };
+  S.deals[id] = { meta, done:{}, docs:{}, links:{}, msgs:[], open:{}, seen:{},
+    access:{ buyer:"none", seller:"none", conveyancer:"none" },
+    otpDate:new Date(f.otp || Date.now()).toISOString(), bondDue:f.bond ? new Date(f.bond).toISOString() : null,
+    log:[{ ts:new Date().toISOString(), who:S.me, act:"Deal room opened", det:`${f.addr}, ${f.area} · ${meta.ref}` }] };
+  S.deal = id; S.view = "people";
+  toast("Deal room created — now invite the parties");
+  render();
+}
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn){ if (popOpen && !e.target.closest("#rolebtn")){ popOpen = false; document.getElementById("rolebtn").setAttribute("aria-expanded", "false"); renderPop(); } return; }
+  const a = btn.dataset.act, d = D();
+
+  if (a === "view"){ S.view = btn.dataset.v; if (S.view === "chat" && d) d.seen[S.me] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
+  else if (a === "home"){ S.deal = null; S.agentFilter = null; S.view = homeView(); render(); window.scrollTo({ top:0 }); }
+  else if (a === "open"){ S.deal = btn.dataset.d; S.view = "dash"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "filter"){ S.agentFilter = btn.dataset.p; S.view = "portfolio"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "clearfilter"){ S.agentFilter = null; render(); }
+  else if (a === "signin"){
+    S.me = btn.dataset.p; popOpen = false;
+    document.getElementById("rolebtn").setAttribute("aria-expanded", "false");
+    if (S.deal && !roleIn(S.deals[S.deal], S.me)) { S.deal = null; S.view = homeView(); }
+    else if (S.deal) { if (S.view === "chat") S.deals[S.deal].seen[S.me] = new Date().toISOString(); }
+    else S.view = homeView();
+    S.agentFilter = null;
+    toast(`Now signed in as ${me().name} — ${me().kind}`);
+    render();
+  }
+  else if (a === "stage"){ const n = +btn.dataset.s; d.open[n] = !(d.open[n] ?? (current(d).n === n)); render(); }
+  else if (a === "task"){ markDone(d, btn.dataset.t); render(); }
+  else if (a === "upload"){ pending = { doc:btn.dataset.d, task:btn.dataset.t }; fileInput.click(); }
+  else if (a === "verify"){ const doc = DOC[btn.dataset.d]; d.docs[doc.id].verified = true;
+    logit(d, "Document verified", `${doc.name} checked and accepted`); toast(`${doc.name} verified`); render(); }
+  else if (a === "link"){ const doc = DOC[btn.dataset.d];
+    d.links[doc.id] = { sig:token(), until:Date.now() + 9e5 };
+    logit(d, "Secure link issued", `${doc.name} · expires in 15 minutes · single use`);
+    toast("Temporary link created — expires in 15 minutes"); render(); }
+  else if (a === "invite"){ const r = btn.dataset.r;
+    d.access[r] = "invited"; d.links["join_" + r] = token();
+    logit(d, "Invitation sent", `${P[d.meta[r]].name} (${P[d.meta[r]].kind}) invited to this deal room only`);
+    toast(`Invitation sent to ${P[d.meta[r]].name.split(" ")[0]}`); render(); }
+  else if (a === "joined"){ const r = btn.dataset.r;
+    d.access[r] = "joined";
+    logit(d, "Party joined", `${P[d.meta[r]].name} accepted the invitation and opened the room`);
+    toast(`${P[d.meta[r]].name.split(" ")[0]} has joined`); render(); }
+  else if (a === "revoke"){ const r = btn.dataset.r;
+    if (!confirm(`Revoke ${P[d.meta[r]].name}'s access to this deal room?`)) return;
+    d.access[r] = "none"; delete d.links["join_" + r];
+    logit(d, "Access revoked", `${P[d.meta[r]].name} can no longer open this room`);
+    if (S.me === d.meta[r]) { S.deal = null; S.view = homeView(); }
+    toast("Access revoked"); render(); }
+  else if (a === "nudge"){ const t = TASK[btn.dataset.t], who = partyOf(d, t.owner);
+    d.msgs.push({ id:"m" + Date.now(), by:S.me, ts:new Date().toISOString(), tag:{ k:"stage", v:t.stage },
+      body:`${P[who].name.split(" ")[0]}, a friendly reminder about this one: ${t.label.charAt(0).toLowerCase() + t.label.slice(1)}. It is the item holding up stage ${t.stage}. Shout if anything is unclear and I'll walk you through it.` });
+    d.seen[S.me] = new Date().toISOString();
+    logit(d, "Reminder sent", `${P[who].name} · ${t.label}`);
+    toast(`Reminder posted for ${P[who].name.split(" ")[0]}`); render(); }
+  else if (a === "post"){
+    const ta = document.getElementById("composer"), body = ta.value.trim();
+    if (!body){ ta.focus(); toast("Write something first"); return; }
+    const raw = document.getElementById("tagsel").value;
+    const tag = raw ? { k:raw.split(":")[0], v:raw.split(":")[0] === "stage" ? +raw.split(":")[1] : raw.split(":")[1] } : null;
+    d.msgs.push({ id:"m" + Date.now(), by:S.me, ts:new Date().toISOString(), body, tag });
+    d.seen[S.me] = new Date().toISOString();
+    logit(d, "Message posted", tag ? (tag.k === "stage" ? `Tagged to stage ${tag.v}` : `Tagged to ${DOC[tag.v].name}`) : "Deal room thread");
+    toast("Posted to the deal room"); render(); }
+  else if (a === "reset"){
+    if (confirm("Reset the demo? Every deal room goes back to how it started, and any room you created is removed.")){
+      S = fresh(); render(); toast("Demo reset"); }
+  }
+});
+document.getElementById("rolebtn").addEventListener("click", e => {
+  e.stopPropagation(); popOpen = !popOpen;
+  e.currentTarget.setAttribute("aria-expanded", String(popOpen)); renderPop();
+});
+document.addEventListener("submit", e => {
+  if (e.target.id !== "newdeal") return;
+  e.preventDefault();
+  const g = id => (document.getElementById(id) || {}).value || "";
+  createDeal({ addr:g("f_addr"), area:g("f_area"), city:g("f_city"), price:g("f_price"), dep:g("f_dep"), url:g("f_url"),
+    otp:g("f_otp"), bond:g("f_bond"), bname:g("f_bname"), bmob:g("f_bmob"), bmail:g("f_bmail"),
+    sname:g("f_sname"), smob:g("f_smob"), smail:g("f_smail"), cname:g("f_cname"), cfirm:g("f_cfirm"), cmail:g("f_cmail") });
+  window.scrollTo({ top:0 });
+});
+
+/* ══ Chart tooltip ══════════════════════════════════════════════════ */
+let tipEl = null;
+function showTip(el){
+  hideTip();
+  tipEl = document.createElement("div");
+  tipEl.className = "tip";
+  tipEl.innerHTML = `<b>${esc(el.dataset.tiptitle)}</b>${esc(el.dataset.tip)}`;
+  document.body.appendChild(tipEl);
+  const r = el.getBoundingClientRect(), t = tipEl.getBoundingClientRect();
+  tipEl.style.left = Math.max(8, Math.min(window.innerWidth - t.width - 8, r.left)) + "px";
+  tipEl.style.top = (r.top - t.height - 8 < 8 ? r.bottom + 8 : r.top - t.height - 8) + "px";
+}
+function hideTip(){ if (tipEl){ tipEl.remove(); tipEl = null; } }
+document.addEventListener("mouseover", e => { const c = e.target.closest("[data-tip]"); if (c) showTip(c); });
+document.addEventListener("mouseout", e => { if (e.target.closest("[data-tip]")) hideTip(); });
+document.addEventListener("focusin", e => { const c = e.target.closest("[data-tip]"); if (c) showTip(c); });
+document.addEventListener("focusout", hideTip);
+window.addEventListener("scroll", hideTip, { passive:true });
+
+/* ══ Link countdown ═════════════════════════════════════════════════ */
+setInterval(() => {
+  const d = D(); if (!d) return;
+  document.querySelectorAll("[data-cd]").forEach(el => {
+    const l = d.links[el.dataset.cd]; if (!l) return;
+    const left = Math.floor((l.until - Date.now()) / 1000);
+    if (left <= 0){ el.textContent = "Link expired"; el.classList.add("exp"); return; }
+    el.textContent = String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(left % 60).padStart(2, "0");
+  });
+}, 1000);
+
+render();
+</script>

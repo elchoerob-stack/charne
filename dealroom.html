@@ -1,0 +1,860 @@
+<title>Charné Deal Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#0F2040; --ink-2:#1B2E52; --gold:#C49A2F; --gold-soft:#F2E7CC;
+  --paper:#F7F5F1; --surface:#FFFFFF; --surface-2:#FBFAF7; --line:#E5E0D8; --line-2:#D6CFC2;
+  --t1:#16203A; --t2:#4E5468; --t3:#7C7A78;
+  --go:#1A6B3A; --go-bg:#E9F3EC; --wait:#8A6100; --wait-bg:#FBF1DC; --stop:#8B1A1A; --stop-bg:#F8EAEA;
+  --chrome:#0F2040; --chrome-t:#FFFFFF; --chrome-t2:rgba(255,255,255,.62); --chrome-line:rgba(255,255,255,.14);
+  --shadow:0 1px 2px rgba(15,32,64,.05), 0 8px 24px -12px rgba(15,32,64,.18);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0A1122; --surface:#111B31; --surface-2:#16223B; --line:#22304C; --line-2:#2C3C5C;
+    --t1:#ECE9E2; --t2:#A9B2C6; --t3:#7C879E; --gold-soft:#3A2F14;
+    --go:#5FBF87; --go-bg:#12301F; --wait:#D9A93C; --wait-bg:#332715; --stop:#E28080; --stop-bg:#331919;
+    --chrome:#101C36; --chrome-line:rgba(255,255,255,.10);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0A1122; --surface:#111B31; --surface-2:#16223B; --line:#22304C; --line-2:#2C3C5C;
+  --t1:#ECE9E2; --t2:#A9B2C6; --t3:#7C879E; --gold-soft:#3A2F14;
+  --go:#5FBF87; --go-bg:#12301F; --wait:#D9A93C; --wait-bg:#332715; --stop:#E28080; --stop-bg:#331919;
+  --chrome:#101C36; --chrome-line:rgba(255,255,255,.10);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--t1);font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:Spectral,Georgia,"Times New Roman",serif;font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── Chrome ─────────────────────────────── */
+.bar{position:sticky;top:0;z-index:40;background:var(--chrome);color:var(--chrome-t);border-bottom:1px solid var(--chrome-line)}
+.bar-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:32px;height:32px;border-radius:7px;background:linear-gradient(150deg,var(--gold),#8E6B14);display:grid;place-items:center;font-family:Spectral,serif;font-weight:700;color:#0F2040;font-size:15px;flex:none}
+.brand-t{min-width:0}
+.brand-t b{display:block;font-family:Spectral,serif;font-weight:600;font-size:15px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-t span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-t2)}
+.bar-sp{flex:1}
+.rolebtn{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.07);border:1px solid var(--chrome-line);border-radius:999px;padding:5px 12px 5px 5px;color:var(--chrome-t)}
+.rolebtn:hover{background:rgba(255,255,255,.13)}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#0F2040;flex:none;letter-spacing:.02em}
+.rolebtn .rt{text-align:left;line-height:1.15}
+.rolebtn .rt b{display:block;font-size:12.5px;font-weight:600}
+.rolebtn .rt span{display:block;font-size:10px;color:var(--chrome-t2);letter-spacing:.08em;text-transform:uppercase}
+.caret{opacity:.6}
+.pop{position:absolute;top:56px;right:16px;z-index:60;width:296px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.pop-h{padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.pop-i{display:flex;gap:11px;align-items:center;width:100%;padding:11px 14px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left}
+.pop-i:last-child{border-bottom:0}
+.pop-i:hover{background:var(--surface-2)}
+.pop-i[aria-current="true"]{background:var(--gold-soft)}
+.pop-i .n{flex:1;min-width:0}
+.pop-i .n b{display:block;font-size:13px;font-weight:600}
+.pop-i .n span{display:block;font-size:11px;color:var(--t2)}
+.dot-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--stop-bg);color:var(--stop);font-size:11px;font-weight:700;display:grid;place-items:center}
+.dot-0{background:var(--go-bg);color:var(--go)}
+
+/* ── Deal strip ─────────────────────────── */
+.strip{background:var(--chrome);color:var(--chrome-t);border-bottom:1px solid var(--chrome-line)}
+.strip-in{max-width:1180px;margin:0 auto;padding:0 16px 14px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px}
+.strip h1{font-size:21px;color:#fff}
+.strip .ref{font-size:11px;color:var(--chrome-t2);letter-spacing:.06em}
+.prog{flex:1;min-width:220px}
+.prog-l{display:flex;justify-content:space-between;font-size:11px;color:var(--chrome-t2);margin-bottom:5px}
+.track{height:5px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#E4C878);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ── Shell ──────────────────────────────── */
+.shell{max-width:1180px;margin:0 auto;padding:20px 16px 96px;display:grid;grid-template-columns:216px 1fr;gap:26px;align-items:start}
+.rail{position:sticky;top:60px;display:flex;flex-direction:column;gap:2px}
+.rail button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;background:none;border:0;border-radius:8px;color:var(--t2);font-size:13.5px;font-weight:500;text-align:left}
+.rail button:hover{background:var(--surface);color:var(--t1)}
+.rail button[aria-current="true"]{background:var(--surface);color:var(--t1);font-weight:600;box-shadow:var(--shadow)}
+.rail button[aria-current="true"] svg{color:var(--gold)}
+.rail .cnt{margin-left:auto;font-size:11px;font-weight:600;color:var(--t3);font-family:"IBM Plex Mono",monospace}
+.rail-note{margin-top:14px;padding:11px;border:1px dashed var(--line-2);border-radius:9px;font-size:11px;color:var(--t3);line-height:1.45}
+.tabs{display:none}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr;padding:16px 12px 84px;gap:0}
+  .rail{display:none}
+  .tabs{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 9px;background:none;border:0;color:var(--t3);font-size:10px;font-weight:600;position:relative}
+  .tabs button[aria-current="true"]{color:var(--gold)}
+  .tabs .cnt{position:absolute;top:4px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:99px;background:var(--stop);color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+  .strip h1{font-size:18px}
+  .strip .ref{font-size:10.5px}
+  .sec-h{flex-direction:column;gap:1px;align-items:flex-start;margin-bottom:14px}
+}
+@media (max-width:560px){
+  .brand-t{display:none}
+  .rolebtn .rt b{max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+
+/* ── Cards ──────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-h{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card-h h2{font-size:16px;flex:1;min-width:0}
+.card-b{padding:16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin:2px 0 12px}
+.sec-h h2{font-size:19px}
+.sec-h p{margin:0;font-size:12.5px;color:var(--t2)}
+
+/* ── Chips / states ─────────────────────── */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2.5px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.c-go{background:var(--go-bg);color:var(--go)}
+.c-wait{background:var(--wait-bg);color:var(--wait)}
+.c-stop{background:var(--stop-bg);color:var(--stop)}
+.c-mute{background:var(--surface-2);color:var(--t3);border:1px solid var(--line)}
+.c-gold{background:var(--gold-soft);color:#8A6100}
+:root[data-theme="dark"] .c-gold,:root:not([data-theme="light"]) .c-gold{color:var(--gold)}
+.stripe{width:3px;border-radius:99px;align-self:stretch;flex:none}
+
+/* ── Tiles ──────────────────────────────── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px}
+.tile .k{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.tile .v{font-family:Spectral,serif;font-size:22px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:11.5px;color:var(--t2);margin-top:2px}
+
+/* ── Action list ────────────────────────── */
+.act{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line)}
+.act:last-child{border-bottom:0;padding-bottom:0}
+.act:first-child{padding-top:0}
+.act-t{flex:1;min-width:0}
+.act-t b{display:block;font-size:13.5px;font-weight:600}
+.act-t span{display:block;font-size:12px;color:var(--t2);margin-top:1px}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--gold);color:#8A6100}
+:root[data-theme="dark"] .btn:hover,:root:not([data-theme="light"]) .btn:hover{color:var(--gold)}
+.btn-p{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-p:hover{background:var(--ink-2);color:#fff;border-color:var(--ink-2)}
+:root[data-theme="dark"] .btn-p,:root:not([data-theme="light"]) .btn-p{background:var(--gold);color:#10182B;border-color:var(--gold)}
+.btn-g{background:var(--gold);color:#10182B;border-color:var(--gold)}
+.btn-g:hover{color:#10182B;filter:brightness(1.07)}
+.btn-s{padding:5px 10px;font-size:11.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.empty{text-align:center;padding:26px 16px;color:var(--t2);font-size:13px}
+.empty b{display:block;font-family:Spectral,serif;font-size:15px;color:var(--t1);margin-bottom:3px}
+
+/* ── Stage spine ────────────────────────── */
+.spine{display:flex;flex-direction:column}
+.stage{display:grid;grid-template-columns:34px 1fr;gap:14px}
+.node{display:flex;flex-direction:column;align-items:center}
+.bead{width:30px;height:30px;border-radius:50%;border:2px solid var(--line-2);background:var(--surface);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--t3);font-family:"IBM Plex Mono",monospace;flex:none;z-index:1}
+.stage.done .bead{background:var(--go);border-color:var(--go);color:#fff}
+.stage.now .bead{border-color:var(--gold);color:#8A6100;box-shadow:0 0 0 4px var(--gold-soft)}
+:root[data-theme="dark"] .stage.now .bead,:root:not([data-theme="light"]) .stage.now .bead{color:var(--gold)}
+.line{flex:1;width:2px;background:var(--line);margin:4px 0}
+.stage.done .line{background:var(--go)}
+.stage-c{padding-bottom:16px;min-width:0}
+.stage-hd{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:4px 0 0;text-align:left}
+.stage-hd h3{font-size:15.5px;flex:1;min-width:0}
+.stage.locked .stage-hd h3{color:var(--t3)}
+.stage-sub{font-size:12px;color:var(--t2);margin:3px 0 0}
+.stage-body{margin-top:11px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.task{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:0}
+.tick{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line-2);background:var(--surface);display:grid;place-items:center;flex:none;margin-top:1px;padding:0}
+.task.on .tick{background:var(--go);border-color:var(--go);color:#fff}
+.task .tx{flex:1;min-width:0}
+.task .tx b{display:block;font-size:13px;font-weight:600}
+.task.on .tx b{color:var(--t2)}
+.task .tx span{display:block;font-size:11.5px;color:var(--t3);margin-top:2px}
+.owner{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── Vault ──────────────────────────────── */
+.docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
+.doc{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:13px 14px;display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden}
+.doc.restricted{background:repeating-linear-gradient(135deg,var(--surface-2),var(--surface-2) 9px,var(--surface) 9px,var(--surface) 18px);border-style:dashed}
+.doc-t{display:flex;gap:9px;align-items:flex-start}
+.doc-t .ic{width:30px;height:30px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--t3);flex:none}
+.doc-t b{display:block;font-size:13px;font-weight:600;line-height:1.3}
+.doc-t span{display:block;font-size:11px;color:var(--t3);margin-top:2px}
+.doc-f{font-size:11px;color:var(--t2);border-top:1px dashed var(--line);padding-top:8px;word-break:break-all}
+.doc-a{display:flex;gap:7px;margin-top:auto;flex-wrap:wrap}
+.link-box{border:1px solid var(--gold);background:var(--gold-soft);border-radius:8px;padding:9px 11px;font-size:11px}
+:root[data-theme="dark"] .link-box,:root:not([data-theme="light"]) .link-box{background:#241D0C}
+.link-box .u{display:block;word-break:break-all;color:var(--t2);margin:4px 0 6px;font-size:10.5px;line-height:1.4}
+.cd{font-weight:700;color:#8A6100}
+:root[data-theme="dark"] .cd,:root:not([data-theme="light"]) .cd{color:var(--gold)}
+.cd.exp{color:var(--stop)}
+
+/* ── Thread ─────────────────────────────── */
+.msg{display:flex;gap:11px;padding:14px 0;border-bottom:1px solid var(--line)}
+.msg:last-of-type{border-bottom:0}
+.msg-b{flex:1;min-width:0}
+.msg-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.msg-h b{font-size:13px;font-weight:600}
+.msg-h .tm{font-size:10.5px;color:var(--t3)}
+.msg-x{font-size:13.5px;color:var(--t1);margin:4px 0 0;white-space:pre-wrap}
+.tagref{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);font-size:11px;color:var(--t2);font-weight:500}
+.comp{border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+textarea,select,input[type=text]{width:100%;font:inherit;font-size:13.5px;color:var(--t1);background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:10px 11px}
+textarea{resize:vertical;min-height:74px}
+.comp-r{display:flex;gap:9px;align-items:center;margin-top:9px;flex-wrap:wrap}
+select{width:auto;max-width:100%;padding:7px 10px;font-size:12.5px}
+
+/* ── Audit ──────────────────────────────── */
+.log{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.logrow{display:grid;grid-template-columns:132px 92px 1fr;gap:12px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:12px;background:var(--surface)}
+.logrow:nth-child(even){background:var(--surface-2)}
+.logrow:last-child{border-bottom:0}
+.logrow .ts{color:var(--t3);font-size:11px}
+.logrow .who{font-weight:600;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.logrow{grid-template-columns:1fr;gap:2px}.logrow .ts{order:3}}
+
+/* ── Property ───────────────────────────── */
+.hero{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.hero-img{height:170px;position:relative;display:flex;align-items:flex-end;padding:14px;overflow:hidden;
+  background:linear-gradient(145deg,#0C2E18 0%,#1E6B3E 55%,#2E8B57 100%)}
+.hero-img::before{content:"";position:absolute;inset:0;opacity:.20;
+  background-image:linear-gradient(135deg,rgba(255,255,255,.9) 1px,transparent 1px),linear-gradient(225deg,rgba(255,255,255,.9) 1px,transparent 1px);
+  background-size:46px 46px;background-position:0 12px}
+.hero-img::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 78% 8%,rgba(196,154,47,.34),transparent 62%)}
+.hero-img .pill{position:relative;z-index:1}
+.hero-img .pill{background:rgba(15,32,64,.72);color:#fff;border-radius:999px;padding:4px 11px;font-size:11px;font-weight:600;backdrop-filter:blur(4px)}
+.specs{display:flex;gap:18px;flex-wrap:wrap;padding:13px 16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--t2)}
+.specs b{color:var(--t1);font-weight:600}
+
+/* ── Misc ───────────────────────────────── */
+.note{display:flex;gap:10px;padding:11px 13px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);font-size:12px;color:var(--t2);line-height:1.5}
+.note b{color:var(--t1)}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);z-index:80;background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:12.5px;font-weight:500;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+:root[data-theme="dark"] .toast,:root:not([data-theme="light"]) .toast{background:var(--gold);color:#10182B}
+.foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;font-size:11px;color:var(--t3);line-height:1.6}
+.foot a{color:var(--t2)}
+svg{display:block}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <div class="mark">RB</div>
+      <div class="brand-t"><b>Deal Room</b><span>RB Brand Real Estate</span></div>
+    </div>
+    <div class="bar-sp"></div>
+    <button class="rolebtn" id="rolebtn" aria-haspopup="menu" aria-expanded="false">
+      <span class="av" id="roleav">CS</span>
+      <span class="rt"><b id="rolename">Charné Snyman</b><span id="rolekind">Agent</span></span>
+      <svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="strip">
+  <div class="strip-in">
+    <div>
+      <h1>34 Heron Street, Olympus AH</h1>
+      <div class="ref mono">DEAL PTA-2501216 · Erf 481 · Transfer file VZK/T/4471</div>
+    </div>
+    <div class="prog">
+      <div class="prog-l"><span id="proglabel">Stage 1 of 7 — OTP &amp; FICA</span><span class="mono" id="progpct">0%</span></div>
+      <div class="track"><i id="progbar" style="width:0%"></i></div>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="rail" id="rail"></nav>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" id="tabs"></nav>
+<footer class="foot" id="foot"></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ══ Icons ══════════════════════════════════════════════════════════ */
+const I = (d, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON = {
+  home:  I('<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/>'),
+  track: I('<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M11 6h9"/><path d="M11 18h9"/>'),
+  vault: I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><circle cx="12" cy="14" r="2.5"/>'),
+  chat:  I('<path d="M20 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/>'),
+  log:   I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),
+  check: I('<path d="M4 12.5 9.5 18 20 6.5"/>', 13),
+  lock:  I('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>', 14),
+  eye:   I('<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/>', 14),
+  up:    I('<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/><path d="M4 21h16"/>', 14),
+  tag:   I('<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.2"/>', 13),
+  shield:I('<path d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>', 14),
+  file:  I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>', 15),
+  key:   I('<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8 3 3-2 2-2-2-3 3"/>', 14),
+};
+
+/* ══ Deal data ══════════════════════════════════════════════════════ */
+const PARTIES = {
+  agent:       { id:"agent", name:"Charné Snyman",  short:"Charné",  kind:"Agent",        org:"RB Brand Real Estate",  ini:"CS", col:"#C49A2F" },
+  buyer:       { id:"buyer", name:"Thabo Mokoena",  short:"Thabo",   kind:"Buyer",        org:"Purchaser",             ini:"TM", col:"#3A6EA5" },
+  seller:      { id:"seller",name:"Marietjie du Toit",short:"Marietjie",kind:"Seller",    org:"Registered owner",      ini:"MT", col:"#2E8B57" },
+  conveyancer: { id:"conveyancer", name:"Elmarie van Zyl", short:"Elmarie", kind:"Conveyancer", org:"Van Zyl Kruger Inc., Menlyn", ini:"EV", col:"#7B3068" },
+};
+const ORDER = ["agent","buyer","seller","conveyancer"];
+
+const PROPERTY = {
+  title:"Heron Hill Family Home", area:"Olympus AH", city:"Pretoria East",
+  price:2990000, deposit:299000, bond:2691000, beds:3, baths:2, garages:2, erf:481, floor:170,
+  url:"https://www.rbbrandrealestate.co.za/olympus-ah-house-for-sale-2501216",
+  otpDate:"2026-07-14", bondDue:"2026-08-15", occupation:"2026-11-01",
+};
+
+const DOCS = [
+  { id:"otp",    name:"Offer to Purchase (signed)",  cat:"Contract",   owner:"agent",  see:["agent","buyer","seller","conveyancer"], stage:1, req:true },
+  { id:"b_id",   name:"Buyer — ID document",         cat:"FICA",       owner:"buyer",  see:["agent","buyer","conveyancer"],          stage:1, req:true },
+  { id:"b_poa",  name:"Buyer — proof of address",    cat:"FICA",       owner:"buyer",  see:["agent","buyer","conveyancer"],          stage:1, req:true },
+  { id:"s_id",   name:"Seller — ID document",        cat:"FICA",       owner:"seller", see:["agent","seller","conveyancer"],         stage:1, req:true },
+  { id:"s_poa",  name:"Seller — proof of address",   cat:"FICA",       owner:"seller", see:["agent","seller","conveyancer"],         stage:1, req:true },
+  { id:"s_rates",name:"Seller — latest rates account",cat:"FICA",      owner:"seller", see:["agent","seller","conveyancer"],         stage:1, req:true },
+  { id:"dep",    name:"Proof of deposit — trust account", cat:"Finance", owner:"buyer", see:["agent","buyer","conveyancer"],         stage:2, req:true },
+  { id:"grant",  name:"Bond grant letter",           cat:"Finance",    owner:"buyer",  see:["agent","buyer","conveyancer"],          stage:2, req:true },
+  { id:"coc_e",  name:"Electrical CoC",              cat:"Compliance", owner:"seller", see:["agent","buyer","seller","conveyancer"], stage:3, req:true },
+  { id:"coc_g",  name:"Gas CoC",                     cat:"Compliance", owner:"seller", see:["agent","buyer","seller","conveyancer"], stage:3, req:true },
+  { id:"coc_p",  name:"Plumbing certificate",        cat:"Compliance", owner:"seller", see:["agent","buyer","seller","conveyancer"], stage:3, req:true },
+  { id:"coc_b",  name:"Borer beetle certificate",    cat:"Compliance", owner:"seller", see:["agent","buyer","seller","conveyancer"], stage:3, req:true },
+  { id:"coc_f",  name:"Electric fence CoC",          cat:"Compliance", owner:"seller", see:["agent","buyer","seller","conveyancer"], stage:3, req:true },
+  { id:"rates_c",name:"Municipal rates clearance",   cat:"Clearance",  owner:"conveyancer", see:["agent","buyer","seller","conveyancer"], stage:4, req:true },
+  { id:"sars",   name:"SARS transfer duty receipt",  cat:"Clearance",  owner:"conveyancer", see:["agent","buyer","seller","conveyancer"], stage:4, req:true },
+  { id:"draft",  name:"Draft deed of transfer",      cat:"Transfer",   owner:"conveyancer", see:["agent","buyer","seller","conveyancer"], stage:5, req:true },
+  { id:"lodge",  name:"Deeds Office lodgement cover",cat:"Transfer",   owner:"conveyancer", see:["agent","buyer","seller","conveyancer"], stage:6, req:true },
+  { id:"title",  name:"Registered title deed",       cat:"Transfer",   owner:"conveyancer", see:["agent","buyer","seller","conveyancer"], stage:7, req:true },
+];
+const DOC = Object.fromEntries(DOCS.map(d => [d.id, d]));
+
+const STAGES = [
+  { n:1, name:"OTP & FICA", days:"3–7 days",
+    blurb:"The signed offer becomes binding and both parties are FICA-verified before the file opens at the attorney.",
+    tasks:[
+      { id:"t1a", owner:"agent",  label:"Upload the fully signed Offer to Purchase", doc:"otp" },
+      { id:"t1b", owner:"buyer",  label:"Upload FICA — ID document", doc:"b_id" },
+      { id:"t1c", owner:"buyer",  label:"Upload FICA — proof of address (under 3 months)", doc:"b_poa" },
+      { id:"t1d", owner:"seller", label:"Upload FICA — ID document", doc:"s_id" },
+      { id:"t1e", owner:"seller", label:"Upload FICA — proof of address (under 3 months)", doc:"s_poa" },
+      { id:"t1f", owner:"seller", label:"Upload latest municipal rates account", doc:"s_rates" },
+      { id:"t1g", owner:"agent",  label:"Verify FICA pack and instruct the transferring attorney", note:"Locks the FICA files against further edits" },
+    ]},
+  { n:2, name:"Bond & Deposit", days:"14–30 days", cond:true,
+    blurb:"The suspensive bond condition must be met by the date in the OTP, or the sale lapses.",
+    tasks:[
+      { id:"t2a", owner:"buyer", label:"Pay the deposit into the attorney's trust account", doc:"dep" },
+      { id:"t2b", owner:"buyer", label:"Upload the bank's bond grant letter", doc:"grant" },
+      { id:"t2c", owner:"agent", label:"Confirm the suspensive condition is met", note:"Releases the sale from the bond clause" },
+      { id:"t2d", owner:"conveyancer", label:"Acknowledge deposit received in trust" },
+    ]},
+  { n:3, name:"Compliance Certificates", days:"7–14 days",
+    blurb:"The seller carries the cost of all statutory certificates. Nothing lodges without them.",
+    tasks:[
+      { id:"t3a", owner:"seller", label:"Electrical CoC (valid 2 years)", doc:"coc_e" },
+      { id:"t3b", owner:"seller", label:"Gas CoC — built-in braai / gas hob", doc:"coc_g" },
+      { id:"t3c", owner:"seller", label:"Plumbing certificate", doc:"coc_p" },
+      { id:"t3d", owner:"seller", label:"Borer beetle certificate", doc:"coc_b" },
+      { id:"t3e", owner:"seller", label:"Electric fence CoC", doc:"coc_f" },
+      { id:"t3f", owner:"agent",  label:"Review all five certificates and sign off" },
+    ]},
+  { n:4, name:"Rates & SARS Clearances", days:"14–45 days",
+    blurb:"The attorney pays rates in advance and files for transfer duty. This is usually the slowest stretch.",
+    tasks:[
+      { id:"t4a", owner:"conveyancer", label:"Apply for rates clearance figures at Tshwane" },
+      { id:"t4b", owner:"conveyancer", label:"Rates clearance certificate issued", doc:"rates_c" },
+      { id:"t4c", owner:"conveyancer", label:"SARS transfer duty receipt obtained", doc:"sars" },
+      { id:"t4d", owner:"seller", label:"Settle the outstanding levy / rates shortfall" },
+    ]},
+  { n:5, name:"Drafting & Signature", days:"5–10 days",
+    blurb:"Both parties sign at the attorney's office. Bond documents are signed with the bank's attorney.",
+    tasks:[
+      { id:"t5a", owner:"conveyancer", label:"Draft the deed of transfer and power of attorney", doc:"draft" },
+      { id:"t5b", owner:"seller", label:"Sign transfer documents at Van Zyl Kruger, Menlyn" },
+      { id:"t5c", owner:"buyer",  label:"Sign transfer documents and pay transfer costs" },
+      { id:"t5d", owner:"buyer",  label:"Sign bond documents with the bank's attorney" },
+    ]},
+  { n:6, name:"Deeds Office Lodgement", days:"7–12 days",
+    blurb:"Transfer, bond and cancellation attorneys lodge as one batch at the Pretoria Deeds Office.",
+    tasks:[
+      { id:"t6a", owner:"conveyancer", label:"Obtain bond cancellation figures from the seller's bank" },
+      { id:"t6b", owner:"conveyancer", label:"Lodge the batch at the Pretoria Deeds Office", doc:"lodge" },
+      { id:"t6c", owner:"conveyancer", label:"Clear examiner queries (prep)" },
+    ]},
+  { n:7, name:"Registration & Handover", days:"1–3 days",
+    blurb:"Ownership passes on registration. Proceeds pay out and the keys change hands.",
+    tasks:[
+      { id:"t7a", owner:"conveyancer", label:"Registration recorded at the Deeds Office", doc:"title" },
+      { id:"t7b", owner:"conveyancer", label:"Pay the nett proceeds to the seller" },
+      { id:"t7c", owner:"agent", label:"Hand over the keys and close the file" },
+    ]},
+];
+const TASK = {}; STAGES.forEach(s => s.tasks.forEach(t => TASK[t.id] = { ...t, stage:s.n }));
+
+const SEED_MSGS = [
+  { id:"m1", by:"agent",  ts:"2026-07-14T10:12:00", tag:{k:"stage",v:1}, body:"Offer accepted and signed by both parties this morning — congratulations to everyone. I've opened the deal room so we can keep every document and decision in one place instead of chasing WhatsApp threads." },
+  { id:"m2", by:"seller", ts:"2026-07-14T13:40:00", tag:{k:"stage",v:1}, body:"Thank you Charné. Willem is away until Thursday, so I'll load my ID and the rates account today and his the moment he is back." },
+  { id:"m3", by:"buyer",  ts:"2026-07-15T08:05:00", tag:{k:"doc",v:"b_poa"}, body:"Quick question — my municipal bill is in my father's name because the flat is his. Will a bank statement with my address on it work for FICA?" },
+  { id:"m4", by:"agent",  ts:"2026-07-15T08:31:00", tag:{k:"doc",v:"b_poa"}, body:"Yes — a bank statement under three months old is accepted, as long as your name and the physical address both appear on it. Load it here and I'll check it before it goes to Elmarie." },
+  { id:"m5", by:"conveyancer", ts:"2026-07-15T15:20:00", tag:{k:"stage",v:2}, body:"File opened as VZK/T/4471. Trust account details have been sent to the purchaser by secure link. Please note the bond condition lapses on 15 August 2026 — I'd rather extend early than at the eleventh hour." },
+];
+
+/* ══ Live dates — the file always reads as an in-flight transfer ═════ */
+const DAY = 864e5;
+const d0 = n => new Date(Date.now() + n * DAY);
+const iso = d => d.toISOString();
+PROPERTY.otpDate = d0(-46); PROPERTY.bondDue = d0(12); PROPERTY.occupation = d0(60);
+const AGO_H = { m1:1104, m2:1096, m3:1078, m4:1069, m5:1032 };
+SEED_MSGS.forEach(m => m.ts = iso(new Date(Date.now() - AGO_H[m.id] * 36e5)));
+
+/* ══ Format ═════════════════════════════════════════════════════════ */
+const R = n => "R " + n.toLocaleString("en-ZA");
+const dstr = d => new Date(d).toLocaleDateString("en-ZA", { day:"numeric", month:"short", year:"numeric" });
+const tstr = d => new Date(d).toLocaleString("en-ZA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+const stamp = d => new Date(d).toLocaleString("en-ZA", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(",", "");
+const days = d => Math.round((new Date(d) - Date.now()) / DAY);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const ago = t => { const m = (Date.now() - new Date(t)) / 6e4;
+  if (m < 1) return "just now"; if (m < 60) return Math.floor(m) + " min ago";
+  if (m < 1440) return Math.floor(m / 60) + " hr ago";
+  return Math.floor(m / 1440) + " days ago"; };
+const avatar = (p, s = 28) => `<span class="av" style="width:${s}px;height:${s}px;background:${p.col};font-size:${Math.round(s*.39)}px">${p.ini}</span>`;
+
+/* ══ State ══════════════════════════════════════════════════════════ */
+const KEY = "rb_dealroom_v3";
+let S;
+const SEED_DOCS = {
+  s_id:   { file:"MduToit_ID_card.pdf",        size:"1.2 MB", by:"seller", ago:44, verified:true,  task:"t1d" },
+  s_rates:{ file:"Tshwane_rates_Jul2026.pdf",  size:"318 KB", by:"seller", ago:43, verified:false, task:"t1f" },
+  b_id:   { file:"T_Mokoena_ID_card.jpg",      size:"2.4 MB", by:"buyer",  ago:42, verified:true,  task:"t1b" },
+};
+const fresh = () => ({
+  role:"agent", view:"dash", done:Object.fromEntries(Object.values(SEED_DOCS).map(d => [d.task, true])),
+  docs:Object.fromEntries(Object.entries(SEED_DOCS).map(([k, d]) => [k, { file:d.file, size:d.size, by:d.by, ts:iso(d0(-d.ago)), verified:d.verified }])),
+  links:{}, seen:{},
+  msgs: SEED_MSGS.map(m => ({ ...m })),
+  log: [
+    { ts:iso(d0(-42)), who:"agent",  act:"Document verified", det:"Buyer — ID document checked against the OTP" },
+    { ts:iso(d0(-42)), who:"buyer",  act:"Document uploaded", det:"Buyer — ID document · T_Mokoena_ID_card.jpg" },
+    { ts:iso(d0(-43)), who:"seller", act:"Document uploaded", det:"Seller — latest rates account · Tshwane_rates_Jul2026.pdf" },
+    { ts:iso(d0(-44)), who:"agent",  act:"Document verified", det:"Seller — ID document checked against the title deed" },
+    { ts:iso(d0(-44)), who:"seller", act:"Document uploaded", det:"Seller — ID document · MduToit_ID_card.pdf" },
+    { ts:iso(d0(-46)), who:"agent", act:"Deal room opened", det:"Erf 481 Olympus AH · PTA-2501216" },
+    { ts:iso(d0(-46)), who:"agent", act:"Parties invited", det:"Purchaser, seller and transferring attorney granted access" },
+    { ts:iso(d0(-45)), who:"conveyancer", act:"Transfer file opened", det:"VZK/T/4471 · Van Zyl Kruger Inc." },
+  ],
+  open:{},
+});
+function load(){ try{ const r = localStorage.getItem(KEY); S = r ? JSON.parse(r) : fresh(); }catch{ S = fresh(); }
+  if (!S || !S.msgs) S = fresh(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch{} }
+load();
+
+/* ══ Derived ════════════════════════════════════════════════════════ */
+const me = () => PARTIES[S.role];
+const stageDone = s => s.tasks.every(t => S.done[t.id]);
+const current = () => STAGES.find(s => !stageDone(s)) || STAGES[6];
+const cur = () => current().n;
+const stageState = s => stageDone(s) ? "done" : s.n === cur() ? "now" : "locked";
+const allTasks = () => STAGES.flatMap(s => s.tasks);
+const pct = () => Math.round(allTasks().filter(t => S.done[t.id]).length / allTasks().length * 100);
+const myOpen = role => current().tasks.filter(t => t.owner === role && !S.done[t.id]);
+const canSee = d => d.see.includes(S.role);
+const docState = id => {
+  const d = DOC[id], r = S.docs[id];
+  if (!r) return "awaiting";
+  return stageDone(STAGES[d.stage - 1]) ? "locked" : r.verified ? "verified" : "uploaded";
+};
+const unread = role => S.msgs.filter(m => m.by !== role && new Date(m.ts) > new Date(S.seen[role] || 0)).length;
+
+/* ══ Audit ══════════════════════════════════════════════════════════ */
+function logit(act, det){ S.log.unshift({ ts:new Date().toISOString(), who:S.role, act, det }); }
+let toastT;
+function toast(msg){ const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2600); }
+
+/* ══ Chrome render ══════════════════════════════════════════════════ */
+const VIEWS = [
+  { id:"dash",  label:"Dashboard", ic:"home"  },
+  { id:"track", label:"Tracker",   ic:"track" },
+  { id:"vault", label:"Vault",     ic:"vault" },
+  { id:"chat",  label:"Messages",  ic:"chat"  },
+  { id:"log",   label:"Audit log", ic:"log"   },
+];
+function badge(v){
+  if (v === "chat") return unread(S.role) || 0;
+  if (v === "track") return myOpen(S.role).length;
+  return 0;
+}
+function renderChrome(){
+  const p = me();
+  document.getElementById("roleav").textContent = p.ini;
+  document.getElementById("roleav").style.background = p.col;
+  document.getElementById("rolename").textContent = p.name;
+  document.getElementById("rolekind").textContent = p.kind;
+  const c = current();
+  document.getElementById("proglabel").textContent = pct() === 100 ? "Registered — transfer complete" : `Stage ${c.n} of 7 — ${c.name}`;
+  document.getElementById("progpct").textContent = pct() + "%";
+  document.getElementById("progbar").style.width = pct() + "%";
+
+  document.getElementById("rail").innerHTML = VIEWS.map(v => {
+    const b = badge(v.id);
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
+  }).join("") + `<div class="rail-note"><b>Concept preview.</b> Everything you do is stored on this device only — no files are uploaded, nothing is sent anywhere.<br><br><button class="btn btn-s" data-act="reset" style="margin-top:2px">Reset the demo</button></div>`;
+
+  document.getElementById("tabs").innerHTML = VIEWS.map(v => {
+    const b = badge(v.id);
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label === "Audit log" ? "Audit" : v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
+  }).join("");
+
+  document.getElementById("foot").innerHTML =
+    `<b>Charné Deal Room</b> — a working concept for a three-way property transfer portal (agent · purchaser · seller, with the transferring attorney linked in).
+     Built around the South African conveyancing sequence and POPIA (Act 4 of 2013, as amended April 2025): role-based document access, expiring document links and a complete audit trail.
+     Parties, figures and documents on this page are illustrative. Listing: <a href="${PROPERTY.url}" target="_blank" rel="noopener">rbbrandrealestate.co.za</a>.`;
+}
+
+/* ══ Role menu ══════════════════════════════════════════════════════ */
+let popOpen = false;
+function renderPop(){
+  document.querySelectorAll(".pop").forEach(e => e.remove());
+  if (!popOpen) return;
+  const el = document.createElement("div");
+  el.className = "pop"; el.setAttribute("role", "menu");
+  el.innerHTML = `<div class="pop-h eyebrow">View this deal as</div>` + ORDER.map(id => {
+    const p = PARTIES[id], n = myOpen(id).length + unread(id);
+    return `<button class="pop-i" data-act="role" data-r="${id}" aria-current="${S.role === id}" role="menuitem">
+      ${avatar(p, 32)}<span class="n"><b>${p.name}</b><span>${p.kind} · ${p.org}</span></span>
+      <span class="dot-n ${n ? "" : "dot-0"}">${n || "✓"}</span></button>`;
+  }).join("");
+  document.body.appendChild(el);
+}
+
+/* ══ Shared partials ════════════════════════════════════════════════ */
+const ownerChip = id => `<span class="chip c-mute"><span class="stripe" style="background:${PARTIES[id].col};width:3px;height:11px"></span>${PARTIES[id].kind}</span>`;
+const DOCSTATE = {
+  awaiting:{ cls:"c-wait", txt:"Awaiting upload" }, uploaded:{ cls:"c-gold", txt:"Uploaded" },
+  verified:{ cls:"c-go", txt:"Verified" },          locked:{ cls:"c-go", txt:"Locked" },
+};
+function taskAction(t, live){
+  if (!live) return `<span class="chip c-mute">${ICON.lock} Locked</span>`;
+  if (S.done[t.id]) return `<span class="chip c-go">${ICON.check} Done</span>`;
+  if (t.owner !== S.role) return `<span class="chip c-wait">Waiting on ${PARTIES[t.owner].short}</span>`;
+  return t.doc
+    ? `<button class="btn btn-g btn-s" data-act="upload" data-d="${t.doc}" data-t="${t.id}">${ICON.up} Upload</button>`
+    : `<button class="btn btn-p btn-s" data-act="task" data-t="${t.id}">Mark done</button>`;
+}
+
+/* ══ View: Dashboard ════════════════════════════════════════════════ */
+function vDash(){
+  const c = current(), mine = myOpen(S.role), others = current().tasks.filter(t => t.owner !== S.role && !S.done[t.id]);
+  const bd = days(PROPERTY.bondDue), bondSettled = S.done.t2c;
+  const est = d0(days(PROPERTY.otpDate) + 92);
+  const depPaid = !!S.docs.dep;
+  return `
+  <div class="stack">
+    <div class="sec-h"><h2>Good day, ${me().short}</h2><p>${mine.length ? `${mine.length} item${mine.length > 1 ? "s" : ""} need${mine.length > 1 ? "" : "s"} you` : "Nothing on your desk right now"}</p></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Purchase price</div><div class="v">${R(PROPERTY.price)}</div><div class="s">Offer signed ${dstr(PROPERTY.otpDate)}</div></div>
+      <div class="tile"><div class="k">Deposit</div><div class="v">${R(PROPERTY.deposit)}</div><div class="s">${depPaid ? "Received in trust" : "Due to trust account"}</div></div>
+      <div class="tile"><div class="k">In transfer</div><div class="v">${-days(PROPERTY.otpDate)} days</div><div class="s">Registration expected ${dstr(est)}</div></div>
+      <div class="tile"><div class="k">Progress</div><div class="v">${pct()}%</div><div class="s">Stage ${c.n} of 7 · ${c.name}</div></div>
+    </div>
+
+    ${pct() === 100 ? `<div class="card"><div class="card-b" style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <span class="stripe" style="background:var(--go);height:52px"></span>
+      <div style="flex:1;min-width:210px">
+        <div class="eyebrow" style="color:var(--go)">Registered</div>
+        <h3 style="font-size:17px;margin-top:3px">Ownership passed to ${PARTIES.buyer.name}</h3>
+        <p style="margin:5px 0 0;font-size:12.5px;color:var(--t2)">Registered at the Pretoria Deeds Office on ${dstr(new Date())}. Proceeds paid to the seller, keys handed over, file closed. The full record stays available to all parties in the audit log.</p>
+      </div>
+      <span class="chip c-go">${ICON.key} Keys handed over</span>
+    </div></div>` : ""}
+
+    ${!bondSettled ? `<div class="card"><div class="card-b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">
+      <span class="stripe" style="background:${bd < 7 ? "var(--stop)" : "var(--wait)"};height:38px"></span>
+      <div style="flex:1;min-width:190px">
+        <div class="eyebrow">Suspensive condition</div>
+        <div style="font-size:13.5px;margin-top:2px">Bond approval must be confirmed by <b>${dstr(PROPERTY.bondDue)}</b>, or the sale lapses.</div>
+      </div>
+      <span class="chip ${bd < 7 ? "c-stop" : "c-wait"}">${bd} days left</span>
+    </div></div>` : ""}
+
+    <div class="card">
+      <div class="card-h">${ICON.check}<h2>Your next steps</h2><span class="chip c-mute">Stage ${c.n} · ${c.name}</span></div>
+      <div class="card-b">
+        ${mine.length ? mine.map(t => `<div class="act">
+            <span class="stripe" style="background:${me().col}"></span>
+            <div class="act-t"><b>${esc(t.label)}</b><span>${t.doc ? "Adds " + esc(DOC[t.doc].name) + " to the vault" : esc(t.note || "Confirm to advance the file")}</span></div>
+            ${taskAction(t, true)}
+          </div>`).join("")
+          : `<div class="empty"><b>You're clear</b>${others.length ? `This stage is waiting on ${[...new Set(others.map(t => PARTIES[t.owner].short))].join(" and ")}.` : "Every task in this stage is complete."}</div>`}
+      </div>
+    </div>
+
+    ${others.length ? `<div class="card">
+      <div class="card-h">${ICON.log}<h2>Waiting on others</h2></div>
+      <div class="card-b">${others.map(t => `<div class="act">
+        <span class="stripe" style="background:${PARTIES[t.owner].col}"></span>
+        <div class="act-t"><b>${esc(t.label)}</b><span>${PARTIES[t.owner].name} · ${PARTIES[t.owner].kind}</span></div>
+        ${S.role === "agent" || S.role === "conveyancer"
+          ? `<button class="btn btn-s" data-act="nudge" data-t="${t.id}">Send a reminder</button>`
+          : `<span class="chip c-wait">Outstanding</span>`}</div>`).join("")}</div>
+    </div>` : ""}
+
+    <div class="grid2">
+      <div class="hero">
+        <div class="hero-img"><span class="pill">${PROPERTY.area}, ${PROPERTY.city}</span></div>
+        <div style="padding:14px 16px">
+          <div class="eyebrow">The property</div>
+          <h3 style="font-size:17px;margin-top:3px">${PROPERTY.title}</h3>
+          <p style="margin:6px 0 0;font-size:12.5px;color:var(--t2)">Secure Pretoria East living with a built-in braai entertainment area, solar system and double automated garage on a ${PROPERTY.erf}m² stand.</p>
+          <a class="btn btn-s" style="display:inline-block;margin-top:11px;text-decoration:none" href="${PROPERTY.url}" target="_blank" rel="noopener">View the live listing ↗</a>
+        </div>
+        <div class="specs"><span><b>${PROPERTY.beds}</b> beds</span><span><b>${PROPERTY.baths}</b> baths</span><span><b>${PROPERTY.garages}</b> garages</span><span><b>${PROPERTY.erf}</b> m² erf</span><span><b>${PROPERTY.floor}</b> m² under roof</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">${ICON.log}<h2>Latest activity</h2></div>
+        <div class="card-b" style="padding:6px 16px 14px">
+          ${S.log.slice(0, 5).map(e => `<div class="act" style="padding:11px 0">
+            <span class="stripe" style="background:${PARTIES[e.who].col}"></span>
+            <div class="act-t"><b>${esc(e.act)}</b><span>${PARTIES[e.who].short} · ${ago(e.ts)}</span></div></div>`).join("")}
+          <button class="btn btn-s" data-act="view" data-v="log" style="margin-top:12px">Open the full audit log</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">${ICON.shield}<div><b>Why this is safe.</b> Each party only ever sees the documents their role allows — the seller never sees the purchaser's FICA pack, and the purchaser never sees the seller's. Documents open through links that expire after 15 minutes, and every view, upload and sign-off is written to an audit trail that nobody can edit.</div></div>
+  </div>`;
+}
+
+/* ══ View: Tracker ══════════════════════════════════════════════════ */
+function vTrack(){
+  return `<div class="stack">
+    <div class="sec-h"><h2>Transfer tracker</h2><p>The standard South African sequence, from signature to registration</p></div>
+    <div class="spine">${STAGES.map(s => {
+      const st = stageState(s), open = S.open[s.n] ?? (st === "now");
+      const doneN = s.tasks.filter(t => S.done[t.id]).length;
+      return `<div class="stage ${st}">
+        <div class="node"><span class="bead">${st === "done" ? ICON.check : s.n}</span>${s.n < 7 ? '<span class="line"></span>' : ""}</div>
+        <div class="stage-c">
+          <button class="stage-hd" data-act="stage" data-s="${s.n}" aria-expanded="${open}">
+            <h3>${s.name}</h3>
+            ${st === "now" ? '<span class="chip c-gold">In progress</span>' : st === "done" ? '<span class="chip c-go">Complete</span>' : '<span class="chip c-mute">Upcoming</span>'}
+            <span class="chip c-mute mono">${doneN}/${s.tasks.length}</span>
+          </button>
+          <p class="stage-sub">${s.blurb} <span class="mono" style="color:var(--t3)">· typically ${s.days}</span></p>
+          ${open ? `<div class="stage-body">${s.tasks.map(t => `<div class="task ${S.done[t.id] ? "on" : ""}">
+              <span class="tick">${S.done[t.id] ? ICON.check : ""}</span>
+              <div class="tx"><b>${esc(t.label)}</b><span>${ownerChip(t.owner)} ${S.done[t.id] && S.docs[t.doc] ? "· " + esc(S.docs[t.doc].file) : t.note ? "· " + esc(t.note) : ""}</span></div>
+              ${taskAction(t, st === "now")}
+            </div>`).join("")}</div>` : ""}
+        </div>
+      </div>`;
+    }).join("")}</div>
+  </div>`;
+}
+
+/* ══ View: Vault ════════════════════════════════════════════════════ */
+function vVault(){
+  const cats = [...new Set(DOCS.map(d => d.cat))];
+  return `<div class="stack">
+    <div class="sec-h"><h2>Document vault</h2><p>Role-based access · links expire after 15 minutes</p></div>
+    ${(() => { const h = DOCS.filter(d => !canSee(d)).length; return `<div class="note">${ICON.shield}<div><b>You are viewing as ${me().name} (${me().kind}).</b> ${h
+      ? `${h} document${h === 1 ? " is" : "s are"} hidden from this role under POPIA's minimality principle — you can see that they exist and whether they are in, but you cannot open them.`
+      : "As the transferring attorney you may open every document in this file. That wider access is itself recorded in the audit log."}</div></div>`; })()}
+    ${cats.map(cat => {
+      const list = DOCS.filter(d => d.cat === cat);
+      return `<div>
+        <div class="eyebrow" style="margin:4px 0 9px">${cat}</div>
+        <div class="docs">${list.map(d => docCard(d)).join("")}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+function docCard(d){
+  const st = docState(d.id), rec = S.docs[d.id], vis = canSee(d), link = S.links[d.id];
+  if (!vis) return `<div class="doc restricted">
+    <div class="doc-t"><span class="ic">${ICON.lock}</span><div><b>${esc(d.name)}</b><span>Restricted — ${PARTIES[d.owner].kind}'s private file</span></div></div>
+    <div class="doc-f" style="border:0;padding-top:2px">Your role cannot open this document. Status is shared so the deal can move; the file itself is not.</div>
+    <div class="doc-a"><span class="chip ${DOCSTATE[st].cls}">${DOCSTATE[st].txt}</span></div></div>`;
+  return `<div class="doc">
+    <div class="doc-t"><span class="ic">${ICON.file}</span><div><b>${esc(d.name)}</b><span>${PARTIES[d.owner].kind} provides · stage ${d.stage}</span></div></div>
+    ${rec ? `<div class="doc-f mono">${esc(rec.file)}<br>${rec.size} · uploaded ${ago(rec.ts)} by ${PARTIES[rec.by].short}</div>` : ""}
+    <div class="doc-a">
+      <span class="chip ${DOCSTATE[st].cls}">${st === "locked" ? ICON.lock : ""} ${DOCSTATE[st].txt}</span>
+      ${st === "awaiting" && d.owner === S.role && d.stage === cur()
+        ? `<button class="btn btn-g btn-s" data-act="upload" data-d="${d.id}">${ICON.up} Upload</button>` : ""}
+      ${rec && !rec.verified && (S.role === "agent" || S.role === "conveyancer") && st !== "locked"
+        ? `<button class="btn btn-s" data-act="verify" data-d="${d.id}">${ICON.check} Verify</button>` : ""}
+      ${rec ? `<button class="btn btn-s" data-act="link" data-d="${d.id}">${ICON.eye} Secure link</button>` : ""}
+    </div>
+    ${link ? `<div class="link-box">
+      <div class="eyebrow" style="color:inherit">Temporary access link</div>
+      <span class="u mono">https://vault.rbbrand.co.za/d/${d.id}?sig=${link.sig}&amp;exp=${link.exp}</span>
+      <span class="mono cd" data-cd="${d.id}">15:00</span> <span style="color:var(--t2)">until this link expires · single use · view logged</span>
+    </div>` : ""}
+  </div>`;
+}
+
+/* ══ View: Messages ═════════════════════════════════════════════════ */
+function vChat(){
+  const tagLabel = t => !t ? "" : t.k === "stage"
+    ? `${ICON.tag} Stage ${t.v} — ${STAGES[t.v - 1].name}`
+    : `${ICON.tag} ${esc(DOC[t.v] ? DOC[t.v].name : t.v)}`;
+  return `<div class="stack">
+    <div class="sec-h"><h2>Deal room</h2><p>Charné · Thabo · Marietjie, with Elmarie linked in from the attorney</p></div>
+    <div class="card"><div class="card-b">
+      ${S.msgs.map(m => { const p = PARTIES[m.by]; return `<div class="msg">
+        ${avatar(p, 34)}
+        <div class="msg-b">
+          <div class="msg-h"><b>${p.name}</b><span class="chip c-mute">${p.kind}</span><span class="tm mono">${ago(m.ts)}</span></div>
+          <p class="msg-x">${esc(m.body)}</p>
+          ${m.tag ? `<span class="tagref">${tagLabel(m.tag)}</span>` : ""}
+        </div></div>`; }).join("")}
+
+      <div class="comp">
+        <textarea id="composer" placeholder="Write to ${ORDER.filter(r => r !== S.role).map(r => PARTIES[r].short).join(", ")}…" aria-label="Your message"></textarea>
+        <div class="comp-r">
+          ${avatar(me(), 26)}<span style="font-size:12px;color:var(--t2)">Posting as <b style="color:var(--t1)">${me().name}</b></span>
+          <select id="tagsel" aria-label="Tag this message">
+            <option value="">No tag</option>
+            ${STAGES.map(s => `<option value="stage:${s.n}">Stage ${s.n} — ${s.name}</option>`).join("")}
+            ${DOCS.filter(canSee).map(d => `<option value="doc:${d.id}">Doc — ${d.name}</option>`).join("")}
+          </select>
+          <span style="flex:1"></span>
+          <button class="btn btn-p" data-act="post">Send to the deal room</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="note">${ICON.shield}<div><b>One thread, not four.</b> Every message is visible to all parties and tagged to the stage or document it belongs to, so nothing important lives in a private WhatsApp chat that can't be produced later.</div></div>
+  </div>`;
+}
+
+/* ══ View: Audit log ════════════════════════════════════════════════ */
+function vLog(){
+  return `<div class="stack">
+    <div class="sec-h"><h2>Audit log</h2><p>${S.log.length} entries · append-only</p></div>
+    <div class="note">${ICON.shield}<div><b>Append-only record.</b> Every upload, verification, sign-off, document view and message is written here with the actor and a timestamp. Entries cannot be edited or deleted by any party, which is what makes the file defensible if a transfer is ever disputed.</div></div>
+    <div class="log">${S.log.map(e => `<div class="logrow">
+      <span class="ts mono">${stamp(e.ts)}</span>
+      <span class="who" style="color:${PARTIES[e.who].col}">${PARTIES[e.who].short}</span>
+      <span><b style="font-weight:600">${esc(e.act)}</b>${e.det ? ` — <span style="color:var(--t2)">${esc(e.det)}</span>` : ""}</span>
+    </div>`).join("")}</div>
+  </div>`;
+}
+
+/* ══ Render ═════════════════════════════════════════════════════════ */
+const RENDER = { dash:vDash, track:vTrack, vault:vVault, chat:vChat, log:vLog };
+function render(){
+  renderChrome();
+  document.getElementById("view").innerHTML = RENDER[S.view]();
+  renderPop();
+  save();
+}
+
+/* ══ Actions ════════════════════════════════════════════════════════ */
+const fileInput = Object.assign(document.createElement("input"), { type:"file", accept:".pdf,.jpg,.jpeg,.png,.heic", hidden:true });
+document.body.appendChild(fileInput);
+let pending = null;
+fileInput.addEventListener("change", () => {
+  const f = fileInput.files && fileInput.files[0];
+  if (f && pending) storeDoc(pending.doc, pending.task, f.name, f.size);
+  fileInput.value = ""; pending = null;
+});
+function storeDoc(docId, taskId, name, size){
+  const d = DOC[docId];
+  S.docs[docId] = { file:name, size:(size / 1024 > 1024 ? (size / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(size / 1024)) + " KB"), by:S.role, ts:new Date().toISOString(), verified:false };
+  if (taskId) S.done[taskId] = true;
+  else { const t = allTasks().find(x => x.doc === docId); if (t) S.done[t.id] = true; }
+  logit("Document uploaded", `${d.name} · ${name} · visible to ${d.see.map(r => PARTIES[r].kind).join(", ")}`);
+  toast(`${d.name} added to the vault`);
+  render();
+}
+function completeTask(id){
+  const t = TASK[id];
+  S.done[id] = true;
+  logit("Task completed", `Stage ${t.stage} · ${t.label}`);
+  const s = STAGES[t.stage - 1];
+  if (stageDone(s)){
+    logit("Stage complete", `${s.name} — documents from this stage are now locked`);
+    toast(s.n < 7 ? `Stage ${s.n} complete — ${STAGES[s.n].name} is now open` : "Registered. Transfer complete.");
+  } else toast("Marked done");
+  render();
+}
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn){ if (popOpen && !e.target.closest("#rolebtn")){ popOpen = false; document.getElementById("rolebtn").setAttribute("aria-expanded", "false"); renderPop(); } return; }
+  const a = btn.dataset.act;
+
+  if (a === "view"){ S.view = btn.dataset.v; if (S.view === "chat") S.seen[S.role] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
+  else if (a === "role"){
+    S.role = btn.dataset.r; popOpen = false;
+    document.getElementById("rolebtn").setAttribute("aria-expanded", "false");
+    toast(`Now viewing as ${me().name} — ${me().kind}`);
+    if (S.view === "chat") S.seen[S.role] = new Date().toISOString();
+    render();
+  }
+  else if (a === "stage"){ const n = +btn.dataset.s; S.open[n] = !(S.open[n] ?? (stageState(STAGES[n - 1]) === "now")); render(); }
+  else if (a === "task"){ completeTask(btn.dataset.t); }
+  else if (a === "upload"){ pending = { doc:btn.dataset.d, task:btn.dataset.t }; fileInput.click(); }
+  else if (a === "verify"){
+    const d = DOC[btn.dataset.d]; S.docs[d.id].verified = true;
+    logit("Document verified", `${d.name} checked and accepted`);
+    toast(`${d.name} verified`); render();
+  }
+  else if (a === "link"){
+    const d = DOC[btn.dataset.d];
+    S.links[d.id] = { sig:Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6), exp:Date.now() + 9e5, until:Date.now() + 9e5 };
+    logit("Secure link issued", `${d.name} · expires in 15 minutes · single use`);
+    toast("Temporary link created — expires in 15 minutes"); render();
+  }
+  else if (a === "post"){
+    const ta = document.getElementById("composer"), body = ta.value.trim();
+    if (!body){ ta.focus(); toast("Write something first"); return; }
+    const raw = document.getElementById("tagsel").value;
+    const tag = raw ? { k:raw.split(":")[0], v:raw.split(":")[0] === "stage" ? +raw.split(":")[1] : raw.split(":")[1] } : null;
+    S.msgs.push({ id:"m" + Date.now(), by:S.role, ts:new Date().toISOString(), body, tag });
+    S.seen[S.role] = new Date().toISOString();
+    logit("Message posted", tag ? (tag.k === "stage" ? `Tagged to stage ${tag.v}` : `Tagged to ${DOC[tag.v].name}`) : "Deal room thread");
+    toast("Posted to the deal room"); render();
+  }
+  else if (a === "nudge"){
+    const t = TASK[btn.dataset.t], who = PARTIES[t.owner];
+    S.msgs.push({ id:"m" + Date.now(), by:S.role, ts:new Date().toISOString(), tag:{ k:"stage", v:t.stage },
+      body:`${who.short}, a friendly reminder about this one: ${t.label.charAt(0).toLowerCase() + t.label.slice(1)}. It is the item holding up stage ${t.stage}. Shout if anything is unclear and I'll walk you through it.` });
+    S.seen[S.role] = new Date().toISOString();
+    logit("Reminder sent", `${who.name} · ${t.label}`);
+    toast(`Reminder posted for ${who.short}`); render();
+  }
+  else if (a === "reset"){
+    if (confirm("Reset the demo? Every upload, message and completed step goes back to the starting point.")){
+      S = fresh(); render(); toast("Demo reset to stage 1");
+    }
+  }
+});
+document.getElementById("rolebtn").addEventListener("click", e => {
+  e.stopPropagation(); popOpen = !popOpen;
+  e.currentTarget.setAttribute("aria-expanded", String(popOpen)); renderPop();
+});
+
+/* ══ Link countdown ═════════════════════════════════════════════════ */
+setInterval(() => {
+  document.querySelectorAll("[data-cd]").forEach(el => {
+    const l = S.links[el.dataset.cd]; if (!l) return;
+    const left = Math.floor((l.until - Date.now()) / 1000);
+    if (left <= 0){ el.textContent = "Link expired"; el.classList.add("exp"); return; }
+    el.textContent = String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(left % 60).padStart(2, "0");
+  });
+}, 1000);
+
+render();
+</script>

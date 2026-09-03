@@ -1,0 +1,240 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0f17;
+  --card: #161d29;
+  --border: #232c3d;
+  --text: #e6e9ef;
+  --muted: #8b93a3;
+  --accent: #22d3ee;
+  --danger: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 64px;
+}
+
+header h1 {
+  font-size: 22px;
+  margin: 8px 0 20px;
+}
+
+.capture {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.mic-button {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #05252c;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.mic-button.listening {
+  background: var(--danger);
+  color: #3b0a0a;
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgba(248, 113, 113, 0);
+  }
+}
+
+.transcript-preview {
+  min-height: 24px;
+  margin: 14px 0;
+  color: var(--muted);
+}
+
+.capture-actions,
+.manual-add {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.manual-add {
+  margin-top: 16px;
+}
+
+.manual-add input {
+  flex: 1;
+}
+
+input,
+textarea {
+  background: #0f1520;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+button {
+  background: #1f2937;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #05252c;
+  border: none;
+  font-weight: 600;
+}
+
+button.ghost {
+  background: transparent;
+}
+
+button.small {
+  padding: 4px 8px;
+}
+
+section h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 24px 0 10px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.badge {
+  font-size: 11px;
+  text-transform: uppercase;
+  background: #0f1520;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--accent);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.summary {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.card-actions,
+.confirmed-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.confirmed-row {
+  justify-content: space-between;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.todo-row span {
+  flex: 1;
+}
+
+.done-row {
+  padding: 6px 2px;
+  text-decoration: line-through;
+  font-size: 14px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.thinking .spinner {
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.unsupported {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  margin-top: 32px;
+}

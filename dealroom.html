@@ -1937,6 +1937,8 @@ function vToday(){
    One place that writes the message, then hands it to WhatsApp, email
    or the calendar. Nothing is sent behind her back — every one of these
    opens the app with the text filled in, and she presses send. ══════ */
+/* A framed preview blocks file downloads, so only offer the .ics where it works. */
+const canDownload = () => { try { return window.self === window.top; } catch { return false; } };
 const waNumber = m => { let n = String(m || "").replace(/[^\d+]/g, "");
   if (n.startsWith("+")) n = n.slice(1);
   if (n.startsWith("0")) n = "27" + n.slice(1);
@@ -2025,7 +2027,7 @@ function renderSend(){
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <a class="btn btn-s" style="text-decoration:none" target="_blank" rel="noopener"
              href="${esc(gcalLink(fillTpl(tpl.subject, v), x.when, x.mins || 60, fillTpl(tpl.body, v), (v.property || "") + ", " + (v.area || "")))}">${ICON.log} Add to Google Calendar</a>
-          <button class="btn btn-s" data-act="send-ics">${ICON.log} Download .ics</button>
+          ${canDownload() ? `<button class="btn btn-s" data-act="send-ics">${ICON.log} Download .ics</button>` : ""}
         </div></div>` : ""}
     </div>
     <div class="modal-h" style="border-bottom:0;border-top:1px solid var(--line);gap:9px;flex-wrap:wrap">

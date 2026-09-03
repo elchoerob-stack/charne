@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Foreman</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0F2040">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root{--ink:#0F2040;--ink2:#1B2E52;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--wait:#8A6100;--wait-bg:#FBF1DC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--r:10px}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}}
@@ -53,6 +58,8 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
   <div><b>Foreman</b><span>CMS Agent · support · reports · problem solving · recorder</span></div>
   <div class="sp"></div>
   <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
+  <a href="/review.html" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Review</a>
+  <button class="btn" id="install" hidden style="background:var(--gold);border-color:var(--gold);color:#0F2040">Install app</button>
   <button class="btn" id="newSession" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">New session</button>
 </div>
 
@@ -202,12 +209,27 @@ async function loadSide() {
     $("#reports").innerHTML = reps.length ? reps.slice(0, 10).map((r) => `<div class="item"><b>${esc(r.title)} <span class="pill">${r.kind}</span></b><div class="meta">${r.dealer || "—"} · ${new Date(r.created_at).toLocaleString("en-ZA")}</div>
       <div class="acts"><a href="/api/reports/${r.id}/html" target="_blank"><button>Open</button></a>${r.xlsx_path ? `<a href="/api/reports/${r.id}/xlsx"><button>Excel</button></a><a href="/api/reports/${r.id}/sms.csv"><button>SMS CSV</button></a><a href="/api/reports/${r.id}/email.csv"><button>E-mail CSV</button></a>` : ""}<button onclick="ask('Read report ${r.id} and give me the headline numbers and the three things to act on.')">Discuss</button></div></div>`).join("") : '<div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div>';
     const cases = await api("/cases" + (dealer ? `?dealer=${encodeURIComponent(dealer)}` : ""));
-    $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button></div></div>`).join("") : '<div class="empty">No cases.</div>';
+    $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button><button onclick="escalate('${c.id}')">Escalate</button>${c.status === "escalated" ? `<a href="/api/cases/${c.id}/packet" target="_blank"><button>Packet</button></a>` : ""}</div></div>`).join("") : '<div class="empty">No cases.</div>';
     if (dealer) { const mem = await api("/memory/" + encodeURIComponent(dealer)); $("#memory").innerHTML = mem.length ? mem.map((m) => `<div class="item">${esc(m.fact)}</div>`).join("") : '<div class="empty">Nothing remembered for this dealer yet.</div>'; }
     const pbs = await api("/playbooks"); $("#playbooks").innerHTML = pbs.map((p) => `<div class="item"><b>${esc(p.title)}</b><div class="meta">${p.domain} · ${p.checks} checks · prior ${Math.round(p.prior * 100)}%</div></div>`).join("");
   } catch (e) { console.error(e); }
 }
 window.ask = (t) => { $("#text").value = t; sendMsg(); };
+window.escalate = async (id) => {
+  if (!confirm("Send this case to the support desk with the full evidence packet?")) return;
+  try {
+    const r = await api(`/cases/${id}/escalate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    if (r.sent) add("agent", `Escalated via ${r.channel}: ${r.reference || ""}${r.url ? " " + r.url : ""}`);
+    else { add("agent", `Escalation packet prepared (channel: ${r.channel}${r.error ? ", not sent: " + r.error : ""}). Open the packet from the case, or send it by e-mail from the link below.\n\n${r.packet.summary}`); window.open(r.mailto, "_blank"); }
+    loadSide();
+  } catch (e) { add("agent", "Escalation failed: " + e.message); }
+};
+/* PWA install + service worker */
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; $("#install").hidden = false; });
+$("#install").onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; $("#install").hidden = true; };
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+if (new URLSearchParams(location.search).get("new")) $("#newSession").click();
 $("#checkAll").onclick = () => ask("Check the health of CMS, Evolve, Infomedia and the SMS gateway and summarise.");
 let uploadKind = "workshop";
 $("#upWorkshop").onclick = () => { uploadKind = "workshop"; $("#xlsxFile").click(); };

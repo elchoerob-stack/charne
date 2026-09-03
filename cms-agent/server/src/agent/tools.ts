@@ -9,6 +9,7 @@ import { compileSop, evidenceFromRecording, renderSopMarkdown } from "../recorde
 import { Recording } from "../recorder/schema.js";
 import { checkIntegration, type HealthResult, type SystemName } from "./integrations.js";
 import { buildReport, getReport, listFiles, listReports, type ReportKind } from "../reports/store.js";
+import { loadCustomPlaybooks } from "../problem-solving/custom.js";
 
 /* ── Tool plumbing ─────────────────────────────────────────────────────── */
 
@@ -65,13 +66,14 @@ export function searchKnowledge(query: string, domain?: string, limit = 5) {
 /* ── Learned playbooks ─────────────────────────────────────────────────── */
 
 export function learnedPlaybooks(): Playbook[] {
+  const custom = loadCustomPlaybooks();
   const rows = db.prepare("SELECT * FROM learned_playbooks").all() as { id: string; case_id: string; title: string; symptoms: string; resolution: string; domain: string; confirmations: number }[];
   return rows.map((r) => {
     const pb = playbookFromCase({ id: r.case_id, title: r.title, symptom: (JSON.parse(r.symptoms) as string[]).join(" "), resolution: (JSON.parse(r.resolution) as string[]).join("\n") });
     pb.id = r.id;
     pb.prior = Math.min(0.12, 0.03 * r.confirmations);
     return pb;
-  });
+  }).concat(custom);
 }
 
 /* ── Recording helpers ─────────────────────────────────────────────────── */
@@ -392,6 +394,46 @@ TOOLS.push(
       const r = getReport(String(input.report_id));
       if (!r) return { error: `No report ${input.report_id}` };
       return { id: r.id, kind: r.kind, title: r.title, dealer: r.dealer, created: r.created_at, summary: JSON.parse(r.summary), links: { html: `/api/reports/${r.id}/html`, xlsx: r.xlsx_path ? `/api/reports/${r.id}/xlsx` : undefined } };
+    },
+  ),
+);
+
+/* ── Escalation and review ─────────────────────────────────────────────── */
+
+TOOLS.push(
+  tool(
+    {
+      name: "escalate_case",
+      description: "Send a case to the support desk as a ticket through the configured channel (webhook, Jira, e-mail) or prepare a draft packet if no channel is configured. The packet contains the symptom, hypotheses tried, evidence from the recording (failed requests, console errors, last screen), links to the recording and SOP, dealer facts, the timeline and a checklist of what the dealer still needs to supply. Use after diagnosis has failed or the resolution needs CMS/Evolve/Infomedia support.",
+      input_schema: {
+        type: "object",
+        properties: { case_id: { type: "string" }, to: { type: "string", description: "Override the recipient/team named by the playbook." } },
+        required: ["case_id"],
+        additionalProperties: false,
+      },
+    },
+    async (input, ctx) => {
+      const { sendTicket } = await import("./ticketing.js");
+      const row = db.prepare("SELECT * FROM cases WHERE id = ?").get(String(input.case_id)) as import("./ticketing.js").CaseRow | undefined;
+      if (!row) return { error: `No case ${input.case_id}` };
+      const r = await sendTicket(row, { to: input.to ? String(input.to) : undefined });
+      ctx.emit({ type: "case", id: row.id, status: r.sent ? "escalated" : "packet-ready", title: row.title });
+      return { channel: r.channel, sent: r.sent, reference: r.reference, url: r.url, error: r.error, to: r.packet.to, summary: r.packet.summary, stillNeeded: r.packet.include, packetMarkdown: r.packet.markdown, mailto: r.sent ? undefined : r.mailto };
+    },
+  ),
+  tool(
+    {
+      name: "review_playbooks",
+      description: "Summarise what is waiting in the weekly playbook review: learned playbooks from resolved cases (with confirmation counts), cases resolved in the last 7 days, and open escalations. Use when asked what has been learned, what should be promoted, or for a weekly summary.",
+      input_schema: { type: "object", properties: {}, additionalProperties: false },
+      strict: true,
+    },
+    async () => {
+      const learned = db.prepare("SELECT id, case_id, title, confirmations, created_at FROM learned_playbooks ORDER BY confirmations DESC").all();
+      const since = new Date(Date.now() - 7 * 86400000).toISOString();
+      const resolved = db.prepare("SELECT id, dealer, title, resolution, updated_at FROM cases WHERE status = 'resolved' AND updated_at >= ?").all(since);
+      const escalated = db.prepare("SELECT id, dealer, title, updated_at FROM cases WHERE status = 'escalated'").all();
+      return { learnedAwaitingReview: learned, promoted: loadCustomPlaybooks().map((p) => ({ id: p.id, title: p.title, prior: p.prior })), resolvedThisWeek: resolved, openEscalations: escalated, reviewPage: "/review.html" };
     },
   ),
 );

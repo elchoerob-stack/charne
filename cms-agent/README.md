@@ -36,6 +36,17 @@ The capability mapping is in `docs/GROK_CAPABILITIES.md`.
   deduplicated SMS and e-mail campaign list with a five-sheet workbook and
   CSVs. Both in CMS eco branding, both discussable with the agent.
   See `docs/REPORTS.md`.
+- **Case-to-ticket bridge**: one click assembles the escalation packet
+  (symptom, hypotheses, recorder evidence, links, dealer facts, timeline,
+  still-needed checklist) and sends it via webhook, Jira or e-mail, or opens
+  a pre-filled draft.
+- **Weekly playbook review** (`/review.html`): edit, promote or archive the
+  playbooks learned from resolved cases; promoted ones persist in
+  `knowledge/playbooks.custom.json`.
+- **Evals** (`server/eval/`): 52-case diagnostic eval (engine level, free)
+  and an agent-level eval with a Claude judge.
+- **Installable app**: progressive web app for the laptop and the phone
+  (`docs/INSTALL.md`), with a service worker for instant open.
 - **Agent tools**: knowledge search, recordings and SOPs, recording analysis,
   diagnose, integration health checks, dealer memory, cases, follow-ups, plus
   Claude's server-side code execution and web search in the deeper modes.
@@ -83,12 +94,18 @@ default), port, database path, web search on/off, optional bearer token, and
 optional live health URLs for Evolve and Infomedia (simulated adapters are
 used when blank).
 
+## Guides
+
+- `docs/INSTALL.md` — install on the laptop, as a desktop app, and on the phone
+- `docs/USER_GUIDE.md` — step-by-step use of every feature
+
 ## Docs
 
 - `docs/GROK_CAPABILITIES.md` — Grok capability inventory and the CMS Agent mapping
 - `docs/PROBLEM_SOLVING.md` — the diagnostic engine
 - `docs/WORKFLOW_RECORDER.md` — capture, masking, SOP compilation, replay
 - `docs/REPORTS.md` — workshop dashboard and campaign list tools
+- `docs/EVALS.md` — the eval harness and how to grow the case set
 - `docs/ARCHITECTURE.md` — layout, turn flow, modes, storage
 - `docs/ROADMAP.md` — what would make Foreman the best workshop agent on the market
 
@@ -97,7 +114,9 @@ used when blank).
 Working now: console, streaming agent with tools, engine, recorder extension,
 SOP/Playwright export, cases, memory, follow-ups, tests.
 
+Also done from the roadmap: case-to-ticket bridge, eval set, weekly playbook
+review, installable phone/desktop app.
+
 Not yet: live Evolve/Infomedia health endpoints (adapters are simulated until
-URLs are configured), speech output, a cron runner for follow-ups, and an MCP
-connection to dealership systems. Each is a small addition on the existing
-tables and tools.
+URLs are configured), scheduled routines with notifications, speech output,
+and an MCP connection to dealership systems.

@@ -164,7 +164,7 @@ export const PLAYBOOKS: Playbook[] = [
     id: "session-expiry",
     title: "Users keep getting logged out",
     domain: "user",
-    symptoms: ["logged out", "log out", "login", "session expired", "keeps logging", "kicked out", "sign in again"],
+    symptoms: ["logged out", "log out", "logs out", "logged out repeatedly", "login", "session expired", "keeps logging", "kicked out", "kicks me out", "sign in again", "signed out", "clock is wrong", "logged", "kicked", "clock"],
     prior: 0.06,
     checks: [
       { id: "many-401", question: "Are there repeated 401 responses across different screens?", auto: reqCheck(/./, (s) => s === 401), lrPass: 5, lrFail: 0.6 },

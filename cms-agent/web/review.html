@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foreman · Playbook review</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+:root{--ink:#0F2040;--blue:#31459C;--turq:#00AEED;--paper:#F7F5F1;--surface:#fff;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--wait:#8A6100;--wait-bg:#FBF1DC}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--stop:#E28080;--stop-bg:#331919;--wait:#D9A93C;--wait-bg:#332715}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--t1);font:14px/1.5 system-ui,"Segoe UI",sans-serif}
+.bar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 16px}.bar b{font-size:15px}.bar span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.65;display:block}.bar a{color:#fff;margin-left:auto;font-size:12px}
+main{max-width:1100px;margin:0 auto;padding:18px}h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin:22px 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px}.card h3{margin:0 0 4px;font-size:15px}.meta{font-size:12px;color:var(--t3)}
+label{display:block;font-size:11px;color:var(--t2);margin:8px 0 3px}input,textarea,select{width:100%;font:inherit;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:6px 8px}textarea{min-height:64px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}button{font:inherit;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:inherit;cursor:pointer;font-weight:600}
+.primary{background:var(--ink);color:#fff;border-color:var(--ink)}.danger{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+.pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--wait-bg);color:var(--wait)}.pill.ok{background:var(--go-bg);color:var(--go)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.empty{color:var(--t3);font-size:13px}.msg{font-size:12px;color:var(--go);min-height:16px;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--t3);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+</style></head>
+<body>
+<div class="bar"><img src="/assets/cms-eco-logo-white.png" alt="CMS eco" style="height:28px"><div><b>Playbook review</b><span>Foreman · weekly learning loop</span></div><a href="/">← Back to Foreman</a></div>
+<main>
+  <div class="card"><b>How this works.</b> Every case resolved with a written resolution becomes a <i>learned playbook</i> with a low weight. Review them here once a week: tidy the title, symptoms and steps, then <b>Promote</b> the good ones into the permanent list (higher weight, survives restarts, editable below) or <b>Archive</b> the noise. Promoted playbooks live in <code>server/knowledge/playbooks.custom.json</code>.</div>
+  <h2>Learned playbooks awaiting review</h2><div id="learned"><div class="empty">Loading…</div></div>
+  <h2>Promoted playbooks</h2><div id="custom"><div class="empty">Loading…</div></div>
+  <div class="grid">
+    <div><h2>Resolved in the last 7 days</h2><div id="resolved" class="card"></div></div>
+    <div><h2>Open escalations</h2><div id="escalated" class="card"></div></div>
+  </div>
+  <h2>Seeded playbooks</h2><div class="card"><table id="seeded"></table></div>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const api = async (p, o) => { const r = await fetch("/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); if (!r.ok) throw new Error(await r.text()); return r.json(); };
+const lines = (a) => (a || []).join("\n");
+async function load() {
+  const d = await api("/review");
+  $("#learned").innerHTML = d.learned.length ? d.learned.map((l) => `<div class="card" data-id="${l.id}">
+    <h3>${esc(l.title)} <span class="pill">${l.confirmations}× confirmed</span></h3>
+    <div class="meta">From case ${esc(l.caseId)} · ${esc(l.dealer || "—")} · learned ${new Date(l.created).toLocaleDateString("en-ZA")}</div>
+    <div class="meta" style="margin-top:6px"><b>Original symptom:</b> ${esc(l.caseSymptom)}</div>
+    <label>Title</label><input class="f-title" value="${esc(l.title)}">
+    <label>Symptom phrases (one per line, lower-case)</label><textarea class="f-symptoms">${esc(lines(l.symptoms))}</textarea>
+    <label>Resolution steps (one per line)</label><textarea class="f-resolution">${esc(lines(l.resolution))}</textarea>
+    <div class="grid"><div><label>Domain</label><select class="f-domain"><option>learned</option><option>cms</option><option>evolve</option><option>infomedia</option><option>comms</option><option>network</option><option>device</option><option>user</option></select></div><div><label>Escalate to</label><input class="f-to" value="CMS support desk"></div></div>
+    <div class="row"><button class="primary" onclick="promote('${l.id}')">Promote</button><button onclick="save('${l.id}')">Save edits</button><button class="danger" onclick="archive('${l.id}')">Archive</button></div><div class="msg"></div></div>`).join("") : '<div class="empty">Nothing waiting. Resolve a case with a resolution and it will appear here.</div>';
+  $("#custom").innerHTML = d.custom.length ? d.custom.map((c) => `<div class="card" data-id="${c.id}"><h3>${esc(c.title)} <span class="pill ok">prior ${Math.round(c.prior * 100)}%</span></h3><div class="meta">${esc(c.domain)} · promoted ${c.promotedAt ? new Date(c.promotedAt).toLocaleDateString("en-ZA") : "—"} · ${c.checks.length} check(s)</div>
+    <label>Symptom phrases</label><textarea class="f-symptoms">${esc(lines(c.symptoms))}</textarea><label>Resolution steps</label><textarea class="f-resolution">${esc(lines(c.resolution))}</textarea>
+    <label>Prior (0.01–0.2)</label><input class="f-prior" type="number" step="0.01" min="0.01" max="0.2" value="${c.prior}">
+    <div class="row"><button class="primary" onclick="saveCustom('${c.id}')">Save</button><button class="danger" onclick="delCustom('${c.id}')">Remove</button></div><div class="msg"></div></div>`).join("") : '<div class="empty">No promoted playbooks yet.</div>';
+  $("#resolved").innerHTML = d.resolvedThisWeek.length ? d.resolvedThisWeek.map((c) => `<div><b>${esc(c.title)}</b> <span class="meta">${esc(c.dealer || "—")} · ${new Date(c.updated_at).toLocaleDateString("en-ZA")}</span><div class="meta">${esc(c.resolution || "")}</div></div>`).join("<hr style='border:0;border-top:1px solid var(--line)'>") : '<div class="empty">No cases resolved this week.</div>';
+  $("#escalated").innerHTML = d.escalated.length ? d.escalated.map((c) => `<div><b>${esc(c.title)}</b> <span class="meta">${esc(c.dealer || "—")} · ${new Date(c.updated_at).toLocaleDateString("en-ZA")}</span> <a class="meta" href="/api/cases/${c.id}/packet" target="_blank">packet</a></div>`).join("<hr style='border:0;border-top:1px solid var(--line)'>") : '<div class="empty">No open escalations.</div>';
+  $("#seeded").innerHTML = "<tr><th>Playbook</th><th>Domain</th><th>Prior</th><th>Checks</th></tr>" + d.seeded.map((p) => `<tr><td>${esc(p.title)}</td><td>${p.domain}</td><td>${Math.round(p.prior * 100)}%</td><td>${p.checks}</td></tr>`).join("");
+}
+const card = (id) => document.querySelector(`.card[data-id="${id}"]`);
+const val = (id, cls) => card(id).querySelector(cls).value;
+const split = (s) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+const say = (id, t) => (card(id).querySelector(".msg").textContent = t);
+async function save(id) { await api(`/review/learned/${id}`, { method: "PATCH", body: JSON.stringify({ title: val(id, ".f-title"), symptoms: split(val(id, ".f-symptoms")).map((s) => s.toLowerCase()), resolution: split(val(id, ".f-resolution")) }) }); say(id, "Saved."); }
+async function promote(id) { await save(id); await api(`/review/learned/${id}/promote`, { method: "POST", body: JSON.stringify({ domain: val(id, ".f-domain"), escalateTo: val(id, ".f-to") }) }); load(); }
+async function archive(id) { if (!confirm("Archive this learned playbook?")) return; await api(`/review/learned/${id}`, { method: "DELETE" }); load(); }
+async function saveCustom(id) { await api(`/review/custom/${id}`, { method: "PATCH", body: JSON.stringify({ symptoms: split(val(id, ".f-symptoms")).map((s) => s.toLowerCase()), resolution: split(val(id, ".f-resolution")), prior: Number(val(id, ".f-prior")) }) }); say(id, "Saved."); }
+async function delCustom(id) { if (!confirm("Remove this promoted playbook?")) return; await api(`/review/custom/${id}`, { method: "DELETE" }); load(); }
+load();
+</script>
+</body></html>

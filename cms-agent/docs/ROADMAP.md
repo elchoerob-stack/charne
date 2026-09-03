@@ -27,14 +27,14 @@ the loop; "capability" items are about doing things no competitor does.
    WhatsApp/e-mail notifier so Foreman chases "did the Evolve retry post?"
    without being asked, and sends the Monday workshop report to each dealer
    principal automatically (Grok Tasks, but for dealers).
-3. **Case-to-ticket bridge.** Push escalation packets straight into the CMS
+3. ✅ **Case-to-ticket bridge** (done: `escalate_case`, webhook/Jira/e-mail/draft). Push escalation packets straight into the CMS
    support desk system (Jira/Zendesk/e-mail) with recording links, so an
    escalation is one click and arrives complete.
-4. **Eval set.** Fifty real support conversations with the known correct
+4. ✅ **Eval set** (done: `server/eval/`, 52 cases, engine + agent levels; replace synthetic cases with real ones). Fifty real support conversations with the known correct
    cause, scored automatically (`/claude-api build-eval`). Without this, every
    prompt or playbook change is a guess. With it, Foreman measurably improves
    every week.
-5. **Playbook growth loop.** A weekly review screen listing resolved cases
+5. ✅ **Playbook growth loop** (done: `/review.html`, promote to `playbooks.custom.json`). A weekly review screen listing resolved cases
    that produced learned playbooks, with one-click promotion into the seeded
    list after a human confirms. Ten playbooks becomes a hundred in a quarter.
 

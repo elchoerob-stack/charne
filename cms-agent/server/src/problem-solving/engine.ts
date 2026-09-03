@@ -20,7 +20,7 @@ const SYNONYMS: Record<string, string> = {
   authorization: "authorisation", authorise: "authorisation", authorize: "authorisation",
   catalog: "catalogue", "log-out": "logged out", logout: "logged out", pics: "photos", picture: "photo",
   pictures: "photos", invoice: "invoice", invoicing: "invoice", posts: "posting", posted: "posting", post: "posting",
-  synch: "sync", syncing: "sync", freeze: "stuck", frozen: "stuck", freezes: "stuck", hang: "hangs", hanging: "hangs",
+  synch: "sync", syncing: "sync", logs: "logged", signs: "logged", "signed": "logged", "kicks": "kicked", freeze: "stuck", frozen: "stuck", freezes: "stuck", hang: "hangs", hanging: "hangs",
 };
 
 export function tokenize(text: string): string[] {

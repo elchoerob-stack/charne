@@ -97,7 +97,7 @@ a{color:inherit}
 .rail button[aria-current="true"] svg{color:var(--gold)}
 .rail .cnt{margin-left:auto;font-size:11px;font-weight:600;color:var(--t3);font-family:"IBM Plex Mono",monospace}
 .rail-note{margin-top:14px;padding:11px;border:1px dashed var(--line-2);border-radius:9px;font-size:11px;color:var(--t3);line-height:1.45}
-.tabs{display:none}
+.tabs,.msheet,.ms-back{display:none}
 @media (max-width:860px){
   .shell{grid-template-columns:minmax(0,1fr);padding:16px 12px 84px;gap:0}
   .rail{display:none}
@@ -105,6 +105,14 @@ a{color:inherit}
   .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 9px;background:none;border:0;color:var(--t3);font-size:10px;font-weight:600;position:relative}
   .tabs button[aria-current="true"]{color:var(--gold)}
   .tabs .cnt{position:absolute;top:4px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:99px;background:var(--stop);color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+  .ms-back{display:block;position:fixed;inset:0;z-index:55;background:rgba(15,32,64,.34)}
+  .msheet{display:block;position:fixed;left:0;right:0;bottom:0;z-index:56;background:var(--surface);border-top:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:0 -8px 32px rgba(15,32,64,.18);padding:6px 0 calc(8px + env(safe-area-inset-bottom));max-height:72vh;overflow:auto}
+  .msheet .grip{width:36px;height:4px;border-radius:99px;background:var(--line-2);margin:6px auto 8px}
+  .msheet button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 18px;background:none;border:0;color:var(--t1);font-size:14.5px;font-weight:500;text-align:left}
+  .msheet button svg{color:var(--t3);flex:none}
+  .msheet button[aria-current="true"]{color:var(--gold);font-weight:600}
+  .msheet button[aria-current="true"] svg{color:var(--gold)}
+  .msheet .cnt{margin-left:auto;min-width:19px;height:19px;border-radius:99px;background:var(--stop);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 6px}
   .strip h1{font-size:18px}
   .strip .ref{font-size:10.5px}
   .sec-h{flex-direction:column;gap:1px;align-items:flex-start;margin-bottom:14px}
@@ -406,7 +414,7 @@ fieldset{border:0;padding:0;margin:0}
 .sigpad{border:1px dashed var(--line-2);border-radius:8px;background:var(--surface-2);touch-action:none;width:100%;height:150px;display:block}
 @media print{
   body{background:#fff!important}
-  .bar,.strip,.rail,.tabs,.foot,.toast,.install,.offline,.noprint{display:none!important}
+  .bar,.strip,.rail,.tabs,.msheet,.ms-back,.foot,.toast,.install,.offline,.noprint{display:none!important}
   .shell{display:block;padding:0;max-width:none}
   .scrim{position:static;background:none;padding:0;overflow:visible;backdrop-filter:none}
   .modal{border:0;box-shadow:none;max-width:none;border-radius:0}
@@ -416,6 +424,26 @@ fieldset{border:0;padding:0;margin:0}
   .paper h1{font-size:19px}
   @page{margin:16mm}
 }
+
+/* ── Money charts ───────────────────────── */
+.mchart{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px}
+.mcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%;
+  background:none;border:0;padding:0;border-radius:6px 6px 0 0;min-width:0}
+.mcol:hover,.mcol:focus-visible{background:var(--surface-2)}
+.mcol .bar{width:100%;max-width:34px;background:var(--viz);border-radius:4px 4px 0 0;min-height:2px;position:relative}
+.mcol .bar.future{background:var(--viz-soft)}
+.mcol .val{font-size:10px;font-variant-numeric:tabular-nums;color:var(--t2);white-space:nowrap}
+.mcol .mon{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.mcol.now .mon{color:var(--gold-ink);font-weight:700}
+.targetline{position:relative;height:0;border-top:1.5px dashed var(--gold);margin-top:-1px}
+.targetline span{position:absolute;right:0;top:-16px;font-size:10px;color:var(--gold-ink);background:var(--surface);padding:0 4px}
+.meter{height:9px;border-radius:99px;background:var(--viz-soft);overflow:hidden;position:relative}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--go),#5FBF87)}
+.meter .mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold)}
+.bucket{display:grid;grid-template-columns:1fr 78px 108px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.bucket:last-of-type{border-bottom:0}
+.bucket .amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+@media (max-width:560px){.bucket{grid-template-columns:1fr 66px 92px;gap:7px}.mchart{height:120px}.mcol .val{display:none}}
 </style>
 <header class="bar">
   <div class="bar-in">
@@ -448,6 +476,7 @@ fieldset{border:0;padding:0;margin:0}
 const I = (d, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICON = {
   home:  I('<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/>'),
+  more:  I('<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>'),
   board: I('<rect x="3" y="4" width="5.5" height="16" rx="1.5"/><rect x="9.5" y="4" width="5.5" height="11" rx="1.5"/><rect x="16" y="4" width="5" height="7" rx="1.5"/>'),
   house: I('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>'),
   deals: I('<rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/>'),
@@ -805,7 +834,8 @@ const SEED_LISTINGS = [
     shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
 ];
 function buildListing(L){
-  const st = { meta:{ ...L }, status:"active", dealId:null, pack:{}, log:[],
+  const st = { meta:{ ...L }, status:"active", dealId:null, pack:{}, log:[], visitors:[],
+    mandateEnds:iso(d0(90 - L.listedAgo)), source:L.source || "",
     prospects:L.prospects.map(([person, status, agoD, preset]) => ({ person, status, preset:preset || null,
       ts:iso(d0(-agoD)), token:token() })),
     viewings:L.viewings.map(([inD, person], i) => ({ id:L.id + "v" + i, when:iso(d0(inD)), person:person || null })),
@@ -833,11 +863,24 @@ const SEED_CARDS = [
     labels:["urgent","client"], members:["lerato"], dueIn:0, pos:1, checklist:[] },
 ];
 
+const SEED_RECEIPTS = () => {
+  const past = [[10, "PTA-2489107", "5 Acacia Close", 27400, "Referral — past client"],
+    [8, "PTA-2471900", "16 Sering Street", 41250, "Property24"],
+    [7, "PTA-2468221", "4 Karee Crescent", 33800, "Board / walk-in"],
+    [5, "PTA-2462014", "Unit 9, Bergsig", 19600, "Referral — past client"],
+    [4, "PTA-2455310", "31 Wag-'n-Bietjie", 52900, "Private Property"],
+    [2, "PTA-2448702", "7 Olienhout Avenue", 38150, "Show day"],
+    [1, "PTA-2441166", "22 Kameeldoring", 44300, "Repeat client"]];
+  return past.map(([ago2, ref, address, amount, source], i) => ({
+    id:"seed" + i, who:"charne", deal:"past" + i, ref, address, amount, source,
+    ts:iso(d0(-(ago2 * 30 + 4))) }));
+};
+
 /* ══ State ══════════════════════════════════════════════════════════ */
 const KEY = "rb_dealroom_v4";
 let S;
 const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{},
-  card:null, send:null, form:null, signing:null, rev:{}, boardFilter:null, boardId:"pipeline",
+  card:null, send:null, form:null, signing:null, rev:{}, money:{}, receipts:SEED_RECEIPTS(), boardFilter:null, boardId:"pipeline",
   boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
   board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
     checklist:c.checklist.map(x => [...x]) })), next:9 },
@@ -848,6 +891,8 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   if (!S.people) S.people = {};
   if (!S.rev) S.rev = {};
   if (!S.board) S.board = fresh().board;
+  if (!S.receipts) S.receipts = SEED_RECEIPTS();
+  if (!S.money) S.money = {};
   if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
   S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline";
     c.files = c.files || []; c.comments = c.comments || []; c.activity = c.activity || []; });
@@ -950,10 +995,11 @@ function navItems(){
     if (canDocs()) v.push(DEAL_VIEWS_DOCS);
     return v; }
   const v = [], r = me().role;
-  if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"earn", label:"Earnings", short:"Earnings", ic:"key" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
     v.push({ id:"today", label:"Today", short:"Today", ic:"home" });
-    if (r === "agent") v.push({ id:"earn", label:"Earnings", short:"Earnings", ic:"key" },
+    if (r === "agent") v.push({ id:"money", label:"Money", short:"Money", ic:"key" },
+      { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" },
       { id:"board", label:"Board", short:"Board", ic:"board" });
     if (myListings().length) v.push({ id:"listings", label:r === "agent" ? "My houses" : "Houses", short:"Houses", ic:"house" });
     if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
@@ -998,7 +1044,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1011,17 +1057,38 @@ function renderChrome(){
     ${sync.needsSignIn ? `<button class="btn btn-s" data-act="syncin" style="margin:9px 0 4px">Sign in to sync</button>` : ""}
     <div style="margin-top:9px"></div><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
 
-  const tabs = items.slice(0, 5);
-  document.getElementById("tabs").style.gridTemplateColumns = `repeat(${tabs.length},1fr)`;
-  document.getElementById("tabs").innerHTML = tabs.map(v => {
-    const b = badgeFor(v.id);
-    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.short || v.label.split(" ")[0]}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
-  }).join("");
+  /* A phone shows five slots. If there are more views than that, the fifth
+     becomes "More" and opens the rest — nothing is ever unreachable. */
+  const overflow = items.length > 5 ? items.slice(4) : [];
+  const tabs = overflow.length ? items.slice(0, 4) : items;
+  if (!overflow.length) moreOpen = false;
+  const tabBtn = v => { const b = badgeFor(v.id);
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.short || v.label.split(" ")[0]}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`; };
+  const overCount = overflow.reduce((n, v) => n + badgeFor(v.id), 0);
+  const onOver = overflow.some(v => v.id === S.view);
+  document.getElementById("tabs").style.gridTemplateColumns = `repeat(${tabs.length + (overflow.length ? 1 : 0)},1fr)`;
+  document.getElementById("tabs").innerHTML = tabs.map(tabBtn).join("")
+    + (overflow.length ? `<button data-act="more" aria-current="${onOver}" aria-expanded="${moreOpen}">${ICON.more}<span>More</span>${overCount ? `<span class="cnt">${overCount}</span>` : ""}</button>` : "");
+  renderMore(overflow);
 
   document.getElementById("foot").innerHTML =
     `<b>RB Brand Deal Room</b> — a working concept for a multi-party property transfer portal: an agent's deal rooms, a principal's team view, and one shared file per sale for the purchaser, seller and transferring attorney.
      Built around the South African conveyancing sequence and POPIA (Act 4 of 2013, as amended April 2025): role-based document access, expiring document links and an append-only audit trail.
      Parties, figures and documents are illustrative; the property links point to live RB Brand listings.`;
+}
+
+/* ══ The "More" sheet on a phone ════════════════════════════════════ */
+let moreOpen = false;
+function renderMore(overflow){
+  document.querySelectorAll(".msheet,.ms-back").forEach(e => e.remove());
+  if (!moreOpen || !overflow.length) return;
+  const back = document.createElement("div"); back.className = "ms-back"; back.dataset.act = "moreclose";
+  const el = document.createElement("div"); el.className = "msheet"; el.setAttribute("role", "menu");
+  el.innerHTML = `<div class="grip"></div>` + overflow.map(v => {
+    const b = badgeFor(v.id);
+    return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}" role="menuitem">${ICON[v.ic]}<span>${v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
+  }).join("");
+  document.body.append(back, el);
 }
 
 /* ══ Identity menu ══════════════════════════════════════════════════ */
@@ -1362,6 +1429,17 @@ function vDash(){
           : `<span class="chip c-wait">Outstanding</span>`}
       </div>`).join("")}</div></div>` : ""}
 
+    ${(() => { const ret = retention(d); if (!ret || d.purged) return "";
+      return `<div class="card"><div class="card-b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">
+        <span class="stripe" style="background:${ret.due ? "var(--stop)" : "var(--line-2)"};height:38px"></span>
+        <div style="flex:1;min-width:200px"><div class="eyebrow">Keeping personal information</div>
+          <div style="font-size:13.5px;margin-top:2px">${ret.due
+            ? `This file registered more than ${RETAIN_YEARS} years ago. POPIA expects the personal information to go once its purpose has ended.`
+            : `Personal information on this file may be kept until <b>${dstr(ret.until)}</b> — ${RETAIN_YEARS} years after registration, which is what FICA requires.`}</div></div>
+        ${ret.due && (d.meta.agent === S.me || isPrincipal(S.me)) ? `<button class="btn btn-s" data-act="purge" style="color:var(--stop)">Remove personal details</button>` : ""}
+      </div></div>`; })()}
+    ${d.purged ? `<div class="note">${ICON.shield}<div><b>Personal information was removed on ${dstr(d.purged)}.</b> The transfer record, the audit trail and the compliance certificates are kept; the parties' contact details and their FICA and finance documents are gone.</div></div>` : ""}
+
     ${commissionCard(d)}
 
     <div class="grid2">
@@ -1381,7 +1459,10 @@ function vDash(){
           ${d.log.slice(0, 5).map(e => `<div class="act" style="padding:11px 0">
             <span class="stripe" style="background:${COL(P[e.who].role)}"></span>
             <div class="act-t"><b>${esc(e.act)}</b><span>${P[e.who].name.split(" ")[0]} · ${ago(e.ts)}</span></div></div>`).join("")}
-          <button class="btn btn-s" data-act="view" data-v="log" style="margin-top:12px">Open the full audit log</button>
+          <div class="comp-r" style="margin-top:12px">
+            <button class="btn btn-s" data-act="view" data-v="log">Open the full audit log</button>
+            ${P[S.me] && (P[S.me].role === "agent" || isPrincipal(S.me)) ? `<button class="btn btn-s" data-act="export" data-s="deal">${ICON.up} Export this file</button>` : ""}
+          </div>
         </div>
       </div>
     </div>
@@ -1590,6 +1671,37 @@ function vHouse(){
       </div>
     </div>
 
+    ${isAgent ? `<div class="card">
+      <div class="card-h">${ICON.log}<h2>The mandate</h2>
+        <span class="chip ${daysTo(l.mandateEnds) < 0 ? "c-stop" : daysTo(l.mandateEnds) < 21 ? "c-wait" : "c-go"}">
+          ${daysTo(l.mandateEnds) < 0 ? Math.abs(daysTo(l.mandateEnds)) + " days expired" : daysTo(l.mandateEnds) + " days left"}</span></div>
+      <div class="card-b" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div class="field" style="min-width:190px"><label for="mandate_end">Mandate runs until</label>
+          <input type="date" id="mandate_end" value="${new Date(l.mandateEnds).toISOString().slice(0, 10)}"></div>
+        <div class="field" style="min-width:210px"><label for="l_source">Where the listing came from</label>
+          <select id="l_source" style="width:100%"><option value="">Not recorded</option>
+            ${SOURCES.map(x => `<option value="${esc(x)}" ${l.source === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>
+        <button class="btn btn-s" data-act="mandatesave" style="align-self:flex-end">Save</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-s" data-act="export" data-s="listing" style="align-self:flex-end">${ICON.up} Export this house</button>
+      </div></div>
+
+    <div class="card">
+      <div class="card-h">${ICON.people}<h2>Show day register</h2><span class="chip c-mute">${(l.visitors || []).length}</span></div>
+      <div class="card-b">
+        ${(l.visitors || []).length ? (l.visitors || []).slice().reverse().map((vv, i) => `<div class="act">
+          <span class="stripe" style="background:var(--p-buyer)"></span>
+          <div class="act-t"><b>${esc(vv.name)}</b><span class="mono">${esc(vv.mobile || "no number")}${vv.note ? " · " + esc(vv.note) : ""} · ${ago(vv.ts)}</span></div>
+          ${vv.mobile ? `<button class="btn btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ listing:l.meta.id, to:l.meta.agent, tpl:"house_invite" }))}'>${ICON.chat} Follow up</button>` : ""}
+        </div>`).join("") : `<div class="empty"><b>Nobody signed in yet</b>Everyone who walks through is a future buyer — and the register is what a seller wants to see.</div>`}
+        <div class="form" style="margin-top:14px">
+          <div class="field"><label for="vz_name">Name</label><input type="text" id="vz_name" placeholder="Who came through"></div>
+          <div class="field"><label for="vz_mob">Mobile</label><input type="tel" id="vz_mob" placeholder="082 000 0000"></div>
+          <div class="field"><label for="vz_note">Note</label><input type="text" id="vz_note" placeholder="Liked it, needs 3 beds"></div>
+        </div>
+        <button class="btn btn-g btn-s" data-act="visitoradd" style="margin-top:11px">${ICON.plus} Add to the register</button>
+      </div></div>` : ""}
+
     ${isAgent || r === "principal" ? `<div class="card">
       <div class="card-h">${ICON.people}<h2>Buyers with access</h2><span class="chip c-mute">${l.prospects.filter(x => x.status === "joined").length} in</span></div>
       <div class="card-b">
@@ -1644,6 +1756,13 @@ function vHouse(){
     ${r === "prospect" || isAgent || r === "seller" || r === "principal" ? `<div class="card">
       <div class="card-h">${ICON.key}<h2>Offers</h2>${openOffers(l).length ? `<span class="chip c-stop">${openOffers(l).length} to answer</span>` : ""}</div>
       <div class="card-b">
+        ${isAgent && l.offers.length > 1 ? (() => {
+          const amts = l.offers.map(o => o.amount);
+          const hi = Math.max(...amts), lo = Math.min(...amts), avg = amts.reduce((a, b) => a + b, 0) / amts.length;
+          return `<div class="note" style="margin-bottom:12px">${ICON.log}<div><b>What the market has said.</b>
+            ${l.offers.length} offers between ${R(lo)} and ${R(hi)}, averaging ${R(Math.round(avg))} — that is
+            ${Math.round((1 - avg / l.meta.price) * 100)}% under the asking price of ${R(l.meta.price)}.
+            Worth showing the seller before the next price conversation.</div></div>`; })() : ""}
         ${l.offers.length ? l.offers.map(o => (r === "prospect" && o.person !== S.me) ? "" : `<div class="act">
           <span class="stripe" style="background:${o.status === "accepted" ? "var(--go)" : o.status === "declined" ? "var(--stop)" : "var(--gold)"}"></span>
           <div class="act-t"><b>${R(o.amount)}${o.amount < l.meta.price ? ` <span style="font-weight:400;color:var(--t3)">— ${R(l.meta.price - o.amount)} under asking</span>` : ""}</b>
@@ -1941,6 +2060,18 @@ function inbox(){
       out.push({ rank:2, id:"rates" + d.meta.id, kind:"deal", dealId:d.meta.id, urgent:true,
         title:"Rates clearance has been quiet for three weeks", why:`${d.meta.address} — worth phoning the attorney`, ts:lastTouch(d) });
   });
+  // a mandate about to run out
+  myListings().filter(l => l.status === "active" && l.meta.agent === S.me && l.mandateEnds).forEach(l => {
+    const n = daysTo(l.mandateEnds);
+    if (n <= 21) out.push({ rank:n < 0 ? 0 : 2, id:"mand" + l.meta.id, kind:"house", houseId:l.meta.id,
+      urgent:n < 7, title:n < 0 ? `Mandate expired ${Math.abs(n)} days ago` : `Mandate runs out in ${n} days`,
+      why:`${l.meta.address} — renew it before someone else does`, ts:l.mandateEnds });
+  });
+  // a file whose personal information is past its retention period
+  myDeals().filter(d => !d.purged).forEach(d => { const ret = retention(d);
+    if (ret && ret.due) out.push({ rank:4, id:"ret" + d.meta.id, kind:"deal", dealId:d.meta.id, urgent:false,
+      title:"Personal information is past its retention period", why:`${d.meta.address} — POPIA says it should go`, ts:ret.until });
+  });
   // a house that has gone quiet
   myListings().filter(l => l.status === "active" && l.meta.agent === S.me).forEach(l => {
     const days = Math.round((Date.now() - new Date(l.log[0] ? l.log[0].ts : Date.now())) / DAY);
@@ -2117,6 +2248,9 @@ function renderSend(){
   document.body.appendChild(el);
 }
 
+const SOURCES = ["Property24", "Private Property", "MyProperty", "Board / walk-in", "Show day",
+  "Referral — past client", "Referral — another agent", "Repeat client", "Social media", "Cold call", "Other"];
+
 /* ══ Commission ═════════════════════════════════════════════════════
    Every deal earns differently, so the figure lives on the mandate and
    is editable there. Splits are percentages of the fee excluding VAT —
@@ -2172,7 +2306,12 @@ function commissionCard(d){
         <div class="act-t"><b>${esc(s.label)}</b><span>${s.kind === "agency" ? "Agency" : s.kind === "agent" ? "Agent" : s.kind === "partner" ? "Partner agency" : "Referral / buyout"} · ${s.pct}%</span></div>
         <span class="mono" style="font-weight:600">${R(s.amount)}</span></div>`).join("")}
       ${commOf(d).note ? `<p style="margin:12px 0 0;font-size:12.5px;color:var(--t2)">${esc(commOf(d).note)}</p>` : ""}
-      ${editable ? `<button class="btn btn-s" data-act="commedit" style="margin-top:13px">Adjust on the mandate</button>` : ""}
+      <div class="comp-r" style="margin-top:13px">
+        ${editable ? `<button class="btn btn-s" data-act="commedit">Adjust on the mandate</button>` : ""}
+        <div class="field" style="min-width:200px"><label for="d_source">Where this deal came from</label>
+          <select id="d_source" data-act="dsource" style="width:100%"><option value="">Not recorded</option>
+            ${SOURCES.map(x => `<option value="${esc(x)}" ${d.meta.source === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>
+      </div>
     </div></div>`;
 }
 function vComm(){
@@ -2364,7 +2503,7 @@ function newForm(type){
     comm:d ? commOf(d).pct : 5, start:new Date().toISOString().slice(0, 10),
     end:new Date(Date.now() + 90 * DAY).toISOString().slice(0, 10) };
   FORMS[type].fields.forEach(f => v[f.k] = g[f.k] !== undefined ? g[f.k] : "");
-  const rec = { id:"f" + Date.now(), type, values:v, status:"draft", signatures:[],
+  const rec = { id:"f" + Date.now(), type, values:v, status:"draft", signatures:[], version:1, history:[],
     by:S.me, ts:new Date().toISOString(), ref:(meta.ref || "RB") + "/" + FORMS[type].short.toUpperCase() + "/" + String(Date.now()).slice(-4) };
   formsOf(host).push(rec);
   const log = d ? (t, x) => logit(d, t, x) : (t, x) => l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:t, det:x });
@@ -2461,6 +2600,29 @@ function renderPaper(f){
     <div class="foot">Prepared in the RB Brand Deal Room · ${esc(f.ref)}</div></div>`;
 }
 
+/* ══ Keeping personal information no longer than needed ═════════════
+   POPIA expects personal information to go once the purpose it was
+   collected for has ended. A registered transfer still has a retention
+   period behind it (FICA keeps records for five years), so the app
+   flags a file that is past it rather than deleting anything itself. */
+const RETAIN_YEARS = 5;
+function retention(d){
+  if (!isClosed(d)) return null;
+  const done = new Date(d.log.find(e => /Stage complete/.test(e.act) && /Registration/.test(e.det || "")) ?
+    d.log.find(e => /Stage complete/.test(e.act) && /Registration/.test(e.det || "")).ts : lastTouch(d));
+  const until = new Date(done.getFullYear() + RETAIN_YEARS, done.getMonth(), done.getDate());
+  return { done, until, due:daysTo(until) <= 0 };
+}
+function purgePersonal(d){
+  const parties = ["buyer", "seller"].map(r => d.meta[r]);
+  parties.forEach(id => { if (!P[id]) return;
+    P[id] = S.people[id] = { ...P[id], name:P[id].name.split(" ")[0] + " (details removed)",
+      mobile:"—", email:"—", ini:P[id].ini }; });
+  Object.keys(d.docs).forEach(k => { if (["FICA", "Finance"].includes((DOC[k] || {}).cat)) delete d.docs[k]; });
+  d.purged = new Date().toISOString();
+  logit(d, "Personal information removed", `FICA and finance documents and party contact details deleted after ${RETAIN_YEARS} years`);
+}
+
 /* ══ The paperwork screen ═══════════════════════════════════════════ */
 function vDocs(){
   const host = formHost(); if (!host) return "";
@@ -2487,7 +2649,13 @@ function vOneForm(f){
   const needed = F.sign === "online" ? [["seller", "Seller"], ["agent", "Agent"]] : [];
   const signedBy = (f.signatures || []).map(x => x.role);
   return `<div class="stack">
-    <div class="sec-h"><h2>${esc(F.name)}</h2><p class="mono">${esc(f.ref)}</p></div>
+    <div class="sec-h"><h2>${esc(F.name)}</h2><p class="mono">${esc(f.ref)}${(f.version || 1) > 1 ? " · version " + f.version : ""}</p></div>
+    ${(f.history || []).length ? `<div class="card"><div class="card-h">${ICON.log}<h2>Earlier versions</h2>
+      <span class="chip c-mute">${f.history.length}</span></div><div class="card-b">
+      ${f.history.slice().reverse().map(h => `<div class="act"><span class="stripe" style="background:var(--line-2)"></span>
+        <div class="act-t"><b>Version ${h.version}${(h.signatures || []).length ? " — was signed" : ""}</b>
+          <span>Replaced ${ago(h.supersededAt)} by ${esc(P[h.by] ? P[h.by].name.split(" ")[0] : "someone")} · ${esc(h.reason)}</span></div></div>`).join("")}
+      </div></div>` : ""}
     <div class="note ${F.sign === "wet" ? "" : ""}" ${F.sign === "wet" ? 'style="border-color:var(--stop)"' : ""}>${F.sign === "wet" ? ICON.warn : ICON.shield}<div>
       <b>${F.sign === "wet" ? "This one must be signed by hand." : F.sign === "online" ? "This one may be signed on screen." : "For information only."}</b> ${esc(F.why)}</div></div>
 
@@ -2632,8 +2800,170 @@ Object.entries(KEEPINTOUCH).forEach(([when, list]) => list.forEach((m, i) => {
     subject:"{property}", body:m.b };
 }));
 
+/* ══ Taking a copy out ══════════════════════════════════════════════
+   If the app is the record, the agency needs its own copy of it. */
+function exportWorkspace(scope){
+  const stamp = new Date().toISOString().slice(0, 10);
+  const pick = scope === "deal" ? { deals:{ [S.deal]:S.deals[S.deal] } }
+    : scope === "listing" ? { listings:{ [S.listing]:S.listings[S.listing] } }
+    : { deals:S.deals, listings:S.listings, boards:S.boards, cards:S.board.cards, receipts:S.receipts || [] };
+  const payload = { exported:new Date().toISOString(), by:P[S.me] ? P[S.me].name : S.me,
+    app:"RB Brand Deal Room", people:S.people, ...pick };
+  const name = `rb-deal-room-${scope}-${stamp}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast("Copy saved to your device");
+}
+
+/* ══ Money in the bank ══════════════════════════════════════════════
+   Commission is only real once it is paid out on registration, so the
+   ledger records receipts, not hopes. Everything set aside is worked
+   out from her own percentages — the app publishes no tax rates,
+   because they change every year and a wrong one is worse than none. */
+const TAXYEAR = d => { const x = new Date(d); return x.getMonth() >= 2 ? x.getFullYear() : x.getFullYear() - 1; };
+const taxYearLabel = y => `1 Mar ${y} – 28 Feb ${y + 1}`;
+const DEFAULT_MONEY = () => ({
+  target:1500000,
+  buckets:[{ k:"tax", label:"Income tax (provisional)", pct:31 },
+           { k:"ra",  label:"Retirement annuity",       pct:10 },
+           { k:"exp", label:"Running costs & float",    pct:8 }],
+  note:"" });
+const moneyCfg = () => { S.money = S.money || {}; return (S.money[S.me] = S.money[S.me] || DEFAULT_MONEY()); };
+const myReceipts = () => (S.receipts || []).filter(r => r.who === S.me).sort((a, b) => new Date(b.ts) - new Date(a.ts));
+function recordPayout(d){
+  S.receipts = S.receipts || [];
+  if (S.receipts.some(r => r.deal === d.meta.id)) return;
+  commCalc(d).splits.filter(x => x.kind !== "agency").forEach(x => {
+    S.receipts.push({ id:"r" + Date.now() + Math.random().toString(36).slice(2, 5), who:x.id, deal:d.meta.id,
+      ref:d.meta.ref, address:d.meta.address, amount:x.amount, ts:new Date().toISOString(), source:d.meta.source || "" });
+  });
+}
+/* Twelve months back, ending this month. */
+function monthly(){
+  const out = [], now = new Date();
+  for (let i = 11; i >= 0; i--){
+    const dte = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const next = new Date(dte.getFullYear(), dte.getMonth() + 1, 1);
+    const amount = myReceipts().filter(r => { const t = new Date(r.ts); return t >= dte && t < next; })
+      .reduce((n, r) => n + r.amount, 0);
+    out.push({ key:dte.toISOString().slice(0, 7), label:dte.toLocaleDateString("en-ZA", { month:"short" }),
+      year:dte.getFullYear(), amount, now:i === 0 });
+  }
+  return out;
+}
+function vMoney(){
+  const cfg = moneyCfg(), months = monthly(), receipts = myReceipts();
+  const peak = Math.max(1, ...months.map(m => m.amount));
+  const ty = TAXYEAR(new Date());
+  const tyReceipts = receipts.filter(r => TAXYEAR(r.ts) === ty);
+  const tyTotal = tyReceipts.reduce((n, r) => n + r.amount, 0);
+  const monthTarget = cfg.target / 12;
+  const thisMonth = months[11].amount;
+  const pctTarget = Math.min(100, Math.round(tyTotal / (cfg.target || 1) * 100));
+  const setAside = cfg.buckets.map(b => ({ ...b, amount:tyTotal * (+b.pct || 0) / 100 }));
+  const totalAside = setAside.reduce((n, b) => n + b.amount, 0);
+  const keep = tyTotal - totalAside;
+  /* Provisional tax for a February year-end: first period end August,
+     second end February. Confirm the dates with her accountant. */
+  const now = new Date();
+  const p1 = new Date(ty, 7, 31), p2 = new Date(ty + 1, 1, 28);
+  const nextDue = now <= p1 ? { label:"First provisional payment", when:p1 }
+    : { label:"Second provisional payment", when:p2 };
+  const taxPct = (cfg.buckets.find(b => b.k === "tax") || { pct:0 }).pct;
+  const live = Object.values(S.deals).filter(d => !isClosed(d) && (d.meta.agent === S.me || commCalc(d).splits.some(x => x.id === S.me)));
+  const coming = live.reduce((n, d) => n + myShare(d) * oddsOf(d), 0);
+
+  return `<div class="stack">
+    <div class="sec-h"><h2>Money</h2><p>What has actually come in, and what of it is not yours to spend</p></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">This month</div><div class="v">${R(thisMonth)}</div>
+        <div class="s">${thisMonth >= monthTarget ? "ahead of" : "behind"} ${R(monthTarget)} a month</div></div>
+      <div class="tile"><div class="k">Tax year to date</div><div class="v" style="color:var(--go)">${Rm(tyTotal)}</div>
+        <div class="s">${taxYearLabel(ty)}</div></div>
+      <div class="tile"><div class="k">Set aside</div><div class="v" style="color:var(--stop)">${Rm(totalAside)}</div>
+        <div class="s">${cfg.buckets.reduce((n, b) => n + (+b.pct || 0), 0)}% of what came in</div></div>
+      <div class="tile"><div class="k">Actually yours</div><div class="v">${Rm(keep)}</div>
+        <div class="s">After everything above</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.board}<h2>Received per month</h2>
+        <span class="chip c-mute mono">12 months to ${months[11].label} ${months[11].year}</span></div>
+      <div class="card-b">
+        <div class="mchart">${months.map(m => `<button class="mcol ${m.now ? "now" : ""}"
+            data-tip="${esc(R(m.amount) + (m.amount ? " received" : " — nothing banked"))}" data-tiptitle="${esc(m.label + " " + m.year)}">
+            <span class="val">${m.amount ? Rm(m.amount) : ""}</span>
+            <span class="bar" style="height:${Math.max(2, m.amount / peak * 100)}%"></span>
+            <span class="mon">${m.label}</span></button>`).join("")}</div>
+        <p style="margin:12px 0 0;font-size:12px;color:var(--t2)">Commission is banked on registration, so a month with nothing in it usually means transfers landed either side of it — the pipeline below is the better guide to what is coming.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.key}<h2>The board</h2><span class="chip ${pctTarget >= 100 ? "c-go" : pctTarget >= 60 ? "c-gold" : "c-mute"}">${pctTarget}% of target</span></div>
+      <div class="card-b">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:6px">
+          <span><b style="color:var(--t1)">${R(tyTotal)}</b> banked</span>
+          <span>target ${R(cfg.target)}</span></div>
+        <div class="meter"><i style="width:${pctTarget}%"></i>
+          <span class="mark" style="left:${Math.min(100, Math.round((new Date() - new Date(ty, 2, 1)) / (365 * DAY) * 100))}%" title="where the year is"></span></div>
+        <p style="margin:9px 0 0;font-size:11.5px;color:var(--t3)">The gold mark is how far through the tax year you are. Ahead of it means you are ahead of pace.</p>
+        <div class="tiles" style="margin-top:14px">
+          <div class="tile"><div class="k">Still to come</div><div class="v">${Rm(coming)}</div><div class="s">Weighted pipeline</div></div>
+          <div class="tile"><div class="k">On pace for</div><div class="v">${Rm(tyTotal + coming)}</div><div class="s">If the live files register</div></div>
+          <div class="tile"><div class="k">Gap to target</div><div class="v" style="color:${tyTotal + coming >= cfg.target ? "var(--go)" : "var(--stop)"}">${Rm(Math.max(0, cfg.target - tyTotal - coming))}</div><div class="s">After the pipeline</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.shield}<h2>What to set aside</h2><span class="chip c-mute">Your percentages</span></div>
+      <div class="card-b">
+        ${setAside.map((b, i) => `<div class="bucket">
+          <input type="text" data-bucket="label" data-i="${i}" value="${esc(b.label)}">
+          <input type="number" data-bucket="pct" data-i="${i}" value="${b.pct}" step="0.5" min="0" max="100">
+          <span class="amt">${R(b.amount)}</span></div>`).join("")}
+        <div class="bucket" style="border-top:2px solid var(--line);margin-top:4px">
+          <b>Total to hold back</b><span></span><span class="amt" style="color:var(--stop)">${R(totalAside)}</span></div>
+        <div class="comp-r" style="margin-top:12px">
+          <button class="btn btn-s" data-act="bucketadd">${ICON.plus} Add a set-aside</button>
+          <div class="field" style="flex:1;min-width:180px"><input type="number" id="mn_target" value="${cfg.target}" step="50000" placeholder="Target for the year"></div>
+          <button class="btn btn-g" data-act="moneysave">Save</button>
+        </div>
+        <div class="note" style="margin-top:14px">${ICON.warn}<div><b>These percentages are yours to set, not the app's to guess.</b> Income tax on commission depends on your total income for the year and what you may deduct — a commission earner can usually claim business expenses that a salaried person cannot. Ask your accountant for the right number and put it in above. The app does the arithmetic; it does not do the tax.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.log}<h2>${esc(nextDue.label)}</h2>
+        <span class="chip ${daysTo(nextDue.when) < 30 ? "c-wait" : "c-mute"}">${daysTo(nextDue.when)} days</span></div>
+      <div class="card-b">
+        <div class="act"><span class="stripe" style="background:var(--wait)"></span>
+          <div class="act-t"><b>Due ${dstr(nextDue.when)}</b>
+            <span>On ${R(tyTotal)} received so far, at ${taxPct}%, that is roughly <b>${R(tyTotal * taxPct / 100)}</b></span></div></div>
+        <p style="margin:10px 0 0;font-size:12px;color:var(--t2)">Provisional tax for a February year-end runs in two periods, the first ending in August and the second at the end of February. Confirm your dates and the amount with your accountant — this is a reminder, not a calculation of what SARS will want.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.deals}<h2>Received</h2><span class="chip c-mute">${receipts.length}</span></div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>When</th><th>Property</th><th>Reference</th><th>Where it came from</th><th>Amount</th></tr></thead>
+        <tbody>${receipts.length ? receipts.map(r => `<tr>
+          <td class="num">${dstr(r.ts)}</td><td><b>${esc(r.address)}</b></td>
+          <td class="mono" style="font-size:11.5px">${esc(r.ref)}</td>
+          <td>${r.source ? `<span class="chip c-mute">${esc(r.source)}</span>` : "—"}</td>
+          <td class="num"><b>${R(r.amount)}</b></td></tr>`).join("")
+          : `<tr><td colspan="5"><div class="empty"><b>Nothing banked yet</b>Commission appears here the day a transfer registers.</div></td></tr>`}</tbody></table></div>
+    </div>
+  </div>`;
+}
+
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { today:vToday, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
   if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
@@ -2644,7 +2974,7 @@ function render(){
   if (!S.listing && S.view === "house") S.view = homeView();
   if (!S.deal && !S.listing && S.view === "listings" && !myListings().length) S.view = homeView();
   if (!S.deal && !S.listing && S.view === "docs") S.view = homeView();
-  if (!S.deal && !S.listing && ["board", "today", "earn"].includes(S.view) && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
+  if (!S.deal && !S.listing && ["board", "today", "earn", "money"].includes(S.view) && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (S.deal && S.view === "comm" && !canSeeComm(D())) S.view = "dash";
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
   if (S.deal && !dealViews().some(v => v.id === S.view)) S.view = "dash";
@@ -2732,6 +3062,7 @@ function markDone(d, id, quiet){
   const s = STAGES[t.stage - 1];
   if (stageDone(d, s)){
     logit(d, "Stage complete", `${s.name} — documents from this stage are now locked`);
+    if (isClosed(d)) recordPayout(d);
     if (!quiet) toast(s.n < 7 ? `Stage ${s.n} complete — ${STAGES[s.n].name} is now open` : "Registered. Transfer complete.");
   } else if (!quiet) toast("Marked done");
 }
@@ -2760,7 +3091,9 @@ document.addEventListener("click", e => {
   if (!btn){ if (popOpen && !e.target.closest("#rolebtn")){ popOpen = false; document.getElementById("rolebtn").setAttribute("aria-expanded", "false"); renderPop(); } return; }
   const a = btn.dataset.act, d = D();
 
-  if (a === "view"){ S.view = btn.dataset.v; if (S.view === "chat" && d) d.seen[S.me] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
+  if (a === "view"){ S.view = btn.dataset.v; moreOpen = false; if (S.view === "chat" && d) d.seen[S.me] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
+  else if (a === "more"){ moreOpen = !moreOpen; renderChrome(); }
+  else if (a === "moreclose"){ moreOpen = false; renderChrome(); }
   else if (a === "home"){ S.deal = null; S.listing = null; S.agentFilter = null; S.view = homeView(); render(); window.scrollTo({ top:0 }); }
   else if (a === "openhouse"){ S.listing = btn.dataset.l; S.deal = null; S.view = "house"; render(); window.scrollTo({ top:0 }); }
   else if (a === "packshare"){ const l = L(), rec = l.pack[btn.dataset.d];
@@ -2920,8 +3253,23 @@ document.addEventListener("click", e => {
   else if (a === "formopen"){ S.form = btn.dataset.f; S.signing = null; render(); window.scrollTo({ top:0 }); }
   else if (a === "formback"){ S.form = null; S.signing = null; render(); }
   else if (a === "formsave"){ const f = curForm();
-    document.querySelectorAll("[data-fx]").forEach(el => f.values[el.dataset.fx] = el.value);
-    toast("Saved"); render(); }
+    const before = JSON.stringify(f.values);
+    const vals = {}; document.querySelectorAll("[data-fx]").forEach(el => vals[el.dataset.fx] = el.value);
+    if (JSON.stringify({ ...f.values, ...vals }) === before){ toast("Nothing changed"); return; }
+    /* Once a document is signed, an edit does not overwrite it — the signed
+       version is kept and a new version is started, with a reason. */
+    if ((f.signatures || []).length){
+      const why = prompt("This document is signed. Saving starts version " + ((f.version || 1) + 1) + ".\n\nWhy is it being changed?");
+      if (why === null) return;
+      f.history = f.history || [];
+      f.history.push({ version:f.version || 1, values:{ ...f.values }, signatures:f.signatures,
+        ts:f.ts, supersededAt:new Date().toISOString(), by:S.me, reason:why.trim() || "no reason given" });
+      f.version = (f.version || 1) + 1; f.signatures = []; f.status = "draft"; f.ts = new Date().toISOString();
+      const dd = D(), ll = L(), line = `${FORMS[f.type].name} v${f.version} · ${why.trim() || "no reason given"}`;
+      if (dd) logit(dd, "Document amended", line); else if (ll) ll.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Document amended", det:line });
+      toast(`Version ${f.version} started — the signed copy is kept`);
+    } else toast("Saved");
+    Object.assign(f.values, vals); render(); }
   else if (a === "formprint"){ const f = curForm();
     document.querySelectorAll("[data-fx]").forEach(el => f.values[el.dataset.fx] = el.value);
     if (f.status === "draft") f.status = "printed";
@@ -2956,6 +3304,31 @@ document.addEventListener("click", e => {
     f.signatures = (f.signatures || []).filter(x => x.role !== btn.dataset.r);
     if (f.signatures.length < 2) f.status = "printed";
     render(); }
+  else if (a === "mandatesave"){ const l = L();
+    l.mandateEnds = new Date(document.getElementById("mandate_end").value).toISOString();
+    l.source = document.getElementById("l_source").value;
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Mandate updated",
+      det:`Runs to ${dstr(l.mandateEnds)}${l.source ? " · from " + l.source : ""}` });
+    toast("Mandate saved"); render(); }
+  else if (a === "visitoradd"){ const l = L(), g = id => (document.getElementById(id) || {}).value || "";
+    if (!g("vz_name").trim()){ toast("A name at least"); return; }
+    l.visitors = l.visitors || [];
+    l.visitors.push({ name:g("vz_name").trim(), mobile:g("vz_mob").trim(), note:g("vz_note").trim(), ts:new Date().toISOString(), by:S.me });
+    l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Show day visitor", det:g("vz_name").trim() });
+    toast("Added to the register"); render(); }
+  else if (a === "export"){ exportWorkspace(btn.dataset.s); }
+  else if (a === "purge"){ const dd = D();
+    if (!confirm("Remove the purchaser's and seller's contact details and their FICA and finance documents from this file?\n\nThe transfer record, the audit log and the compliance certificates are kept. This cannot be undone.")) return;
+    purgePersonal(dd); toast("Personal information removed"); render(); }
+  else if (a === "bucketadd"){ const c = moneyCfg();
+    c.buckets.push({ k:"b" + Date.now(), label:"Something else", pct:0 }); render(); }
+  else if (a === "moneysave"){ const c = moneyCfg();
+    document.querySelectorAll("[data-bucket]").forEach(el => {
+      const b = c.buckets[+el.dataset.i]; if (!b) return;
+      if (el.dataset.bucket === "pct") b.pct = +el.value || 0; else b.label = el.value;
+    });
+    c.target = +(document.getElementById("mn_target") || {}).value || c.target;
+    toast("Saved"); render(); }
   else if (a === "switchboard"){ S.boardId = btn.dataset.b; S.card = null; render(); window.scrollTo({ top:0 }); }
   else if (a === "importtrello"){ trelloImport.click(); }
   else if (a === "delboard"){
@@ -3031,6 +3404,8 @@ document.getElementById("rolebtn").addEventListener("click", e => {
   e.currentTarget.setAttribute("aria-expanded", String(popOpen)); renderPop();
 });
 document.addEventListener("change", e => {
+  if (e.target.id === "d_source" && D()){ D().meta.source = e.target.value;
+    logit(D(), "Lead source recorded", e.target.value || "cleared"); save(); toast("Noted"); }
   if (e.target.id === "send-tpl" && S.send){ S.send.tpl = e.target.value; S.send.text = null; renderSend(); }
 });
 document.addEventListener("input", e => {

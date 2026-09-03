@@ -802,7 +802,7 @@ const SEED_CARDS = [
 const KEY = "rb_dealroom_v4";
 let S;
 const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{},
-  card:null, send:null, boardFilter:null, boardId:"pipeline",
+  card:null, send:null, rev:{}, boardFilter:null, boardId:"pipeline",
   boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
   board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
     checklist:c.checklist.map(x => [...x]) })), next:9 },
@@ -811,6 +811,7 @@ const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agent
 function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r) : fresh(); } catch { S = fresh(); }
   if (!S || !S.deals || !Object.keys(S.deals).length || !S.listings) S = fresh();
   if (!S.people) S.people = {};
+  if (!S.rev) S.rev = {};
   if (!S.board) S.board = fresh().board;
   if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
   S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline";
@@ -818,7 +819,8 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   S.card = null; S.send = null;
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
+  if (typeof pushLocal === "function") pushLocal(false); }
 load();
 
 /* ══ Derived ════════════════════════════════════════════════════════ */
@@ -956,7 +958,9 @@ function renderChrome(){
   document.getElementById("rail").innerHTML = items.map(v => {
     const b = badgeFor(v.id);
     return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
-  }).join("") + `<div class="rail-note"><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
+  }).join("") + `<div class="rail-note" style="text-align:left">${syncPill()}
+    ${sync.needsSignIn ? `<button class="btn btn-s" data-act="syncin" style="margin:9px 0 4px">Sign in to sync</button>` : ""}
+    <div style="margin-top:9px"></div><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
 
   const tabs = items.slice(0, 5);
   document.getElementById("tabs").style.gridTemplateColumns = `repeat(${tabs.length},1fr)`;
@@ -2363,6 +2367,7 @@ document.addEventListener("click", e => {
   }
   else if (a === "cdelete"){ if (!confirm("Delete this card?")) return;
     S.board.cards = S.board.cards.filter(x => x.id !== S.card.id); closeCard(); toast("Card deleted"); render(); }
+  else if (a === "syncin"){ syncSignIn(); }
   else if (a === "reset"){
     if (confirm("Reset the demo? Every deal room goes back to how it started, and any room you created is removed.")){
       S = fresh(); render(); toast("Demo reset"); }
@@ -2625,7 +2630,114 @@ setInterval(() => {
   });
 }, 1000);
 
+/* ══ Team sync ══════════════════════════════════════════════════════
+   Off unless config.js supplies a Firebase project. With no config the
+   app behaves exactly as it always has: everything stays on this device.
+   With one, the team's boards, houses and transfers follow them between
+   phone and laptop, and between Charné and Rassie. ═══════════════════ */
+const SYNC_KINDS = { cards:"card", deals:"deal", listings:"listing", boards:"board", people:"person" };
+let sync = { on:false, status:"local", db:null, ws:null, uid:null, pending:{}, timer:null, applying:false };
+
+/* Each entity is one document, so two people editing different cards never
+   collide. Within one document the newer revision wins. */
+function localEntities(){
+  const out = {};
+  (S.board.cards || []).forEach(c => out["cards/" + c.id] = c);
+  Object.entries(S.deals).forEach(([id, d]) => out["deals/" + id] = d);
+  Object.entries(S.listings).forEach(([id, l]) => out["listings/" + id] = l);
+  (S.boards || []).forEach(b => out["boards/" + b.id] = b);
+  Object.entries(S.people || {}).forEach(([id, p]) => out["people/" + id] = p);
+  return out;
+}
+function applyRemote(path, body){
+  const [coll, id] = path.split("/");
+  if (coll === "cards"){
+    const i = S.board.cards.findIndex(c => c.id === id);
+    if (i >= 0) S.board.cards[i] = body; else S.board.cards.push(body);
+  } else if (coll === "deals") S.deals[id] = body;
+  else if (coll === "listings") S.listings[id] = body;
+  else if (coll === "boards"){
+    const i = S.boards.findIndex(b => b.id === id);
+    if (i >= 0) S.boards[i] = body; else S.boards.push(body);
+  } else if (coll === "people"){ S.people[id] = body; P[id] = body; }
+}
+function syncStatus(st){ sync.status = st;
+  const el = document.getElementById("syncpill");
+  if (el) el.outerHTML = syncPill();
+}
+function syncPill(){
+  const m = { local:["c-mute", "On this device"], connecting:["c-wait", "Connecting…"],
+    synced:["c-go", "Synced with the team"], offline:["c-wait", "Offline — will catch up"],
+    error:["c-stop", "Sync problem"] }[sync.status] || ["c-mute", ""];
+  return `<span class="chip ${m[0]}" id="syncpill" title="${sync.on ? "Team sync is on" : "No project connected — nothing leaves this device"}">${m[1]}</span>`;
+}
+async function startSync(){
+  const cfg = window.RB_CONFIG && window.RB_CONFIG.firebase;
+  if (!cfg || !cfg.projectId) return;                 // no project: stay local
+  syncStatus("connecting");
+  try {
+    const V = "https://www.gstatic.com/firebasejs/12.16.0/";
+    const [{ initializeApp }, auth, fs] = await Promise.all([
+      import(V + "firebase-app.js"), import(V + "firebase-auth.js"), import(V + "firebase-firestore.js")]);
+    const app = initializeApp(cfg);
+    const A = auth.getAuth(app);
+    const user = A.currentUser || await new Promise(res => auth.onAuthStateChanged(A, res));
+    if (!user){ syncStatus("local"); sync.needsSignIn = { auth, A }; render(); return; }
+    sync.uid = user.uid;
+    sync.db = fs.getFirestore(app); sync.fs = fs; sync.on = true;
+    sync.ws = (window.RB_CONFIG.workspace || "rb-brand");
+    Object.keys(SYNC_KINDS).forEach(coll => {
+      fs.onSnapshot(fs.collection(sync.db, "ws", sync.ws, coll), snap => {
+        let touched = false;
+        snap.docChanges().forEach(ch => {
+          if (ch.type === "removed") return;
+          const d = ch.doc.data(), path = coll + "/" + ch.doc.id;
+          if ((S.rev[path] || 0) >= d.rev) return;      // ours is newer or the same
+          S.rev[path] = d.rev; applyRemote(path, d.body); touched = true;
+        });
+        if (touched){ sync.applying = true; save(); render(); sync.applying = false; }
+      }, err => { console.warn("sync read", err); syncStatus("error"); });
+    });
+    syncStatus("synced");
+    pushLocal(true);
+  } catch (err){ console.warn("sync unavailable", err); syncStatus("error"); }
+}
+/* Debounced: a burst of edits becomes one write per changed document. */
+function pushLocal(all){
+  if (!sync.on || sync.applying) return;
+  const ents = localEntities();
+  Object.entries(ents).forEach(([path, body]) => {
+    const stamp = JSON.stringify(body);
+    if (!all && sync.shadow && sync.shadow[path] === stamp) return;
+    sync.pending[path] = body;
+  });
+  sync.shadow = Object.fromEntries(Object.entries(ents).map(([k, v]) => [k, JSON.stringify(v)]));
+  clearTimeout(sync.timer);
+  sync.timer = setTimeout(flushSync, 700);
+}
+async function flushSync(){
+  if (!sync.on) return;
+  const batch = Object.entries(sync.pending); sync.pending = {};
+  if (!batch.length) return;
+  try {
+    const fs = sync.fs;
+    await Promise.all(batch.map(([path, body]) => {
+      const [coll, id] = path.split("/"), rev = Date.now();
+      S.rev[path] = rev;
+      return fs.setDoc(fs.doc(sync.db, "ws", sync.ws, coll, id), { rev, body });
+    }));
+    syncStatus(navigator.onLine ? "synced" : "offline");
+  } catch (err){ console.warn("sync write", err); syncStatus(navigator.onLine ? "error" : "offline"); }
+}
+async function syncSignIn(){
+  if (!sync.needsSignIn) return;
+  const { auth, A } = sync.needsSignIn;
+  try { await auth.signInWithPopup(A, new auth.GoogleAuthProvider()); location.reload(); }
+  catch (err){ toast("Sign-in did not complete"); console.warn(err); }
+}
+
 render();
+startSync();
 
 /* ══ The phone app ══════════════════════════════════════════════════
    Served from a folder, this installs to the home screen and keeps

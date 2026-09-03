@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CMS Agent</title>
+<style>
+:root{--ink:#0F2040;--ink2:#1B2E52;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--wait:#8A6100;--wait-bg:#FBF1DC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--r:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}}
+:root[data-theme=dark]{--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--t1);font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inherit;color:inherit}
+.bar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 16px;position:sticky;top:0;z-index:5}
+.mark{width:30px;height:30px;border-radius:7px;background:linear-gradient(150deg,var(--gold),#8E6B14);display:grid;place-items:center;font-weight:700;color:var(--ink)}
+.bar b{font-size:15px}.bar span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.65;display:block}
+.bar .sp{flex:1}.bar select,.bar input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:7px;padding:5px 8px}
+.bar option{color:#000}
+.app{display:grid;grid-template-columns:1fr 340px;gap:0;min-height:calc(100vh - 52px)}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}}
+.chat{display:flex;flex-direction:column;min-width:0}
+.msgs{flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.m{max-width:820px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);white-space:pre-wrap;overflow-wrap:anywhere}
+.m.user{align-self:flex-end;background:var(--ink);color:#fff;border-color:var(--ink)}
+.m.agent{align-self:flex-start}
+.m .who{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:4px}.m.user .who{color:rgba(255,255,255,.6)}
+.m img{max-width:220px;border-radius:6px;display:block;margin-bottom:6px}
+.m h1,.m h2,.m h3{font-size:14px;margin:8px 0 2px}.m ol,.m ul{margin:4px 0;padding-left:20px}.m code{background:var(--surface2);padding:0 4px;border-radius:4px}
+.think{font-size:12px;color:var(--t2);background:var(--surface2);border:1px dashed var(--line);border-radius:var(--r);padding:8px 12px;max-width:820px;white-space:pre-wrap}
+.think summary{cursor:pointer;color:var(--t3);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.act{font-size:12px;color:var(--t2);display:flex;flex-direction:column;gap:3px;max-width:820px}
+.act div{padding:4px 8px;border-left:3px solid var(--gold);background:var(--surface2);border-radius:4px}
+.act .err{border-color:var(--stop)}.act .ok{border-color:var(--go)}
+.compose{border-top:1px solid var(--line);background:var(--surface);padding:10px 16px;display:flex;gap:8px;align-items:flex-end}
+.compose textarea{flex:1;resize:none;min-height:44px;max-height:180px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper)}
+.btn{padding:9px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);font-weight:600}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}.btn.on{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+.btn:disabled{opacity:.5;cursor:default}
+.side{border-left:1px solid var(--line);background:var(--surface);overflow:auto}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}.sec h3{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:6px}.modes button{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);text-align:left}
+.modes button.on{border-color:var(--gold);background:var(--paper);box-shadow:inset 0 0 0 1px var(--gold)}.modes b{display:block}.modes small{color:var(--t2)}
+.list{display:flex;flex-direction:column;gap:6px}.item{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface2);font-size:12.5px}
+.item b{display:block}.item .meta{color:var(--t3);font-size:11px}.item .acts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.item .acts button{font-size:11px;padding:3px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.pill{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;background:var(--wait-bg);color:var(--wait)}.pill.up,.pill.resolved{background:var(--go-bg);color:var(--go)}.pill.down,.pill.escalated{background:var(--stop-bg);color:var(--stop)}
+.attach{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 6px}.attach img{height:44px;border-radius:5px;border:1px solid var(--line)}
+.hint{color:var(--t3);font-size:12px}
+.empty{color:var(--t3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="mark">C</div>
+  <div><b>CMS Agent</b><span>Workshop support · problem solving · workflow recorder</span></div>
+  <div class="sp"></div>
+  <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
+  <button class="btn" id="newSession" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">New session</button>
+</div>
+
+<div class="app">
+  <section class="chat">
+    <div class="msgs" id="msgs">
+      <div class="m agent"><div class="who">CMS Agent</div>Hi. Tell me what is going wrong at the dealership, or ask how to do something in CMS. I will diagnose with the playbooks, check Evolve/Infomedia/SMS health, pull evidence from a recording if you have one, and give you steps to fix and verify.
+
+Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i> or <i>"How do I create a booking with an OEM menu?"</i></div>
+    </div>
+    <div class="attach" id="attach"></div>
+    <div class="compose">
+      <button class="btn" id="mic" title="Dictate (Web Speech)">🎙</button>
+      <button class="btn" id="img" title="Attach a screenshot">🖼</button>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+      <textarea id="text" placeholder="Describe the problem or ask a question…  (Enter to send, Shift+Enter for a new line, paste screenshots)"></textarea>
+      <button class="btn primary" id="send">Send</button>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="sec">
+      <h3>Mode</h3>
+      <div class="modes" id="modes">
+        <button data-mode="quick"><b>Quick</b><small>Direct answer, few tools</small></button>
+        <button data-mode="think" class="on"><b>Think</b><small>Reason + evidence</small></button>
+        <button data-mode="deep"><b>Deep</b><small>Multi-step investigation + web</small></button>
+        <button data-mode="council"><b>Council</b><small>3 specialists cross-check</small></button>
+      </div>
+    </div>
+    <div class="sec"><h3>Integration health <button class="btn" id="checkAll" style="float:right;padding:2px 8px;font-size:11px">Check all</button></h3><div class="list" id="health"><div class="empty">No checks run yet.</div></div></div>
+    <div class="sec"><h3>Recordings <input type="file" id="recFile" accept="application/json" hidden><button class="btn" id="recUpload" style="float:right;padding:2px 8px;font-size:11px">Upload JSON</button></h3><div class="list" id="recs"><div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div></div></div>
+    <div class="sec"><h3>Cases</h3><div class="list" id="cases"><div class="empty">No cases.</div></div></div>
+    <div class="sec"><h3>Dealer memory</h3><div class="list" id="memory"><div class="empty">Set a dealer code to see what the agent remembers.</div></div></div>
+    <div class="sec"><h3>Playbooks</h3><div class="list" id="playbooks"></div></div>
+  </aside>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const API = "";
+let mode = "think", sessionId = null, images = [], busy = false;
+try { sessionId = localStorage.getItem("cms_session") || null; $("#dealer").value = localStorage.getItem("cms_dealer") || ""; mode = localStorage.getItem("cms_mode") || "think"; } catch {}
+document.querySelectorAll("#modes button").forEach((b) => { b.classList.toggle("on", b.dataset.mode === mode); b.onclick = () => { mode = b.dataset.mode; document.querySelectorAll("#modes button").forEach((x) => x.classList.toggle("on", x === b)); try { localStorage.setItem("cms_mode", mode); } catch {} }; });
+$("#dealer").onchange = () => { try { localStorage.setItem("cms_dealer", $("#dealer").value.trim()); } catch {} loadSide(); };
+$("#newSession").onclick = () => { sessionId = null; try { localStorage.removeItem("cms_session"); } catch {} $("#msgs").innerHTML = ""; add("agent", "New session started."); };
+
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+function md(s) {
+  let h = esc(s);
+  h = h.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c}</code></pre>`).replace(/`([^`]+)`/g, "<code>$1</code>");
+  h = h.replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/^# (.*)$/gm, "<h1>$1</h1>");
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|\s)\*([^*\n]+)\*(?=\s|$)/g, "$1<i>$2</i>");
+  h = h.replace(/^(\d+)\. (.*)$/gm, "<li value=\"$1\">$2</li>").replace(/(<li value="\d+">.*<\/li>\n?)+/g, (m) => `<ol>${m}</ol>`);
+  h = h.replace(/^[-•] (.*)$/gm, "<li>$1</li>").replace(/(<li>(?!.*value).*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`);
+  return h;
+}
+function add(role, text, imgs = []) {
+  const d = document.createElement("div"); d.className = "m " + role;
+  d.innerHTML = `<div class="who">${role === "user" ? "You" : "CMS Agent"}</div>` + imgs.map((i) => `<img src="data:${i.mediaType};base64,${i.data}">`).join("") + (role === "user" ? esc(text) : md(text));
+  $("#msgs").appendChild(d); $("#msgs").scrollTop = $("#msgs").scrollHeight; return d;
+}
+
+async function api(path, opts) { const r = await fetch(API + "/api" + path, opts); if (!r.ok) throw new Error(await r.text()); return r.json(); }
+
+async function sendMsg() {
+  const text = $("#text").value.trim(); if (!text || busy) return;
+  busy = true; $("#send").disabled = true; $("#text").value = "";
+  add("user", text, images); const sent = images; images = []; renderAttach();
+  const think = document.createElement("details"); think.className = "think"; think.innerHTML = "<summary>Thoughts</summary><div></div>"; think.hidden = true;
+  const act = document.createElement("div"); act.className = "act";
+  const out = add("agent", ""); const body = document.createElement("div"); out.appendChild(body);
+  $("#msgs").insertBefore(think, out); $("#msgs").insertBefore(act, out);
+  let textBuf = "", thinkBuf = "";
+  const render = () => { body.innerHTML = md(textBuf); $("#msgs").scrollTop = $("#msgs").scrollHeight; };
+  try {
+    const res = await fetch(API + "/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, dealer: $("#dealer").value.trim(), mode, text, images: sent }) });
+    if (!res.ok) throw new Error(await res.text());
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+    while (true) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        const line = chunk.split("\n").find((l) => l.startsWith("data: ")); if (!line) continue;
+        const ev = JSON.parse(line.slice(6)); handle(ev);
+      }
+    }
+  } catch (err) { textBuf += `\n\n⚠ ${err.message}`; render(); }
+  busy = false; $("#send").disabled = false; loadSide();
+
+  function handle(ev) {
+    switch (ev.type) {
+      case "session": sessionId = ev.sessionId; try { localStorage.setItem("cms_session", sessionId); } catch {} break;
+      case "text": textBuf += ev.delta; render(); break;
+      case "thinking": thinkBuf += ev.delta; think.hidden = false; think.querySelector("div").textContent = thinkBuf; break;
+      case "status": actLine(ev.text); break;
+      case "council": actLine(`Council · ${ev.title}: ${ev.brief.slice(0, 220)}${ev.brief.length > 220 ? "…" : ""}`); break;
+      case "tool_start": actLine(`▶ ${ev.name} ${short(ev.input)}`); break;
+      case "tool_result": actLine(`${ev.error ? "✖" : "✔"} ${ev.name}: ${ev.summary}`, ev.error ? "err" : "ok"); break;
+      case "health": actLine(`Health · ${ev.result.system}: ${ev.result.state}`); break;
+      case "diagnosis": actLine(`Diagnosis · ${ev.diagnosis.hypotheses.map((h) => `${h.title} ${Math.round(h.confidence * 100)}%`).join(" | ")}`); break;
+      case "case": actLine(`Case ${ev.id} ${ev.status}: ${ev.title}`); break;
+      case "followup": actLine(`⏰ Follow-up due: ${ev.note}`); break;
+      case "error": textBuf += `\n\n⚠ ${ev.message}`; render(); break;
+      case "done": actLine(`Done · ${ev.usage.iterations} iteration(s), ${ev.usage.input} in / ${ev.usage.output} out tokens`); break;
+    }
+  }
+  function actLine(t, cls = "") { const d = document.createElement("div"); d.className = cls; d.textContent = t; act.appendChild(d); $("#msgs").scrollTop = $("#msgs").scrollHeight; }
+  function short(o) { try { const s = JSON.stringify(o); return s.length > 120 ? s.slice(0, 120) + "…" : s; } catch { return ""; } }
+}
+$("#send").onclick = sendMsg;
+$("#text").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
+
+/* Screenshots: file picker and paste */
+function renderAttach() { $("#attach").innerHTML = images.map((i, n) => `<img title="click to remove" data-n="${n}" src="data:${i.mediaType};base64,${i.data}">`).join(""); document.querySelectorAll("#attach img").forEach((im) => im.onclick = () => { images.splice(Number(im.dataset.n), 1); renderAttach(); }); }
+function addFile(f) { if (!f || !f.type.startsWith("image/")) return; const r = new FileReader(); r.onload = () => { images.push({ mediaType: f.type === "image/jpg" ? "image/jpeg" : f.type, data: String(r.result).split(",")[1] }); renderAttach(); }; r.readAsDataURL(f); }
+$("#img").onclick = () => $("#file").click();
+$("#file").onchange = () => { [...$("#file").files].forEach(addFile); $("#file").value = ""; };
+document.addEventListener("paste", (e) => { [...(e.clipboardData?.items || [])].forEach((it) => { if (it.type.startsWith("image/")) addFile(it.getAsFile()); }); });
+
+/* Voice input */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null;
+if (!SR) $("#mic").disabled = true;
+$("#mic").onclick = () => {
+  if (rec) { rec.stop(); return; }
+  rec = new SR(); rec.lang = "en-ZA"; rec.interimResults = true; rec.continuous = true; const base = $("#text").value;
+  rec.onresult = (e) => { let t = ""; for (const r of e.results) t += r[0].transcript; $("#text").value = (base + " " + t).trim(); };
+  rec.onend = () => { rec = null; $("#mic").classList.remove("on"); };
+  rec.start(); $("#mic").classList.add("on");
+};
+
+/* Sidebar */
+async function loadSide() {
+  const dealer = $("#dealer").value.trim();
+  try {
+    const recs = await api("/recordings");
+    $("#recs").innerHTML = recs.length ? recs.slice(0, 12).map((r) => `<div class="item"><b>${esc(r.title)}</b><div class="meta">${r.purpose} · ${r.dealer || "—"} · ${r.event_count} events · ${new Date(r.started_at).toLocaleString("en-ZA")}</div>
+      <div class="acts"><a href="/api/recordings/${r.id}/sop?format=md" target="_blank"><button>SOP</button></a><a href="/api/recordings/${r.id}/sop?format=playwright" target="_blank"><button>Playwright</button></a><button onclick="ask('Please analyse recording ${r.id} and diagnose what went wrong.')">Diagnose</button><button onclick="ask('Write the SOP for recording ${r.id} as numbered steps for a service advisor.')">Explain</button></div></div>`).join("") : '<div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div>';
+    const cases = await api("/cases" + (dealer ? `?dealer=${encodeURIComponent(dealer)}` : ""));
+    $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button></div></div>`).join("") : '<div class="empty">No cases.</div>';
+    if (dealer) { const mem = await api("/memory/" + encodeURIComponent(dealer)); $("#memory").innerHTML = mem.length ? mem.map((m) => `<div class="item">${esc(m.fact)}</div>`).join("") : '<div class="empty">Nothing remembered for this dealer yet.</div>'; }
+    const pbs = await api("/playbooks"); $("#playbooks").innerHTML = pbs.map((p) => `<div class="item"><b>${esc(p.title)}</b><div class="meta">${p.domain} · ${p.checks} checks · prior ${Math.round(p.prior * 100)}%</div></div>`).join("");
+  } catch (e) { console.error(e); }
+}
+window.ask = (t) => { $("#text").value = t; sendMsg(); };
+$("#checkAll").onclick = () => ask("Check the health of CMS, Evolve, Infomedia and the SMS gateway and summarise.");
+$("#recUpload").onclick = () => $("#recFile").click();
+$("#recFile").onchange = async () => { const f = $("#recFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const r = await api("/recordings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(j) }); add("agent", `Recording uploaded as ${r.id}: ${r.stats.steps} steps, ${r.stats.errors} console errors, ${r.stats.failedRequests} failed requests.`); loadSide(); } catch (e) { add("agent", "Upload failed: " + e.message); } $("#recFile").value = ""; };
+
+(async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "kb-booking-wizard",
+    "title": "Booking wizard: steps and mandatory fields",
+    "domain": "cms",
+    "tags": ["booking", "wizard", "mandatory", "drafts"],
+    "body": "The booking wizard has five steps: Customer → Vehicle → Work requested → Slot & advisor → Confirm. Mandatory fields: customer name and mobile, vehicle registration (VIN optional but required for OEM menus), requested date, service advisor. Drafts autosave on each step and can be resumed from Bookings → Drafts. A greyed Next button means a mandatory field on the current step is empty or invalid; the field is outlined in red."
+  },
+  {
+    "id": "kb-evolve-posting",
+    "title": "Evolve DMS posting: how job cards and invoices post",
+    "domain": "evolve",
+    "tags": ["evolve", "posting", "invoice", "financial", "retry"],
+    "body": "Evolve DMS is the financial system of record. CMS posts a job card to Evolve when it is opened (creates the repair order) and posts the invoice when it is finalised. Each attempt is written to Financial → Posting log with the Evolve response. Common posting failures: debtor account on hold, closed accounting period, missing GL/VAT mapping for the job type, or Evolve unavailable. Use Financial → Retry posting after the cause is fixed. Never re-invoice to work around a posting failure; it creates duplicate documents in Evolve."
+  },
+  {
+    "id": "kb-superservice",
+    "title": "Infomedia Superservice menus and Intelligent Catalog",
+    "domain": "infomedia",
+    "tags": ["infomedia", "superservice", "menus", "catalog", "vin", "labour rate"],
+    "body": "Superservice Menus provides OEM service menus with labour times and parts for a decoded VIN. Intelligent Catalog / Microcat EPC supplies parts with exploded views and supersession chains. Menus require: a 17-character VIN that decodes, the franchise's Infomedia brand code under Setup → Integrations, and a franchise labour rate plus parts pricing rule. If any is missing the menu loads without prices or is empty. The menu response is cached per VIN for 24 hours; reload the quote screen to force a fresh request."
+  },
+  {
+    "id": "kb-authorisation",
+    "title": "Customer authorisation: OTP, e-signature and fallbacks",
+    "domain": "comms",
+    "tags": ["otp", "authorisation", "e-signature", "sms", "whatsapp", "fallback"],
+    "body": "Additional work is authorised by sending the customer a link (SMS, WhatsApp or e-mail). The customer approves items and signs electronically; an OTP confirms identity. The send log on the authorisation shows queued/sent/delivered/failed per message. Mobile numbers must be 10 digits starting with 0 or +27 followed by 9 digits. If messaging is down, use the telephone authorisation fallback: record the call time and the customer's verbal approval, and mark 'Authorised by phone'."
+  },
+  {
+    "id": "kb-evhc",
+    "title": "eVHC: electronic vehicle health check on tablets",
+    "domain": "device",
+    "tags": ["evhc", "inspection", "tablet", "photos", "video", "triage"],
+    "body": "Technicians complete the eVHC on a tablet: red/amber/green per item with photos or short videos. Media uploads are queued and retried; a grey clock icon means queued, a green tick means uploaded. Keep camera resolution at medium and videos under 30 seconds. Uploads larger than the size limit fail with 413. Poor Wi-Fi in pits and wash bays is the most common cause of stuck uploads."
+  },
+  {
+    "id": "kb-dispatch",
+    "title": "Dispatch board: live updates and clocking",
+    "domain": "cms",
+    "tags": ["dispatch", "board", "clocking", "websocket", "wall screen"],
+    "body": "The dispatch board shows bays, technicians and job status and updates live over a WebSocket connection. Wall screens should run in a foreground tab with sleep disabled. If the connection drops the board shows a yellow 'reconnecting' banner; use the board's Refresh control to resync. Dealership proxies that inspect SSL can break wss:// connections; IT must whitelist the CMS host."
+  },
+  {
+    "id": "kb-parts-pricing",
+    "title": "Parts pricing: catalogue, Evolve price file, markup and VAT",
+    "domain": "cms",
+    "tags": ["parts", "price", "markup", "vat", "supersession", "price file"],
+    "body": "Quote part prices come from the Evolve stock/price file, then the franchise markup matrix is applied, then VAT is added for display. The catalogue shows OEM list prices which can differ from the dealer's price file. Superseded parts keep the old number on the quote until re-added. Compare prices VAT-exclusive before raising a mismatch."
+  },
+  {
+    "id": "kb-rollout",
+    "title": "Dealership rollout checklist",
+    "domain": "user",
+    "tags": ["rollout", "training", "onboarding", "go-live", "checklist"],
+    "body": "Go-live checklist: 1) Franchise setup: labour rates, job types with GL/VAT mappings, Infomedia brand codes, SMS sender ID. 2) Users: one login per person with roles (advisor, technician, parts, manager). 3) Devices: tablets on workshop Wi-Fi with camera set to medium resolution; wall screen for dispatch. 4) Evolve: confirm posting with a test job card and reverse it. 5) Training: booking wizard, dispatch, eVHC, quoting, authorisation, invoicing. 6) Day-one support: product specialist on site, escalation contacts pinned at the service desk."
+  },
+  {
+    "id": "kb-popia",
+    "title": "POPIA: handling customer data in recordings and cases",
+    "domain": "user",
+    "tags": ["popia", "privacy", "recording", "masking", "personal information"],
+    "body": "Recordings and support cases may contain personal information. The workflow recorder masks values typed into password fields and any value that looks like an SA ID number (13 digits), phone number, e-mail or card number. Do not paste customer ID numbers or bank details into case notes. Recordings are retained for 90 days unless attached to a case."
+  },
+  {
+    "id": "kb-support-escalation",
+    "title": "Support escalation paths and what to include",
+    "domain": "user",
+    "tags": ["escalation", "support", "ticket", "evolve support", "infomedia support"],
+    "body": "First line: dealership super-user. Second line: CMS product specialist (on site or remote). Third line: CMS support desk, which liaises with Evolve DMS support and Infomedia. Every escalation must include: dealer code, user, exact time, screen or URL, exact error wording, job card/booking number, a recording ID if captured, and what has already been tried."
+  }
+]

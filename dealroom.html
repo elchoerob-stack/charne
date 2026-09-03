@@ -383,6 +383,39 @@ fieldset{border:0;padding:0;margin:0}
 .offline{position:fixed;left:50%;transform:translateX(-50%);top:8px;z-index:100;background:var(--stop);color:#fff;
   border-radius:99px;padding:5px 14px;font-size:11.5px;font-weight:600;box-shadow:0 6px 18px -6px rgba(0,0,0,.5)}
 @media (min-width:861px){ .install{left:auto;right:20px;bottom:20px;max-width:380px} }
+
+/* ── Documents ──────────────────────────── */
+.paper{background:#fff;color:#111;border:1px solid var(--line);border-radius:8px;padding:34px 38px;
+  font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;line-height:1.6;max-width:820px;margin:0 auto}
+.paper h1{font-family:Spectral,serif;font-size:21px;color:#0F2040;margin:0 0 3px}
+.paper h2{font-family:Spectral,serif;font-size:14.5px;color:#0F2040;margin:20px 0 7px;padding-bottom:4px;border-bottom:1px solid #E5E0D8}
+.paper .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #C49A2F;padding-bottom:12px;margin-bottom:6px}
+.paper .brandblock{font-size:11px;color:#4E5468;text-align:right;line-height:1.45}
+.paper .ref{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#78716C;letter-spacing:.04em}
+.paper table{width:100%;border-collapse:collapse;margin:6px 0;min-width:0}
+.paper td{padding:5px 0;border-bottom:1px solid #EFEBE4;vertical-align:top;font-size:12.5px}
+.paper td:first-child{width:38%;color:#4E5468}
+.paper .clause{margin:0 0 8px;padding-left:22px;position:relative}
+.paper .clause b.n{position:absolute;left:0;color:#C49A2F}
+.paper .sigrow{display:flex;gap:26px;margin-top:22px;flex-wrap:wrap}
+.paper .sigbox{flex:1;min-width:210px}
+.paper .sigline{border-bottom:1px solid #111;height:56px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px}
+.paper .sigline img{max-height:52px}
+.paper .siglabel{font-size:10.5px;color:#4E5468;margin-top:5px}
+.paper .foot{margin-top:26px;border-top:1px solid #E5E0D8;padding-top:9px;font-size:10px;color:#78716C}
+.sigpad{border:1px dashed var(--line-2);border-radius:8px;background:var(--surface-2);touch-action:none;width:100%;height:150px;display:block}
+@media print{
+  body{background:#fff!important}
+  .bar,.strip,.rail,.tabs,.foot,.toast,.install,.offline,.noprint{display:none!important}
+  .shell{display:block;padding:0;max-width:none}
+  .scrim{position:static;background:none;padding:0;overflow:visible;backdrop-filter:none}
+  .modal{border:0;box-shadow:none;max-width:none;border-radius:0}
+  .modal-h{display:none!important}
+  .modal-b{padding:0}
+  .paper{border:0;border-radius:0;padding:0;max-width:none;font-size:11.5px}
+  .paper h1{font-size:19px}
+  @page{margin:16mm}
+}
 </style>
 <header class="bar">
   <div class="bar-in">
@@ -651,7 +684,9 @@ const SEED_DEALS = [
 const DAY = 864e5;
 const d0 = n => new Date(Date.now() + n * DAY);
 const iso = d => new Date(d).toISOString();
-const R = n => "R " + Math.round(n).toLocaleString("en-ZA");
+/* Formatted here rather than by the device: locale data differs between
+   phones and browsers, and South African convention groups with a space. */
+const R = n => "R\u00a0" + Math.round(+n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
 const Rm = n => n >= 1e6 ? "R " + (n / 1e6).toFixed(2).replace(/\.00$/, "") + "m" : R(n);
 const dstr = d => new Date(d).toLocaleDateString("en-ZA", { day:"numeric", month:"short", year:"numeric" });
 const stampf = d => new Date(d).toLocaleString("en-ZA", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(",", "");
@@ -802,7 +837,7 @@ const SEED_CARDS = [
 const KEY = "rb_dealroom_v4";
 let S;
 const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{},
-  card:null, send:null, rev:{}, boardFilter:null, boardId:"pipeline",
+  card:null, send:null, form:null, signing:null, rev:{}, boardFilter:null, boardId:"pipeline",
   boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
   board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
     checklist:c.checklist.map(x => [...x]) })), next:9 },
@@ -816,7 +851,7 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
   S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline";
     c.files = c.files || []; c.comments = c.comments || []; c.activity = c.activity || []; });
-  S.card = null; S.send = null;
+  S.card = null; S.send = null; S.form = null; S.signing = null;
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
@@ -890,7 +925,7 @@ function toast(msg){ const el = document.getElementById("toast"); el.textContent
   clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2800); }
 
 /* ══ Navigation model ═══════════════════════════════════════════════ */
-const DEAL_VIEWS = [
+const DEAL_VIEWS_BASE = [
   { id:"dash",  label:"Overview",  ic:"home" },
   { id:"track", label:"Tracker",   ic:"track" },
   { id:"vault", label:"Vault",     ic:"vault" },
@@ -898,19 +933,33 @@ const DEAL_VIEWS = [
   { id:"people",label:"Access",    ic:"people" },
   { id:"log",   label:"Audit log", ic:"log" },
 ];
+/* The commission screen only exists for people allowed to see money. */
+const DEAL_VIEWS_COMM = { id:"comm", label:"Commission", short:"Fee", ic:"key" };
+const DEAL_VIEWS_DOCS = { id:"docs", label:"Paperwork", short:"Docs", ic:"file" };
+function dealViews(){
+  const staff = P[S.me] && (P[S.me].role === "agent" || isPrincipal(S.me));
+  const v = [DEAL_VIEWS_BASE[0]];
+  if (canSeeComm(D())) v.push(DEAL_VIEWS_COMM);
+  if (staff) v.push(DEAL_VIEWS_DOCS);
+  return v.concat(DEAL_VIEWS_BASE.slice(1));
+}
 const homeView = () => isPrincipal(S.me) || me().role === "agent" ? "today" : myDeals().length ? "portfolio" : "listings";
 function navItems(){
-  if (S.deal) return DEAL_VIEWS;
-  if (S.listing) return [{ id:"house", label:"The house", short:"House", ic:"house" }];
+  if (S.deal) return dealViews();
+  if (S.listing) { const v = [{ id:"house", label:"The house", short:"House", ic:"house" }];
+    if (canDocs()) v.push(DEAL_VIEWS_DOCS);
+    return v; }
   const v = [], r = me().role;
-  if (r === "principal") v.push({ id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"earn", label:"Earnings", short:"Earnings", ic:"key" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
     v.push({ id:"today", label:"Today", short:"Today", ic:"home" });
-    if (r === "agent") v.push({ id:"board", label:"Board", short:"Board", ic:"board" });
+    if (r === "agent") v.push({ id:"earn", label:"Earnings", short:"Earnings", ic:"key" },
+      { id:"board", label:"Board", short:"Board", ic:"board" });
     if (myListings().length) v.push({ id:"listings", label:r === "agent" ? "My houses" : "Houses", short:"Houses", ic:"house" });
     if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
   }
   if (r === "agent") v.push({ id:"new", label:"New deal room", short:"New", ic:"plus" });
+  v.push({ id:"road", label:"The road to a sale", short:"Guide", ic:"track" });
   return v;
 }
 function badgeFor(v){
@@ -949,7 +998,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1312,6 +1361,8 @@ function vDash(){
           <button class="btn btn-g btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ deal:d.meta.id, to:partyOf(d, t.owner), tpl:"doc_request", item:t.label, people:["buyer", "seller", "conveyancer"].map(x => d.meta[x]) }))}'>${ICON.chat} WhatsApp</button></span>`
           : `<span class="chip c-wait">Outstanding</span>`}
       </div>`).join("")}</div></div>` : ""}
+
+    ${commissionCard(d)}
 
     <div class="grid2">
       <div class="hero">
@@ -1876,6 +1927,26 @@ function inbox(){
     if (n) out.push({ rank:5, id:"msg" + d.meta.id, kind:"deal", dealId:d.meta.id, urgent:false,
       title:`${n} new message${n > 1 ? "s" : ""}`, why:d.meta.address, ts:d.msgs[d.msgs.length - 1].ts, chat:true });
   });
+  // dates that will bite if nobody moves
+  myDeals().filter(d => !isClosed(d)).forEach(d => {
+    const br = bondRisk(d);
+    if (br !== null && br <= 14) out.push({ rank:br < 0 ? 0 : 1, id:"bond" + d.meta.id, kind:"deal", dealId:d.meta.id,
+      urgent:br < 7, title:br < 0 ? `Bond condition lapsed ${Math.abs(br)} days ago` : `Bond condition due in ${br} days`,
+      why:`${d.meta.address} — extend in writing or the sale falls away`, ts:d.bondDue });
+    const cocs = ["coc_e", "coc_g", "coc_p", "coc_b", "coc_f"].filter(x => !d.docs[x]);
+    if (current(d).n === 3 && cocs.length) out.push({ rank:3, id:"coc" + d.meta.id, kind:"deal", dealId:d.meta.id,
+      urgent:false, title:`${cocs.length} certificate${cocs.length > 1 ? "s" : ""} outstanding`,
+      why:`${d.meta.address} — the usual reason a transfer misses its date`, ts:lastTouch(d) });
+    if (current(d).n === 4 && (Date.now() - new Date(lastTouch(d))) / DAY > 21)
+      out.push({ rank:2, id:"rates" + d.meta.id, kind:"deal", dealId:d.meta.id, urgent:true,
+        title:"Rates clearance has been quiet for three weeks", why:`${d.meta.address} — worth phoning the attorney`, ts:lastTouch(d) });
+  });
+  // a house that has gone quiet
+  myListings().filter(l => l.status === "active" && l.meta.agent === S.me).forEach(l => {
+    const days = Math.round((Date.now() - new Date(l.log[0] ? l.log[0].ts : Date.now())) / DAY);
+    if (days > 14) out.push({ rank:4, id:"cold" + l.meta.id, kind:"house", houseId:l.meta.id, urgent:false,
+      title:`No movement on this house in ${days} days`, why:`${l.meta.address} — time to talk price or photographs`, ts:l.log[0] ? l.log[0].ts : new Date().toISOString() });
+  });
   // offers waiting on me
   myListings().filter(l => l.meta.agent === S.me).forEach(l => openOffers(l).forEach(o =>
     out.push({ rank:0, id:"off" + o.id, kind:"house", houseId:l.meta.id, urgent:true,
@@ -2001,6 +2072,8 @@ function sendVars(ctx){
     item:ctx.item || "", stage:c ? c.n : "", stage_name:c ? c.name : "",
     stage_prev:c && c.n > 1 ? STAGES[c.n - 2].name : "the offer", stage_note:c ? c.blurb : "",
     date:ctx.when ? new Date(ctx.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" }) : "",
+    activity:ctx.activity || "no viewings booked yet", feedback:ctx.feedback || "…",
+    update:ctx.update || "…",
     link:ctx.link || (d ? `https://deal.rbbrand.co.za/${d.meta.id}` : l ? `https://houses.rbbrand.co.za/${l.meta.id}` : "") };
 }
 function openSend(ctx){ S.send = { ...ctx, tpl:ctx.tpl || Object.keys(TEMPLATES)[0], text:null }; renderSend(); }
@@ -2044,23 +2117,542 @@ function renderSend(){
   document.body.appendChild(el);
 }
 
+/* ══ Commission ═════════════════════════════════════════════════════
+   Every deal earns differently, so the figure lives on the mandate and
+   is editable there. Splits are percentages of the fee excluding VAT —
+   the agency, the agent, a partner agency, and a referring agent on a
+   buyout. None of it is ever shown to a client. ════════════════════ */
+const VAT = 0.15;
+const DEFAULT_COMM = () => ({ basis:"pct", pct:5, fixed:0, vatIncl:true, note:"",
+  splits:[{ id:"agency", kind:"agency", label:"RB Brand Real Estate", pct:50 },
+          { id:"charne", kind:"agent",  label:"Charné Snyman",        pct:50 }] });
+function commOf(d){ return d.comm || (d.comm = DEFAULT_COMM()); }
+function commCalc(d){
+  const c = commOf(d), price = d.meta.price || 0;
+  const gross = c.basis === "fixed" ? (+c.fixed || 0) : price * (+c.pct || 0) / 100;
+  const net = c.vatIncl ? gross / (1 + VAT) : gross;
+  const vat = c.vatIncl ? gross - net : gross * VAT;
+  const total = net + vat;
+  const splits = (c.splits || []).map(s => ({ ...s, amount:net * (+s.pct || 0) / 100 }));
+  const allocated = splits.reduce((n, s) => n + (+s.pct || 0), 0);
+  return { price, gross, net, vat, total, splits, allocated, balanced:Math.abs(allocated - 100) < 0.01 };
+}
+/* Who may see money. A client never does — not their own deal, not any other. */
+function canSeeComm(d){
+  if (!d) return false;
+  if (isPrincipal(S.me)) return true;
+  if (P[S.me] && P[S.me].role !== "agent") return false;      // buyers, sellers, attorneys: never
+  if (d.meta.agent === S.me) return true;
+  return (commOf(d).splits || []).some(s => s.id === S.me);   // named in a split
+}
+const myShare = d => { const c = commCalc(d);
+  return c.splits.filter(s => s.id === S.me).reduce((n, s) => n + s.amount, 0); };
+/* How likely a file is to reach registration, by how far it has come. */
+const STAGE_ODDS = { 1:0.55, 2:0.65, 3:0.80, 4:0.88, 5:0.93, 6:0.97, 7:0.99 };
+const oddsOf = d => isClosed(d) ? 1 : (atRisk(d) ? 0.7 : 1) * (STAGE_ODDS[current(d).n] || 0.5);
+
+function commissionCard(d){
+  if (!canSeeComm(d)) return "";
+  const c = commCalc(d), mine = myShare(d), editable = d.meta.agent === S.me || isPrincipal(S.me);
+  return `<div class="card">
+    <div class="card-h">${ICON.key}<h2>Commission</h2><span class="chip c-mute">${ICON.lock} Never shown to clients</span></div>
+    <div class="card-b">
+      <div class="tiles" style="margin-bottom:14px">
+        <div class="tile"><div class="k">Fee ${commOf(d).basis === "pct" ? "at " + commOf(d).pct + "%" : "(fixed)"}</div>
+          <div class="v">${R(c.total)}</div><div class="s">incl. VAT</div></div>
+        <div class="tile"><div class="k">Excl. VAT</div><div class="v">${R(c.net)}</div><div class="s">VAT ${R(c.vat)}</div></div>
+        <div class="tile"><div class="k">Your share</div><div class="v" style="color:var(--go)">${R(mine)}</div>
+          <div class="s">${c.splits.filter(s => s.id === S.me).map(s => s.pct + "%").join(" + ") || "not on this deal"}</div></div>
+        <div class="tile"><div class="k">Likely to bank</div><div class="v">${R(mine * oddsOf(d))}</div>
+          <div class="s">${Math.round(oddsOf(d) * 100)}% at stage ${current(d).n}</div></div>
+      </div>
+      ${!c.balanced ? `<div class="note" style="border-color:var(--stop);margin-bottom:12px">${ICON.warn}<div><b>The splits add up to ${c.allocated}%, not 100%.</b> ${c.allocated < 100 ? "Something is unallocated" : "You have allocated more than the fee"} — fix it before the mandate goes out.</div></div>` : ""}
+      ${c.splits.map(s => `<div class="act">
+        <span class="stripe" style="background:${s.kind === "agency" ? "var(--ink)" : s.kind === "agent" ? "var(--p-agent)" : s.kind === "partner" ? "var(--p-conveyancer)" : "var(--p-buyer)"}"></span>
+        <div class="act-t"><b>${esc(s.label)}</b><span>${s.kind === "agency" ? "Agency" : s.kind === "agent" ? "Agent" : s.kind === "partner" ? "Partner agency" : "Referral / buyout"} · ${s.pct}%</span></div>
+        <span class="mono" style="font-weight:600">${R(s.amount)}</span></div>`).join("")}
+      ${commOf(d).note ? `<p style="margin:12px 0 0;font-size:12.5px;color:var(--t2)">${esc(commOf(d).note)}</p>` : ""}
+      ${editable ? `<button class="btn btn-s" data-act="commedit" style="margin-top:13px">Adjust on the mandate</button>` : ""}
+    </div></div>`;
+}
+function vComm(){
+  const d = D(), c = commCalc(d), cm = commOf(d);
+  return `<div class="stack">
+    <div class="sec-h"><h2>Commission on the mandate</h2><p>${esc(d.meta.address)} · ${R(d.meta.price)}</p></div>
+    <div class="note">${ICON.lock}<div><b>This screen is for the agency only.</b> Commission never appears in anything a purchaser, seller or attorney can open, and it is not written into any document they receive.</div></div>
+    <div class="card"><div class="card-b">
+      <div class="subhead" style="border:0;padding:0;margin:0 0 11px">The fee</div>
+      <div class="form">
+        <div class="field"><label for="cm_basis">How it is charged</label>
+          <select id="cm_basis" style="width:100%">
+            <option value="pct" ${cm.basis === "pct" ? "selected" : ""}>Percentage of the price</option>
+            <option value="fixed" ${cm.basis === "fixed" ? "selected" : ""}>Fixed amount</option></select></div>
+        <div class="field"><label for="cm_pct">Percentage</label><input type="number" id="cm_pct" step="0.25" min="0" value="${cm.pct}"></div>
+        <div class="field"><label for="cm_fixed">Fixed amount (R)</label><input type="number" id="cm_fixed" step="1000" min="0" value="${cm.fixed}"></div>
+        <div class="field"><label for="cm_vat">VAT</label>
+          <select id="cm_vat" style="width:100%">
+            <option value="1" ${cm.vatIncl ? "selected" : ""}>The figure above includes VAT</option>
+            <option value="0" ${!cm.vatIncl ? "selected" : ""}>VAT is added on top</option></select></div>
+        <div class="field wide"><label for="cm_note">Note for the file</label><input type="text" id="cm_note" value="${esc(cm.note || "")}" placeholder="e.g. reduced to 4.5% to secure the sole mandate"></div>
+      </div>
+      <div class="tiles" style="margin-top:14px">
+        <div class="tile"><div class="k">Fee incl. VAT</div><div class="v">${R(c.total)}</div></div>
+        <div class="tile"><div class="k">Excl. VAT</div><div class="v">${R(c.net)}</div></div>
+        <div class="tile"><div class="k">VAT</div><div class="v">${R(c.vat)}</div></div>
+      </div>
+    </div></div>
+
+    <div class="card"><div class="card-h">${ICON.people}<h2>How it splits</h2>
+      <span class="chip ${c.balanced ? "c-go" : "c-stop"}">${c.allocated}% allocated</span></div>
+      <div class="card-b">
+        <p style="margin:0 0 12px;font-size:12.5px;color:var(--t2)">Percentages of the fee excluding VAT. Add a partner agency on a joint mandate, or a referring agent on a buyout.</p>
+        ${c.splits.map((s, i) => `<div class="act">
+          <span class="stripe" style="background:${s.kind === "agency" ? "var(--ink)" : s.kind === "agent" ? "var(--p-agent)" : s.kind === "partner" ? "var(--p-conveyancer)" : "var(--p-buyer)"}"></span>
+          <div class="act-t" style="display:grid;grid-template-columns:1fr 92px;gap:9px;align-items:center">
+            <input type="text" data-split="label" data-i="${i}" value="${esc(s.label)}">
+            <input type="number" data-split="pct" data-i="${i}" step="0.5" min="0" max="100" value="${s.pct}">
+          </div>
+          <button class="btn btn-s" data-act="splitdel" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-s" data-act="splitadd" data-k="agent">${ICON.plus} Agent</button>
+          <button class="btn btn-s" data-act="splitadd" data-k="partner">${ICON.plus} Partner agency</button>
+          <button class="btn btn-s" data-act="splitadd" data-k="referral">${ICON.plus} Referral / buyout</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-g" data-act="commsave">Save to the mandate</button>
+        </div>
+      </div></div>
+  </div>`;
+}
+
+/* ══ Earnings ═══════════════════════════════════════════════════════ */
+function vEarn(){
+  const staffView = isPrincipal(S.me);
+  const deals = Object.values(S.deals).filter(d => staffView || d.meta.agent === S.me || (commOf(d).splits || []).some(s => s.id === S.me));
+  const rows = deals.map(d => ({ d, mine:myShare(d), odds:oddsOf(d), closed:isClosed(d), total:commCalc(d).total }));
+  const banked = rows.filter(r => r.closed).reduce((n, r) => n + r.mine, 0);
+  const live = rows.filter(r => !r.closed);
+  const pipeline = live.reduce((n, r) => n + r.mine, 0);
+  const weighted = live.reduce((n, r) => n + r.mine * r.odds, 0);
+  const atRiskV = live.filter(r => atRisk(r.d)).reduce((n, r) => n + r.mine, 0);
+  const byAgent = {};
+  if (staffView) Object.values(S.deals).forEach(d => commCalc(d).splits.forEach(s => {
+    if (s.kind === "agency") return;
+    const k = s.label; byAgent[k] = byAgent[k] || { label:k, banked:0, weighted:0 };
+    if (isClosed(d)) byAgent[k].banked += s.amount; else byAgent[k].weighted += s.amount * oddsOf(d);
+  }));
+  return `<div class="stack">
+    <div class="sec-h"><h2>${staffView ? "Agency earnings" : "Your earnings"}</h2><p>Never visible to clients</p></div>
+    <div class="tiles">
+      <div class="tile"><div class="k">Banked</div><div class="v" style="color:var(--go)">${Rm(banked)}</div><div class="s">Registered transfers</div></div>
+      <div class="tile"><div class="k">In the pipeline</div><div class="v">${Rm(pipeline)}</div><div class="s">If every live file registers</div></div>
+      <div class="tile"><div class="k">Likely</div><div class="v">${Rm(weighted)}</div><div class="s">Weighted by stage</div></div>
+      <div class="tile"><div class="k">At risk</div><div class="v" style="color:${atRiskV ? "var(--stop)" : "inherit"}">${Rm(atRiskV)}</div><div class="s">On stalled or lapsing files</div></div>
+    </div>
+    <div class="card">
+      <div class="card-h">${ICON.deals}<h2>File by file</h2></div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Property</th><th>Price</th><th>Fee incl VAT</th><th>Your share</th><th>Stage</th><th>Likely</th><th></th></tr></thead>
+        <tbody>${rows.sort((a, b) => b.mine - a.mine).map(r => `<tr>
+          <td><b>${esc(r.d.meta.address)}</b><br><span style="font-size:11.5px;color:var(--t2)">${esc(r.d.meta.area)}</span></td>
+          <td class="num">${R(r.d.meta.price)}</td>
+          <td class="num">${R(r.total)}</td>
+          <td class="num"><b>${R(r.mine)}</b></td>
+          <td>${r.closed ? `<span class="chip c-go">Registered</span>` : `<span class="chip ${atRisk(r.d) ? "c-stop" : "c-mute"}">${current(r.d).n} of 7</span>`}</td>
+          <td class="num">${r.closed ? "—" : R(r.mine * r.odds)}</td>
+          <td><button class="btn btn-s" data-act="open" data-d="${r.d.meta.id}">Open</button></td>
+        </tr>`).join("")}</tbody></table></div>
+    </div>
+    ${staffView && Object.keys(byAgent).length ? `<div class="card">
+      <div class="card-h">${ICON.team}<h2>By agent</h2></div>
+      <div class="tblwrap"><table><thead><tr><th>Agent</th><th>Banked</th><th>Likely</th></tr></thead>
+        <tbody>${Object.values(byAgent).sort((a, b) => (b.banked + b.weighted) - (a.banked + a.weighted)).map(a => `<tr>
+          <td><b>${esc(a.label)}</b></td><td class="num">${R(a.banked)}</td><td class="num">${R(a.weighted)}</td></tr>`).join("")}</tbody></table></div>
+    </div>` : ""}
+    <div class="note">${ICON.shield}<div><b>How "likely" is worked out.</b> Each stage carries a probability of reaching registration — 55% at the offer, 97% once lodged — and a file that has stalled or whose bond date is close is discounted further. These are assumptions for planning, not a forecast to bank on.</div></div>
+  </div>`;
+}
+
+/* ══ Paperwork ══════════════════════════════════════════════════════
+   Fill it in here, print it, and — where the law allows — sign it here
+   too. It does not allow it everywhere: under the ECT Act (s 4(4) and
+   Schedule 2) an agreement for the alienation of land is excluded from
+   electronic signature, so an Offer to Purchase must be printed and
+   signed by hand. A mandate is not an alienation, so it may be signed
+   on screen. The app enforces that difference rather than leaving it to
+   memory. ══════════════════════════════════════════════════════════ */
+const FORMS = {
+  mandate:{
+    name:"Sole Mandate", short:"Mandate", sign:"online", scope:"listing",
+    why:"A mandate is a service agreement, not a sale of land, so it may be signed on screen.",
+    fields:[
+      { k:"seller",   l:"Seller / registered owner", w:1 },
+      { k:"sellerid", l:"ID number", w:0 },
+      { k:"address",  l:"Property", w:1 },
+      { k:"erf",      l:"Erf / unit number", w:0 },
+      { k:"price",    l:"Asking price (R)", t:"number" },
+      { k:"start",    l:"Mandate starts", t:"date" },
+      { k:"end",      l:"Mandate ends", t:"date" },
+      { k:"comm",     l:"Commission (%)", t:"number" },
+      { k:"marketing",l:"Marketing agreed", w:1, ph:"Portals, show days, boards, photography" },
+      { k:"special",  l:"Special conditions", w:1 },
+    ]},
+  otp:{
+    name:"Offer to Purchase", short:"OTP", sign:"wet", scope:"listing",
+    why:"An agreement for the alienation of land is excluded from electronic signature by the ECT Act. Print it and have it signed by hand.",
+    fields:[
+      { k:"buyer",    l:"Purchaser", w:1 },
+      { k:"buyerid",  l:"ID number", w:0 },
+      { k:"seller",   l:"Seller", w:1 },
+      { k:"address",  l:"Property", w:1 },
+      { k:"erf",      l:"Erf / unit number", w:0 },
+      { k:"price",    l:"Purchase price (R)", t:"number" },
+      { k:"deposit",  l:"Deposit (R)", t:"number" },
+      { k:"bond",     l:"Bond required (R)", t:"number" },
+      { k:"bondby",   l:"Bond approval by", t:"date" },
+      { k:"occupation",l:"Occupation date", t:"date" },
+      { k:"rental",   l:"Occupational rent (R per month)", t:"number" },
+      { k:"conveyancer",l:"Transferring attorney", w:1 },
+      { k:"fixtures", l:"Included fixtures and fittings", w:1 },
+      { k:"special",  l:"Suspensive and special conditions", w:1 },
+    ]},
+  costs:{
+    name:"Purchaser's Cost Estimate", short:"Costs", sign:"none", scope:"listing",
+    why:"An estimate for the purchaser. Ask the transferring attorney for the exact figures.",
+    fields:[
+      { k:"buyer",   l:"Purchaser", w:1 },
+      { k:"address", l:"Property", w:1 },
+      { k:"price",   l:"Purchase price (R)", t:"number" },
+      { k:"duty",    l:"Transfer duty (R)", t:"number", ph:"From the attorney" },
+      { k:"transfer",l:"Transfer costs (R)", t:"number", ph:"From the attorney" },
+      { k:"bondcost",l:"Bond registration costs (R)", t:"number", ph:"From the bond attorney" },
+      { k:"deposit", l:"Deposit (R)", t:"number" },
+      { k:"other",   l:"Other (R)", t:"number" },
+    ]},
+  compliance:{
+    name:"Seller's Compliance Checklist", short:"Compliance", sign:"online", scope:"listing",
+    why:"A record of which certificates the seller undertakes to provide, and by when.",
+    fields:[
+      { k:"seller",  l:"Seller", w:1 },
+      { k:"address", l:"Property", w:1 },
+      { k:"electrical", l:"Electrical CoC — by", t:"date" },
+      { k:"gas",     l:"Gas CoC — by (if applicable)", t:"date" },
+      { k:"plumbing",l:"Plumbing certificate — by", t:"date" },
+      { k:"beetle",  l:"Borer beetle — by (coastal / if agreed)", t:"date" },
+      { k:"fence",   l:"Electric fence CoC — by (if applicable)", t:"date" },
+      { k:"who",     l:"Who arranges the inspections", w:1, ph:"Seller / agent to book" },
+    ]},
+};
+const formsOf = obj => (obj.forms = obj.forms || []);
+/* Paperwork is the agency's. A buyer, seller or attorney never reaches it —
+   including by landing on the screen directly. */
+function canDocs(){
+  const p = P[S.me]; if (!p) return false;
+  if (!(p.role === "agent" || isPrincipal(S.me))) return false;
+  if (S.listing) return listingRole(L(), S.me) === "agent" || isPrincipal(S.me);
+  return !!S.deal;
+}
+const formHost = () => D() || L();
+function newForm(type){
+  const host = formHost(), meta = host.meta, v = {};
+  const d = D(), l = L();
+  const g = { address:`${meta.address}, ${meta.area}, ${meta.city}`, erf:meta.erf ? String(meta.erf) : "",
+    price:meta.price || "", seller:P[meta.seller] ? P[meta.seller].name : "",
+    buyer:d && meta.buyer ? P[meta.buyer].name : "", conveyancer:d ? meta.firm : "",
+    deposit:d ? meta.deposit : Math.round((meta.price || 0) * .1),
+    bond:d ? Math.max(0, (meta.price || 0) - (meta.deposit || 0)) : "",
+    bondby:d && d.bondDue ? new Date(d.bondDue).toISOString().slice(0, 10) : "",
+    comm:d ? commOf(d).pct : 5, start:new Date().toISOString().slice(0, 10),
+    end:new Date(Date.now() + 90 * DAY).toISOString().slice(0, 10) };
+  FORMS[type].fields.forEach(f => v[f.k] = g[f.k] !== undefined ? g[f.k] : "");
+  const rec = { id:"f" + Date.now(), type, values:v, status:"draft", signatures:[],
+    by:S.me, ts:new Date().toISOString(), ref:(meta.ref || "RB") + "/" + FORMS[type].short.toUpperCase() + "/" + String(Date.now()).slice(-4) };
+  formsOf(host).push(rec);
+  const log = d ? (t, x) => logit(d, t, x) : (t, x) => l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:t, det:x });
+  log(FORMS[type].name + " created", rec.ref);
+  S.form = rec.id; render(); return rec;
+}
+const curForm = () => { const h = formHost(); return h && (formsOf(h).find(f => f.id === S.form)); };
+
+const money = n => n === "" || n === undefined || n === null ? "—" : R(+n || 0);
+const dt = v => v ? new Date(v).toLocaleDateString("en-ZA", { day:"numeric", month:"long", year:"numeric" }) : "—";
+function paperHead(f, title){
+  return `<div class="head">
+    <div><h1>${esc(title)}</h1><div class="ref">${esc(f.ref)} · prepared ${dt(f.ts)}</div></div>
+    <div class="brandblock"><b style="color:#0F2040;font-size:13px">RB Brand Real Estate</b><br>
+      ${esc(P[S.me] ? P[S.me].name : "")}<br>${esc(P[S.me] ? P[S.me].mobile : "")}<br>${esc(P[S.me] ? P[S.me].email : "")}</div></div>`;
+}
+function sigBlock(f, names){
+  return `<div class="sigrow">${names.map(n => {
+    const sig = (f.signatures || []).find(x => x.role === n.role);
+    return `<div class="sigbox"><div class="sigline">${sig ? `<img src="${sig.data}" alt="signature">` : ""}</div>
+      <div class="siglabel"><b>${esc(n.label)}</b>${sig ? `<br>${esc(sig.name)} · signed ${dt(sig.ts)}` : "<br>signature and date"}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderPaper(f){
+  const v = f.values, F = FORMS[f.type];
+  if (f.type === "mandate") return `<div class="paper">${paperHead(f, "Sole Mandate to Sell")}
+    <p style="margin:12px 0 0">The undersigned owner appoints <b>RB Brand Real Estate</b> as sole and exclusive agent to sell the property described below, on the terms set out here.</p>
+    <h2>The property and the owner</h2>
+    <table><tr><td>Owner</td><td><b>${esc(v.seller || "—")}</b>${v.sellerid ? " · ID " + esc(v.sellerid) : ""}</td></tr>
+      <tr><td>Property</td><td>${esc(v.address || "—")}</td></tr>
+      ${v.erf ? `<tr><td>Erf / unit</td><td>${esc(v.erf)}</td></tr>` : ""}
+      <tr><td>Asking price</td><td><b>${money(v.price)}</b></td></tr></table>
+    <h2>Period and fee</h2>
+    <table><tr><td>Mandate period</td><td>${dt(v.start)} to ${dt(v.end)}</td></tr>
+      <tr><td>Commission</td><td><b>${v.comm || 0}%</b> of the purchase price, plus VAT where applicable</td></tr></table>
+    <h2>Terms</h2>
+    <p class="clause"><b class="n">1</b> This is a <b>sole mandate</b>. For the period above the owner will not appoint another agent, and commission is payable to the agent on a sale concluded during the period, whoever introduces the purchaser.</p>
+    <p class="clause"><b class="n">2</b> Commission becomes payable on registration of transfer, from the proceeds held by the transferring attorney.</p>
+    <p class="clause"><b class="n">3</b> The owner warrants that they are entitled to sell, and will provide the statutory compliance certificates at their own cost.</p>
+    <p class="clause"><b class="n">4</b> The agent will market the property as agreed: ${esc(v.marketing || "as discussed")}.</p>
+    <p class="clause"><b class="n">5</b> Personal information is processed under POPIA for the purpose of marketing and concluding this sale, and is not shared beyond the parties, the conveyancer and the portals on which the property is advertised.</p>
+    ${v.special ? `<p class="clause"><b class="n">6</b> ${esc(v.special)}</p>` : ""}
+    ${sigBlock(f, [{ role:"seller", label:"Owner" }, { role:"agent", label:"For RB Brand Real Estate" }])}
+    <div class="foot">Prepared in the RB Brand Deal Room · ${esc(f.ref)}. A signed copy is kept in the file for this property.</div></div>`;
+
+  if (f.type === "otp") return `<div class="paper">${paperHead(f, "Offer to Purchase")}
+    <p style="margin:12px 0 0">The purchaser named below offers to purchase the property from the seller on the terms set out here. This offer is open for acceptance and, once accepted and signed by both parties, becomes a binding agreement of sale.</p>
+    <h2>Parties</h2>
+    <table><tr><td>Purchaser</td><td><b>${esc(v.buyer || "—")}</b>${v.buyerid ? " · ID " + esc(v.buyerid) : ""}</td></tr>
+      <tr><td>Seller</td><td><b>${esc(v.seller || "—")}</b></td></tr>
+      <tr><td>Property</td><td>${esc(v.address || "—")}${v.erf ? " · Erf " + esc(v.erf) : ""}</td></tr></table>
+    <h2>Price and payment</h2>
+    <table><tr><td>Purchase price</td><td><b>${money(v.price)}</b></td></tr>
+      <tr><td>Deposit</td><td>${money(v.deposit)} payable into the transferring attorney's trust account</td></tr>
+      <tr><td>Balance by bond</td><td>${money(v.bond)}</td></tr>
+      <tr><td>Bond approval by</td><td><b>${dt(v.bondby)}</b></td></tr>
+      <tr><td>Occupation</td><td>${dt(v.occupation)}${v.rental ? " · occupational rent " + money(v.rental) + " per month" : ""}</td></tr>
+      <tr><td>Transferring attorney</td><td>${esc(v.conveyancer || "—")}</td></tr></table>
+    <h2>Conditions</h2>
+    <p class="clause"><b class="n">1</b> This offer is subject to the purchaser obtaining a bond of ${money(v.bond)} by ${dt(v.bondby)}. If it is not obtained by then, this agreement lapses unless the parties extend the date in writing.</p>
+    <p class="clause"><b class="n">2</b> The seller will provide the electrical, gas, plumbing, beetle and electric fence certificates required by law, at the seller's cost.</p>
+    <p class="clause"><b class="n">3</b> The property is sold voetstoots, subject to the seller's disclosure of defects known to them.</p>
+    <p class="clause"><b class="n">4</b> Risk and benefit pass on registration of transfer.</p>
+    ${v.fixtures ? `<p class="clause"><b class="n">5</b> Included in the sale: ${esc(v.fixtures)}.</p>` : ""}
+    ${v.special ? `<p class="clause"><b class="n">6</b> ${esc(v.special)}</p>` : ""}
+    ${sigBlock(f, [{ role:"buyer", label:"Purchaser" }, { role:"seller", label:"Seller" }, { role:"agent", label:"Agent" }])}
+    <div class="foot"><b>This document must be signed by hand.</b> An agreement for the alienation of land is excluded from electronic signature by the Electronic Communications and Transactions Act (s 4(4), Schedule 2). Print it, have it signed and initialled on every page, and load the signed copy back into the file. · ${esc(f.ref)}</div></div>`;
+
+  if (f.type === "costs"){
+    const sum = ["duty", "transfer", "bondcost", "other"].reduce((n, k) => n + (+v[k] || 0), 0);
+    return `<div class="paper">${paperHead(f, "Purchaser's Cost Estimate")}
+      <p style="margin:12px 0 0">An estimate of what ${esc(v.buyer || "the purchaser")} should budget for over and above the purchase price.</p>
+      <h2>The purchase</h2>
+      <table><tr><td>Property</td><td>${esc(v.address || "—")}</td></tr>
+        <tr><td>Purchase price</td><td><b>${money(v.price)}</b></td></tr>
+        <tr><td>Deposit</td><td>${money(v.deposit)}</td></tr></table>
+      <h2>Costs on top</h2>
+      <table><tr><td>Transfer duty (SARS)</td><td>${money(v.duty)}</td></tr>
+        <tr><td>Transfer costs</td><td>${money(v.transfer)}</td></tr>
+        <tr><td>Bond registration</td><td>${money(v.bondcost)}</td></tr>
+        ${+v.other ? `<tr><td>Other</td><td>${money(v.other)}</td></tr>` : ""}
+        <tr><td><b>Total to budget</b></td><td><b>${money(sum)}</b></td></tr></table>
+      <div class="foot">An estimate only. The transferring attorney gives the exact figures, and transfer duty depends on the SARS table in force on the date of the sale. · ${esc(f.ref)}</div></div>`;
+  }
+  const rows = [["Electrical CoC", v.electrical], ["Gas CoC", v.gas], ["Plumbing certificate", v.plumbing],
+    ["Borer beetle certificate", v.beetle], ["Electric fence CoC", v.fence]];
+  return `<div class="paper">${paperHead(f, "Seller's Compliance Checklist")}
+    <p style="margin:12px 0 0">${esc(v.seller || "The seller")} undertakes to provide the following certificates for ${esc(v.address || "the property")}, at the seller's cost, by the dates below.</p>
+    <h2>Certificates</h2>
+    <table>${rows.map(([l, d2]) => `<tr><td>${l}</td><td>${d2 ? "<b>by " + dt(d2) + "</b>" : "not applicable"}</td></tr>`).join("")}</table>
+    ${v.who ? `<p style="margin-top:12px">Inspections arranged by: <b>${esc(v.who)}</b>.</p>` : ""}
+    <p class="clause" style="margin-top:14px"><b class="n">!</b> A transfer cannot be lodged without the certificates the law requires. Late certificates are the single most common reason a transfer misses its date.</p>
+    ${sigBlock(f, [{ role:"seller", label:"Seller" }, { role:"agent", label:"Agent" }])}
+    <div class="foot">Prepared in the RB Brand Deal Room · ${esc(f.ref)}</div></div>`;
+}
+
+/* ══ The paperwork screen ═══════════════════════════════════════════ */
+function vDocs(){
+  const host = formHost(); if (!host) return "";
+  const list = formsOf(host), f = curForm();
+  if (f) return vOneForm(f);
+  return `<div class="stack">
+    <div class="sec-h"><h2>Paperwork</h2><p>Fill it in here, print it, sign it where the law allows</p></div>
+    <div class="card"><div class="card-h">${ICON.plus}<h2>Start a document</h2></div>
+      <div class="card-b"><div class="docs">${Object.entries(FORMS).map(([k, F]) => `<div class="doc">
+        <div class="doc-t"><span class="ic">${ICON.file}</span><div><b>${esc(F.name)}</b>
+          <span>${F.sign === "online" ? "Can be signed on screen" : F.sign === "wet" ? "Must be printed and signed by hand" : "For information"}</span></div></div>
+        <div class="doc-f" style="border:0;padding-top:2px">${esc(F.why)}</div>
+        <div class="doc-a"><button class="btn btn-g btn-s" data-act="formnew" data-t="${k}">${ICON.plus} Start</button></div></div>`).join("")}</div>
+      </div></div>
+    ${list.length ? `<div class="card"><div class="card-h">${ICON.vault}<h2>On this file</h2><span class="chip c-mute">${list.length}</span></div>
+      <div class="card-b">${list.slice().reverse().map(x => `<div class="act">
+        <span class="stripe" style="background:${x.status === "signed" ? "var(--go)" : x.status === "printed" ? "var(--gold)" : "var(--line-2)"}"></span>
+        <div class="act-t"><b>${esc(FORMS[x.type].name)}</b><span class="mono">${esc(x.ref)} · ${x.status === "signed" ? "signed" : x.status === "printed" ? "printed" : "draft"} · ${ago(x.ts)}</span></div>
+        <button class="btn btn-s" data-act="formopen" data-f="${x.id}">Open</button></div>`).join("")}</div></div>` : ""}
+  </div>`;
+}
+function vOneForm(f){
+  const F = FORMS[f.type], v = f.values;
+  const needed = F.sign === "online" ? [["seller", "Seller"], ["agent", "Agent"]] : [];
+  const signedBy = (f.signatures || []).map(x => x.role);
+  return `<div class="stack">
+    <div class="sec-h"><h2>${esc(F.name)}</h2><p class="mono">${esc(f.ref)}</p></div>
+    <div class="note ${F.sign === "wet" ? "" : ""}" ${F.sign === "wet" ? 'style="border-color:var(--stop)"' : ""}>${F.sign === "wet" ? ICON.warn : ICON.shield}<div>
+      <b>${F.sign === "wet" ? "This one must be signed by hand." : F.sign === "online" ? "This one may be signed on screen." : "For information only."}</b> ${esc(F.why)}</div></div>
+
+    <div class="card noprint"><div class="card-h">${ICON.file}<h2>Fill it in</h2>
+      <button class="btn btn-s" data-act="formback">All paperwork</button></div>
+      <div class="card-b"><div class="form">
+        ${F.fields.map(fl => `<div class="field${fl.w ? " wide" : ""}"><label for="fx_${fl.k}">${esc(fl.l)}</label>
+          <input type="${fl.t || "text"}" id="fx_${fl.k}" data-fx="${fl.k}" value="${esc(v[fl.k] === undefined ? "" : v[fl.k])}" placeholder="${esc(fl.ph || "")}"></div>`).join("")}
+      </div>
+      <div class="comp-r" style="margin-top:14px">
+        <button class="btn btn-g" data-act="formsave">Save</button>
+        <button class="btn btn-p" data-act="formprint">${ICON.file} Print / save as PDF</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-s" data-act="formdel" style="color:var(--stop)">Delete</button>
+      </div></div></div>
+
+    ${F.sign === "online" ? `<div class="card noprint"><div class="card-h">${ICON.check}<h2>Sign on screen</h2>
+      <span class="chip ${signedBy.length >= 2 ? "c-go" : "c-wait"}">${signedBy.length} of 2 signed</span></div>
+      <div class="card-b">
+        ${needed.map(([role, label]) => { const done = (f.signatures || []).find(x => x.role === role);
+          return `<div class="act"><span class="stripe" style="background:${done ? "var(--go)" : "var(--line-2)"}"></span>
+            <div class="act-t"><b>${label}</b><span>${done ? esc(done.name) + " · signed " + ago(done.ts) : "not signed yet"}</span></div>
+            ${done ? `<button class="btn btn-s" data-act="unsign" data-r="${role}">Clear</button>`
+              : `<button class="btn btn-g btn-s" data-act="signopen" data-r="${role}">Sign</button>`}</div>`; }).join("")}
+        ${S.signing ? `<div style="margin-top:14px">
+          <div class="eyebrow" style="margin-bottom:7px">Sign for ${esc(needed.find(n => n[0] === S.signing)[1])} — draw below</div>
+          <canvas id="sigpad" class="sigpad"></canvas>
+          <div class="form" style="margin-top:10px"><div class="field wide"><label for="signame">Full name of the person signing</label>
+            <input type="text" id="signame" placeholder="As it appears on their ID"></div></div>
+          <div class="comp-r" style="margin-top:10px">
+            <button class="btn btn-g" data-act="sigsave">Attach this signature</button>
+            <button class="btn btn-s" data-act="sigclear">Clear</button>
+            <button class="btn btn-s" data-act="sigcancel">Cancel</button></div>
+          <p style="margin:9px 0 0;font-size:11.5px;color:var(--t3)">Signing records the name, the date and the device it was signed on in this file's audit log.</p>
+        </div>` : ""}
+      </div></div>` : ""}
+
+    <div class="card"><div class="card-h noprint">${ICON.eye}<h2>Preview</h2>
+      <span class="chip c-mute">This is what prints</span></div>
+      <div class="card-b" style="background:var(--surface-2)">${renderPaper(f)}</div></div>
+  </div>`;
+}
+
+/* Signature pad — pointer events, so a finger and a mouse behave the same. */
+let sigCtx = null, sigDrawing = false, sigDirty = false;
+function initSigPad(){
+  const c = document.getElementById("sigpad"); if (!c) { sigCtx = null; return; }
+  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  c.width = r.width * dpr; c.height = r.height * dpr;
+  sigCtx = c.getContext("2d"); sigCtx.scale(dpr, dpr);
+  sigCtx.lineWidth = 2.2; sigCtx.lineCap = "round"; sigCtx.lineJoin = "round";
+  sigCtx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--t1").trim() || "#16203A";
+  sigDirty = false;
+  const at = e => { const b = c.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  c.addEventListener("pointerdown", e => { e.preventDefault(); sigDrawing = true; sigDirty = true;
+    c.setPointerCapture(e.pointerId); const [x, y] = at(e); sigCtx.beginPath(); sigCtx.moveTo(x, y); });
+  c.addEventListener("pointermove", e => { if (!sigDrawing) return; e.preventDefault();
+    const [x, y] = at(e); sigCtx.lineTo(x, y); sigCtx.stroke(); });
+  c.addEventListener("pointerup", () => { sigDrawing = false; });
+  c.addEventListener("pointercancel", () => { sigDrawing = false; });
+}
+
+/* ══ The road to a home sale ════════════════════════════════════════
+   A client-facing guide. Sellers and buyers ask the same questions in
+   the same order; this answers them before they have to ask. ═══════ */
+const ROAD = [
+  { n:1, name:"Deciding to sell", who:"Seller", days:"Week 0",
+    what:"We price the house on what comparable homes actually sold for, not what they were listed at, and agree the mandate and the marketing.",
+    watch:"Overpricing costs more than time. A house that sits gets offers below what it would have fetched in the first three weeks." },
+  { n:2, name:"On the market", who:"Seller & buyers", days:"Weeks 1–6",
+    what:"Photography, portals, show days and buyer viewings. You get feedback after every viewing, not just when there is an offer.",
+    watch:"The first two weeks bring the most serious buyers — they are the ones who have been watching the area." },
+  { n:3, name:"The offer", who:"Buyer",
+    what:"A written Offer to Purchase sets out the price, the deposit, the bond amount and the date it must be approved by, and what stays in the house.",
+    watch:"An offer is not a sale until both parties have signed. Sign it by hand — the law does not allow an OTP for property to be signed electronically." },
+  { n:4, name:"FICA and the attorney", who:"Both", days:"3–7 days",
+    what:"Both sides prove who they are, and the seller nominates the transferring attorney. The file opens.",
+    watch:"A proof of address older than three months holds everything up. Bank statements work." },
+  { n:5, name:"The bond", who:"Buyer", days:"14–30 days",
+    what:"The buyer's bank values the property and approves the bond. The deposit goes into the attorney's trust account.",
+    watch:"If the bond date in the OTP passes without approval, the sale lapses unless both parties extend it in writing. Extend early." },
+  { n:6, name:"Certificates", who:"Seller", days:"7–14 days",
+    what:"Electrical, gas, plumbing, beetle and electric fence certificates, at the seller's cost.",
+    watch:"This is the most common reason a transfer misses its date. Book the electrician the week the offer is accepted." },
+  { n:7, name:"Rates and SARS", who:"Attorney", days:"14–45 days",
+    what:"The attorney pays rates in advance to get a clearance certificate, and files for transfer duty at SARS.",
+    watch:"The slowest stretch, and the one nobody can speed up. Expect quiet weeks here — it does not mean nothing is happening." },
+  { n:8, name:"Signing", who:"Both", days:"5–10 days",
+    what:"Both parties sign the transfer documents at the attorney's office. The buyer pays the transfer costs.",
+    watch:"Transfer costs are over and above the purchase price. Ask for the figure early so it is not a surprise." },
+  { n:9, name:"Lodgement", who:"Attorney", days:"7–12 days",
+    what:"The transfer, bond and cancellation attorneys lodge together at the Deeds Office, which examines the batch.",
+    watch:"They must lodge on the same day. One attorney who is not ready delays everyone." },
+  { n:10, name:"Registration", who:"Everyone", days:"1–3 days",
+    what:"Ownership passes, the seller is paid, and the keys change hands.",
+    watch:"Occupation and registration are not the same date. Read the OTP for who pays occupational rent if the buyer moves in first." },
+];
+function vRoad(){
+  const client = !(P[S.me] && (P[S.me].role === "agent" || isPrincipal(S.me)));
+  return `<div class="stack">
+    <div class="sec-h"><h2>The road to a home sale</h2><p>What happens, in what order, and what usually goes wrong</p></div>
+    <div class="note">${ICON.shield}<div><b>Roughly three months from offer to registration</b> when nothing goes wrong — and the two things that most often go wrong are certificates booked late and a bond date nobody extended. Both are avoidable.</div></div>
+    <div class="spine">${ROAD.map(r => `<div class="stage ${r.n <= 2 ? "done" : "now"}">
+      <div class="node"><span class="bead">${r.n}</span>${r.n < 10 ? '<span class="line"></span>' : ""}</div>
+      <div class="stage-c">
+        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:4px">
+          <h3 style="font-size:15.5px">${esc(r.name)}</h3>
+          <span class="chip c-mute">${esc(r.who)}</span>${r.days ? `<span class="chip c-mute mono">${esc(r.days)}</span>` : ""}</div>
+        <p class="stage-sub" style="margin-top:5px">${esc(r.what)}</p>
+        <div class="stage-body" style="padding:11px 13px;margin-top:9px">
+          <b style="font-size:11.5px;color:var(--gold-ink)">Watch out</b>
+          <p style="margin:3px 0 0;font-size:12.5px;color:var(--t2)">${esc(r.watch)}</p></div>
+      </div></div>`).join("")}</div>
+    ${client ? "" : `<div class="note">${ICON.chat}<div><b>Send this to a client.</b> Sellers ask "what happens now" at every stage — this is the answer, and it saves the phone call. Use the message templates to send the link.</div></div>`}
+  </div>`;
+}
+
+/* ══ Keeping in touch ═══════════════════════════════════════════════ */
+const KEEPINTOUCH = {
+  pre:[
+    { t:"First week on the market", b:"Hi {first}\n\n{property} has been live for a week. Most serious buyers in an area are already watching it before it lists, so the first fortnight tells us the most.\n\nSo far: {activity}\n\nI'll send you feedback after every viewing, not only when there is an offer.\n\n{agent}" },
+    { t:"After a viewing", b:"Hi {first}\n\nWe showed {property} today. Honest feedback: {feedback}\n\nNothing to action yet — I'll tell you straight if a pattern starts forming in what buyers are saying.\n\n{agent}" },
+    { t:"Quiet fortnight", b:"Hi {first}\n\nTwo quieter weeks on {property}. That is normal at this point in the season, but it is worth a conversation about the asking price or the photographs before it goes stale.\n\nCan I phone you this week?\n\n{agent}" },
+    { t:"A fact worth knowing", b:"Hi {first}\n\nA useful one for you: in South Africa the seller carries the cost of the electrical, gas, plumbing and beetle certificates, and a transfer cannot be lodged without them. Booking the electrician early is the single easiest way to keep a sale on its dates.\n\nNo action needed yet — just so it is not a surprise later.\n\n{agent}" },
+  ],
+  during:[
+    { t:"Offer accepted", b:"Hi {first}\n\nThe offer on {property} is accepted and the file is open. From here it runs on a well-worn track: FICA, the bond, the certificates, then rates and SARS clearances before the Deeds Office.\n\nHere is the whole road, so you know what is coming: {link}\n\n{agent}" },
+    { t:"The quiet stretch", b:"Hi {first}\n\nAn honest update on {property}: we are in the rates and SARS clearance stretch, which is the slowest part of any transfer and the part nobody can hurry. It usually runs two to six weeks.\n\nNothing is stuck — I am watching it, and you will hear from me the moment it moves.\n\n{agent}" },
+    { t:"Ready to sign", b:"Hi {first}\n\nThe attorney has the transfer documents ready for {property}. Please book a slot to sign — the sooner both sides have signed, the sooner it can be lodged.\n\n{agent}" },
+  ],
+  post:[
+    { t:"The day after", b:"Hi {first}\n\nCongratulations again on {property}. A few things worth doing in your first week:\n\n• Take meter readings and send them to the municipality\n• Put the rates account in your name\n• Check the geyser and the electric fence battery\n• Keep the compliance certificates somewhere safe — you will need them when you sell\n\nI am at the end of the phone if anything comes up.\n\n{agent}" },
+    { t:"Three months on", b:"Hi {first}\n\nThree months in {property} — how is it treating you?\n\nIf anything needs a good plumber, electrician or painter, I have people I trust and use myself. Just ask.\n\n{agent}" },
+    { t:"One year on", b:"Hi {first}\n\nA year today since {property} became yours. \n\nIf you are curious what it is worth now, I am happy to run the comparable sales for you — no strings, and no obligation to do anything with it.\n\n{agent}" },
+    { t:"Area update", b:"Hi {first}\n\nA quick note on {area}: {update}\n\nNothing to do with selling — I just think it is useful to know what your biggest asset is doing.\n\n{agent}" },
+  ],
+};
+
+/* The keep-in-touch library folds into the same send sheet. */
+Object.entries(KEEPINTOUCH).forEach(([when, list]) => list.forEach((m, i) => {
+  TEMPLATES["kit_" + when + i] = { label:`${when === "pre" ? "While on the market" : when === "during" ? "During the transfer" : "After registration"} — ${m.t}`,
+    subject:"{property}", body:m.b };
+}));
+
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { today:vToday, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { today:vToday, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
   if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
   if (S.listing && !listingRole(S.listings[S.listing], S.me)) { S.listing = null; S.view = homeView(); }
   if (S.deal) S.listing = null;
-  if (S.listing && S.view !== "house") S.view = "house";
+  if (S.listing && !["house", "docs"].includes(S.view)) S.view = "house";
+  if (S.view === "docs" && !canDocs()) S.view = S.listing ? "house" : S.deal ? "dash" : homeView();
   if (!S.listing && S.view === "house") S.view = homeView();
   if (!S.deal && !S.listing && S.view === "listings" && !myListings().length) S.view = homeView();
-  if (!S.deal && !S.listing && ["board", "today"].includes(S.view) && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
+  if (!S.deal && !S.listing && S.view === "docs") S.view = homeView();
+  if (!S.deal && !S.listing && ["board", "today", "earn"].includes(S.view) && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
+  if (S.deal && S.view === "comm" && !canSeeComm(D())) S.view = "dash";
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
-  if (S.deal && !DEAL_VIEWS.some(v => v.id === S.view)) S.view = "dash";
+  if (S.deal && !dealViews().some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && me().role !== "principal") S.view = "portfolio";
   if (!S.deal && S.view === "new" && me().role !== "agent") S.view = "portfolio";
   renderChrome();
   document.getElementById("view").innerHTML = RENDER[S.view]();
+  if (S.signing) initSigPad();
   renderPop();
   renderModal();
   renderSend();
@@ -2303,6 +2895,67 @@ document.addEventListener("click", e => {
     a2.href = url; a2.download = "rb-deal-room.ics"; document.body.appendChild(a2); a2.click(); a2.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000); toast("Calendar file saved");
   }
+  else if (a === "commedit"){ S.view = "comm"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "splitadd"){ const c = commOf(d), k = btn.dataset.k;
+    const free = TEAM.find(x => !c.splits.some(y => y.id === x));
+    c.splits.push({ id:k === "agent" && free ? free : "x" + Date.now(), kind:k,
+      label:k === "agent" ? (free ? P[free].name : "Another agent") : k === "partner" ? "Partner agency" : "Referring agent",
+      pct:0 });
+    render(); }
+  else if (a === "splitdel"){ commOf(d).splits.splice(+btn.dataset.i, 1); render(); }
+  else if (a === "commsave"){
+    const c = commOf(d), g = id => (document.getElementById(id) || {}).value;
+    document.querySelectorAll("[data-split]").forEach(el => {
+      const sp = c.splits[+el.dataset.i]; if (!sp) return;
+      if (el.dataset.split === "pct") sp.pct = +el.value || 0; else sp.label = el.value;
+    });
+    c.basis = g("cm_basis"); c.pct = +g("cm_pct") || 0; c.fixed = +g("cm_fixed") || 0;
+    c.vatIncl = g("cm_vat") === "1"; c.note = g("cm_note") || "";
+    const calc = commCalc(d);
+    logit(d, "Commission updated", `${R(calc.total)} incl VAT · ${calc.splits.map(x => x.label + " " + x.pct + "%").join(", ")}`);
+    toast(calc.balanced ? "Saved to the mandate" : `Saved — but the splits total ${calc.allocated}%`);
+    S.view = "dash"; render(); window.scrollTo({ top:0 });
+  }
+  else if (a === "formnew"){ newForm(btn.dataset.t); window.scrollTo({ top:0 }); }
+  else if (a === "formopen"){ S.form = btn.dataset.f; S.signing = null; render(); window.scrollTo({ top:0 }); }
+  else if (a === "formback"){ S.form = null; S.signing = null; render(); }
+  else if (a === "formsave"){ const f = curForm();
+    document.querySelectorAll("[data-fx]").forEach(el => f.values[el.dataset.fx] = el.value);
+    toast("Saved"); render(); }
+  else if (a === "formprint"){ const f = curForm();
+    document.querySelectorAll("[data-fx]").forEach(el => f.values[el.dataset.fx] = el.value);
+    if (f.status === "draft") f.status = "printed";
+    const host = formHost(), dd = D(), ll = L();
+    const line = `${FORMS[f.type].name} printed · ${f.ref}`;
+    if (dd) logit(dd, "Document printed", line); else if (ll) ll.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Document printed", det:line });
+    render(); setTimeout(() => { try { window.print(); } catch { toast("Use your browser's print option"); } }, 120);
+  }
+  else if (a === "formdel"){ const f = curForm();
+    if (!confirm(`Delete this ${FORMS[f.type].name}?`)) return;
+    const host = formHost(); host.forms = host.forms.filter(x => x.id !== f.id);
+    S.form = null; toast("Deleted"); render(); }
+  else if (a === "signopen"){ S.signing = btn.dataset.r; render();
+    setTimeout(() => { const el = document.getElementById("sigpad"); if (el) el.scrollIntoView({ block:"center", behavior:"smooth" }); }, 80); }
+  else if (a === "sigcancel"){ S.signing = null; render(); }
+  else if (a === "sigclear"){ const c = document.getElementById("sigpad");
+    if (c && sigCtx){ sigCtx.clearRect(0, 0, c.width, c.height); sigDirty = false; } }
+  else if (a === "sigsave"){
+    const f = curForm(), c = document.getElementById("sigpad");
+    const name = (document.getElementById("signame") || {}).value || "";
+    if (!sigDirty){ toast("Draw the signature first"); return; }
+    if (!name.trim()){ toast("Type the name of the person signing"); return; }
+    f.signatures = (f.signatures || []).filter(x => x.role !== S.signing);
+    f.signatures.push({ role:S.signing, name:name.trim(), data:c.toDataURL("image/png"),
+      ts:new Date().toISOString(), by:S.me });
+    if (f.signatures.length >= 2) f.status = "signed";
+    const dd = D(), ll = L(), line = `${FORMS[f.type].name} signed by ${name.trim()} (${S.signing}) · ${f.ref}`;
+    if (dd) logit(dd, "Document signed", line); else if (ll) ll.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Document signed", det:line });
+    S.signing = null; toast("Signature attached"); render();
+  }
+  else if (a === "unsign"){ const f = curForm();
+    f.signatures = (f.signatures || []).filter(x => x.role !== btn.dataset.r);
+    if (f.signatures.length < 2) f.status = "printed";
+    render(); }
   else if (a === "switchboard"){ S.boardId = btn.dataset.b; S.card = null; render(); window.scrollTo({ top:0 }); }
   else if (a === "importtrello"){ trelloImport.click(); }
   else if (a === "delboard"){

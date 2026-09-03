@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Charné Deal Room</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -369,6 +371,18 @@ fieldset{border:0;padding:0;margin:0}
   .list{flex-basis:82vw;max-width:300px}
   .scrim{padding:12px 10px}
 }
+
+/* ── Phone app ──────────────────────────── */
+.install{position:fixed;left:12px;right:12px;bottom:76px;z-index:70;background:var(--ink);color:#fff;border-radius:12px;
+  padding:13px 15px;display:flex;gap:12px;align-items:center;box-shadow:0 14px 34px -12px rgba(0,0,0,.55)}
+:root[data-theme="dark"] .install,:root:not([data-theme="light"]) .install{border:1px solid var(--line-2)}
+.install .ic{width:38px;height:38px;border-radius:9px;background:var(--gold);display:grid;place-items:center;color:#0F2040;flex:none}
+.install b{display:block;font-size:13.5px}
+.install span{display:block;font-size:11.5px;color:rgba(255,255,255,.68);margin-top:1px}
+.install .btn{background:var(--gold);border-color:var(--gold);color:#10182B}
+.offline{position:fixed;left:50%;transform:translateX(-50%);top:8px;z-index:100;background:var(--stop);color:#fff;
+  border-radius:99px;padding:5px 14px;font-size:11.5px;font-weight:600;box-shadow:0 6px 18px -6px rgba(0,0,0,.5)}
+@media (min-width:861px){ .install{left:auto;right:20px;bottom:20px;max-width:380px} }
 </style>
 <header class="bar">
   <div class="bar-in">
@@ -428,6 +442,7 @@ const ICON = {
 const P = {
   charne:    { name:"Charné Snyman",   ini:"CS", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0114", email:"charne@rbbrand.co.za" },
   riaan:     { name:"Riaan Brand",     ini:"RB", kind:"Principal",   role:"principal",   org:"RB Brand Real Estate", mobile:"083 555 0100", email:"riaan@rbbrand.co.za" },
+  rassie:    { name:"Rassie Nel",      ini:"RN", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0119", email:"rassie@rbbrand.co.za" },
   lerato:    { name:"Lerato Dube",     ini:"LD", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"071 555 0127", email:"lerato@rbbrand.co.za" },
   pieter:    { name:"Pieter Naudé",    ini:"PN", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0143", email:"pieter@rbbrand.co.za" },
   thabo:     { name:"Thabo Mokoena",   ini:"TM", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"073 555 0198", email:"t.mokoena@gmail.com" },
@@ -460,7 +475,11 @@ const P = {
 };
 const COL = r => `var(--p-${r})`;
 const isPrincipal = id => !!P[id] && P[id].kind === "Principal";
-const STAFF = ["charne", "riaan", "lerato"];
+/* Charné and Rassie work as a pair: separate files, one shared board. */
+const TEAM = ["charne", "rassie"];
+const inTeam = id => TEAM.includes(id);
+const teamOf = id => inTeam(id) ? TEAM : [id];
+const STAFF = ["charne", "rassie", "riaan", "lerato"];
 [["hendrik","Hendrik Meyer","Buyer"],["annelie","Annelie Roux","Seller"],
  ["zanele","Zanele Mthembu","Buyer"],["kobus","Kobus Grobler","Seller"],
  ["fatima","Fatima Ismail","Buyer"],["deon","Deon Swanepoel","Seller"],
@@ -588,7 +607,7 @@ const SEED_DEALS = [
     otpAgo:141, bondIn:null, stage:6, extra:["t6a","t6b"], lastAct:4, hero:"linear-gradient(145deg,#0A2E2B,#1A6B64)" },
   { id:"d5", ref:"PTA-2475568", file:"VZK/T/4455", address:"Stand 118, The Hills", area:"The Hills Estate", city:"Pretoria East",
     price:2000000, deposit:200000, beds:0, baths:0, garages:0, erf:940, type:"Vacant Land",
-    agent:"lerato", buyer:"gerhard", seller:"susan", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
+    agent:"rassie", buyer:"gerhard", seller:"susan", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475568",
     otpAgo:39, bondIn:-3, stage:2, extra:[], lastAct:17, hero:"linear-gradient(145deg,#0F3018,#1A6030)" },
   { id:"d6", ref:"PTA-2487360", file:"KB/T/2195", address:"Unit 14, Glevera", area:"Rietvalleirand", city:"Pretoria East",
@@ -623,7 +642,7 @@ const SEED_DEALS = [
     otpAgo:102, bondIn:null, stage:4, extra:["t4a","t4b","t4c"], lastAct:8, hero:"linear-gradient(145deg,#1A2A10,#3A5A20)" },
   { id:"d12", ref:"PTA-2479682", file:"KB/T/2231", address:"41 Simon Vermooten Road", area:"Equestria", city:"Pretoria East",
     price:2800000, deposit:280000, beds:3, baths:3, garages:2, erf:null, type:"House",
-    agent:"lerato", buyer:"chantal", seller:"themba", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
+    agent:"rassie", buyer:"chantal", seller:"themba", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
     listing:"https://www.rbbrandrealestate.co.za/equestria-house-for-sale-2479682",
     otpAgo:11, bondIn:26, stage:1, extra:["t1a","t1b"], lastAct:1, hero:"linear-gradient(145deg,#3A1E05,#7A4515)" },
 ];
@@ -637,6 +656,7 @@ const Rm = n => n >= 1e6 ? "R " + (n / 1e6).toFixed(2).replace(/\.00$/, "") + "m
 const dstr = d => new Date(d).toLocaleDateString("en-ZA", { day:"numeric", month:"short", year:"numeric" });
 const stampf = d => new Date(d).toLocaleString("en-ZA", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(",", "");
 const daysTo = d => Math.round((new Date(d) - Date.now()) / DAY);
+const dayDiff = d => Math.round((new Date(new Date(d).toDateString()) - new Date(new Date().toDateString())) / DAY);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
 const ago = t => { const m = (Date.now() - new Date(t)) / 6e4;
   if (m < 1) return "just now"; if (m < 60) return Math.floor(m) + " min ago";
@@ -781,9 +801,9 @@ const SEED_CARDS = [
 /* ══ State ══════════════════════════════════════════════════════════ */
 const KEY = "rb_dealroom_v4";
 let S;
-const fresh = () => ({ me:"charne", view:"board", deal:null, listing:null, agentFilter:null, people:{},
+const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{},
   card:null, boardFilter:null, boardId:"pipeline",
-  boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline" }],
+  boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
   board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
     checklist:c.checklist.map(x => [...x]) })), next:9 },
   deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])),
@@ -793,7 +813,8 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   if (!S.people) S.people = {};
   if (!S.board) S.board = fresh().board;
   if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
-  S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline"; });
+  S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline";
+    c.files = c.files || []; c.comments = c.comments || []; c.activity = c.activity || []; });
   S.card = null;
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
@@ -875,13 +896,14 @@ const DEAL_VIEWS = [
   { id:"people",label:"Access",    ic:"people" },
   { id:"log",   label:"Audit log", ic:"log" },
 ];
-const homeView = () => isPrincipal(S.me) ? "team" : me().role === "agent" ? "board" : myDeals().length ? "portfolio" : "listings";
+const homeView = () => isPrincipal(S.me) || me().role === "agent" ? "today" : myDeals().length ? "portfolio" : "listings";
 function navItems(){
   if (S.deal) return DEAL_VIEWS;
   if (S.listing) return [{ id:"house", label:"The house", short:"House", ic:"house" }];
   const v = [], r = me().role;
   if (r === "principal") v.push({ id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
+    v.push({ id:"today", label:"Today", short:"Today", ic:"home" });
     if (r === "agent") v.push({ id:"board", label:"Board", short:"Board", ic:"board" });
     if (myListings().length) v.push({ id:"listings", label:r === "agent" ? "My houses" : "Houses", short:"Houses", ic:"house" });
     if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
@@ -890,6 +912,7 @@ function navItems(){
   return v;
 }
 function badgeFor(v){
+  if (v === "today") return inbox().length;
   if (v === "house"){ const l = L(); return l && listingRole(l, S.me) === "agent" ? openOffers(l).length : 0; }
   const d = D(); if (!d) return 0;
   if (v === "chat") return unread(d, S.me);
@@ -924,7 +947,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1588,6 +1611,11 @@ function vHouse(){
   </div>`;
 }
 
+const mentionRe = () => new RegExp("@(" + STAFF.map(id => P[id].name.split(" ")[0]).join("|") + ")(?![\\p{L}])", "giu");
+const mentionise = txt => esc(txt).replace(mentionRe(),
+  (m) => `<span class="chip c-gold" style="padding:1px 7px">${m}</span>`);
+const mentions = txt => STAFF.filter(id => new RegExp("@" + P[id].name.split(" ")[0] + "(?![\\p{L}])", "iu").test(txt || ""));
+
 /* ══ Board ══════════════════════════════════════════════════════════ */
 const LISTS = [
   { id:"market", name:"On the market",        kind:"house", tint:"var(--go)" },
@@ -1608,21 +1636,28 @@ const LABELS = {
   admin:{ name:"Admin",             col:"var(--p-buyer)" },
   show:{ name:"Show house",         col:"var(--go)" },
 };
-const curBoard = () => S.boards.find(b => b.id === S.boardId) || S.boards[0];
+const boardsFor = id => S.boards.filter(b => b.kind === "pipeline"
+  ? (inTeam(id) || isPrincipal(id) || P[id].role === "agent")
+  : b.owner === id || (b.shared || []).includes(id));
+const curBoard = () => boardsFor(S.me).find(b => b.id === S.boardId) || boardsFor(S.me)[0] || S.boards[0];
 const listsOf = b => b.kind === "pipeline" ? LISTS : b.lists;
 const cardsOf = list => (S.board.cards || []).filter(c => c.board === S.boardId && c.list === list).sort((a, b) => a.pos - b.pos);
 const labChip = k => typeof k === "string" ? LABELS[k] : k;
 function listOfDeal(d){ return isClosed(d) ? "done" : "s" + current(d).n; }
 function listOfListing(l){ return l.status !== "active" ? null : openOffers(l).length ? "offer" : "market"; }
 function boardVisible(){
-  const deals = myDeals().filter(d => !S.boardFilter || (roleIn(d, S.boardFilter) || extraIn(d, S.boardFilter)));
-  const listings = myListings().filter(l => !S.boardFilter || l.meta.agent === S.boardFilter);
-  return { deals, listings };
+  const team = isPrincipal(S.me) ? agencyAgents() : teamOf(S.me);
+  const mine = id => team.includes(id);
+  const deals = Object.values(S.deals).filter(d => mine(d.meta.agent))
+    .filter(d => !S.boardFilter || d.meta.agent === S.boardFilter);
+  const listings = Object.values(S.listings).filter(l => mine(l.meta.agent))
+    .filter(l => !S.boardFilter || l.meta.agent === S.boardFilter);
+  return { deals, listings, team };
 }
 function dueChip(iso2){
   if (!iso2) return "";
-  const n = daysTo(iso2), cls = n < 0 ? "late" : n <= 3 ? "soon" : "ok";
-  const txt = n < 0 ? Math.abs(n) + "d over" : n === 0 ? "today" : n === 1 ? "tomorrow" : new Date(iso2).toLocaleDateString("en-ZA", { day:"numeric", month:"short" });
+  const n = dayDiff(iso2), cls = n < 0 ? "late" : n <= 3 ? "soon" : "ok";
+  const txt = n < 0 ? Math.abs(n) + (Math.abs(n) === 1 ? "d over" : "d over") : n === 0 ? "today" : n === 1 ? "tomorrow" : new Date(iso2).toLocaleDateString("en-ZA", { day:"numeric", month:"short" });
   return `<span class="mi due ${cls}">${ICON.log} ${txt}</span>`;
 }
 function dealCardMini(d){
@@ -1665,25 +1700,28 @@ function manualCardMini(c){
     <span class="tt">${esc(c.title)}</span>
     <span class="meta">
       ${c.checklist.length ? `<span class="mi">${ICON.check} ${doneN}/${c.checklist.length}</span>` : ""}
+      ${(c.comments || []).length ? `<span class="mi">${ICON.chat} ${c.comments.length}</span>` : ""}
+      ${(c.files || []).length ? `<span class="mi">${ICON.file} ${c.files.length}</span>` : ""}
       ${dueChip(c.due)}
       <span class="faces">${c.members.map(m => avatar(m, 22)).join("")}</span>
     </span></button>`;
 }
 function vBoard(){
-  const { deals, listings } = boardVisible();
-  const agents = agencyAgents(), B = curBoard(), pipeline = B.kind === "pipeline";
+  const { deals, listings, team } = boardVisible();
+  const B = curBoard(), pipeline = B.kind === "pipeline";
   return `<div class="stack">
     <div class="sec-h"><h2>${esc(B.name)}</h2><p>${pipeline ? "Every house and every transfer, in the column it is actually in" : "Imported board — works exactly as it did before"}</p></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      ${S.boards.map(b => `<button class="btn btn-s" data-act="switchboard" data-b="${b.id}" style="${b.id === S.boardId ? "border-color:var(--gold);background:var(--gold-soft)" : ""}">${esc(b.name)}</button>`).join("")}
+      ${boardsFor(S.me).map(b => `<button class="btn btn-s" data-act="switchboard" data-b="${b.id}" style="${b.id === S.boardId ? "border-color:var(--gold);background:var(--gold-soft)" : ""}">${esc(b.name)}</button>`).join("")}
       <button class="btn btn-s" data-act="importtrello">${ICON.up} Import a Trello board</button>
-      ${!pipeline ? `<button class="btn btn-s" data-act="delboard" style="color:var(--stop)">Remove this board</button>` : ""}
+      ${!pipeline ? `<button class="btn btn-s" data-act="shareboard">${(B.shared || []).length ? ICON.people + " Shared with " + (B.shared || []).map(x => P[x].name.split(" ")[0]).join(", ") : ICON.people + " Share with the team"}</button>
+        <button class="btn btn-s" data-act="delboard" style="color:var(--stop)">Remove this board</button>` : `<span class="chip c-mute">${ICON.people} Shared by ${esc(TEAM.map(x => P[x].name.split(" ")[0]).join(" and "))}</span>`}
     </div>
     ${pipeline ? `<div class="note">${ICON.shield}<div><b>The cards are the files themselves.</b> A house or a transfer sits in the column its real state puts it in — complete a step here or in the deal room and the card moves on its own. Cards you write yourself drag anywhere you like.</div></div>` : `<div class="note">${ICON.shield}<div><b>Brought across from Trello.</b> Your lists, cards, labels, due dates, checklists and members came over as they were. Everything drags and edits the way you are used to.</div></div>`}
     ${pipeline ? `<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
       <span class="eyebrow">Filter</span>
       <button class="btn btn-s" data-act="bfilter" data-p="" aria-current="${!S.boardFilter}" style="${!S.boardFilter ? "border-color:var(--gold)" : ""}">Everyone</button>
-      ${(isPrincipal(S.me) ? agents : [S.me]).map(a => `<button class="btn btn-s" data-act="bfilter" data-p="${a}" style="${S.boardFilter === a ? "border-color:var(--gold)" : ""}">${P[a].name.split(" ")[0]}</button>`).join("")}
+      ${team.map(a => `<button class="btn btn-s" data-act="bfilter" data-p="${a}" style="${S.boardFilter === a ? "border-color:var(--gold)" : ""}">${P[a].name.split(" ")[0]}</button>`).join("")}
       <span style="flex:1"></span>
       <span class="mono" style="font-size:11.5px;color:var(--t3)">${deals.length} transfers · ${listings.length} houses</span>
     </div>` : ""}
@@ -1766,7 +1804,27 @@ function renderModal(){
         <div style="display:flex;gap:7px;flex-wrap:wrap">${Object.entries(LABELS).map(([k, v]) => `<button class="lab wide" data-act="clabel" data-k="${k}"
           style="background:${c.labels.includes(k) ? v.col : "var(--surface-2)"};color:${c.labels.includes(k) ? "#fff" : "var(--t2)"};border:1px solid ${c.labels.includes(k) ? v.col : "var(--line)"};border-radius:6px;cursor:pointer">${v.name}</button>`).join("")}</div></div>
       <div class="mblock"><div class="eyebrow">Due date</div>
-        <input type="date" id="cdue" value="${c.due ? new Date(c.due).toISOString().slice(0, 10) : ""}" style="max-width:200px"></div>`;
+        <input type="date" id="cdue" value="${c.due ? new Date(c.due).toISOString().slice(0, 10) : ""}" style="max-width:200px"></div>
+      <div class="mblock"><div class="eyebrow">Who is on it</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">${teamOf(S.me).concat(TEAM.includes(S.me) ? [] : []).map(m => `
+          <button class="btn btn-s" data-act="cmember" data-m="${m}" style="${c.members.includes(m) ? "border-color:var(--gold);background:var(--gold-soft)" : ""}">
+            ${avatar(m, 20)} ${esc(P[m].name.split(" ")[0])}</button>`).join("")}</div></div>
+      <div class="mblock"><div class="eyebrow">Attachments</div>
+        ${(c.files || []).length ? c.files.map((f, i) => `<div class="check">
+          <span class="tick" style="opacity:.55">${ICON.file}</span>
+          <span class="tx">${esc(f.name)}<br><span style="font-size:11px;color:var(--t3)">${esc(f.size)} · added by ${esc(P[f.by] ? P[f.by].name.split(" ")[0] : "someone")} ${ago(f.ts)}</span></span>
+          <button class="btn btn-s" data-act="cunfile" data-i="${i}">Remove</button></div>`).join("")
+          : `<p style="margin:0;font-size:12.5px;color:var(--t2)">Nothing attached yet.</p>`}
+        <button class="btn btn-s" data-act="cfile" style="margin-top:9px">${ICON.up} Attach a file</button></div>
+      <div class="mblock"><div class="eyebrow">Comments</div>
+        ${(c.comments || []).map(m => `<div class="msg" style="padding:10px 0">${avatar(m.by, 28)}
+          <div class="msg-b"><div class="msg-h"><b>${esc(P[m.by] ? P[m.by].name : "Someone")}</b><span class="tm mono">${ago(m.ts)}</span></div>
+          <p class="msg-x" style="font-size:13px">${mentionise(m.body)}</p></div></div>`).join("")}
+        <textarea id="ccomment" style="min-height:56px" placeholder="Write a comment… use @${esc(P[teamOf(S.me).find(x => x !== S.me) || S.me].name.split(" ")[0])} to pull someone in"></textarea>
+        <button class="btn btn-s" data-act="ccomment" style="margin-top:8px">${ICON.send} Comment</button></div>
+      ${(c.activity || []).length ? `<div class="mblock"><div class="eyebrow">History</div>
+        ${c.activity.slice(-6).reverse().map(x => `<p style="margin:0 0 5px;font-size:11.5px;color:var(--t2)">
+          <b style="color:var(--t1)">${esc(P[x.who] ? P[x.who].name.split(" ")[0] : "Someone")}</b> ${esc(x.what)} · ${ago(x.ts)}</p>`).join("")}</div>` : ""}`;
     foot = `<button class="btn btn-p" data-act="csave">Save the card</button><button class="btn" data-act="cdelete" style="color:var(--stop)">Delete</button>`;
   }
   const el = document.createElement("div");
@@ -1780,8 +1838,95 @@ function renderModal(){
   document.body.appendChild(el);
 }
 
+/* ══ What needs me ══════════════════════════════════════════════════ */
+function inbox(){
+  const out = [];
+  const seen = S.inboxSeen || {};
+  // cards assigned to me that are due
+  S.board.cards.filter(c => c.members.includes(S.me) && c.due).forEach(c => {
+    const n = dayDiff(c.due);
+    if (n <= 2) out.push({ rank:n < 0 ? 0 : 2, id:"due" + c.id, kind:"card", cardId:c.id, board:c.board, urgent:n < 0,
+      title:c.title, why:n < 0 ? `${Math.abs(n)} day${Math.abs(n) === 1 ? "" : "s"} overdue` : n === 0 ? "due today" : n === 1 ? "due tomorrow" : `due in ${n} days`, ts:c.due });
+  });
+  // someone pulled me into a card
+  S.board.cards.forEach(c => (c.comments || []).forEach(m => {
+    if (m.by !== S.me && mentions(m.body).includes(S.me))
+      out.push({ rank:1, id:"men" + c.id + m.ts, kind:"card", cardId:c.id, board:c.board, urgent:false,
+        title:c.title, why:`${P[m.by].name.split(" ")[0]} mentioned you`, ts:m.ts });
+  }));
+  // steps in a file that are mine
+  myDeals().forEach(d => { const acc = accessIn(d, S.me); if (!acc) return;
+    openFor(d, acc.role).forEach(t => out.push({ rank:atRisk(d) ? 0 : 4, id:"task" + d.meta.id + t.id, kind:"deal", dealId:d.meta.id,
+      urgent:atRisk(d), title:t.label, why:`${d.meta.address} · stage ${current(d).n}`, ts:lastTouch(d) }));
+  });
+  // messages in a file I have not read
+  myDeals().forEach(d => { const n = unread(d, S.me);
+    if (n) out.push({ rank:5, id:"msg" + d.meta.id, kind:"deal", dealId:d.meta.id, urgent:false,
+      title:`${n} new message${n > 1 ? "s" : ""}`, why:d.meta.address, ts:d.msgs[d.msgs.length - 1].ts, chat:true });
+  });
+  // offers waiting on me
+  myListings().filter(l => l.meta.agent === S.me).forEach(l => openOffers(l).forEach(o =>
+    out.push({ rank:0, id:"off" + o.id, kind:"house", houseId:l.meta.id, urgent:true,
+      title:`Offer of ${R(o.amount)} to answer`, why:`${l.meta.address} · from ${P[o.person].name}`, ts:o.ts })));
+  return out.filter(x => !seen[x.id])
+    .sort((a, b) => (a.rank - b.rank) || (new Date(b.ts) - new Date(a.ts)));
+}
+function inboxRow(x){
+  return `<div class="act">
+    <span class="stripe" style="background:${x.urgent ? "var(--stop)" : "var(--gold)"}"></span>
+    <div class="act-t"><b>${esc(x.title)}</b><span>${esc(x.why)}</span></div>
+    <span style="display:flex;gap:7px">
+      <button class="btn btn-s" data-act="inbox-go" data-x="${esc(x.id)}">Open</button>
+      <button class="btn btn-s" data-act="inbox-done" data-x="${esc(x.id)}" aria-label="Dismiss">✓</button></span>
+  </div>`;
+}
+function vToday(){
+  const items = inbox(), urgent = items.filter(x => x.urgent);
+  const mineCards = S.board.cards.filter(c => c.members.includes(S.me));
+  const viewings = Object.values(S.listings).filter(l => l.meta.agent === S.me)
+    .flatMap(l => l.viewings.filter(v => daysTo(v.when) >= 0 && daysTo(v.when) <= 7).map(v => ({ l, v })))
+    .sort((a, b) => new Date(a.v.when) - new Date(b.v.when));
+  const hour = new Date().getHours();
+  return `<div class="stack">
+    <div class="sec-h"><h2>${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}, ${esc(me().name.split(" ")[0])}</h2>
+      <p>${items.length ? `${items.length} thing${items.length > 1 ? "s" : ""} need you${urgent.length ? ` · ${urgent.length} urgent` : ""}` : "You are all clear"}</p></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Needs you</div><div class="v" style="color:${urgent.length ? "var(--stop)" : "inherit"}">${items.length}</div><div class="s">${urgent.length} urgent</div></div>
+      <div class="tile"><div class="k">Your cards</div><div class="v">${mineCards.length}</div><div class="s">On the team board</div></div>
+      <div class="tile"><div class="k">Viewings</div><div class="v">${viewings.length}</div><div class="s">Next 7 days</div></div>
+      <div class="tile"><div class="k">Active files</div><div class="v">${myDeals().filter(d => !isClosed(d)).length}</div><div class="s">In transfer</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.check}<h2>What needs you</h2>${items.length ? `<span class="chip ${urgent.length ? "c-stop" : "c-wait"}">${items.length}</span>` : `<span class="chip c-go">Clear</span>`}</div>
+      <div class="card-b">${items.length ? items.slice(0, 8).map(inboxRow).join("")
+        + (items.length > 8 ? `<p style="margin:12px 0 0;font-size:12px;color:var(--t3)">and ${items.length - 8} more waiting</p>` : "")
+        : `<div class="empty"><b>Nothing waiting</b>Every step on your desk is done.</div>`}</div>
+    </div>
+
+    ${viewings.length ? `<div class="card">
+      <div class="card-h">${ICON.log}<h2>Viewings coming up</h2></div>
+      <div class="card-b">${viewings.slice(0, 5).map(({ l, v }) => `<div class="act">
+        <span class="stripe" style="background:${v.person ? "var(--go)" : "var(--line-2)"}"></span>
+        <div class="act-t"><b>${new Date(v.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</b>
+          <span>${esc(l.meta.address)} · ${v.person ? esc(P[v.person].name) : "open slot"}</span></div>
+        <button class="btn btn-s" data-act="openhouse" data-l="${l.meta.id}">Open</button></div>`).join("")}</div>
+    </div>` : ""}
+
+    <div class="card">
+      <div class="card-h">${ICON.board}<h2>Your cards on the team board</h2></div>
+      <div class="card-b">${mineCards.length ? mineCards.slice(0, 6).map(c => `<div class="act">
+        <span class="stripe" style="background:${c.due && daysTo(c.due) < 0 ? "var(--stop)" : "var(--gold)"}"></span>
+        <div class="act-t"><b>${esc(c.title)}</b><span>${esc((S.boards.find(b => b.id === c.board) || { name:"" }).name)}${c.due ? " · due " + dstr(c.due) : ""}</span></div>
+        <button class="btn btn-s" data-act="opencardfrom" data-id="${c.id}" data-b="${c.board}">Open</button></div>`).join("")
+        : `<div class="empty"><b>No cards on you</b>Cards you or ${esc(P[TEAM.find(x => x !== S.me) || "rassie"].name.split(" ")[0])} put your name on show here.</div>`}</div>
+    </div>
+  </div>`;
+}
+
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { today:vToday, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
   if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
@@ -1790,7 +1935,7 @@ function render(){
   if (S.listing && S.view !== "house") S.view = "house";
   if (!S.listing && S.view === "house") S.view = homeView();
   if (!S.deal && !S.listing && S.view === "listings" && !myListings().length) S.view = homeView();
-  if (!S.deal && !S.listing && S.view === "board" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
+  if (!S.deal && !S.listing && ["board", "today"].includes(S.view) && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
   if (S.deal && !DEAL_VIEWS.some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && me().role !== "principal") S.view = "portfolio";
@@ -1808,7 +1953,14 @@ document.body.appendChild(fileInput);
 let pending = null;
 fileInput.addEventListener("change", () => {
   const f = fileInput.files && fileInput.files[0];
-  if (f && pending && pending.pack) storePack(pending.pack, f.name, f.size);
+  if (f && pending && pending.cardFile){
+    const c = S.board.cards.find(x => x.id === pending.cardFile);
+    if (c){ c.files.push({ name:f.name, size:f.size / 1024 > 1024 ? (f.size / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(f.size / 1024)) + " KB",
+      by:S.me, ts:new Date().toISOString() });
+      c.activity.push({ who:S.me, ts:new Date().toISOString(), what:"attached " + f.name });
+      renderModal(); save(); render(); toast("Attached"); }
+  }
+  else if (f && pending && pending.pack) storePack(pending.pack, f.name, f.size);
   else if (f && pending) storeDoc(pending.doc, pending.task, f.name, f.size);
   fileInput.value = ""; pending = null;
 });
@@ -1997,6 +2149,20 @@ document.addEventListener("click", e => {
   else if (a === "closecard"){ closeCard(); }
   else if (a === "gotodeal"){ S.card = null; S.deal = btn.dataset.id; S.listing = null; S.view = "dash"; render(); window.scrollTo({ top:0 }); }
   else if (a === "gotohouse"){ S.card = null; S.listing = btn.dataset.id; S.deal = null; S.view = "house"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "shareboard"){ const B = curBoard();
+    B.shared = (B.shared || []).length ? [] : TEAM.filter(x => x !== B.owner);
+    toast(B.shared.length ? `Shared with ${B.shared.map(x => P[x].name.split(" ")[0]).join(", ")}` : "Now private to you"); render(); }
+  else if (a === "inbox-done"){ S.inboxSeen = S.inboxSeen || {}; S.inboxSeen[btn.dataset.x] = true; toast("Cleared"); render(); }
+  else if (a === "inbox-go"){
+    const x = inbox().find(i => i.id === btn.dataset.x); if (!x) return render();
+    if (x.kind === "card"){ S.boardId = x.board; S.view = "board"; S.deal = null; S.listing = null; render(); openCard("manual", x.cardId); }
+    else if (x.kind === "deal"){ S.deal = x.dealId; S.listing = null; S.view = x.chat ? "chat" : "track";
+      if (x.chat) S.deals[x.dealId].seen[S.me] = new Date().toISOString();
+      render(); }
+    else { S.listing = x.houseId; S.deal = null; S.view = "house"; render(); }
+    window.scrollTo({ top:0 });
+  }
+  else if (a === "opencardfrom"){ S.boardId = btn.dataset.b; S.view = "board"; render(); openCard("manual", btn.dataset.id); }
   else if (a === "switchboard"){ S.boardId = btn.dataset.b; S.card = null; render(); window.scrollTo({ top:0 }); }
   else if (a === "importtrello"){ trelloImport.click(); }
   else if (a === "delboard"){
@@ -2026,7 +2192,8 @@ document.addEventListener("click", e => {
     const title = prompt("What needs doing?");
     if (!title || !title.trim()) return;
     S.board.cards.push({ id:"c" + (S.board.next++), board:S.boardId, list:btn.dataset.list, title:title.trim(), desc:"",
-      labels:[], members:[S.me], due:null, checklist:[], pos:Date.now() });
+      labels:[], members:[S.me], due:null, checklist:[], files:[], comments:[], pos:Date.now(),
+      activity:[{ who:S.me, ts:new Date().toISOString(), what:"added this card" }] });
     toast("Card added"); render();
   }
   else if (a === "ctick"){ const c = S.board.cards.find(x => x.id === S.card.id);
@@ -2035,9 +2202,27 @@ document.addEventListener("click", e => {
     if (!inp.value.trim()) return; c.checklist.push([inp.value.trim(), false]); renderModal(); save(); }
   else if (a === "clabel"){ const c = S.board.cards.find(x => x.id === S.card.id), k = btn.dataset.k;
     c.labels = c.labels.includes(k) ? c.labels.filter(x => x !== k) : [...c.labels, k]; renderModal(); save(); }
+  else if (a === "cmember"){ const c = S.board.cards.find(x => x.id === S.card.id), m = btn.dataset.m;
+    const on = c.members.includes(m);
+    c.members = on ? c.members.filter(x => x !== m) : [...c.members, m];
+    c.activity.push({ who:S.me, ts:new Date().toISOString(), what:`${on ? "took" : "put"} ${m === S.me ? "themselves" : P[m].name.split(" ")[0]} ${on ? "off" : "on"} this card` });
+    renderModal(); save(); }
+  else if (a === "cfile"){ pending = { cardFile:S.card.id }; fileInput.click(); }
+  else if (a === "cunfile"){ const c = S.board.cards.find(x => x.id === S.card.id);
+    c.files.splice(+btn.dataset.i, 1); renderModal(); save(); }
+  else if (a === "ccomment"){ const c = S.board.cards.find(x => x.id === S.card.id);
+    const ta = document.getElementById("ccomment"), body = ta.value.trim();
+    if (!body){ ta.focus(); return; }
+    c.comments.push({ by:S.me, ts:new Date().toISOString(), body });
+    c.activity.push({ who:S.me, ts:new Date().toISOString(), what:"commented" });
+    const m = mentions(body).filter(x => x !== S.me);
+    if (m.length) toast(`${m.map(x => P[x].name.split(" ")[0]).join(" and ")} will see this in their inbox`);
+    renderModal(); save(); render(); }
   else if (a === "csave"){ const c = S.board.cards.find(x => x.id === S.card.id);
     c.desc = document.getElementById("cdesc").value;
-    const dv = document.getElementById("cdue").value; c.due = dv ? new Date(dv).toISOString() : null;
+    const dv = document.getElementById("cdue").value, was = c.due;
+    c.due = dv ? new Date(dv).toISOString() : null;
+    if (was !== c.due) c.activity.push({ who:S.me, ts:new Date().toISOString(), what:c.due ? "set the due date" : "cleared the due date" });
     closeCard(); toast("Card saved"); render();
   }
   else if (a === "cdelete"){ if (!confirm("Delete this card?")) return;
@@ -2147,11 +2332,12 @@ function adoptTrello(t){
       labels:(c.labels || []).map(l => ({ name:l.name || l.color || "Label", col:TRELLO_COL[l.color] || "#8A8A94" })),
       members:(c.idMembers || []).map(id => memberBy[id]).filter(Boolean),
       due:c.due || null, checklist:checksBy[c.id] || [], pos:c.pos || 0,
+      files:[], comments:[], activity:[{ who:S.me, ts:new Date().toISOString(), what:"brought this card across from Trello" }],
     });
     n++;
   });
   if (!lists.length) throw new Error("every list in that board is archived");
-  S.boards.push({ id:bid, name:t.name || "Imported board", kind:"custom", lists });
+  S.boards.push({ id:bid, name:t.name || "Imported board", kind:"custom", lists, owner:S.me, shared:[] });
   S.boardId = bid; S.view = "board"; S.card = null;
   toast(`${t.name || "Board"} brought across — ${n} card${n === 1 ? "" : "s"} in ${lists.length} lists`);
   render(); window.scrollTo({ top:0 });
@@ -2291,4 +2477,81 @@ setInterval(() => {
 }, 1000);
 
 render();
+
+/* ══ The phone app ══════════════════════════════════════════════════
+   Served from a folder, this installs to the home screen and keeps
+   working without signal. In the single-file preview these simply do
+   nothing, which is why every step is guarded. ═════════════════════ */
+(function phoneApp(){
+  const head = document.head, rel = (r, href, extra) => {
+    const l = document.createElement("link"); l.rel = r; l.href = href;
+    Object.assign(l, extra || {}); head.appendChild(l);
+  };
+  try {
+    rel("manifest", "manifest.webmanifest");
+    rel("apple-touch-icon", "apple-touch-icon.png");
+    rel("icon", "favicon-32.png", { type:"image/png", sizes:"32x32" });
+    const m = document.createElement("meta"); m.name = "theme-color";
+    m.content = matchMedia("(prefers-color-scheme: dark)").matches ? "#0A1122" : "#0F2040";
+    head.appendChild(m);
+    const cap = document.createElement("meta"); cap.name = "apple-mobile-web-app-capable"; cap.content = "yes"; head.appendChild(cap);
+    const ttl = document.createElement("meta"); ttl.name = "apple-mobile-web-app-title"; ttl.content = "Deal Room"; head.appendChild(ttl);
+  } catch {}
+
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+
+  // a shortcut from the home screen can open straight onto a screen
+  try {
+    const go = new URLSearchParams(location.search).get("go");
+    if (go && ["today", "board", "listings", "portfolio"].includes(go)){ S.view = go; S.deal = null; S.listing = null; render(); }
+  } catch {}
+
+  let deferred = null, dismissed = false;
+  try { dismissed = localStorage.getItem("rb_install_dismissed") === "1"; } catch {}
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  function banner(html){
+    document.querySelectorAll(".install").forEach(e => e.remove());
+    const el = document.createElement("div"); el.className = "install"; el.innerHTML = html;
+    document.body.appendChild(el);
+  }
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault(); deferred = e;
+    if (dismissed || standalone) return;
+    banner(`<span class="ic">${ICON.home}</span>
+      <span style="flex:1"><b>Put the Deal Room on your phone</b><span>Opens like an app, and works without signal.</span></span>
+      <button class="btn btn-s" data-act="install">Add</button>
+      <button class="mx" data-act="install-no" aria-label="Not now" style="color:rgba(255,255,255,.6)">×</button>`);
+  });
+  const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (iOS && !standalone && !dismissed && location.protocol.startsWith("http")){
+    setTimeout(() => banner(`<span class="ic">${ICON.home}</span>
+      <span style="flex:1"><b>Put the Deal Room on your phone</b><span>Tap Share, then “Add to Home Screen”.</span></span>
+      <button class="mx" data-act="install-no" aria-label="Not now" style="color:rgba(255,255,255,.6)">×</button>`), 2500);
+  }
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    if (b.dataset.act === "install"){
+      document.querySelectorAll(".install").forEach(x => x.remove());
+      if (deferred){ deferred.prompt(); const r = await deferred.userChoice.catch(() => null);
+        deferred = null; if (r && r.outcome === "accepted") toast("Added to your home screen"); }
+    }
+    if (b.dataset.act === "install-no"){
+      document.querySelectorAll(".install").forEach(x => x.remove());
+      try { localStorage.setItem("rb_install_dismissed", "1"); } catch {}
+    }
+  });
+
+  const pill = () => {
+    document.querySelectorAll(".offline").forEach(e => e.remove());
+    if (navigator.onLine) return;
+    const el = document.createElement("div"); el.className = "offline";
+    el.textContent = "Offline — your work is saved on this phone";
+    document.body.appendChild(el);
+  };
+  window.addEventListener("online", () => { pill(); toast("Back online"); });
+  window.addEventListener("offline", pill);
+  pill();
+})();
 </script>

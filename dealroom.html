@@ -316,6 +316,59 @@ fieldset{border:0;padding:0;margin:0}
 .person .pi span{display:block;font-size:11.5px;color:var(--t2)}
 .joinlink{grid-column:1/-1;width:100%;margin-top:2px;border:1px dashed var(--gold);border-radius:8px;padding:9px 11px;font-size:11px;background:var(--gold-soft)}
 .joinlink .u{display:block;word-break:break-all;color:var(--t2);margin:4px 0 7px;font-size:10.5px}
+
+/* ── Board ──────────────────────────────── */
+.boardwrap{overflow-x:auto;overflow-y:visible;margin:0 -16px;padding:0 16px 8px;-webkit-overflow-scrolling:touch}
+.board{display:flex;gap:12px;align-items:flex-start;min-height:60vh}
+.list{flex:0 0 272px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;max-height:none}
+.list.over{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.list-h{padding:11px 13px 9px;display:flex;align-items:center;gap:8px;position:sticky;top:0;background:var(--surface-2);border-radius:12px 12px 0 0;z-index:2}
+.list-h b{font-family:Spectral,serif;font-size:13.5px;font-weight:600;flex:1;min-width:0;line-height:1.25}
+.list-h .n{font-size:11px;font-weight:600;color:var(--t3);font-family:"IBM Plex Mono",monospace}
+.list-rail{height:3px;border-radius:99px;margin:0 13px 8px}
+.cards{display:flex;flex-direction:column;gap:8px;padding:0 9px 9px;min-height:22px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px 11px;text-align:left;width:100%;display:block;box-shadow:0 1px 1px rgba(15,32,64,.05);touch-action:manipulation}
+.tcard:hover{border-color:var(--line-2)}
+.tcard.pinned{border-left:3px solid var(--gold)}
+.tcard.ghost{opacity:.35}
+.tcard .labels{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.lab{height:7px;border-radius:99px;width:30px}
+.lab.wide{width:auto;height:auto;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.02em}
+.tcard .tt{font-size:13px;font-weight:600;line-height:1.35;display:block}
+.tcard .sub{display:block;font-size:11.5px;color:var(--t2);margin-top:2px}
+.tcard .meta{display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap}
+.mi{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums}
+.mi.due{padding:2px 7px;border-radius:6px;font-weight:600}
+.mi.due.soon{background:var(--wait-bg);color:var(--wait)}
+.mi.due.late{background:var(--stop-bg);color:var(--stop)}
+.mi.due.ok{background:var(--surface-2);color:var(--t2)}
+.tcard .faces{margin-left:auto}
+.tcard .faces .av{border:2px solid var(--surface)}
+.addcard{width:100%;text-align:left;background:none;border:0;padding:8px 11px;color:var(--t3);font-size:12.5px;border-radius:8px}
+.addcard:hover{background:var(--surface);color:var(--t1)}
+.drag-layer{position:fixed;z-index:120;pointer-events:none;width:250px;transform:rotate(2.5deg);filter:drop-shadow(0 12px 22px rgba(15,32,64,.28))}
+.slot{border:2px dashed var(--gold);border-radius:9px;background:var(--gold-soft);height:44px}
+
+/* ── Modal ──────────────────────────────── */
+.scrim{position:fixed;inset:0;background:rgba(10,17,34,.55);z-index:110;display:flex;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:100%;max-width:600px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);overflow:hidden;margin:auto 0}
+.modal-h{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.modal-h h2{font-size:18px;flex:1;min-width:0}
+.modal-b{padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.mx{background:none;border:0;color:var(--t3);font-size:20px;line-height:1;padding:2px 6px;border-radius:6px}
+.mx:hover{background:var(--surface-2);color:var(--t1)}
+.mblock .eyebrow{margin-bottom:8px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:0}
+.check .tx{flex:1;min-width:0;font-size:13px}
+.check.on .tx{color:var(--t3);text-decoration:line-through}
+.bar-mini{height:5px;border-radius:99px;background:var(--viz-soft);overflow:hidden;margin-bottom:10px}
+.bar-mini i{display:block;height:100%;background:var(--go)}
+@media (max-width:860px){
+  .boardwrap{margin:0 -12px;padding:0 12px 8px}
+  .list{flex-basis:82vw;max-width:300px}
+  .scrim{padding:12px 10px}
+}
 </style>
 <header class="bar">
   <div class="bar-in">
@@ -348,6 +401,7 @@ fieldset{border:0;padding:0;margin:0}
 const I = (d, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICON = {
   home:  I('<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/>'),
+  board: I('<rect x="3" y="4" width="5.5" height="16" rx="1.5"/><rect x="9.5" y="4" width="5.5" height="11" rx="1.5"/><rect x="16" y="4" width="5" height="7" rx="1.5"/>'),
   house: I('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>'),
   deals: I('<rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/>'),
   team:  I('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 5.2A3.2 3.2 0 0 1 16 11"/><path d="M18 20c0-2.6-1-4.4-2.6-5.3"/>'),
@@ -713,15 +767,34 @@ function buildListing(L){
   return st;
 }
 
+const SEED_CARDS = [
+  { id:"c1", list:"market", title:"Order new photos for 15 Duiker Street", desc:"The current set was shot in winter — the garden looks bare. Book Andries for a morning shoot.",
+    labels:["admin"], members:["charne"], dueIn:3, pos:1, checklist:[["Confirm with the owner", true], ["Book the photographer", false], ["Load the new set", false]] },
+  { id:"c2", list:"market", title:"Show day Saturday — Kiepersol", desc:"Boards up by 13:00. Bring the info pack printouts and the visitors book.",
+    labels:["show"], members:["charne"], dueIn:5, pos:2, checklist:[["Put out the boards", false], ["Print the pack", false]] },
+  { id:"c3", list:"s4", title:"Chase Tshwane on the rates figures", desc:"Third follow-up. Elmarie says the account is sitting with the valuation department.",
+    labels:["urgent","attorney"], members:["charne","elmarie"], dueIn:-2, pos:1, checklist:[["Phone the municipality", true], ["Email the reference number", false]] },
+  { id:"c4", list:"s2", title:"Remind Gerhard about the bond extension", desc:"The suspensive date has passed. Needs a written extension signed by both parties today.",
+    labels:["urgent","client"], members:["lerato"], dueIn:0, pos:1, checklist:[] },
+];
+
 /* ══ State ══════════════════════════════════════════════════════════ */
 const KEY = "rb_dealroom_v4";
 let S;
-const fresh = () => ({ me:"charne", view:"portfolio", deal:null, listing:null, agentFilter:null, people:{},
+const fresh = () => ({ me:"charne", view:"board", deal:null, listing:null, agentFilter:null, people:{},
+  card:null, boardFilter:null, boardId:"pipeline",
+  boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline" }],
+  board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
+    checklist:c.checklist.map(x => [...x]) })), next:9 },
   deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])),
   listings:Object.fromEntries(SEED_LISTINGS.map(L => [L.id, buildListing(L)])), nextRef:2600001 });
 function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r) : fresh(); } catch { S = fresh(); }
   if (!S || !S.deals || !Object.keys(S.deals).length || !S.listings) S = fresh();
   if (!S.people) S.people = {};
+  if (!S.board) S.board = fresh().board;
+  if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
+  S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline"; });
+  S.card = null;
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
@@ -802,13 +875,14 @@ const DEAL_VIEWS = [
   { id:"people",label:"Access",    ic:"people" },
   { id:"log",   label:"Audit log", ic:"log" },
 ];
-const homeView = () => isPrincipal(S.me) ? "team" : myDeals().length ? "portfolio" : "listings";
+const homeView = () => isPrincipal(S.me) ? "team" : me().role === "agent" ? "board" : myDeals().length ? "portfolio" : "listings";
 function navItems(){
   if (S.deal) return DEAL_VIEWS;
   if (S.listing) return [{ id:"house", label:"The house", short:"House", ic:"house" }];
   const v = [], r = me().role;
-  if (r === "principal") v.push({ id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  if (r === "principal") v.push({ id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
+    if (r === "agent") v.push({ id:"board", label:"Board", short:"Board", ic:"board" });
     if (myListings().length) v.push({ id:"listings", label:r === "agent" ? "My houses" : "Houses", short:"Houses", ic:"house" });
     if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
   }
@@ -850,7 +924,8 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
+      <h1>${S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+        : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
 
@@ -1513,8 +1588,200 @@ function vHouse(){
   </div>`;
 }
 
+/* ══ Board ══════════════════════════════════════════════════════════ */
+const LISTS = [
+  { id:"market", name:"On the market",        kind:"house", tint:"var(--go)" },
+  { id:"offer",  name:"Offer in",             kind:"house", tint:"var(--gold)" },
+  { id:"s1", n:1, name:"OTP & FICA",          kind:"deal",  tint:"var(--p-agent)" },
+  { id:"s2", n:2, name:"Bond & Deposit",      kind:"deal",  tint:"var(--p-buyer)" },
+  { id:"s3", n:3, name:"Compliance",          kind:"deal",  tint:"var(--p-seller)" },
+  { id:"s4", n:4, name:"Rates & SARS",        kind:"deal",  tint:"var(--p-conveyancer)" },
+  { id:"s5", n:5, name:"Drafting & Signature",kind:"deal",  tint:"var(--p-buyer)" },
+  { id:"s6", n:6, name:"Deeds Office",        kind:"deal",  tint:"var(--p-conveyancer)" },
+  { id:"s7", n:7, name:"Registration",        kind:"deal",  tint:"var(--go)" },
+  { id:"done",   name:"Registered",           kind:"deal",  tint:"var(--go)" },
+];
+const LABELS = {
+  urgent:{ name:"Urgent",           col:"var(--stop)" },
+  client:{ name:"Waiting on client",col:"var(--wait)" },
+  attorney:{ name:"With attorney",  col:"var(--p-conveyancer)" },
+  admin:{ name:"Admin",             col:"var(--p-buyer)" },
+  show:{ name:"Show house",         col:"var(--go)" },
+};
+const curBoard = () => S.boards.find(b => b.id === S.boardId) || S.boards[0];
+const listsOf = b => b.kind === "pipeline" ? LISTS : b.lists;
+const cardsOf = list => (S.board.cards || []).filter(c => c.board === S.boardId && c.list === list).sort((a, b) => a.pos - b.pos);
+const labChip = k => typeof k === "string" ? LABELS[k] : k;
+function listOfDeal(d){ return isClosed(d) ? "done" : "s" + current(d).n; }
+function listOfListing(l){ return l.status !== "active" ? null : openOffers(l).length ? "offer" : "market"; }
+function boardVisible(){
+  const deals = myDeals().filter(d => !S.boardFilter || (roleIn(d, S.boardFilter) || extraIn(d, S.boardFilter)));
+  const listings = myListings().filter(l => !S.boardFilter || l.meta.agent === S.boardFilter);
+  return { deals, listings };
+}
+function dueChip(iso2){
+  if (!iso2) return "";
+  const n = daysTo(iso2), cls = n < 0 ? "late" : n <= 3 ? "soon" : "ok";
+  const txt = n < 0 ? Math.abs(n) + "d over" : n === 0 ? "today" : n === 1 ? "tomorrow" : new Date(iso2).toLocaleDateString("en-ZA", { day:"numeric", month:"short" });
+  return `<span class="mi due ${cls}">${ICON.log} ${txt}</span>`;
+}
+function dealCardMini(d){
+  const c = current(d), out = c.tasks.filter(t => !d.done[t.id]).length, doneN = c.tasks.length - out;
+  const members = ["agent", "buyer", "seller", "conveyancer"].map(r => avatar(d.meta[r], 22)).join("");
+  const labs = [];
+  if (atRisk(d)) labs.push("urgent");
+  if (current(d).tasks.some(t => !d.done[t.id] && (t.owner === "buyer" || t.owner === "seller"))) labs.push("client");
+  if (current(d).tasks.some(t => !d.done[t.id] && t.owner === "conveyancer")) labs.push("attorney");
+  return `<button class="tcard pinned" data-act="card" data-kind="deal" data-id="${d.meta.id}" data-drag="sync">
+    <span class="labels">${labs.map(k => `<span class="lab" style="background:${LABELS[k].col}" title="${LABELS[k].name}"></span>`).join("")}</span>
+    <span class="tt">${esc(d.meta.address)}</span>
+    <span class="sub">${esc(d.meta.area)} · ${R(d.meta.price)}</span>
+    <span class="meta">
+      ${isClosed(d) ? `<span class="mi">${ICON.check} complete</span>` : `<span class="mi">${ICON.check} ${doneN}/${c.tasks.length}</span>`}
+      ${d.msgs.length ? `<span class="mi">${ICON.chat} ${d.msgs.length}</span>` : ""}
+      ${Object.keys(d.docs).length ? `<span class="mi">${ICON.file} ${Object.keys(d.docs).length}</span>` : ""}
+      ${!isClosed(d) ? dueChip(d.bondDue && !d.done.t2c ? d.bondDue : null) : ""}
+      <span class="faces">${members}</span>
+    </span></button>`;
+}
+function houseCardMini(l){
+  const joined = l.prospects.filter(x => x.status === "joined");
+  const next = l.viewings.filter(v => daysTo(v.when) >= 0).sort((a, b) => new Date(a.when) - new Date(b.when))[0];
+  return `<button class="tcard pinned" data-act="card" data-kind="house" data-id="${l.meta.id}" data-drag="sync">
+    <span class="labels"><span class="lab wide" style="background:var(--go-bg);color:var(--go)">House</span>
+      ${openOffers(l).length ? `<span class="lab wide" style="background:var(--wait-bg);color:var(--wait)">${openOffers(l).length} offer${openOffers(l).length > 1 ? "s" : ""}</span>` : ""}</span>
+    <span class="tt">${esc(l.meta.address)}</span>
+    <span class="sub">${esc(l.meta.area)} · ${R(l.meta.price)}</span>
+    <span class="meta">
+      <span class="mi">${ICON.people} ${joined.length}</span>
+      ${next ? `<span class="mi">${ICON.log} viewing ${daysTo(next.when) === 0 ? "today" : "in " + daysTo(next.when) + "d"}</span>` : ""}
+      <span class="faces">${avatar(l.meta.agent, 22)}${joined.slice(0, 3).map(x => avatar(x.person, 22)).join("")}</span>
+    </span></button>`;
+}
+function manualCardMini(c){
+  const doneN = c.checklist.filter(x => x[1]).length;
+  return `<button class="tcard" data-act="card" data-kind="manual" data-id="${c.id}" data-drag="free">
+    ${c.labels.length ? `<span class="labels">${c.labels.map(k => { const L3 = labChip(k); return L3 ? `<span class="lab" style="background:${L3.col}" title="${esc(L3.name)}"></span>` : ""; }).join("")}</span>` : ""}
+    <span class="tt">${esc(c.title)}</span>
+    <span class="meta">
+      ${c.checklist.length ? `<span class="mi">${ICON.check} ${doneN}/${c.checklist.length}</span>` : ""}
+      ${dueChip(c.due)}
+      <span class="faces">${c.members.map(m => avatar(m, 22)).join("")}</span>
+    </span></button>`;
+}
+function vBoard(){
+  const { deals, listings } = boardVisible();
+  const agents = agencyAgents(), B = curBoard(), pipeline = B.kind === "pipeline";
+  return `<div class="stack">
+    <div class="sec-h"><h2>${esc(B.name)}</h2><p>${pipeline ? "Every house and every transfer, in the column it is actually in" : "Imported board — works exactly as it did before"}</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${S.boards.map(b => `<button class="btn btn-s" data-act="switchboard" data-b="${b.id}" style="${b.id === S.boardId ? "border-color:var(--gold);background:var(--gold-soft)" : ""}">${esc(b.name)}</button>`).join("")}
+      <button class="btn btn-s" data-act="importtrello">${ICON.up} Import a Trello board</button>
+      ${!pipeline ? `<button class="btn btn-s" data-act="delboard" style="color:var(--stop)">Remove this board</button>` : ""}
+    </div>
+    ${pipeline ? `<div class="note">${ICON.shield}<div><b>The cards are the files themselves.</b> A house or a transfer sits in the column its real state puts it in — complete a step here or in the deal room and the card moves on its own. Cards you write yourself drag anywhere you like.</div></div>` : `<div class="note">${ICON.shield}<div><b>Brought across from Trello.</b> Your lists, cards, labels, due dates, checklists and members came over as they were. Everything drags and edits the way you are used to.</div></div>`}
+    ${pipeline ? `<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+      <span class="eyebrow">Filter</span>
+      <button class="btn btn-s" data-act="bfilter" data-p="" aria-current="${!S.boardFilter}" style="${!S.boardFilter ? "border-color:var(--gold)" : ""}">Everyone</button>
+      ${(isPrincipal(S.me) ? agents : [S.me]).map(a => `<button class="btn btn-s" data-act="bfilter" data-p="${a}" style="${S.boardFilter === a ? "border-color:var(--gold)" : ""}">${P[a].name.split(" ")[0]}</button>`).join("")}
+      <span style="flex:1"></span>
+      <span class="mono" style="font-size:11.5px;color:var(--t3)">${deals.length} transfers · ${listings.length} houses</span>
+    </div>` : ""}
+    <div class="boardwrap"><div class="board">${listsOf(B).map(L2 => {
+      const pinned = !pipeline ? [] : L2.kind === "house"
+        ? listings.filter(l => listOfListing(l) === L2.id).map(houseCardMini)
+        : deals.filter(d => listOfDeal(d) === L2.id).map(dealCardMini);
+      const manual = cardsOf(L2.id).map(manualCardMini);
+      return `<div class="list" data-list="${L2.id}">
+        <div class="list-h"><b>${esc(L2.name)}</b><span class="n">${pinned.length + manual.length}</span>
+          ${!pipeline ? `<button class="mx" data-act="renlist" data-l="${L2.id}" aria-label="Rename list" style="font-size:13px">⋯</button>` : ""}</div>
+        <div class="list-rail" style="background:${L2.tint || "var(--line-2)"};opacity:.5"></div>
+        <div class="cards" data-drop="${L2.id}">${pinned.join("")}${manual.join("")}</div>
+        <button class="addcard" data-act="addcard" data-list="${L2.id}">${ICON.plus} Add a card</button>
+      </div>`;
+    }).join("")}
+    ${!pipeline ? `<div class="list" style="background:none;border-style:dashed"><button class="addcard" data-act="addlist" style="padding:14px 13px">${ICON.plus} Add a list</button></div>` : ""}</div></div>
+  </div>`;
+}
+
+/* ══ Card detail ════════════════════════════════════════════════════ */
+function openCard(kind, id){ S.card = { kind, id }; renderModal(); }
+function closeCard(){ S.card = null; renderModal(); }
+function renderModal(){
+  document.querySelectorAll(".scrim").forEach(e => e.remove());
+  if (!S.card) return;
+  const { kind, id } = S.card;
+  let body = "", title = "", sub = "", foot = "";
+  if (kind === "deal"){
+    const d = S.deals[id], c = current(d), a = accessIn(d, S.me);
+    title = d.meta.address; sub = `${d.meta.area} · ${R(d.meta.price)} · stage ${c.n} of 7`;
+    const doneN = c.tasks.filter(t => d.done[t.id]).length;
+    body = `
+      <div class="mblock"><div class="eyebrow">This stage — ${esc(c.name)}</div>
+        <div class="bar-mini"><i style="width:${doneN / c.tasks.length * 100}%"></i></div>
+        ${c.tasks.map(t => `<div class="check ${d.done[t.id] ? "on" : ""}">
+          <span class="tick" ${!d.done[t.id] && a && t.owner === a.role ? `data-act="task" data-t="${t.id}" role="button" tabindex="0"` : ""}
+            style="${!d.done[t.id] && a && t.owner === a.role ? "cursor:pointer" : "opacity:.55"}">${d.done[t.id] ? ICON.check : ""}</span>
+          <span class="tx">${esc(t.label)}<br><span style="font-size:11px;color:var(--t3)">${P[partyOf(d, t.owner)].kind}${!d.done[t.id] && a && t.owner !== a.role ? " — theirs to do" : ""}</span></span>
+        </div>`).join("")}</div>
+      <div class="mblock"><div class="eyebrow">People on this file</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">${["agent", "buyer", "seller", "conveyancer"].map(r => `<span class="chip c-mute">${avatar(d.meta[r], 20)} ${esc(P[d.meta[r]].name.split(" ")[0])}</span>`).join("")}
+        ${(d.extra || []).filter(x => x.status === "joined").map(x => `<span class="chip c-mute">${avatar(x.person, 20)} ${esc(P[x.person].name.split(" ")[0])}</span>`).join("")}</div></div>
+      ${d.msgs.length ? `<div class="mblock"><div class="eyebrow">Latest message</div>
+        <p style="margin:0;font-size:13px">${esc(d.msgs[d.msgs.length - 1].body)}</p>
+        <p style="margin:5px 0 0;font-size:11px;color:var(--t3)">${esc(P[d.msgs[d.msgs.length - 1].by].name)} · ${ago(d.msgs[d.msgs.length - 1].ts)}</p></div>` : ""}`;
+    foot = `<button class="btn btn-p" data-act="gotodeal" data-id="${id}">Open the deal room</button>`;
+  } else if (kind === "house"){
+    const l = S.listings[id];
+    title = l.meta.address; sub = `${l.meta.area} · ${R(l.meta.price)} · ${LSTATUS[l.status].txt}`;
+    body = `
+      <div class="mblock"><div class="eyebrow">Buyers with access</div>
+        ${l.prospects.length ? l.prospects.map(pr => `<div class="check"><span class="tick" style="opacity:.55">${pr.status === "joined" ? ICON.check : ""}</span>
+          <span class="tx">${esc(P[pr.person].name)}<br><span style="font-size:11px;color:var(--t3)">${pr.status === "joined" ? "has access" : "invitation sent"}</span></span></div>`).join("")
+          : `<p style="margin:0;font-size:13px;color:var(--t2)">Nobody yet.</p>`}</div>
+      <div class="mblock"><div class="eyebrow">Viewings</div>
+        ${l.viewings.length ? l.viewings.map(v => `<div class="check"><span class="tick" style="opacity:.55">${v.person ? ICON.check : ""}</span>
+          <span class="tx">${new Date(v.when).toLocaleString("en-ZA", { weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}<br>
+          <span style="font-size:11px;color:var(--t3)">${v.person ? "booked by " + esc(P[v.person].name) : "open slot"}</span></span></div>`).join("")
+          : `<p style="margin:0;font-size:13px;color:var(--t2)">No slots set.</p>`}</div>
+      ${l.offers.length ? `<div class="mblock"><div class="eyebrow">Offers</div>
+        ${l.offers.map(o => `<div class="check"><span class="tick" style="opacity:.55"></span><span class="tx">${R(o.amount)} — ${esc(P[o.person].name)}<br>
+          <span style="font-size:11px;color:var(--t3)">${o.status === "submitted" ? "waiting on the seller" : o.status}</span></span></div>`).join("")}</div>` : ""}`;
+    foot = `<button class="btn btn-p" data-act="gotohouse" data-id="${id}">Open the house</button>`;
+  } else {
+    const c = S.board.cards.find(x => x.id === id);
+    if (!c) return closeCard();
+    title = c.title; sub = (listsOf(curBoard()).find(x => x.id === c.list) || { name:"" }).name;
+    const doneN = c.checklist.filter(x => x[1]).length;
+    body = `
+      <div class="mblock"><div class="eyebrow">Notes</div>
+        <textarea id="cdesc" style="min-height:64px" placeholder="Add a note…">${esc(c.desc || "")}</textarea></div>
+      <div class="mblock"><div class="eyebrow">Checklist${c.checklist.length ? ` — ${doneN} of ${c.checklist.length}` : ""}</div>
+        ${c.checklist.length ? `<div class="bar-mini"><i style="width:${doneN / c.checklist.length * 100}%"></i></div>` : ""}
+        ${c.checklist.map((x, i) => `<div class="check ${x[1] ? "on" : ""}">
+          <span class="tick" data-act="ctick" data-i="${i}" role="button" tabindex="0" style="cursor:pointer">${x[1] ? ICON.check : ""}</span>
+          <span class="tx">${esc(x[0])}</span></div>`).join("")}
+        <div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="citem" placeholder="Add an item…"><button class="btn btn-s" data-act="cadditem">Add</button></div></div>
+      <div class="mblock"><div class="eyebrow">Labels</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">${Object.entries(LABELS).map(([k, v]) => `<button class="lab wide" data-act="clabel" data-k="${k}"
+          style="background:${c.labels.includes(k) ? v.col : "var(--surface-2)"};color:${c.labels.includes(k) ? "#fff" : "var(--t2)"};border:1px solid ${c.labels.includes(k) ? v.col : "var(--line)"};border-radius:6px;cursor:pointer">${v.name}</button>`).join("")}</div></div>
+      <div class="mblock"><div class="eyebrow">Due date</div>
+        <input type="date" id="cdue" value="${c.due ? new Date(c.due).toISOString().slice(0, 10) : ""}" style="max-width:200px"></div>`;
+    foot = `<button class="btn btn-p" data-act="csave">Save the card</button><button class="btn" data-act="cdelete" style="color:var(--stop)">Delete</button>`;
+  }
+  const el = document.createElement("div");
+  el.className = "scrim"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+  el.innerHTML = `<div class="modal">
+    <div class="modal-h"><div style="flex:1;min-width:0"><h2>${esc(title)}</h2><p style="margin:3px 0 0;font-size:12px;color:var(--t2)">${esc(sub)}</p></div>
+      <button class="mx" data-act="closecard" aria-label="Close">×</button></div>
+    <div class="modal-b">${body}</div>
+    <div class="modal-h" style="border-bottom:0;border-top:1px solid var(--line);gap:9px">${foot}<span style="flex:1"></span><button class="btn" data-act="closecard">Close</button></div>
+  </div>`;
+  document.body.appendChild(el);
+}
+
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
   if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
@@ -1523,6 +1790,7 @@ function render(){
   if (S.listing && S.view !== "house") S.view = "house";
   if (!S.listing && S.view === "house") S.view = homeView();
   if (!S.deal && !S.listing && S.view === "listings" && !myListings().length) S.view = homeView();
+  if (!S.deal && !S.listing && S.view === "board" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
   if (S.deal && !DEAL_VIEWS.some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && me().role !== "principal") S.view = "portfolio";
@@ -1530,6 +1798,7 @@ function render(){
   renderChrome();
   document.getElementById("view").innerHTML = RENDER[S.view]();
   renderPop();
+  renderModal();
   save();
 }
 
@@ -1684,7 +1953,10 @@ document.addEventListener("click", e => {
     render();
   }
   else if (a === "stage"){ const n = +btn.dataset.s; d.open[n] = !(d.open[n] ?? (current(d).n === n)); render(); }
-  else if (a === "task"){ markDone(d, btn.dataset.t); render(); }
+  else if (a === "task"){
+    const target = d || (S.card && S.card.kind === "deal" ? S.deals[S.card.id] : null);
+    markDone(target, btn.dataset.t); render();
+  }
   else if (a === "upload"){ pending = { doc:btn.dataset.d, task:btn.dataset.t }; fileInput.click(); }
   else if (a === "verify"){ const doc = DOC[btn.dataset.d]; d.docs[doc.id].verified = true;
     logit(d, "Document verified", `${doc.name} checked and accepted`); toast(`${doc.name} verified`); render(); }
@@ -1721,6 +1993,55 @@ document.addEventListener("click", e => {
     d.seen[S.me] = new Date().toISOString();
     logit(d, "Message posted", tag ? (tag.k === "stage" ? `Tagged to stage ${tag.v}` : `Tagged to ${DOC[tag.v].name}`) : "Deal room thread");
     toast("Posted to the deal room"); render(); }
+  else if (a === "card"){ openCard(btn.dataset.kind, btn.dataset.id); }
+  else if (a === "closecard"){ closeCard(); }
+  else if (a === "gotodeal"){ S.card = null; S.deal = btn.dataset.id; S.listing = null; S.view = "dash"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "gotohouse"){ S.card = null; S.listing = btn.dataset.id; S.deal = null; S.view = "house"; render(); window.scrollTo({ top:0 }); }
+  else if (a === "switchboard"){ S.boardId = btn.dataset.b; S.card = null; render(); window.scrollTo({ top:0 }); }
+  else if (a === "importtrello"){ trelloImport.click(); }
+  else if (a === "delboard"){
+    const B = curBoard();
+    if (!confirm(`Remove "${B.name}" and its cards from this app? Your Trello board is untouched.`)) return;
+    S.board.cards = S.board.cards.filter(c => c.board !== B.id);
+    S.boards = S.boards.filter(b => b.id !== B.id);
+    S.boardId = "pipeline"; toast("Board removed"); render();
+  }
+  else if (a === "addlist"){
+    const name = prompt("Name for the new list");
+    if (!name || !name.trim()) return;
+    curBoard().lists.push({ id:"l" + Date.now(), name:name.trim() });
+    toast("List added"); render();
+  }
+  else if (a === "renlist"){
+    const B = curBoard(), l = B.lists.find(x => x.id === btn.dataset.l);
+    const name = prompt("Rename this list", l.name);
+    if (name === null) return;
+    if (!name.trim()){ if (!confirm(`Delete "${l.name}" and its cards?`)) return;
+      S.board.cards = S.board.cards.filter(c => !(c.board === B.id && c.list === l.id));
+      B.lists = B.lists.filter(x => x.id !== l.id); toast("List deleted"); render(); return; }
+    l.name = name.trim(); render();
+  }
+  else if (a === "bfilter"){ S.boardFilter = btn.dataset.p || null; render(); }
+  else if (a === "addcard"){
+    const title = prompt("What needs doing?");
+    if (!title || !title.trim()) return;
+    S.board.cards.push({ id:"c" + (S.board.next++), board:S.boardId, list:btn.dataset.list, title:title.trim(), desc:"",
+      labels:[], members:[S.me], due:null, checklist:[], pos:Date.now() });
+    toast("Card added"); render();
+  }
+  else if (a === "ctick"){ const c = S.board.cards.find(x => x.id === S.card.id);
+    c.checklist[+btn.dataset.i][1] = !c.checklist[+btn.dataset.i][1]; renderModal(); save(); }
+  else if (a === "cadditem"){ const c = S.board.cards.find(x => x.id === S.card.id), inp = document.getElementById("citem");
+    if (!inp.value.trim()) return; c.checklist.push([inp.value.trim(), false]); renderModal(); save(); }
+  else if (a === "clabel"){ const c = S.board.cards.find(x => x.id === S.card.id), k = btn.dataset.k;
+    c.labels = c.labels.includes(k) ? c.labels.filter(x => x !== k) : [...c.labels, k]; renderModal(); save(); }
+  else if (a === "csave"){ const c = S.board.cards.find(x => x.id === S.card.id);
+    c.desc = document.getElementById("cdesc").value;
+    const dv = document.getElementById("cdue").value; c.due = dv ? new Date(dv).toISOString() : null;
+    closeCard(); toast("Card saved"); render();
+  }
+  else if (a === "cdelete"){ if (!confirm("Delete this card?")) return;
+    S.board.cards = S.board.cards.filter(x => x.id !== S.card.id); closeCard(); toast("Card deleted"); render(); }
   else if (a === "reset"){
     if (confirm("Reset the demo? Every deal room goes back to how it started, and any room you created is removed.")){
       S = fresh(); render(); toast("Demo reset"); }
@@ -1769,6 +2090,175 @@ document.addEventListener("submit", e => {
     sname:g("f_sname"), smob:g("f_smob"), smail:g("f_smail"), cname:g("f_cname"), cfirm:g("f_cfirm"), cmail:g("f_cmail") });
   window.scrollTo({ top:0 });
 });
+
+/* ══ Bringing a Trello board across ═════════════════════════════════
+   Trello exports a board as JSON (Board menu → Print, export and share
+   → Export as JSON). Everything below is read in the browser; the file
+   never leaves the device. ════════════════════════════════════════════ */
+const TRELLO_COL = { green:"#3F8F5B", yellow:"#C9A227", orange:"#C97B2A", red:"#B3392F", purple:"#7B3068",
+  blue:"#3A6EA5", sky:"#3E8FA8", lime:"#6C9A3F", pink:"#B85585", black:"#4A4A55",
+  green_dark:"#2E6B45", blue_dark:"#2C5580", null:"#8A8A94" };
+const trelloImport = Object.assign(document.createElement("input"), { type:"file", accept:".json,application/json", hidden:true });
+document.body.appendChild(trelloImport);
+trelloImport.addEventListener("change", () => {
+  const f = trelloImport.files && trelloImport.files[0];
+  trelloImport.value = "";
+  if (!f) return;
+  const r = new FileReader();
+  r.onerror = () => toast("That file could not be read");
+  r.onload = () => {
+    let data;
+    try { data = JSON.parse(r.result); }
+    catch { toast("That is not a Trello export — look for the .json file"); return; }
+    try { adoptTrello(data); }
+    catch (err) { toast("Could not read that board: " + err.message); }
+  };
+  r.readAsText(f);
+});
+function adoptTrello(t){
+  if (!t || !Array.isArray(t.lists) || !Array.isArray(t.cards))
+    throw new Error("no lists or cards in the file");
+  const bid = "b" + Date.now();
+  const lists = t.lists.filter(l => !l.closed).sort((a, b) => (a.pos || 0) - (b.pos || 0))
+    .map(l => ({ id:bid + "_" + l.id, name:l.name || "Untitled list" }));
+  const listBy = Object.fromEntries(t.lists.map(l => [l.id, bid + "_" + l.id]));
+  const known = new Set(lists.map(l => l.id));
+
+  // members become people, so their faces show on the cards
+  const memberBy = {};
+  (t.members || []).forEach(m => {
+    const name = m.fullName || m.username || "Member";
+    const existing = Object.keys(P).find(k => P[k].name.toLowerCase() === name.toLowerCase());
+    memberBy[m.id] = existing || newPerson("t_", name, "", "", "Team member", "agent", "From Trello");
+  });
+
+  const checksBy = {};
+  (t.checklists || []).forEach(cl => {
+    (checksBy[cl.idCard] = checksBy[cl.idCard] || []).push(
+      ...(cl.checkItems || []).sort((a, b) => (a.pos || 0) - (b.pos || 0))
+        .map(ci => [ci.name, ci.state === "complete"]));
+  });
+
+  let n = 0;
+  t.cards.filter(c => !c.closed && known.has(listBy[c.idList])).forEach(c => {
+    S.board.cards.push({
+      id:"c" + (S.board.next++), board:bid, list:listBy[c.idList],
+      title:c.name || "Untitled card", desc:c.desc || "",
+      labels:(c.labels || []).map(l => ({ name:l.name || l.color || "Label", col:TRELLO_COL[l.color] || "#8A8A94" })),
+      members:(c.idMembers || []).map(id => memberBy[id]).filter(Boolean),
+      due:c.due || null, checklist:checksBy[c.id] || [], pos:c.pos || 0,
+    });
+    n++;
+  });
+  if (!lists.length) throw new Error("every list in that board is archived");
+  S.boards.push({ id:bid, name:t.name || "Imported board", kind:"custom", lists });
+  S.boardId = bid; S.view = "board"; S.card = null;
+  toast(`${t.name || "Board"} brought across — ${n} card${n === 1 ? "" : "s"} in ${lists.length} lists`);
+  render(); window.scrollTo({ top:0 });
+}
+
+/* ══ Dragging a card ════════════════════════════════════════════════
+   Pointer events, so a finger works exactly like a mouse: touch holds
+   briefly before it lifts, which keeps the board scrollable. ═════════ */
+let drag = null;
+function cardAt(e){ return e.target.closest ? e.target.closest("[data-drag]") : null; }
+document.addEventListener("pointerdown", e => {
+  if (S.view !== "board" || S.card) return;
+  const card = cardAt(e); if (!card) return;
+  const touch = e.pointerType !== "mouse";
+  drag = { card, id:card.dataset.id, kind:card.dataset.kind, free:card.dataset.drag === "free",
+    x0:e.clientX, y0:e.clientY, live:false, pointer:e.pointerId,
+    timer:touch ? setTimeout(() => startDrag(e.clientX, e.clientY), 220) : null, touch };
+}, { passive:true });
+function startDrag(x, y){
+  if (!drag || drag.live) return;
+  drag.live = true;
+  const r = drag.card.getBoundingClientRect();
+  drag.dx = x - r.left; drag.dy = y - r.top;
+  drag.layer = document.createElement("div");
+  drag.layer.className = "drag-layer";
+  drag.layer.innerHTML = drag.card.outerHTML;
+  drag.layer.style.width = r.width + "px";
+  document.body.appendChild(drag.layer);
+  moveLayer(x, y);
+  drag.card.classList.add("ghost");
+  if (drag.free){
+    drag.slot = document.createElement("div");
+    drag.slot.className = "slot";
+    drag.card.parentNode.insertBefore(drag.slot, drag.card.nextSibling);
+  }
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
+}
+function moveLayer(x, y){ drag.layer.style.left = (x - drag.dx) + "px"; drag.layer.style.top = (y - drag.dy) + "px"; }
+document.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const far = Math.abs(e.clientX - drag.x0) + Math.abs(e.clientY - drag.y0);
+  if (!drag.live){
+    if (drag.touch){ if (far > 12){ clearTimeout(drag.timer); drag = null; } return; }   // let the board scroll
+    if (far > 6) startDrag(e.clientX, e.clientY); else return;
+  }
+  e.preventDefault();
+  moveLayer(e.clientX, e.clientY);
+  drag.layer.style.display = "none";
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  drag.layer.style.display = "";
+  // near an edge, walk the board along — on a phone only one column fits
+  const wrap = document.querySelector(".boardwrap");
+  if (wrap){
+    const wr = wrap.getBoundingClientRect(), edge = 74;
+    drag.scroll = e.clientX > wr.right - edge ? 16 : e.clientX < wr.left + edge ? -16 : 0;
+    if (drag.scroll && !drag.scrollTimer){
+      drag.scrollTimer = setInterval(() => { if (drag && drag.scroll) wrap.scrollLeft += drag.scroll; }, 16);
+    } else if (!drag.scroll && drag.scrollTimer){ clearInterval(drag.scrollTimer); drag.scrollTimer = null; }
+  }
+  const listEl = under && under.closest ? under.closest(".list") : null;
+  document.querySelectorAll(".list.over").forEach(l => l.classList.remove("over"));
+  if (listEl) listEl.classList.add("over");
+  drag.target = listEl ? listEl.dataset.list : null;
+  if (drag.free && drag.slot && listEl){
+    const zone = listEl.querySelector(".cards");
+    const after = [...zone.querySelectorAll(".tcard:not(.ghost)")].find(el => {
+      const r = el.getBoundingClientRect(); return e.clientY < r.top + r.height / 2;
+    });
+    zone.insertBefore(drag.slot, after || null);
+  }
+}, { passive:false });
+document.addEventListener("pointerup", () => {
+  if (!drag) return;
+  clearTimeout(drag.timer); clearInterval(drag.scrollTimer);
+  const d = drag; drag = null;
+  document.querySelectorAll(".list.over").forEach(l => l.classList.remove("over"));
+  if (d.layer) d.layer.remove();
+  if (d.card) d.card.classList.remove("ghost");
+  if (!d.live){ if (d.slot) d.slot.remove(); return; }
+  if (!d.free){
+    if (d.slot) d.slot.remove();
+    if (d.target && d.target !== d.card.closest(".list").dataset.list)
+      toast(d.kind === "deal" ? "This card moves when the file moves — open it and complete the step"
+                              : "A house moves when its offer is accepted");
+    render();
+    return;
+  }
+  // a card of her own: drop it where the placeholder sits
+  const zone = d.slot && d.slot.parentNode;
+  const c = S.board.cards.find(x => x.id === d.id);
+  if (zone && c){
+    const listId = zone.dataset.drop;
+    const siblings = [...zone.children].filter(el => el.classList.contains("tcard") || el === d.slot);
+    const idx = siblings.indexOf(d.slot);
+    const before = siblings.slice(0, idx).filter(el => el.dataset && el.dataset.kind === "manual").pop();
+    const after = siblings.slice(idx + 1).find(el => el.dataset && el.dataset.kind === "manual");
+    const pb = before ? (S.board.cards.find(x => x.id === before.dataset.id) || {}).pos : null;
+    const pa = after ? (S.board.cards.find(x => x.id === after.dataset.id) || {}).pos : null;
+    c.list = listId;
+    c.pos = pb !== null && pa !== null ? (pb + pa) / 2 : pa !== null ? pa - 1 : pb !== null ? pb + 1 : Date.now();
+  }
+  if (d.slot) d.slot.remove();
+  render();
+});
+document.addEventListener("pointercancel", () => { if (drag){ clearTimeout(drag.timer); clearInterval(drag.scrollTimer); if (drag.layer) drag.layer.remove();
+  if (drag.card) drag.card.classList.remove("ghost"); if (drag.slot) drag.slot.remove(); drag = null; render(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.card) closeCard(); });
 
 /* ══ Chart tooltip ══════════════════════════════════════════════════ */
 let tipEl = null;

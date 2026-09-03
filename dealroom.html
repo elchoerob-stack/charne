@@ -802,7 +802,7 @@ const SEED_CARDS = [
 const KEY = "rb_dealroom_v4";
 let S;
 const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{},
-  card:null, boardFilter:null, boardId:"pipeline",
+  card:null, send:null, boardFilter:null, boardId:"pipeline",
   boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
   board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
     checklist:c.checklist.map(x => [...x]) })), next:9 },
@@ -815,7 +815,7 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
   S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline";
     c.files = c.files || []; c.comments = c.comments || []; c.activity = c.activity || []; });
-  S.card = null;
+  S.card = null; S.send = null;
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
@@ -1183,6 +1183,7 @@ function vPeople(){
         <div class="eyebrow" style="color:inherit">Personal invitation link — ${esc(P[id].name)}</div>
         <span class="u mono">https://deal.rbbrand.co.za/join/${d.meta.id}-${link}</span>
         <span style="color:var(--t2)">Opens this one room only, on this person's device. It cannot be forwarded to anyone else and it expires in 7 days.</span>
+        <button class="btn btn-g btn-s" style="margin-top:9px" data-act="send" data-ctx='${esc(JSON.stringify({ deal:d.meta.id, to:id, tpl:"deal_invite", link:"https://deal.rbbrand.co.za/join/" + d.meta.id + "-" + link }))}'>${ICON.chat} Send the link on WhatsApp</button>
       </div>` : ""}
     </div>`;
   }).join("");
@@ -1284,7 +1285,8 @@ function vDash(){
       <span class="stripe" style="background:${br < 7 ? "var(--stop)" : "var(--wait)"};height:38px"></span>
       <div style="flex:1;min-width:190px"><div class="eyebrow">Suspensive condition</div>
         <div style="font-size:13.5px;margin-top:2px">Bond approval must be confirmed by <b>${dstr(d.bondDue)}</b>, or the sale lapses.</div></div>
-      <span class="chip ${br < 7 ? "c-stop" : "c-wait"}">${br < 0 ? Math.abs(br) + " days overdue" : br + " days left"}</span></div></div>` : ""}
+      <span class="chip ${br < 7 ? "c-stop" : "c-wait"}">${br < 0 ? Math.abs(br) + " days overdue" : br + " days left"}</span>
+      ${r === "agent" ? `<button class="btn btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ deal:d.meta.id, to:d.meta.buyer, tpl:"bond_reminder", when:d.bondDue, people:[d.meta.buyer, d.meta.seller] }))}'>${ICON.chat} Remind the buyer</button>` : ""}</div></div>` : ""}
 
     ${r === "principal" ? "" : `<div class="card">
       <div class="card-h">${ICON.check}<h2>Your next steps</h2><span class="chip c-mute">Stage ${c.n} · ${c.name}</span></div>
@@ -1301,7 +1303,10 @@ function vDash(){
       <div class="card-b">${others.map(t => `<div class="act">
         <span class="stripe" style="background:${COL(t.owner)}"></span>
         <div class="act-t"><b>${esc(t.label)}</b><span>${esc(P[partyOf(d, t.owner)].name)} · ${P[partyOf(d, t.owner)].kind}</span></div>
-        ${r === "agent" || r === "conveyancer" ? `<button class="btn btn-s" data-act="nudge" data-t="${t.id}">Send a reminder</button>` : `<span class="chip c-wait">Outstanding</span>`}
+        ${r === "agent" || r === "conveyancer" ? `<span style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn btn-s" data-act="nudge" data-t="${t.id}">In the room</button>
+          <button class="btn btn-g btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ deal:d.meta.id, to:partyOf(d, t.owner), tpl:"doc_request", item:t.label, people:["buyer", "seller", "conveyancer"].map(x => d.meta[x]) }))}'>${ICON.chat} WhatsApp</button></span>`
+          : `<span class="chip c-wait">Outstanding</span>`}
       </div>`).join("")}</div></div>` : ""}
 
     <div class="grid2">
@@ -1544,7 +1549,8 @@ function vHouse(){
           ${pr.status === "invited" ? `<div class="joinlink">
             <div class="eyebrow" style="color:inherit">Personal link — ${esc(P[pr.person].name)}</div>
             <span class="u mono">https://houses.rbbrand.co.za/${l.meta.id}/${pr.token}</span>
-            <span style="color:var(--t2)">Opens this house only. Not the asking history, not your other houses, not another buyer's offer.</span></div>` : ""}
+            <span style="color:var(--t2)">Opens this house only. Not the asking history, not your other houses, not another buyer's offer.</span>
+            <button class="btn btn-g btn-s" style="margin-top:9px" data-act="send" data-ctx='${esc(JSON.stringify({ listing:l.meta.id, to:pr.person, tpl:"house_invite", link:"https://houses.rbbrand.co.za/" + l.meta.id + "/" + pr.token }))}'>${ICON.chat} Send the link on WhatsApp</button></div>` : ""}
         </div>`).join("") : `<div class="empty"><b>Nobody has access yet</b>Give an interested buyer access below and they can view the pack, book a viewing and make an offer.</div>`}
 
         ${isAgent ? `<form id="pinvite" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
@@ -1571,7 +1577,8 @@ function vHouse(){
           <span class="stripe" style="background:${v.person ? COL(P[v.person].role) : "var(--line-2)"}"></span>
           <div class="act-t"><b>${new Date(v.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</b>
             <span>${v.person ? (v.person === S.me ? "Booked by you" : "Booked by " + P[v.person].name) : "Open slot"}</span></div>
-          ${r === "prospect" && !v.person && daysTo(v.when) >= 0 ? `<button class="btn btn-g btn-s" data-act="book" data-v="${v.id}">Book this slot</button>`
+          ${isAgent && v.person ? `<button class="btn btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ listing:l.meta.id, to:v.person, tpl:"viewing_confirm", when:v.when, mins:45 }))}'>${ICON.chat} Confirm</button>`
+            : r === "prospect" && !v.person && daysTo(v.when) >= 0 ? `<button class="btn btn-g btn-s" data-act="book" data-v="${v.id}">Book this slot</button>`
             : v.person === S.me ? `<button class="btn btn-s" data-act="unbook" data-v="${v.id}">Cancel</button>`
             : `<span class="chip ${v.person ? "c-go" : "c-mute"}">${v.person ? "Booked" : "Open"}</span>`}
         </div>`).join("") : `<div class="empty"><b>No viewing slots yet</b></div>`}
@@ -1588,7 +1595,8 @@ function vHouse(){
             <span>${esc(P[o.person].name)} · deposit ${R(o.deposit)} · ${ago(o.ts)}</span>
             ${o.cond ? `<span style="color:var(--t2);margin-top:3px;display:block">${esc(o.cond)}</span>` : ""}</div>
           ${o.status === "submitted" && isAgent
-            ? `<span style="display:flex;gap:7px"><button class="btn btn-g btn-s" data-act="accept" data-o="${o.id}">Accept</button><button class="btn btn-s" data-act="decline" data-o="${o.id}">Decline</button></span>`
+            ? `<span style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-g btn-s" data-act="accept" data-o="${o.id}">Accept</button><button class="btn btn-s" data-act="decline" data-o="${o.id}">Decline</button>
+                <button class="btn btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ listing:l.meta.id, to:o.person, tpl:"offer_accepted", amount:o.amount }))}'>${ICON.chat} Reply</button></span>`
             : `<span class="chip ${o.status === "accepted" ? "c-go" : o.status === "declined" ? "c-stop" : "c-wait"}">${o.status === "accepted" ? "Accepted" : o.status === "declined" ? "Declined" : "With the seller"}</span>`}
         </div>`).join("") : `<div class="empty"><b>No offers yet</b>${isAgent ? "Offers made by buyers you gave access to land here." : ""}</div>`}
 
@@ -1925,6 +1933,111 @@ function vToday(){
   </div>`;
 }
 
+/* ══ Talking to the client ══════════════════════════════════════════
+   One place that writes the message, then hands it to WhatsApp, email
+   or the calendar. Nothing is sent behind her back — every one of these
+   opens the app with the text filled in, and she presses send. ══════ */
+const waNumber = m => { let n = String(m || "").replace(/[^\d+]/g, "");
+  if (n.startsWith("+")) n = n.slice(1);
+  if (n.startsWith("0")) n = "27" + n.slice(1);
+  if (!n.startsWith("27") && n.length === 9) n = "27" + n;
+  return n; };
+const waLink = (mobile, text) => `https://wa.me/${waNumber(mobile)}?text=${encodeURIComponent(text)}`;
+const mailLink = (email, subject, body) => `mailto:${encodeURIComponent(email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+const gcalLink = (title, startISO, mins, details, where) => {
+  const f = d => new Date(d).toISOString().replace(/[-:]|\.\d{3}/g, "");
+  const end = new Date(new Date(startISO).getTime() + mins * 6e4);
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE"
+    + `&text=${encodeURIComponent(title)}&dates=${f(startISO)}/${f(end)}`
+    + `&details=${encodeURIComponent(details || "")}&location=${encodeURIComponent(where || "")}`;
+};
+function icsFor(title, startISO, mins, details, where){
+  const f = d => new Date(d).toISOString().replace(/[-:]|\.\d{3}/g, "");
+  const end = new Date(new Date(startISO).getTime() + mins * 6e4);
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//RB Brand//Deal Room//EN", "BEGIN:VEVENT",
+    "UID:" + token() + "@rbbrand", "DTSTAMP:" + f(new Date()), "DTSTART:" + f(startISO), "DTEND:" + f(end),
+    "SUMMARY:" + String(title).replace(/\n/g, " "),
+    "DESCRIPTION:" + String(details || "").replace(/\n/g, "\\n"),
+    "LOCATION:" + String(where || ""), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+}
+
+/* The house style: short, warm, specific, and it always says what happens next. */
+const TEMPLATES = {
+  house_invite:{ label:"Give them access to the house", subject:"{property} — your private link",
+    body:"Hi {first}\n\nHere is your own link to {property} ({area}) at {price}:\n{link}\n\nIt opens the photos, floor plan and the paperwork I am allowed to share, and you can book a viewing or put an offer through from there. The link is yours alone — please don't forward it.\n\nShout if anything is unclear.\n{agent}\nRB Brand Real Estate" },
+  viewing_confirm:{ label:"Confirm a viewing", subject:"Viewing confirmed — {property}",
+    body:"Hi {first}\n\nYou are booked to view {property}, {area} on {date}.\n\nI'll meet you at the gate. Bring your ID for the estate register if there is one.\n\nSee you then\n{agent}" },
+  doc_request:{ label:"Chase an outstanding document", subject:"{property} — {item}",
+    body:"Hi {first}\n\nWe are on stage {stage} of the transfer for {property}, and the one thing holding it up is: {item}.\n\nYou can load it straight into the deal room here:\n{link}\n\nIt takes a minute on your phone. Shout if you would rather send it to me and I'll load it for you.\n\n{agent}" },
+  deal_invite:{ label:"Invite them to the deal room", subject:"{property} — your transfer file",
+    body:"Hi {first}\n\nCongratulations. Here is your link to the deal room for {property}:\n{link}\n\nEverything for this sale lives there — the documents, where we are in the transfer, and one thread with all of us on it. You will see exactly what is waiting on you at any time.\n\nThe link is yours alone and works on your phone.\n\n{agent}" },
+  stage_update:{ label:"Tell them where the transfer is", subject:"{property} — {stage_name}",
+    body:"Hi {first}\n\nAn update on {property}: we have finished {stage_prev} and moved on to {stage_name}.\n\n{stage_note}\n\nYou can see the whole picture here: {link}\n\n{agent}" },
+  bond_reminder:{ label:"Bond condition is close", subject:"{property} — bond date {date}",
+    body:"Hi {first}\n\nA friendly heads-up: the bond condition on {property} runs out on {date}. If the bank has not come back by then we need a written extension signed by both parties, so please let me know today where the application stands.\n\nI would much rather extend early than at the eleventh hour.\n\n{agent}" },
+  offer_accepted:{ label:"Their offer was accepted", subject:"{property} — your offer is accepted",
+    body:"Hi {first}\n\nWonderful news — your offer of {amount} on {property} has been accepted.\n\nI am opening the transfer file now and you will get your own link to it shortly. The first thing I will need from you is your FICA pack: ID and a proof of address under three months old.\n\nCongratulations\n{agent}" },
+  offer_declined:{ label:"Their offer was declined", subject:"{property} — feedback on your offer",
+    body:"Hi {first}\n\nThank you for your offer of {amount} on {property}. The seller has decided not to accept it.\n\nI would rather tell you straight than leave you waiting. If you would like to come back with something else, or you want me to keep an eye out for something similar, just say the word.\n\n{agent}" },
+  registration:{ label:"Registered — keys", subject:"{property} — registered!",
+    body:"Hi {first}\n\n{property} registered at the Deeds Office today. The property is yours.\n\nI will bring the keys through — let me know what time suits you.\n\nCongratulations, and thank you for letting me be part of it.\n{agent}" },
+};
+function fillTpl(str, v){ return String(str).replace(/\{(\w+)\}/g, (m, k) => v[k] !== undefined ? v[k] : m); }
+
+/* Everything the templates might need, gathered from wherever she is */
+function sendVars(ctx){
+  const d = ctx.deal ? S.deals[ctx.deal] : null, l = ctx.listing ? S.listings[ctx.listing] : null;
+  const meta = d ? d.meta : l ? l.meta : {};
+  const c = d ? current(d) : null;
+  return { first:P[ctx.to] ? P[ctx.to].name.split(" ")[0] : "there",
+    name:P[ctx.to] ? P[ctx.to].name : "", property:meta.address || "", area:meta.area || "",
+    price:meta.price ? R(meta.price) : "", agent:me().name, amount:ctx.amount ? R(ctx.amount) : "",
+    item:ctx.item || "", stage:c ? c.n : "", stage_name:c ? c.name : "",
+    stage_prev:c && c.n > 1 ? STAGES[c.n - 2].name : "the offer", stage_note:c ? c.blurb : "",
+    date:ctx.when ? new Date(ctx.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" }) : "",
+    link:ctx.link || (d ? `https://deal.rbbrand.co.za/${d.meta.id}` : l ? `https://houses.rbbrand.co.za/${l.meta.id}` : "") };
+}
+function openSend(ctx){ S.send = { ...ctx, tpl:ctx.tpl || Object.keys(TEMPLATES)[0], text:null }; renderSend(); }
+function closeSend(){ S.send = null; renderSend(); }
+function renderSend(){
+  document.querySelectorAll(".sendscrim").forEach(e => e.remove());
+  const x = S.send; if (!x) return;
+  const v = sendVars(x), tpl = TEMPLATES[x.tpl];
+  const text = x.text !== null && x.text !== undefined ? x.text : fillTpl(tpl.body, v);
+  const subject = fillTpl(tpl.subject, v);
+  const to = P[x.to] || {};
+  const el = document.createElement("div");
+  el.className = "scrim sendscrim"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+  el.innerHTML = `<div class="modal">
+    <div class="modal-h"><div style="flex:1;min-width:0"><h2>Send to ${esc(to.name || "client")}</h2>
+      <p style="margin:3px 0 0;font-size:12px;color:var(--t2)">${esc(to.kind || "")}${to.mobile ? " · " + esc(to.mobile) : ""}</p></div>
+      <button class="mx" data-act="send-close" aria-label="Close">×</button></div>
+    <div class="modal-b">
+      ${x.people && x.people.length > 1 ? `<div class="mblock"><div class="eyebrow">Who</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">${x.people.map(pid => `<button class="btn btn-s" data-act="send-to" data-p="${pid}"
+          style="${pid === x.to ? "border-color:var(--gold);background:var(--gold-soft)" : ""}">${avatar(pid, 20)} ${esc(P[pid].name.split(" ")[0])}</button>`).join("")}</div></div>` : ""}
+      <div class="mblock"><div class="eyebrow">Message</div>
+        <select id="send-tpl" style="width:100%;margin-bottom:10px">${Object.entries(TEMPLATES).map(([k, t]) =>
+          `<option value="${k}" ${k === x.tpl ? "selected" : ""}>${esc(t.label)}</option>`).join("")}</select>
+        <textarea id="send-text" style="min-height:190px">${esc(text)}</textarea>
+        <p style="margin:8px 0 0;font-size:11.5px;color:var(--t3)">Edit it however you like — nothing goes out until you press send in WhatsApp or your mail app.</p></div>
+      ${x.when ? `<div class="mblock"><div class="eyebrow">Diary</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-s" style="text-decoration:none" target="_blank" rel="noopener"
+             href="${esc(gcalLink(fillTpl(tpl.subject, v), x.when, x.mins || 60, fillTpl(tpl.body, v), (v.property || "") + ", " + (v.area || "")))}">${ICON.log} Add to Google Calendar</a>
+          <button class="btn btn-s" data-act="send-ics">${ICON.log} Download .ics</button>
+        </div></div>` : ""}
+    </div>
+    <div class="modal-h" style="border-bottom:0;border-top:1px solid var(--line);gap:9px;flex-wrap:wrap">
+      <a class="btn btn-g" style="text-decoration:none" data-act="send-wa" target="_blank" rel="noopener"
+         href="${esc(waLink(to.mobile, text))}">${ICON.chat} WhatsApp</a>
+      <a class="btn" style="text-decoration:none" href="${esc(mailLink(to.email, subject, text))}">${ICON.send} Email</a>
+      <button class="btn" data-act="send-copy">Copy</button>
+      <span style="flex:1"></span><button class="btn" data-act="send-close">Close</button></div>
+  </div>`;
+  document.body.appendChild(el);
+}
+
 /* ══ Render ═════════════════════════════════════════════════════════ */
 const RENDER = { today:vToday, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
@@ -1944,6 +2057,7 @@ function render(){
   document.getElementById("view").innerHTML = RENDER[S.view]();
   renderPop();
   renderModal();
+  renderSend();
   save();
 }
 
@@ -2163,6 +2277,26 @@ document.addEventListener("click", e => {
     window.scrollTo({ top:0 });
   }
   else if (a === "opencardfrom"){ S.boardId = btn.dataset.b; S.view = "board"; render(); openCard("manual", btn.dataset.id); }
+  else if (a === "send"){ openSend(JSON.parse(btn.dataset.ctx)); }
+  else if (a === "send-close"){ closeSend(); }
+  else if (a === "send-to"){ S.send.to = btn.dataset.p; S.send.text = null; renderSend(); }
+  else if (a === "send-copy"){
+    const t = document.getElementById("send-text").value;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Copied")).catch(() => toast("Select the text and copy it"));
+  }
+  else if (a === "send-wa"){
+    const x = S.send, d2 = x.deal ? S.deals[x.deal] : null, l2 = x.listing ? S.listings[x.listing] : null;
+    if (d2) logit(d2, "Message sent to client", `${P[x.to].name} · WhatsApp`);
+    if (l2) l2.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Message sent to client", det:`${P[x.to].name} · WhatsApp` });
+    save(); toast(`Opening WhatsApp to ${P[x.to].name.split(" ")[0]}`);
+  }
+  else if (a === "send-ics"){
+    const x = S.send, v = sendVars(x), tpl = TEMPLATES[x.tpl];
+    const blob = new Blob([icsFor(fillTpl(tpl.subject, v), x.when, x.mins || 60, document.getElementById("send-text").value, v.property)], { type:"text/calendar" });
+    const url = URL.createObjectURL(blob), a2 = document.createElement("a");
+    a2.href = url; a2.download = "rb-deal-room.ics"; document.body.appendChild(a2); a2.click(); a2.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000); toast("Calendar file saved");
+  }
   else if (a === "switchboard"){ S.boardId = btn.dataset.b; S.card = null; render(); window.scrollTo({ top:0 }); }
   else if (a === "importtrello"){ trelloImport.click(); }
   else if (a === "delboard"){
@@ -2235,6 +2369,19 @@ document.addEventListener("click", e => {
 document.getElementById("rolebtn").addEventListener("click", e => {
   e.stopPropagation(); popOpen = !popOpen;
   e.currentTarget.setAttribute("aria-expanded", String(popOpen)); renderPop();
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "send-tpl" && S.send){ S.send.tpl = e.target.value; S.send.text = null; renderSend(); }
+});
+document.addEventListener("input", e => {
+  if (e.target.id !== "send-text" || !S.send) return;
+  S.send.text = e.target.value;
+  // keep the send links in step with what she has actually typed
+  const v = sendVars(S.send), to = P[S.send.to] || {};
+  const wa = document.querySelector('[data-act="send-wa"]');
+  const mail = document.querySelector('.sendscrim a[href^="mailto:"]');
+  if (wa) wa.href = waLink(to.mobile, e.target.value);
+  if (mail) mail.href = mailLink(to.email, fillTpl(TEMPLATES[S.send.tpl].subject, v), e.target.value);
 });
 document.addEventListener("submit", e => {
   const g = id => (document.getElementById(id) || {}).value || "";

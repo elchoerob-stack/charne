@@ -95,6 +95,11 @@ Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i>, <
       <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" hidden>
       <div class="list" id="reports"><div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div></div>
     </div>
+    <div class="sec"><h3>Connect your phone</h3>
+      <div class="hint" style="margin-bottom:6px">Scan with the phone camera on the same Wi-Fi (or Tailscale), then Add to Home screen.</div>
+      <div id="qr" style="background:#fff;padding:8px;border-radius:8px;display:inline-block"></div>
+      <div class="hint" id="qrUrl" style="margin-top:6px;word-break:break-all"></div>
+    </div>
     <div class="sec"><h3>Integration health <button class="btn" id="checkAll" style="float:right;padding:2px 8px;font-size:11px">Check all</button></h3><div class="list" id="health"><div class="empty">No checks run yet.</div></div></div>
     <div class="sec"><h3>Recordings <input type="file" id="recFile" accept="application/json" hidden><button class="btn" id="recUpload" style="float:right;padding:2px 8px;font-size:11px">Upload JSON</button></h3><div class="list" id="recs"><div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div></div></div>
     <div class="sec"><h3>Cases</h3><div class="list" id="cases"><div class="empty">No cases.</div></div></div>
@@ -103,6 +108,7 @@ Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i>, <
   </aside>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* Access token (CMS_AGENT_TOKEN): stored in localStorage and mirrored to a cookie so plain links work. */
 const tokenKey = "foreman_token";
@@ -266,6 +272,14 @@ $("#xlsxFile").onchange = async () => {
 $("#recUpload").onclick = () => $("#recFile").click();
 $("#recFile").onchange = async () => { const f = $("#recFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const r = await api("/recordings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(j) }); add("agent", `Recording uploaded as ${r.id}: ${r.stats.steps} steps, ${r.stats.errors} console errors, ${r.stats.failedRequests} failed requests.`); loadSide(); } catch (e) { add("agent", "Upload failed: " + e.message); } $("#recFile").value = ""; };
 
+(async () => {
+  try {
+    const c = await api("/connect");
+    $("#qrUrl").textContent = c.publicUrl + (c.hasToken ? " (token included in the QR link)" : "");
+    if (window.qrcode) { const q = qrcode(0, "M"); q.addData(c.url); q.make(); $("#qr").innerHTML = q.createSvgTag({ cellSize: 3, margin: 0 }); }
+    else $("#qr").innerHTML = `<a href="${c.url}">${c.url}</a>`;
+  } catch {}
+})();
 (async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
 </script>
 </body>

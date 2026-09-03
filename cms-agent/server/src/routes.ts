@@ -32,6 +32,13 @@ apiRoutes.post("/chat", async (req, res) => {
   }
 });
 
+/** What the phone needs to connect: the public URL and (if set) the access token. Only available once the caller is authenticated. */
+apiRoutes.get("/connect", (req, res) => {
+  const base = (process.env.PUBLIC_URL || `http://${req.hostname}:${config.port}`).replace(/\/$/, "");
+  const url = config.token ? `${base}/?token=${encodeURIComponent(config.token)}` : `${base}/`;
+  res.json({ url, publicUrl: base, hasToken: Boolean(config.token) });
+});
+
 apiRoutes.get("/sessions", (_req, res) => {
   res.json(db.prepare("SELECT id, dealer, title, created_at, updated_at FROM sessions ORDER BY updated_at DESC LIMIT 50").all());
 });

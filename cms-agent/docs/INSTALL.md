@@ -5,6 +5,15 @@ web console you install as an app on the laptop and on your phone. The phone
 talks to the laptop over the network, so nothing is uploaded anywhere except
 the Claude API calls the server makes.
 
+## The shortest way (Windows, double-click)
+
+Download `cms-agent/Install-Foreman.cmd` from the repo and double-click it. It
+opens an admin PowerShell window and runs the installer below. Click Yes on
+the Windows permission prompt so the firewall rule for the phone is added.
+
+After it finishes, the console shows a **Connect your phone** QR code: scan it
+with the phone camera on the same Wi-Fi and tap Add to Home screen.
+
 ## The short way (Windows, one command)
 
 Open PowerShell (Start → type PowerShell → Enter) and paste:

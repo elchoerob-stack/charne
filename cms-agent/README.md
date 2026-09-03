@@ -53,6 +53,18 @@ The capability mapping is in `docs/GROK_CAPABILITIES.md`.
 
 ## Quick start
 
+Windows, one command in PowerShell (installs Node and Git if needed, builds,
+configures, autostarts, opens the console):
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass -Force
+irm https://raw.githubusercontent.com/elchoerob-stack/charne/claude/grokbot-cms-agent-5vkq13/cms-agent/setup.ps1 | iex
+```
+
+Mac/Linux: `bash cms-agent/setup.sh`. Docker: `docker compose up -d` in `cms-agent/`.
+
+Manual:
+
 ```bash
 cd cms-agent/server
 cp .env.example .env            # add ANTHROPIC_API_KEY (or use `ant auth login`)

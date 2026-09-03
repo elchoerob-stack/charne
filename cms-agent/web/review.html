@@ -29,6 +29,22 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 8px;b
   <h2>Seeded playbooks</h2><div class="card"><table id="seeded"></table></div>
 </main>
 <script>
+/* Access token (CMS_AGENT_TOKEN): stored in localStorage and mirrored to a cookie so plain links work. */
+const tokenKey = "foreman_token";
+function getToken() { try { return localStorage.getItem(tokenKey) || ""; } catch { return ""; } }
+function setToken(t) { try { localStorage.setItem(tokenKey, t); } catch {} document.cookie = `foreman_token=${encodeURIComponent(t)}; path=/; max-age=31536000; SameSite=Lax`; }
+(() => { const q = new URLSearchParams(location.search).get("token"); if (q) { setToken(q); history.replaceState(null, "", location.pathname); } else if (getToken()) setToken(getToken()); })();
+const rawFetch = window.fetch.bind(window);
+window.fetch = async (url, opts = {}) => {
+  const headers = new Headers(opts.headers || {});
+  if (String(url).startsWith("/api") && getToken()) headers.set("Authorization", "Bearer " + getToken());
+  let res = await rawFetch(url, { ...opts, headers });
+  if (res.status === 401 && String(url).startsWith("/api")) {
+    const t = prompt("This Foreman server needs its access token (CMS_AGENT_TOKEN from server/.env, shown by the installer):", getToken());
+    if (t) { setToken(t.trim()); headers.set("Authorization", "Bearer " + t.trim()); res = await rawFetch(url, { ...opts, headers }); }
+  }
+  return res;
+};
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const api = async (p, o) => { const r = await fetch("/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); if (!r.ok) throw new Error(await r.text()); return r.json(); };

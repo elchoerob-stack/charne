@@ -5,7 +5,31 @@ web console you install as an app on the laptop and on your phone. The phone
 talks to the laptop over the network, so nothing is uploaded anywhere except
 the Claude API calls the server makes.
 
-## Part 1 — the server on your computer (once, about 15 minutes)
+## The short way (Windows, one command)
+
+Open PowerShell (Start → type PowerShell → Enter) and paste:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass -Force
+irm https://raw.githubusercontent.com/elchoerob-stack/charne/claude/grokbot-cms-agent-5vkq13/cms-agent/setup.ps1 | iex
+```
+
+The installer installs Node.js and Git if needed, clones the repo to
+`Documents\charne`, builds the server, asks for your Anthropic API key,
+generates the phone access token, sets the LAN address, registers Foreman to
+start at logon, starts it and opens the console. Re-running it later updates
+to the latest code. Run it from an **admin** PowerShell if you also want the
+firewall rule for the phone added automatically; otherwise it prints the one
+line to run.
+
+Mac or Linux: `bash cms-agent/setup.sh` does the same (launchd on macOS,
+systemd user service on Linux).
+
+Hosting it somewhere always on (a NAS, a VPS, Railway/Render/Fly): from the
+`cms-agent` folder run `docker compose up -d` with your settings in
+`server/.env`. The database lives in the `foreman-data` volume.
+
+## The long way — the server on your computer (about 15 minutes)
 
 1. **Install Node.js 22 LTS.** Download from https://nodejs.org (the "LTS"
    button), run the installer, accept defaults. Open a new PowerShell window

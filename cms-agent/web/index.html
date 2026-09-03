@@ -104,6 +104,22 @@ Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i>, <
 </div>
 
 <script>
+/* Access token (CMS_AGENT_TOKEN): stored in localStorage and mirrored to a cookie so plain links work. */
+const tokenKey = "foreman_token";
+function getToken() { try { return localStorage.getItem(tokenKey) || ""; } catch { return ""; } }
+function setToken(t) { try { localStorage.setItem(tokenKey, t); } catch {} document.cookie = `foreman_token=${encodeURIComponent(t)}; path=/; max-age=31536000; SameSite=Lax`; }
+(() => { const q = new URLSearchParams(location.search).get("token"); if (q) { setToken(q); history.replaceState(null, "", location.pathname); } else if (getToken()) setToken(getToken()); })();
+const rawFetch = window.fetch.bind(window);
+window.fetch = async (url, opts = {}) => {
+  const headers = new Headers(opts.headers || {});
+  if (String(url).startsWith("/api") && getToken()) headers.set("Authorization", "Bearer " + getToken());
+  let res = await rawFetch(url, { ...opts, headers });
+  if (res.status === 401 && String(url).startsWith("/api")) {
+    const t = prompt("This Foreman server needs its access token (CMS_AGENT_TOKEN from server/.env, shown by the installer):", getToken());
+    if (t) { setToken(t.trim()); headers.set("Authorization", "Bearer " + t.trim()); res = await rawFetch(url, { ...opts, headers }); }
+  }
+  return res;
+};
 const $ = (s) => document.querySelector(s);
 const API = "";
 let mode = "think", sessionId = null, images = [], busy = false;

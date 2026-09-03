@@ -15,10 +15,15 @@ app.use(cors());
 app.use(express.json({ limit: "60mb" })); // recordings carry screenshots
 
 if (config.token) {
+  // Accept the token as a bearer header (extension, scripts), a cookie (console and
+  // plain download links), or a ?token= query parameter (first visit from the phone).
   app.use("/api", (req, res, next) => {
     const auth = req.header("authorization") ?? "";
-    if (auth === `Bearer ${config.token}`) return next();
-    res.status(401).json({ error: "unauthorised" });
+    const cookie = /(?:^|;\s*)foreman_token=([^;]+)/.exec(req.header("cookie") ?? "")?.[1];
+    const query = typeof req.query.token === "string" ? req.query.token : undefined;
+    const presented = auth.startsWith("Bearer ") ? auth.slice(7) : cookie ? decodeURIComponent(cookie) : query;
+    if (presented === config.token) return next();
+    res.status(401).json({ error: "unauthorised", hint: "Send Authorization: Bearer <CMS_AGENT_TOKEN>, or enter the token in the console." });
   });
 }
 

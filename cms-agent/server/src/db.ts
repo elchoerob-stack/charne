@@ -74,6 +74,29 @@ CREATE TABLE IF NOT EXISTS learned_playbooks (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS files (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  kind TEXT,                      -- workshop | contacts | other
+  mime TEXT,
+  size INTEGER NOT NULL,
+  path TEXT NOT NULL,
+  dealer TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,             -- workshop | campaign
+  title TEXT NOT NULL,
+  file_id TEXT,
+  dealer TEXT,
+  summary TEXT NOT NULL,          -- JSON: model-friendly summary
+  html_path TEXT,
+  xlsx_path TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS followups (
   id TEXT PRIMARY KEY,
   case_id TEXT,

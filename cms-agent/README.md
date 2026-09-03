@@ -1,8 +1,10 @@
-# CMS Agent
+# Foreman — the CMS Agent
 
-A Claude-powered support and problem-solving agent for the CMS Workshop
-Module, with a workflow recorder that turns real dealership sessions into SOPs
-and diagnostic evidence.
+**Foreman** is a Claude-powered support, reporting and problem-solving agent
+for the CMS Workshop Module, with a workflow recorder that turns real
+dealership sessions into SOPs and diagnostic evidence. The name is the job:
+the foreman runs the floor, knows every job on the board, and sorts out the
+problem before it reaches the dealer principal.
 
 It takes the useful parts of the Grok "agent bot" feature set (server-side
 tools, DeepSearch-style investigation, visible thinking, multi-agent
@@ -27,6 +29,13 @@ The capability mapping is in `docs/GROK_CAPABILITIES.md`.
   console errors and failed requests with POPIA masking; the server compiles
   recordings into markdown SOPs, Playwright replay scripts and evidence for
   the engine.
+- **Workshop reports and campaign lists** (`server/src/reports/`): upload a
+  CMS workshop bookings export for the Workshop Performance Dashboard (KPIs,
+  dealer and advisor tables, close rates, carry-over abuse, weekly trend,
+  tracking, insights) or a Marketing Contacts export for a validated,
+  deduplicated SMS and e-mail campaign list with a five-sheet workbook and
+  CSVs. Both in CMS eco branding, both discussable with the agent.
+  See `docs/REPORTS.md`.
 - **Agent tools**: knowledge search, recordings and SOPs, recording analysis,
   diagnose, integration health checks, dealer memory, cases, follow-ups, plus
   Claude's server-side code execution and web search in the deeper modes.
@@ -45,11 +54,13 @@ Open http://localhost:8787, set a dealer code, and try:
 - "Invoice on job card 48812 is not posting to Evolve at Kimberley"
 - "Customer says she never got the OTP for the brake authorisation"
 - "How do I create a booking with an OEM menu?" (after uploading a recording)
+- "Build the workshop report and tell me who to worry about" (after uploading an export)
+- "How many of these contacts can we actually reach?" (after uploading a contacts export)
 
 To exercise the diagnostic engine and recordings without API credentials:
 
 ```bash
-npm test                         # engine + SOP unit tests
+npm test                         # engine, SOP and report unit tests
 curl -X POST localhost:8787/api/recordings -H 'content-type: application/json' \
      --data @test/fixtures/sample-recording.json
 curl localhost:8787/api/recordings/rec_sample/sop?format=md
@@ -77,7 +88,9 @@ used when blank).
 - `docs/GROK_CAPABILITIES.md` — Grok capability inventory and the CMS Agent mapping
 - `docs/PROBLEM_SOLVING.md` — the diagnostic engine
 - `docs/WORKFLOW_RECORDER.md` — capture, masking, SOP compilation, replay
+- `docs/REPORTS.md` — workshop dashboard and campaign list tools
 - `docs/ARCHITECTURE.md` — layout, turn flow, modes, storage
+- `docs/ROADMAP.md` — what would make Foreman the best workshop agent on the market
 
 ## Status and next steps
 

@@ -8,6 +8,7 @@ import type { Evidence, Playbook } from "../problem-solving/types.js";
 import { compileSop, evidenceFromRecording, renderSopMarkdown } from "../recorder/sop.js";
 import { Recording } from "../recorder/schema.js";
 import { checkIntegration, type HealthResult, type SystemName } from "./integrations.js";
+import { buildReport, getReport, listFiles, listReports, type ReportKind } from "../reports/store.js";
 
 /* ── Tool plumbing ─────────────────────────────────────────────────────── */
 
@@ -342,6 +343,58 @@ export const TOOLS: AgentTool[] = [
     },
   ),
 ];
+
+/* ── Reports & campaign lists ──────────────────────────────────────────── */
+
+TOOLS.push(
+  tool(
+    {
+      name: "list_files",
+      description: "List uploaded workbooks (CMS workshop bookings exports and Marketing Contacts exports) with their guessed kind, so you can build a report or campaign list from one.",
+      input_schema: { type: "object", properties: {}, additionalProperties: false },
+      strict: true,
+    },
+    async () => listFiles().map((f) => ({ id: f.id, name: f.name, kind: f.kind, sizeKb: Math.round(f.size / 1024), dealer: f.dealer, uploaded: f.created_at })),
+  ),
+  tool(
+    {
+      name: "build_report",
+      description: "Build a report from an uploaded workbook. kind 'workshop' turns a CMS workshop bookings export into the Workshop Performance Dashboard (KPIs, dealer and advisor tables, close rates, carry-over abuse, weekly breakdown, tracking, insights). kind 'campaign' turns a Marketing Contacts export into a validated, deduplicated SMS and e-mail campaign list (RSA mobile and e-mail format rules, status breakdown, send list workbook and CSVs). Returns the summary; the HTML and files are available in the console.",
+      input_schema: {
+        type: "object",
+        properties: { file_id: { type: "string" }, kind: { type: "string", enum: ["workshop", "campaign"] }, title: { type: "string" } },
+        required: ["file_id"],
+        additionalProperties: false,
+      },
+    },
+    async (input, ctx) => {
+      const built = buildReport(String(input.file_id), input.kind as ReportKind | undefined, { title: input.title ? String(input.title) : undefined, dealer: ctx.dealer });
+      ctx.emit({ type: "report", id: built.report.id, kind: built.report.kind, title: built.report.title });
+      return { report_id: built.report.id, kind: built.report.kind, title: built.report.title, warnings: built.warnings, summary: built.summary, links: { html: `/api/reports/${built.report.id}/html`, xlsx: built.report.xlsx_path ? `/api/reports/${built.report.id}/xlsx` : undefined } };
+    },
+  ),
+  tool(
+    {
+      name: "list_reports",
+      description: "List built reports and campaign lists, newest first.",
+      input_schema: { type: "object", properties: { kind: { type: "string", enum: ["workshop", "campaign"] } }, additionalProperties: false },
+    },
+    async (input) => listReports(input.kind as ReportKind | undefined).map((r) => ({ id: r.id, kind: r.kind, title: r.title, dealer: r.dealer, created: r.created_at })),
+  ),
+  tool(
+    {
+      name: "get_report",
+      description: "Read a built report's summary to answer questions about it: totals, dealer and advisor performance, close rates, carry-over abuse, zero-close advisors, weekly trend and insights for workshop reports; validity counts, status breakdown, rejection reasons, warnings and reconciliation for campaign lists.",
+      input_schema: { type: "object", properties: { report_id: { type: "string" } }, required: ["report_id"], additionalProperties: false },
+      strict: true,
+    },
+    async (input) => {
+      const r = getReport(String(input.report_id));
+      if (!r) return { error: `No report ${input.report_id}` };
+      return { id: r.id, kind: r.kind, title: r.title, dealer: r.dealer, created: r.created_at, summary: JSON.parse(r.summary), links: { html: `/api/reports/${r.id}/html`, xlsx: r.xlsx_path ? `/api/reports/${r.id}/xlsx` : undefined } };
+    },
+  ),
+);
 
 export const TOOL_MAP = new Map(TOOLS.map((t) => [t.definition.name, t]));
 

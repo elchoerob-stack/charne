@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CMS Agent</title>
+<title>Foreman</title>
 <style>
 :root{--ink:#0F2040;--ink2:#1B2E52;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--wait:#8A6100;--wait-bg:#FBF1DC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--r:10px}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}}
@@ -49,8 +49,8 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 </head>
 <body>
 <div class="bar">
-  <div class="mark">C</div>
-  <div><b>CMS Agent</b><span>Workshop support · problem solving · workflow recorder</span></div>
+  <img src="/assets/cms-eco-logo-white.png" alt="CMS eco" style="height:30px">
+  <div><b>Foreman</b><span>CMS Agent · support · reports · problem solving · recorder</span></div>
   <div class="sp"></div>
   <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
   <button class="btn" id="newSession" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">New session</button>
@@ -59,9 +59,9 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 <div class="app">
   <section class="chat">
     <div class="msgs" id="msgs">
-      <div class="m agent"><div class="who">CMS Agent</div>Hi. Tell me what is going wrong at the dealership, or ask how to do something in CMS. I will diagnose with the playbooks, check Evolve/Infomedia/SMS health, pull evidence from a recording if you have one, and give you steps to fix and verify.
+      <div class="m agent"><div class="who">Foreman</div>Hi Jacques. Tell me what is going wrong at a dealership, ask how to do something in CMS, or drop a workshop export or Marketing Contacts export on the right and I will build the dashboard or the campaign list and talk you through it.
 
-Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i> or <i>"How do I create a booking with an OEM menu?"</i></div>
+Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i>, <i>"Build the workshop report and tell me who to worry about"</i>, or <i>"How many of these contacts can we actually reach?"</i></div>
     </div>
     <div class="attach" id="attach"></div>
     <div class="compose">
@@ -82,6 +82,11 @@ Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i> or
         <button data-mode="deep"><b>Deep</b><small>Multi-step investigation + web</small></button>
         <button data-mode="council"><b>Council</b><small>3 specialists cross-check</small></button>
       </div>
+    </div>
+    <div class="sec"><h3>Reports &amp; campaign lists</h3>
+      <div class="row" style="display:flex;gap:6px;margin-bottom:8px"><button class="btn" id="upWorkshop" style="flex:1;font-size:12px;padding:6px">＋ Workshop export</button><button class="btn" id="upContacts" style="flex:1;font-size:12px;padding:6px">＋ Marketing contacts</button></div>
+      <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" hidden>
+      <div class="list" id="reports"><div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div></div>
     </div>
     <div class="sec"><h3>Integration health <button class="btn" id="checkAll" style="float:right;padding:2px 8px;font-size:11px">Check all</button></h3><div class="list" id="health"><div class="empty">No checks run yet.</div></div></div>
     <div class="sec"><h3>Recordings <input type="file" id="recFile" accept="application/json" hidden><button class="btn" id="recUpload" style="float:right;padding:2px 8px;font-size:11px">Upload JSON</button></h3><div class="list" id="recs"><div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div></div></div>
@@ -157,6 +162,7 @@ async function sendMsg() {
       case "diagnosis": actLine(`Diagnosis · ${ev.diagnosis.hypotheses.map((h) => `${h.title} ${Math.round(h.confidence * 100)}%`).join(" | ")}`); break;
       case "case": actLine(`Case ${ev.id} ${ev.status}: ${ev.title}`); break;
       case "followup": actLine(`⏰ Follow-up due: ${ev.note}`); break;
+      case "report": actLine(`📊 Report built: ${ev.title}`, "ok"); break;
       case "error": textBuf += `\n\n⚠ ${ev.message}`; render(); break;
       case "done": actLine(`Done · ${ev.usage.iterations} iteration(s), ${ev.usage.input} in / ${ev.usage.output} out tokens`); break;
     }
@@ -192,6 +198,9 @@ async function loadSide() {
     const recs = await api("/recordings");
     $("#recs").innerHTML = recs.length ? recs.slice(0, 12).map((r) => `<div class="item"><b>${esc(r.title)}</b><div class="meta">${r.purpose} · ${r.dealer || "—"} · ${r.event_count} events · ${new Date(r.started_at).toLocaleString("en-ZA")}</div>
       <div class="acts"><a href="/api/recordings/${r.id}/sop?format=md" target="_blank"><button>SOP</button></a><a href="/api/recordings/${r.id}/sop?format=playwright" target="_blank"><button>Playwright</button></a><button onclick="ask('Please analyse recording ${r.id} and diagnose what went wrong.')">Diagnose</button><button onclick="ask('Write the SOP for recording ${r.id} as numbered steps for a service advisor.')">Explain</button></div></div>`).join("") : '<div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div>';
+    const reps = await api("/reports");
+    $("#reports").innerHTML = reps.length ? reps.slice(0, 10).map((r) => `<div class="item"><b>${esc(r.title)} <span class="pill">${r.kind}</span></b><div class="meta">${r.dealer || "—"} · ${new Date(r.created_at).toLocaleString("en-ZA")}</div>
+      <div class="acts"><a href="/api/reports/${r.id}/html" target="_blank"><button>Open</button></a>${r.xlsx_path ? `<a href="/api/reports/${r.id}/xlsx"><button>Excel</button></a><a href="/api/reports/${r.id}/sms.csv"><button>SMS CSV</button></a><a href="/api/reports/${r.id}/email.csv"><button>E-mail CSV</button></a>` : ""}<button onclick="ask('Read report ${r.id} and give me the headline numbers and the three things to act on.')">Discuss</button></div></div>`).join("") : '<div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div>';
     const cases = await api("/cases" + (dealer ? `?dealer=${encodeURIComponent(dealer)}` : ""));
     $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button></div></div>`).join("") : '<div class="empty">No cases.</div>';
     if (dealer) { const mem = await api("/memory/" + encodeURIComponent(dealer)); $("#memory").innerHTML = mem.length ? mem.map((m) => `<div class="item">${esc(m.fact)}</div>`).join("") : '<div class="empty">Nothing remembered for this dealer yet.</div>'; }
@@ -200,6 +209,22 @@ async function loadSide() {
 }
 window.ask = (t) => { $("#text").value = t; sendMsg(); };
 $("#checkAll").onclick = () => ask("Check the health of CMS, Evolve, Infomedia and the SMS gateway and summarise.");
+let uploadKind = "workshop";
+$("#upWorkshop").onclick = () => { uploadKind = "workshop"; $("#xlsxFile").click(); };
+$("#upContacts").onclick = () => { uploadKind = "contacts"; $("#xlsxFile").click(); };
+$("#xlsxFile").onchange = async () => {
+  const f = $("#xlsxFile").files[0]; if (!f) return;
+  add("agent", `Uploading ${f.name} and building the ${uploadKind === "contacts" ? "campaign list" : "workshop report"}…`);
+  try {
+    const res = await fetch(`/api/files?build=1&kind=${uploadKind === "contacts" ? "campaign" : "workshop"}`, { method: "POST", headers: { "Content-Type": "application/octet-stream", "X-File-Name": encodeURIComponent(f.name), "X-Kind": uploadKind, "X-Dealer": $("#dealer").value.trim() }, body: f });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || res.statusText);
+    add("agent", `Built **${j.report.title}** (${j.report.id}).${j.warnings.length ? "\n\n⚠ " + j.warnings.join("\n⚠ ") : ""}\n\nOpen it from the Reports panel, or ask me to walk you through it.`);
+    loadSide();
+    $("#text").value = `Read report ${j.report.id} and give me the headline numbers and the three things to act on.`;
+  } catch (e) { add("agent", "Upload failed: " + e.message); }
+  $("#xlsxFile").value = "";
+};
 $("#recUpload").onclick = () => $("#recFile").click();
 $("#recFile").onchange = async () => { const f = $("#recFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const r = await api("/recordings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(j) }); add("agent", `Recording uploaded as ${r.id}: ${r.stats.steps} steps, ${r.stats.errors} console errors, ${r.stats.failedRequests} failed requests.`); loadSide(); } catch (e) { add("agent", "Upload failed: " + e.message); } $("#recFile").value = ""; };
 

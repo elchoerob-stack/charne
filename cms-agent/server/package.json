@@ -18,6 +18,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "nanoid": "^5.1.5",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -28,5 +29,7 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

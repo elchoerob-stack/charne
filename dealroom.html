@@ -6,16 +6,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 :root{
-  --ink:#0F2040; --ink-2:#1B2E52; --gold:#C49A2F; --gold-soft:#F2E7CC;
+  /* RB Brand: the navy and the restrained warm accent of rbbrandrealestate.co.za */
+  --ink:#2A3243; --ink-2:#39435A; --gold:#B08D57; --gold-soft:#F0E8DC;
   --paper:#F7F5F1; --surface:#FFFFFF; --surface-2:#FBFAF7; --line:#E5E0D8; --line-2:#D6CFC2;
   --t1:#16203A; --t2:#4E5468; --t3:#7C7A78;
   --go:#1A6B3A; --go-bg:#E9F3EC; --wait:#8A6100; --wait-bg:#FBF1DC; --stop:#8B1A1A; --stop-bg:#F8EAEA;
-  --chrome:#0F2040; --chrome-t:#FFFFFF; --chrome-t2:rgba(255,255,255,.62); --chrome-line:rgba(255,255,255,.14);
+  --chrome:#2A3243; --chrome-t:#FFFFFF; --chrome-t2:rgba(255,255,255,.66); --chrome-line:rgba(255,255,255,.14);
   --shadow:0 1px 2px rgba(15,32,64,.05), 0 8px 24px -12px rgba(15,32,64,.18);
   --r:10px;
   --p-agent:#C49A2F; --p-buyer:#3A6EA5; --p-seller:#2E8B57; --p-conveyancer:#7B3068; --p-principal:#3C4A66;
   --viz:#2F4A7C; --viz-soft:#DDE3EE;
-  --gold-ink:#8A6100; --btn-p-bg:#0F2040; --btn-p-fg:#FFFFFF; --toast-bg:#0F2040; --toast-fg:#FFFFFF; --tip-bg:#0F2040; --tip-fg:#FFFFFF;
+  --gold-ink:#7A5C2E; --btn-p-bg:#2A3243; --btn-p-fg:#FFFFFF; --toast-bg:#2A3243; --toast-fg:#FFFFFF; --tip-bg:#2A3243; --tip-fg:#FFFFFF;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -53,7 +54,10 @@ a{color:inherit}
 .bar{position:sticky;top:0;z-index:40;background:var(--chrome);color:var(--chrome-t);border-bottom:1px solid var(--chrome-line)}
 .bar-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.mark{width:32px;height:32px;border-radius:7px;background:linear-gradient(150deg,var(--gold),#8E6B14);display:grid;place-items:center;font-family:Spectral,serif;font-weight:700;color:#0F2040;font-size:15px;flex:none}
+.mark{width:34px;height:34px;border-radius:6px;background:#fff;border:1.5px solid var(--gold);display:grid;place-items:center;
+  font-family:Spectral,serif;font-weight:700;color:#2A3243;font-size:13.5px;letter-spacing:.02em;flex:none}
+.wordmark{font-family:Spectral,Georgia,serif;font-weight:400;font-size:16px;letter-spacing:.30em;text-transform:uppercase;line-height:1.1;white-space:nowrap}
+.wordsub{font-size:8.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--chrome-t2);margin-top:3px}
 .brand-t{min-width:0}
 .brand-t b{display:block;font-family:Spectral,serif;font-weight:600;font-size:15px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand-t span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-t2)}
@@ -444,12 +448,44 @@ fieldset{border:0;padding:0;margin:0}
 .bucket:last-of-type{border-bottom:0}
 .bucket .amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
 @media (max-width:560px){.bucket{grid-template-columns:1fr 66px 92px;gap:7px}.mchart{height:120px}.mcol .val{display:none}}
+
+/* ── Signing in ─────────────────────────── */
+body.auth .bar,body.auth .strip,body.auth .rail,body.auth .tabs,body.auth .foot,body.auth .install{display:none!important}
+body.auth .shell{grid-template-columns:minmax(0,1fr);padding:0;max-width:none;gap:0}
+.authwrap{min-height:100vh;display:grid;place-items:center;padding:26px 16px;
+  background:linear-gradient(158deg,#0C1A33 0%,#12233F 55%,#1B2E4E 100%)}
+.authcard{width:100%;max-width:432px;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 30px 70px -24px rgba(0,0,0,.55);padding:30px 28px 26px;text-align:center}
+.authcard .mark{width:52px;height:52px;border-radius:12px;margin:0 auto 15px;font-size:21px}
+.authcard h1{font-size:23px;margin-bottom:5px}
+.authcard .wordmark,.authcard .wordsub{text-align:center}
+.authcard .sub{font-size:13px;color:var(--t2);line-height:1.55;margin:0 0 20px}
+.authcard .btn{width:100%;padding:11px 15px;font-size:14px}
+.authcard .gbtn{display:flex;align-items:center;justify-content:center;gap:10px}
+.gmark{width:19px;height:19px;flex:none}
+.authcard .fine{margin-top:17px;padding-top:15px;border-top:1px solid var(--line);font-size:11.5px;color:var(--t3);line-height:1.6}
+.authcard .waiting{background:var(--wait-bg);color:var(--wait);border-radius:10px;padding:13px 14px;font-size:12.5px;line-height:1.55;text-align:left;margin-bottom:16px}
+.authcard .err{background:var(--stop-bg);color:var(--stop);border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.5;text-align:left;margin-bottom:14px;word-break:break-word}
+.authcard .who{font-size:12.5px;color:var(--t2);margin-bottom:16px}
+.spin{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--gold);margin:6px auto 0;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── Getting started ────────────────────── */
+.step{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.step:last-child{border-bottom:0}
+.step .num{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:var(--t3);font-family:"IBM Plex Mono",monospace;flex:none;margin-top:1px}
+.step.on .num{background:var(--go);border-color:var(--go);color:#fff}
+.step .sx{flex:1;min-width:0}
+.step .sx b{display:block;font-size:13.5px;font-weight:600}
+.step.on .sx b{color:var(--t2)}
+.step .sx span{display:block;font-size:12px;color:var(--t2);margin-top:2px}
 </style>
 <header class="bar">
   <div class="bar-in">
     <div class="brand">
       <div class="mark">RB</div>
-      <div class="brand-t"><b>Deal Room</b><span>RB Brand Real Estate</span></div>
+      <div class="brand-t"><b class="wordmark">Brand</b><span class="wordsub">Real Estate · Deal Room</span></div>
     </div>
     <div class="bar-sp"></div>
     <button class="rolebtn" id="rolebtn" aria-haspopup="menu" aria-expanded="false">
@@ -761,7 +797,7 @@ const THREADS = {
 };
 function buildDeal(D){
   const meta = { ...D };
-  const st = { meta, done:{}, docs:{}, links:{}, msgs:[], log:[], open:{}, seen:{},
+  const st = { demo:true, meta, done:{}, docs:{}, links:{}, msgs:[], log:[], open:{}, seen:{},
     access:{ buyer:"joined", seller:"joined", conveyancer:"joined" },
     extra:(D.extras || []).map(([person, preset, status]) => ({ person, preset, status, token:token() })),
     otpDate:iso(d0(-D.otpAgo)), bondDue:D.bondIn === null ? null : iso(d0(D.bondIn)) };
@@ -843,7 +879,7 @@ const SEED_LISTINGS = [
     shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
 ];
 function buildListing(L){
-  const st = { meta:{ ...L }, status:"active", dealId:null, pack:{}, log:[], visitors:[],
+  const st = { demo:true, meta:{ ...L }, status:"active", dealId:null, pack:{}, log:[], visitors:[],
     mandateEnds:iso(d0(90 - L.listedAgo)), source:L.source || "",
     prospects:L.prospects.map(([person, status, agoD, preset]) => ({ person, status, preset:preset || null,
       ts:iso(d0(-agoD)), token:token() })),
@@ -881,17 +917,17 @@ const SEED_RECEIPTS = () => {
     [2, "PTA-2448702", "7 Olienhout Avenue", 38150, "Show day"],
     [1, "PTA-2441166", "22 Kameeldoring", 44300, "Repeat client"]];
   return past.map(([ago2, ref, address, amount, source], i) => ({
-    id:"seed" + i, who:"charne", deal:"past" + i, ref, address, amount, source,
+    id:"seed" + i, demo:true, who:"charne", deal:"past" + i, ref, address, amount, source,
     ts:iso(d0(-(ago2 * 30 + 4))) }));
 };
 
 /* ══ State ══════════════════════════════════════════════════════════ */
 const KEY = "rb_dealroom_v4";
 let S;
-const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{}, prefill:null, staff:null,
+const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{}, prefill:null, staff:null, tour:{}, welcomed:{}, invited:{},
   card:null, send:null, form:null, signing:null, rev:{}, money:{}, receipts:SEED_RECEIPTS(), boardFilter:null, boardId:"pipeline",
   boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
-  board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
+  board:{ cards:SEED_CARDS.map(c => ({ ...c, demo:true, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
     checklist:c.checklist.map(x => [...x]) })), next:9 },
   deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])),
   listings:Object.fromEntries(SEED_LISTINGS.map(L => [L.id, buildListing(L)])), nextRef:2600001 });
@@ -909,6 +945,7 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   /* The roster: who works here and how far they see. Seeded from the demo
      team, then whatever the admin adds. People added here also join the
      identity switcher so they can be tried out before the project is live. */
+  S.tour = S.tour || {}; S.welcomed = S.welcomed || {}; S.invited = S.invited || {};
   if (!S.staff) S.staff = STAFF.map(id => ({ as:id, role:P[id].role, since:new Date().toISOString() }));
   S.staff.forEach(x => { if (P[x.as] && !STAFF.includes(x.as)) STAFF.push(x.as); });
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
@@ -1020,7 +1057,8 @@ function navItems(){
     if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
   }
   if (r === "agent") v.push({ id:"new", label:"New deal room", short:"New", ic:"plus" });
-  v.push({ id:"road", label:"The road to a sale", short:"Guide", ic:"track" });
+  if (r === "agent" || isPrincipal(S.me)) v.push({ id:"guide", label:"How this works", short:"Help", ic:"shield" });
+  v.push({ id:"road", label:"The road to a sale", short:"Road", ic:"track" });
   return v;
 }
 function badgeFor(v){
@@ -1059,7 +1097,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1073,7 +1111,12 @@ function renderChrome(){
     <div id="syncwhy" style="margin-top:6px;color:var(--stop);word-break:break-word">${esc(sync.err || "")}</div>
     ${sync.status === "pending" ? `<div style="margin-top:8px">Signed in as <b>${esc(sync.user && sync.user.email || "")}</b>. An admin has to approve you before the team's work appears — nothing to do but wait. <button class="btn btn-s" data-act="syncout" style="margin-top:6px">Sign out</button></div>` : ""}
     ${sync.on ? `<div style="margin-top:8px">Signed in as <b>${esc(sync.user && sync.user.email || "")}</b> <button class="btn btn-s" data-act="syncout" style="margin-left:4px">Sign out</button></div>` : ""}
-    <div style="margin-top:9px"></div><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
+    <div style="margin-top:9px"></div>${sync.offlineOnly
+      ? `<b>Working offline.</b> The sign-in service could not be reached, so you are seeing what is saved on this device. Everything you do is kept here and goes to the team the next time it connects.`
+      : sync.on
+      ? `<b>Shared with the team.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Your work reaches the people who have been approved, and nobody else.`
+      : `<b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.`}
+    ${sync.on || sync.offlineOnly ? "" : `<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button>`}</div>`;
 
   /* A phone shows five slots. If there are more views than that, the fifth
      becomes "More" and opens the rest — nothing is ever unreachable. */
@@ -1177,6 +1220,112 @@ function vPortfolio(){
   </div>`;
 }
 
+/* ══ Getting started ════════════════════════════════════════════════
+   Not a tour that talks at you: a short list of the things that make the
+   app worth having, each one ticking itself off the moment it is true. */
+function setupSteps(){
+  const r = me().role;
+  if (isAdmin(S.me)){
+    const roster = (S.staff || []).filter(x => x.as !== S.me);
+    const invited = roster.length && roster.every(x => S.invited[x.as]);
+    const others = (sync.staff || []).filter(x => x.uid !== sync.uid);
+    return [
+      { t:"Be the admin on the project itself", w:"One staff entry created by hand in Firebase is what makes you the admin. Everyone after you is approved from here.",
+        done:sync.role === "admin" },
+      { t:"Put the team on the roster", w:"Add each agent and the principal, so a real sign-in can be matched to a person the app already knows.",
+        done:roster.length > 0, v:"staff" },
+      { t:"Send each of them the link", w:"Adding someone tells them nothing. Use the send button on their row — it writes the message and hands it to WhatsApp.",
+        done:!!invited, v:"staff" },
+      { t:"Approve them when they sign in", w:"They appear at the top of this screen the moment they sign in with Google. Pick who they are, pick their level, approve.",
+        done:others.length > 0, v:"staff" },
+      { t:"Clear the sample data", w:"The demo houses and deal rooms come out, and what is left is the agency's own work.",
+        done:demoLeft() === 0, v:"staff" },
+      { t:"Hand over when they are settled", w:"Make Charné an admin as well, then remove yourself. Nothing else changes.",
+        done:others.some(x => x.role === "admin") || (S.staff || []).some(x => x.as !== S.me && x.role === "admin"), v:"staff" },
+    ];
+  }
+  if (r === "principal") return [
+    { t:"Look over the team", w:"Every agent, what is in their pipeline, and the files that have stopped moving.", done:!!S.tour.team, v:"team" },
+    { t:"See where the work is sitting", w:"The stage chart shows which part of the conveyancing sequence is holding the agency up.", done:!!S.tour.team, v:"team" },
+    { t:"Check the month", w:"What has been banked, what is still to come, and what the year is on pace for.", done:!!S.tour.money, v:"money" },
+    { t:"Open a file and read its audit log", w:"Every upload, every view, every message, with who and when. This is what makes the file defensible.", done:!!S.tour.log, v:"portfolio" },
+  ];
+  const mine = myDeals(), listings = myListings();
+  return [
+    { t:"Bring your board across", w:"Export your Trello board as JSON and import it here. Your lists, cards, labels, due dates and call notes come with it.",
+      done:(S.boards || []).some(b => b.kind !== "pipeline"), v:"board" },
+    { t:"Put a house on the books", w:"A house holds the information pack, the show-day register, the viewings and the offers — and its mandate clock.",
+      done:listings.length > 0, v:"listings" },
+    { t:"Open a deal room on a signed offer", w:"Seven stages from OTP to registration, one shared thread, and a document vault each party sees only their part of.",
+      done:mine.length > 0, v:"new" },
+    { t:"Set what the deal earns", w:"The fee lives on the mandate, per deal, split however the deal was actually done. Clients never see it.",
+      done:mine.some(d => (d.comm || {}).set), v:mine.length ? "portfolio" : null },
+    { t:"Let a client in", w:"A personal link, to one file only, revocable. They see their own steps and nothing about anyone else.",
+      done:mine.some(d => Object.values(d.access).some(x => x !== "none")) || listings.some(l => l.prospects.length > 0),
+      v:mine.length ? "portfolio" : "listings" },
+    { t:"Set your year", w:"A target and your own set-aside percentages, so the Money screen tells you what is actually yours to spend.",
+      done:!!moneyCfg().set, v:"money" },
+  ];
+}
+function vSetup(compact){
+  const steps = setupSteps(), done = steps.filter(x => x.done).length;
+  if (compact && (S.tour.setupHidden || done === steps.length)) return "";
+  const r = isAdmin(S.me) ? "admin" : me().role;
+  const hello = S.welcomed[r] ? "" : `<div style="border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:4px">
+      <p style="margin:0;font-size:13.5px;line-height:1.6"><b>Welcome, ${esc(me().name.split(" ")[0])}.</b> ${
+        r === "admin" ? "You set this up and decide who gets in — add the team below, send them the link, and approve them when they sign in."
+        : r === "principal" ? "Everything your agents are working on, in one place. Team overview is the wide view; this screen is what needs you."
+        : "Your houses, your transfers and your board in one place — and this screen tells you what actually needs you today."}</p>
+      <p style="margin:8px 0 0;font-size:12.5px;color:var(--t2);line-height:1.6">Three things worth knowing: nothing is ever sent without you pressing send, everyone sees only their own part of a file, and it works on your phone if you add it to the home screen.</p>
+      <div class="comp-r" style="margin-top:11px">
+        <button class="btn btn-s" data-act="view" data-v="guide">How the whole thing works</button>
+        <button class="btn btn-s" data-act="welclose">Got it</button></div>
+    </div>`;
+  return `<div class="card">
+    <div class="card-h">${ICON.check}<h2>Getting started</h2>
+      <span class="chip ${done === steps.length ? "c-go" : "c-mute"}">${done} of ${steps.length}</span>
+      ${done === steps.length ? `<button class="btn btn-s" data-act="hidesetup">Hide this</button>` : ""}</div>
+    <div class="card-b">
+      ${hello}
+      ${done === steps.length ? `<div class="empty" style="padding:14px"><b>You are set up</b>Everything below is done. This card can go.</div>` : ""}
+      ${steps.map((x, i) => `<div class="step ${x.done ? "on" : ""}">
+        <span class="num">${x.done ? ICON.check : i + 1}</span>
+        <div class="sx"><b>${esc(x.t)}</b><span>${esc(x.w)}</span></div>
+        ${!x.done && x.v ? `<button class="btn btn-s" data-act="view" data-v="${x.v}">Show me</button>` : ""}
+      </div>`).join("")}
+      <p style="margin:12px 0 0;font-size:11.5px;color:var(--t3)">Each one ticks itself off as you do it. <button class="btn btn-s" data-act="view" data-v="guide" style="margin-left:4px">How the whole thing works</button></p>
+    </div></div>`;
+}
+
+/* ══ How this works ═════════════════════════════════════════════════ */
+const GUIDE = [
+  { for:["agent", "principal", "admin"], ic:"home", t:"Today", w:"The one screen worth opening first thing. It gathers what actually needs you — a bond date about to lapse, certificates nobody has booked, a mandate elsewhere running out, an offer waiting on an answer, a card with your name on it — sorted by what bites soonest. Tick something off and it goes." },
+  { for:["agent", "principal"], ic:"board", t:"The board", w:"Your Trello, kept. The Pipeline board is different: its cards <em>are</em> the houses and the transfers, so a card moves when the work moves, not when someone remembers to drag it. Cards you write yourself drag anywhere. Boards you import stay exactly as they were." },
+  { for:["agent", "principal"], ic:"house", t:"Houses", w:"A house on the books: the information pack you choose document by document to share, the show-day register, viewing slots buyers can book themselves, and every offer with what it is under asking. The mandate clock warns you before your own mandate runs out." },
+  { for:["agent", "principal"], ic:"deals", t:"Deal rooms", w:"One room per sale, sealed off from every other. Seven stages in the order the Deeds Office actually wants them, each task owned by the party who must do it. The purchaser, the seller and the attorney get a link to their room and nothing else." },
+  { for:["agent", "principal"], ic:"vault", t:"The vault", w:"Documents by role. The buyer's FICA is not the seller's business, and neither is the principal's. Links to a document expire after fifteen minutes, and every view is written to the audit log — which is what makes the file hold up later." },
+  { for:["agent", "principal"], ic:"file", t:"Paperwork", w:"Mandates, offers, cost estimates and compliance checklists filled in on screen and printed as PDF. A mandate may be signed on screen; an Offer to Purchase may not — the ECT Act excludes the sale of land from electronic signature — so the app signs the one and prints hand-signing instructions on the other." },
+  { for:["agent"], ic:"key", t:"Commission and Money", w:"The fee sits on the mandate, per deal, split between the agency, you, a partner agency, or an agent on a buyout. Money then shows what has actually been received, what to hold back for tax at your own percentages, and what is left. No client ever sees any of it." },
+  { for:["principal"], ic:"team", t:"Team overview", w:"Every agent, their pipeline, their average progress, and the files that have stopped moving. You can open any file's progress — but not the parties' FICA or finance documents, because oversight is not a reason to hold someone's ID." },
+  { for:["admin"], ic:"shield", t:"Staff and access", w:"Who is waiting to be let in, who is in, and at what level. Approving is what grants access; removing ends it on every device at once. Nobody can promote themselves, and nobody can remove themselves." },
+  { for:["agent", "principal", "admin"], ic:"chat", t:"Talking to clients", w:"Every message the app writes — an invitation, a chase for a certificate, a bond warning, a keep-in-touch note — opens WhatsApp or your mail app with the text ready. Nothing is ever sent behind your back: you read it, change it, and press send." },
+];
+function vGuide(){
+  const r = isAdmin(S.me) ? "admin" : me().role;
+  const mine = GUIDE.filter(g => g.for.includes(r));
+  return `<div class="stack">
+    <div class="sec-h"><h2>How this works</h2><p>Every screen, and what it is for</p></div>
+    <div class="note">${ICON.shield}<div><b>The short version.</b> Houses become deal rooms; deal rooms run to registration on their own seven stages; everyone sees only their part; and the app never sends anything without you pressing send.</div></div>
+    ${vSetup(false)}
+    <div class="grid2">${mine.map(g => `<div class="card"><div class="card-h">${ICON[g.ic]}<h2>${esc(g.t)}</h2></div>
+      <div class="card-b" style="font-size:13px;color:var(--t2);line-height:1.6">${g.w}</div></div>`).join("")}</div>
+    <div class="card"><div class="card-h">${ICON.warn}<h2>What it does not do</h2></div>
+      <div class="card-b" style="font-size:13px;color:var(--t2);line-height:1.6">
+        It does not send anything on its own — no automatic WhatsApps, no automatic emails. It does not talk to Property24 or the office portal yet, so a house you put here does not appear there. It is not the Deeds Office: the stages tell you where a transfer is, they do not move it. And it does not do your tax — you set the percentages, it does the arithmetic.
+      </div></div>
+  </div>`;
+}
+
 /* ══ View: staff & access (admin) ═══════════════════════════════════
    Locally this is the roster. With the project connected it is the real
    door: someone signs in with Google, appears here as a request, and has
@@ -1189,6 +1338,7 @@ function vStaff(){
   const roleSel = (id, cur) => `<select data-role="${id}" style="width:auto">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${v}</option>`).join("")}</select>`;
   const asSel = (id, cur) => `<select data-as="${id}" style="width:auto"><option value="">Someone new</option>${STAFF.filter(x => P[x]).map(x => `<option value="${x}" ${x === cur ? "selected" : ""}>${esc(P[x].name)}</option>`).join("")}</select>`;
   return `<div class="stack">
+    ${vSetup(true)}
     <div class="sec-h"><h2>Staff &amp; access</h2><p>${live ? "Live — approving someone here is what lets them in" : sync.on ? "Connected, but only an admin can manage access" : "Not connected to the project yet — this is the roster the demo uses"}</p></div>
     <div class="note">${ICON.shield}<div><b>How access works.</b> Each person signs in once with Google. Until an admin approves them here they see nothing of the team's work. Remove someone and their access ends immediately, on every device. To hand over, make Charné an admin and then remove yourself.</div></div>
 
@@ -1211,11 +1361,14 @@ function vStaff(){
 
     <div class="card"><div class="card-h">${ICON.team}<h2>${live ? "The roster in the app" : "The roster"}</h2><span class="chip c-mute">${roster.length}</span></div>
       <div class="card-b">
+        <div class="note" style="margin-bottom:12px">${ICON.warn}<div><b>Adding someone here does not tell them anything.</b> It only creates them in the app. They get in by opening the link, signing in with Google and being approved above — so send them the link with the button on their row. Nothing goes out until you press send in WhatsApp or your mail app.</div></div>
         <p style="margin:0 0 10px;font-size:12.5px;color:var(--t2)">Who the app knows as the team. ${live ? "Approvals above map a real sign-in onto one of these people." : "Add an agent here and they appear in the identity switcher straight away."}</p>
         ${roster.map(x => P[x.as] ? `<div class="person">${avatar(x.as, 38)}
           <div class="pi"><b>${esc(P[x.as].name)}</b><span>${esc(P[x.as].email)} · ${esc(P[x.as].mobile)}</span></div>
           <span class="chip ${x.role === "admin" ? "c-gold" : "c-mute"}">${ROLE_LABEL[x.role] || x.role}</span>
-          ${x.as === S.me ? `<span class="chip c-go">You</span>` : `<span style="display:flex;gap:7px">${roleSel("r:" + x.as, x.role)}<button class="btn btn-s" data-act="rosterrole" data-p="${x.as}">Change</button><button class="btn btn-s" data-act="rosterdel" data-p="${x.as}" style="color:var(--stop)">Remove</button></span>`}
+          ${x.as === S.me ? `<span class="chip c-go">You</span>` : `<span style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-g btn-s" data-act="staffinvite" data-p="${x.as}">${ICON.chat} ${S.invited[x.as] ? "Send again" : "Send the link"}</button>
+            ${roleSel("r:" + x.as, x.role)}<button class="btn btn-s" data-act="rosterrole" data-p="${x.as}">Change</button><button class="btn btn-s" data-act="rosterdel" data-p="${x.as}" style="color:var(--stop)">Remove</button></span>`}
         </div>` : "").join("")}
         <form id="staffadd" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
           <div class="subhead" style="border:0;padding:0;margin:0 0 11px">Add someone to the team</div>
@@ -1228,7 +1381,14 @@ function vStaff(){
           <button type="submit" class="btn btn-g" style="margin-top:13px">${ICON.plus} Add to the team</button>
         </form>
       </div></div>
-    ${!sync.on ? `<div class="note">${ICON.warn}<div><b>Until the project is connected, this changes the demo only.</b> Once Charné and Rassie have signed in on the live link, their requests appear at the top of this screen and you approve them there.</div></div>` : ""}
+    <div class="card"><div class="card-h">${ICON.shield}<h2>Going live</h2>
+      ${demoLeft() ? `<span class="chip c-wait">${demoLeft()} sample items</span>` : `<span class="chip c-go">Clean</span>`}</div>
+      <div class="card-b">
+        <p style="margin:0 0 12px;font-size:12.5px;color:var(--t2)">The app ships with sample houses and deal rooms so it can be shown to someone before there is anything real in it. Clear them the day the team starts for real — everything they have made stays.</p>
+        ${demoLeft() ? `<button class="btn btn-g" data-act="dropdemo">Clear the sample data</button>`
+          : `<div class="empty"><b>Nothing but your own work</b>The sample data is gone.</div>`}
+      </div></div>
+    ${!sync.on ? `<div class="note">${ICON.warn}<div><b>Until the project is connected, this changes this device only.</b> Once the team have signed in on the live link, their requests appear at the top of this screen and you approve them there.</div></div>` : ""}
   </div>`;
 }
 
@@ -2246,6 +2406,8 @@ function vToday(){
       <div class="tile"><div class="k">Active files</div><div class="v">${myDeals().filter(d => !isClosed(d)).length}</div><div class="s">In transfer</div></div>
     </div>
 
+    ${vSetup(true)}
+
     <div class="card">
       <div class="card-h">${ICON.check}<h2>What needs you</h2>${items.length ? `<span class="chip ${urgent.length ? "c-stop" : "c-wait"}">${items.length}</span>` : `<span class="chip c-go">Clear</span>`}</div>
       <div class="card-b">${items.length ? items.slice(0, 8).map(inboxRow).join("")
@@ -2335,6 +2497,8 @@ const TEMPLATES = {
     body:"Hi {first}\n\nWonderful news — your offer of {amount} on {property} has been accepted.\n\nI am opening the transfer file now and you will get your own link to it shortly. The first thing I will need from you is your FICA pack: ID and a proof of address under three months old.\n\nCongratulations\n{agent}" },
   offer_declined:{ label:"Their offer was declined", subject:"{property} — feedback on your offer",
     body:"Hi {first}\n\nThank you for your offer of {amount} on {property}. The seller has decided not to accept it.\n\nI would rather tell you straight than leave you waiting. If you would like to come back with something else, or you want me to keep an eye out for something similar, just say the word.\n\n{agent}" },
+  staff_invite:{ label:"Invite a colleague to the app", subject:"RB Brand Deal Room — your access",
+    body:"Hi {first}\n\nWe are running our houses, our transfers and the team board in one place now — the RB Brand Deal Room.\n\nOpen this on your phone and sign in with your Google account:\n{applink}\n\nIt will say you are waiting for approval. That is normal — I approve you from my side and then everything appears. Add it to your home screen while you wait; it works like an app.\n\n{agent}" },
   registration:{ label:"Registered — keys", subject:"{property} — registered!",
     body:"Hi {first}\n\n{property} registered at the Deeds Office today. The property is yours.\n\nI will bring the keys through — let me know what time suits you.\n\nCongratulations, and thank you for letting me be part of it.\n{agent}" },
 };
@@ -2353,6 +2517,7 @@ function sendVars(ctx){
     date:ctx.when ? new Date(ctx.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" }) : "",
     activity:ctx.activity || "no viewings booked yet", feedback:ctx.feedback || "…",
     update:ctx.update || "…",
+    applink:appLink(),
     link:ctx.link || (d ? `https://deal.rbbrand.co.za/${d.meta.id}` : l ? `https://houses.rbbrand.co.za/${l.meta.id}` : "") };
 }
 function openSend(ctx){ S.send = { ...ctx, tpl:ctx.tpl || Object.keys(TEMPLATES)[0], text:null }; renderSend(); }
@@ -2948,6 +3113,31 @@ Object.entries(KEEPINTOUCH).forEach(([when, list]) => list.forEach((m, i) => {
     subject:"{property}", body:m.b };
 }));
 
+/* ══ Clearing the sample data ═══════════════════════════════════════
+   Everything seeded for the demo carries demo:true, so going live is a
+   matter of dropping exactly those and nothing the team has made. */
+function dropDemo(announce){
+  const gone = [];
+  Object.entries(S.deals).forEach(([id, d]) => { if (d.demo){ delete S.deals[id]; gone.push("deals/" + id); } });
+  Object.entries(S.listings).forEach(([id, l]) => { if (l.demo){ delete S.listings[id]; gone.push("listings/" + id); } });
+  S.board.cards = S.board.cards.filter(c => { if (c.demo) gone.push("cards/" + c.id); return !c.demo; });
+  S.receipts = (S.receipts || []).filter(r => !r.demo);
+  S.deal = null; S.listing = null; S.card = null;
+  if (!S.boards.some(b => b.id === S.boardId)) S.boardId = "pipeline";
+  sync.shadow = null;
+  if (sync.on && gone.length) removeRemote(gone);
+  if (announce) toast(gone.length ? "Sample data cleared" : "Nothing to clear — this is already your own work");
+  return gone.length;
+}
+async function removeRemote(paths){
+  const fs = sync.fs; if (!fs) return;
+  try { await Promise.all(paths.map(pp => { const [coll, id] = pp.split("/");
+    delete S.rev[pp]; return fs.deleteDoc(fs.doc(sync.db, "ws", sync.ws, coll, id)); })); }
+  catch (err){ console.warn("clean", err); toast("Cleared here, but some of it stayed on the server"); }
+}
+const demoLeft = () => Object.values(S.deals).filter(d => d.demo).length
+  + Object.values(S.listings).filter(l => l.demo).length + S.board.cards.filter(c => c.demo).length;
+
 /* ══ Taking a copy out ══════════════════════════════════════════════
    If the app is the record, the agency needs its own copy of it. */
 function exportWorkspace(scope){
@@ -3111,8 +3301,11 @@ function vMoney(){
 }
 
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { staff:vStaff, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { staff:vStaff, guide:vGuide, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
+  if (sync.gate !== "in" && sync.gate !== "demo"){ renderAuth(); return; }
+  document.body.classList.remove("auth");
+  const rb0 = document.getElementById("rolebtn"); if (rb0) rb0.removeAttribute("hidden");
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
   if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
   if (S.listing && !listingRole(S.listings[S.listing], S.me)) { S.listing = null; S.view = homeView(); }
@@ -3128,6 +3321,7 @@ function render(){
   if (S.deal && !dealViews().some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && !isPrincipal(S.me)) S.view = "portfolio";
   if (S.view === "staff" && !isAdmin(S.me)) S.view = homeView();
+  if (S.view === "guide" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (!S.deal && ["money", "earn"].includes(S.view) && !(me().role === "agent" || isOwner(S.me))) S.view = homeView();
   if (!S.deal && S.view === "new" && me().role !== "agent") S.view = "portfolio";
   renderChrome();
@@ -3137,6 +3331,35 @@ function render(){
   renderModal();
   renderSend();
   save();
+}
+
+/* ══ Actions ════════════════════════════════════════════════════════ */
+/* ══ The sign-in page ═══════════════════════════════════════════════ */
+const appLink = () => location.protocol.startsWith("http") ? location.origin + location.pathname
+  : "https://elchoerob-stack.github.io/rb-deal-room/";
+const GOOGLE_G = `<svg class="gmark" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-3.9H24v7.1h12.1c-.2 1.8-1.6 4.6-4.5 6.4l6.9 5.3c4.1-3.8 6.6-9.4 6.6-14.9z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.3c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C8.1 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.5 28.5c-.5-1.4-.7-2.9-.7-4.5s.3-3.1.7-4.5l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 10z"/><path fill="#EA4335" d="M24 10.2c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4 29.9 2 24 2 15.4 2 8.1 6.9 4.4 14l7.1 5.5c1.8-5.3 6.7-9.3 12.5-9.3z"/></svg>`;
+function renderAuth(){
+  document.body.classList.add("auth");
+  document.querySelectorAll(".scrim,.pop,.msheet,.ms-back").forEach(e => e.remove());
+  const g = sync.gate, who = sync.user || {};
+  const body =
+    g === "checking" ? `<p class="sub">Just a moment…</p><div class="spin"></div>`
+    : g === "pending" ? `<p class="sub">You are signed in. One more step.</p>
+        <div class="waiting"><b>Waiting for an admin to let you in.</b><br>
+          Access to the agency's houses, deals and board is given person by person. Whoever set the app up will approve you — there is nothing else for you to do. Come back to this page once they have.</div>
+        <div class="who">Signed in as <b style="color:var(--t1)">${esc(who.email || "")}</b></div>
+        <button class="btn" data-act="syncout">Sign out</button>`
+    : `<p class="sub">One place for every house you are marketing and every sale in transfer — shared with the people who need it, and nobody else.</p>
+        ${sync.err ? `<div class="err"><b>Could not sign you in.</b><br>${esc(sync.err)}</div>` : ""}
+        <button class="btn btn-p gbtn" data-act="syncin">${GOOGLE_G} Sign in with Google</button>
+        <div class="fine">Use the Google account your office knows you by. Signing in says who you are; an admin decides what you may see.</div>`;
+  document.getElementById("view").innerHTML = `<div class="authwrap"><div class="authcard">
+    <div class="mark">RB</div>
+    <div class="wordmark" style="color:var(--t1);font-size:21px;margin-bottom:4px">Brand</div>
+    <div class="wordsub" style="color:var(--t3);margin-bottom:18px">Real Estate · Deal Room</div>${body}</div></div>`;
+  ["strip", "rail", "tabs", "foot"].forEach(id => document.getElementById(id).innerHTML = "");
+  ["rolename", "rolekind", "roleav"].forEach(id => document.getElementById(id).textContent = "");
+  const rb = document.getElementById("rolebtn"); if (rb) rb.setAttribute("hidden", "");
 }
 
 /* ══ Actions ════════════════════════════════════════════════════════ */
@@ -3271,7 +3494,7 @@ document.addEventListener("click", e => {
   if (!btn){ if (popOpen && !e.target.closest("#rolebtn")){ popOpen = false; document.getElementById("rolebtn").setAttribute("aria-expanded", "false"); renderPop(); } return; }
   const a = btn.dataset.act, d = D();
 
-  if (a === "view"){ S.view = btn.dataset.v; moreOpen = false; if (S.view === "chat" && d) d.seen[S.me] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
+  if (a === "view"){ S.view = btn.dataset.v; moreOpen = false; S.tour[S.view] = true; if (S.view === "chat" && d) d.seen[S.me] = new Date().toISOString(); render(); window.scrollTo({ top:0, behavior:"smooth" }); }
   else if (a === "more"){ moreOpen = !moreOpen; renderChrome(); }
   else if (a === "moreclose"){ moreOpen = false; renderChrome(); }
   else if (a === "home"){ S.deal = null; S.listing = null; S.agentFilter = null; S.view = homeView(); render(); window.scrollTo({ top:0 }); }
@@ -3422,6 +3645,7 @@ document.addEventListener("click", e => {
       const sp = c.splits[+el.dataset.i]; if (!sp) return;
       if (el.dataset.split === "pct") sp.pct = +el.value || 0; else sp.label = el.value;
     });
+    c.set = true;
     c.basis = g("cm_basis"); c.pct = +g("cm_pct") || 0; c.fixed = +g("cm_fixed") || 0;
     c.vatIncl = g("cm_vat") === "1"; c.note = g("cm_note") || "";
     const calc = commCalc(d);
@@ -3508,7 +3732,7 @@ document.addEventListener("click", e => {
       if (el.dataset.bucket === "pct") b.pct = +el.value || 0; else b.label = el.value;
     });
     c.target = +(document.getElementById("mn_target") || {}).value || c.target;
-    toast("Saved"); render(); }
+    c.set = true; toast("Saved"); render(); }
   else if (a === "switchboard"){ S.boardId = btn.dataset.b; S.card = null; render(); window.scrollTo({ top:0 }); }
   else if (a === "importtrello"){ trelloImport.click(); }
   else if (a === "delboard"){
@@ -3604,6 +3828,13 @@ document.addEventListener("click", e => {
     if (!confirm(`Take ${P[id].name} off the team?`)) return;
     S.staff = S.staff.filter(y => y.as !== id); const i = STAFF.indexOf(id); if (i >= 0) STAFF.splice(i, 1);
     toast("Removed"); render(); }
+  else if (a === "staffinvite"){ S.invited[btn.dataset.p] = new Date().toISOString();
+    openSend({ to:btn.dataset.p, tpl:"staff_invite" }); save(); }
+  else if (a === "hidesetup"){ S.tour.setupHidden = true; toast("Hidden — it lives under How this works"); render(); }
+  else if (a === "welclose"){ S.welcomed[isAdmin(S.me) ? "admin" : me().role] = true; toast("Hidden — it lives under How this works"); render(); }
+  else if (a === "dropdemo"){
+    if (!confirm("Clear the sample houses, deal rooms and cards?\n\nAnything you or the team have made stays. If the project is connected this clears it for everyone.")) return;
+    dropDemo(true); render(); }
   else if (a === "approve"){ approveRequest(btn.dataset.u); }
   else if (a === "decline"){ declineRequest(btn.dataset.u); }
   else if (a === "setrole"){ const sel = document.querySelector(`[data-role="s:${btn.dataset.u}"]`); if (sel) setStaffRole(btn.dataset.u, sel.value); }
@@ -3978,7 +4209,11 @@ setInterval(() => {
    With one, the team's boards, houses and transfers follow them between
    phone and laptop, and between Charné and Rassie. ═══════════════════ */
 const SYNC_KINDS = { cards:"card", deals:"deal", listings:"listing", boards:"board", people:"person" };
-let sync = { on:false, status:"local", db:null, ws:null, uid:null, pending:{}, timer:null, applying:false };
+/* With a project configured the app opens on a sign-in page and shows
+   nothing of the agency's work until Google says who you are and an admin
+   has let you in. With no project (the preview) it opens on the demo. */
+const HAS_PROJECT = () => !!(window.RB_CONFIG && window.RB_CONFIG.firebase && window.RB_CONFIG.firebase.projectId);
+let sync = { on:false, status:"local", gate:"demo", db:null, ws:null, uid:null, pending:{}, timer:null, applying:false };
 
 /* Each entity is one document, so two people editing different cards never
    collide. Within one document the newer revision wins. */
@@ -4028,7 +4263,7 @@ async function startSync(){
     const A = auth.getAuth(app);
     const user = A.currentUser || await new Promise(res => auth.onAuthStateChanged(A, res));
     sync.auth = { auth, A };
-    if (!user){ syncStatus("local"); sync.needsSignIn = { auth, A }; render(); return; }
+    if (!user){ syncStatus("local"); sync.needsSignIn = { auth, A }; if (sync.gate === "checking") sync.gate = "signin"; render(); return; }
     sync.uid = user.uid; sync.user = { name:user.displayName || "", email:user.email || "" };
     sync.db = fs.getFirestore(app); sync.fs = fs;
     /* The door. A staff document with this uid is what lets a person in;
@@ -4036,13 +4271,20 @@ async function startSync(){
     const mine = await fs.getDoc(fs.doc(sync.db, "staff", user.uid)).catch(() => null);
     if (!mine || !mine.exists()){
       await fs.setDoc(fs.doc(sync.db, "requests", user.uid), { name:sync.user.name, email:sync.user.email, ts:Date.now() }, { merge:true }).catch(err => console.warn("request", err));
-      syncStatus("pending"); render(); return;
+      syncStatus("pending"); sync.gate = "pending"; render(); return;
     }
     const st = mine.data() || {};
     sync.role = st.role || "agent";
+    /* Remembered so that a phone with no signal still opens on her own
+       work — it is already on this device; locking the screen protects
+       nothing and costs her the show day. */
+    S.session = { uid:user.uid, email:sync.user.email, name:sync.user.name, role:sync.role, as:st.as || "" };
     if (st.as && P[st.as]){ S.me = st.as; sync.as = st.as; }        // a real sign-in is one person, not a switcher
-    sync.on = true;
+    sync.on = true; sync.gate = "in";
     sync.ws = (window.RB_CONFIG.workspace || "rb-brand");
+    /* First real sign-in on this device: the sample data goes, so that what
+       you see is the agency's own work and nothing else. */
+    if (!S.live){ S.live = true; dropDemo(false); }
     if (sync.role === "admin") watchStaff();
     Object.keys(SYNC_KINDS).forEach(coll => {
       fs.onSnapshot(fs.collection(sync.db, "ws", sync.ws, coll), snap => {
@@ -4058,7 +4300,18 @@ async function startSync(){
     });
     syncStatus("synced");
     pushLocal(true);
-  } catch (err){ console.warn("sync unavailable", err); sync.err = err && err.message || String(err); syncStatus("error"); }
+  } catch (err){ console.warn("sync unavailable", err);
+    const m = err && err.message || String(err);
+    sync.err = /dynamically imported module|Failed to fetch|NetworkError|ERR_/i.test(m)
+      ? "Could not reach the sign-in service. Check that you are online and try again."
+      : m;
+    if (S.session){                                   // let in here before: carry on offline
+      sync.role = S.session.role; sync.as = S.session.as || null;
+      sync.user = { email:S.session.email, name:S.session.name };
+      if (sync.as && P[sync.as]) S.me = sync.as;
+      sync.offlineOnly = true; sync.gate = "in"; syncStatus("offline"); render(); return;
+    }
+    syncStatus("error"); if (sync.gate === "checking") sync.gate = "signin"; render(); }
 }
 /* Debounced: a burst of edits becomes one write per changed document. */
 function pushLocal(all){
@@ -4121,17 +4374,27 @@ async function removeStaff(uid){
   try { await fs.deleteDoc(fs.doc(sync.db, "staff", uid)); toast("Removed"); } catch (err){ console.warn(err); toast("Could not remove"); }
 }
 async function syncSignOut(){
-  if (!sync.auth) return;
+  S.session = null; save();
+  if (!sync.auth){ sync.gate = HAS_PROJECT() ? "signin" : "demo"; sync.offlineOnly = false; render(); return; }
   try { await sync.auth.auth.signOut(sync.auth.A); } catch {}
   location.reload();
 }
 async function syncSignIn(){
   if (!sync.needsSignIn) return;
   const { auth, A } = sync.needsSignIn;
-  try { await auth.signInWithPopup(A, new auth.GoogleAuthProvider()); location.reload(); }
-  catch (err){ toast("Sign-in did not complete"); console.warn(err); }
+  try { sync.err = ""; await auth.signInWithPopup(A, new auth.GoogleAuthProvider()); location.reload(); }
+  catch (err){
+    console.warn(err);
+    const c = (err && err.code || "").replace("auth/", "");
+    sync.err = c === "popup-closed-by-user" || c === "cancelled-popup-request" ? "The sign-in window closed before it finished. Try again."
+      : c === "unauthorized-domain" ? "This web address is not on the project's list of allowed domains yet."
+      : c === "popup-blocked" ? "Your browser blocked the sign-in window. Allow pop-ups for this page and try again."
+      : (err && err.message) || "Something went wrong.";
+    render();
+  }
 }
 
+if (HAS_PROJECT()) sync.gate = "checking";
 render();
 startSync();
 

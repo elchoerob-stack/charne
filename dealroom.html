@@ -471,6 +471,10 @@ fieldset{border:0;padding:0;margin:0}
 <footer class="foot" id="foot"></footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Optional: identifies a Firebase project for team sync. Absent in the
+     artifact preview and on a fresh checkout, in which case the app stays
+     entirely on this device — see the comment in config.example.js. -->
+<script src="config.js" onerror="void 0"></script>
 <script>
 /* ══ Icons ══════════════════════════════════════════════════════════ */
 const I = (d, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;

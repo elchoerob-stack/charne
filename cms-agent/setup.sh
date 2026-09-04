@@ -13,7 +13,8 @@ if ! command -v node >/dev/null; then
   if command -v brew >/dev/null; then brew install node@22 >/dev/null; elif command -v apt-get >/dev/null; then curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs; else echo "Install Node.js 22 from https://nodejs.org and re-run"; exit 1; fi
 fi
 command -v git >/dev/null || { echo "Install git and re-run"; exit 1; }
-NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]'); [[ $NODE_MAJOR -ge 20 ]] || { echo "Node $(node --version) is too old (need 20+)"; exit 1; }
+NODE_OK=$(node -p 'const [a,b]=process.versions.node.split(".").map(Number); (a>22||(a===22&&b>=13))?"yes":"no"')
+[[ "$NODE_OK" == "yes" ]] || { echo "Node $(node --version) is too old (need 22.13+; Foreman uses Node's built-in SQLite)"; exit 1; }
 ok "node $(node --version), git $(git --version | cut -d' ' -f3)"
 
 step "2/6 Code"

@@ -1,12 +1,15 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
 import { nanoid } from "nanoid";
 import { config } from "./config.js";
 
 fs.mkdirSync(path.dirname(config.dbPath), { recursive: true });
-export const db = new Database(config.dbPath);
-db.pragma("journal_mode = WAL");
+// Node's built-in SQLite (Node 22.13+ / 24+). Deliberately not better-sqlite3:
+// that is a native addon, and on any Node release newer than its prebuilt
+// binaries it tries to compile from source and demands Visual Studio.
+export const db = new DatabaseSync(config.dbPath);
+db.exec("PRAGMA journal_mode = WAL");
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS sessions (

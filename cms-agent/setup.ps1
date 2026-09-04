@@ -52,7 +52,9 @@ if (-not (Have node)) { Write-Host "   Installing Node.js LTS..."; winget instal
 if (-not (Have git)) { Write-Host "   Installing Git..."; winget install --id Git.Git -e --accept-source-agreements --accept-package-agreements | Out-Null; Refresh-Path }
 if (-not (Have node)) { throw "Node.js is still not on PATH. Close and reopen PowerShell, then re-run setup.ps1." }
 $nodeVer = (node --version)
-if ([int]($nodeVer.TrimStart("v").Split(".")[0]) -lt 20) { throw "Node $nodeVer is too old; Foreman needs Node 20 or newer." }
+$nodeParts = $nodeVer.TrimStart("v").Split(".")
+$nodeOk = ([int]$nodeParts[0] -gt 22) -or ([int]$nodeParts[0] -eq 22 -and [int]$nodeParts[1] -ge 13)
+if (-not $nodeOk) { throw "Node $nodeVer is too old; Foreman needs Node 22.13 or newer (it uses Node's built-in SQLite). Install the LTS from https://nodejs.org and re-run." }
 Ok "Node $nodeVer, git $((git --version) -replace 'git version ','')"
 
 Step "2/7 Code"

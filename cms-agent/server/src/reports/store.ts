@@ -41,7 +41,7 @@ export function storeFile(name: string, buf: Buffer, opts: { mime?: string; deal
 }
 
 export function listFiles(): FileRow[] {
-  return db.prepare("SELECT * FROM files ORDER BY created_at DESC LIMIT 100").all() as FileRow[];
+  return db.prepare("SELECT * FROM files ORDER BY created_at DESC LIMIT 100").all() as unknown as FileRow[];
 }
 export function getFile(id: string): FileRow | undefined {
   return db.prepare("SELECT * FROM files WHERE id = ?").get(id) as FileRow | undefined;
@@ -89,7 +89,7 @@ export function buildReport(fileId: string, kind?: ReportKind, opts: { title?: s
 }
 
 export function listReports(kind?: ReportKind): Omit<ReportRow, "summary">[] {
-  const rows = (kind ? db.prepare("SELECT * FROM reports WHERE kind = ? ORDER BY created_at DESC LIMIT 100").all(kind) : db.prepare("SELECT * FROM reports ORDER BY created_at DESC LIMIT 100").all()) as ReportRow[];
+  const rows = (kind ? db.prepare("SELECT * FROM reports WHERE kind = ? ORDER BY created_at DESC LIMIT 100").all(kind) : db.prepare("SELECT * FROM reports ORDER BY created_at DESC LIMIT 100").all()) as unknown as ReportRow[];
   return rows.map(({ summary: _s, ...r }) => r);
 }
 export function getReport(id: string): ReportRow | undefined {

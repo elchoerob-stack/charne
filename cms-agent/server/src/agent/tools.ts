@@ -124,9 +124,9 @@ export const TOOLS: AgentTool[] = [
     },
     async (input) => {
       const where: string[] = [];
-      const args: unknown[] = [];
-      if (input.dealer) { where.push("dealer = ?"); args.push(input.dealer); }
-      if (input.purpose) { where.push("purpose = ?"); args.push(input.purpose); }
+      const args: string[] = [];
+      if (input.dealer) { where.push("dealer = ?"); args.push(String(input.dealer)); }
+      if (input.purpose) { where.push("purpose = ?"); args.push(String(input.purpose)); }
       const rows = db.prepare(`SELECT id, title, dealer, purpose, recorded_by, started_at, event_count FROM recordings ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY created_at DESC LIMIT 25`).all(...args);
       return rows;
     },

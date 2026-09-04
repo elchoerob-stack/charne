@@ -14,7 +14,7 @@ interface LearnedRow { id: string; case_id: string; title: string; symptoms: str
 
 reviewRoutes.get("/review", (_req, res) => {
   const since = new Date(Date.now() - 7 * 86400000).toISOString();
-  const learned = (db.prepare("SELECT * FROM learned_playbooks ORDER BY confirmations DESC, created_at DESC").all() as LearnedRow[]).map((r) => {
+  const learned = (db.prepare("SELECT * FROM learned_playbooks ORDER BY confirmations DESC, created_at DESC").all() as unknown as LearnedRow[]).map((r) => {
     const c = db.prepare("SELECT dealer, symptom, resolution, updated_at FROM cases WHERE id = ?").get(r.case_id) as { dealer: string | null; symptom: string; resolution: string | null; updated_at: string } | undefined;
     return { id: r.id, caseId: r.case_id, title: r.title, symptoms: JSON.parse(r.symptoms) as string[], resolution: JSON.parse(r.resolution) as string[], confirmations: r.confirmations, created: r.created_at, dealer: c?.dealer, caseSymptom: c?.symptom, caseResolution: c?.resolution, lastSeen: c?.updated_at };
   });

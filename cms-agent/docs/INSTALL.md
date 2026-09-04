@@ -40,7 +40,7 @@ Hosting it somewhere always on (a NAS, a VPS, Railway/Render/Fly): from the
 
 ## The long way — the server on your computer (about 15 minutes)
 
-1. **Install Node.js 22 LTS.** Download from https://nodejs.org (the "LTS"
+1. **Install Node.js 22 LTS or newer** (22.13+ required; Node 24 is fine). Download from https://nodejs.org (the "LTS"
    button), run the installer, accept defaults. Open a new PowerShell window
    and check:
    ```powershell
@@ -60,9 +60,9 @@ Hosting it somewhere always on (a NAS, a VPS, Railway/Render/Fly): from the
    ```powershell
    npm install
    ```
-   `better-sqlite3` ships prebuilt binaries for Windows; if you see a build
-   error, install "Desktop development with C++" from the Visual Studio Build
-   Tools and run `npm install` again.
+   Foreman has no native dependencies — it uses Node's own built-in SQLite —
+   so there is nothing to compile and no Visual Studio needed. If `npm install`
+   fails, the message names the package; send it over.
 5. **Configure.** Copy `.env.example` to `.env` and open it in Notepad:
    ```powershell
    copy .env.example .env

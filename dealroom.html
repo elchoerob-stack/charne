@@ -508,7 +508,7 @@ const ICON = {
 const P = {
   charne:    { name:"Charné Snyman",   ini:"CS", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0114", email:"charne@rbbrand.co.za" },
   riaan:     { name:"Riaan Brand",     ini:"RB", kind:"Principal",   role:"principal",   org:"RB Brand Real Estate", mobile:"083 555 0100", email:"riaan@rbbrand.co.za" },
-  rassie:    { name:"Rassie Nel",      ini:"RN", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0119", email:"rassie@rbbrand.co.za" },
+  rassie:    { name:"Rassie Venter",   ini:"RV", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0119", email:"rassie@rbbrand.co.za" },
   lerato:    { name:"Lerato Dube",     ini:"LD", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"071 555 0127", email:"lerato@rbbrand.co.za" },
   pieter:    { name:"Pieter Naudé",    ini:"PN", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0143", email:"pieter@rbbrand.co.za" },
   thabo:     { name:"Thabo Mokoena",   ini:"TM", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"073 555 0198", email:"t.mokoena@gmail.com" },
@@ -1880,11 +1880,15 @@ function houseCardMini(l){
     </span></button>`;
 }
 function manualCardMini(c){
-  const doneN = c.checklist.filter(x => x[1]).length;
+  const doneN = c.checklist.filter(x => x[1]).length, ld = c.lead;
   return `<button class="tcard" data-act="card" data-kind="manual" data-id="${c.id}" data-drag="free">
     ${c.labels.length ? `<span class="labels">${c.labels.map(k => { const L3 = labChip(k); return L3 ? `<span class="lab" style="background:${L3.col}" title="${esc(L3.name)}"></span>` : ""; }).join("")}</span>` : ""}
     <span class="tt">${esc(c.title)}</span>
+    ${ld && (ld.suburb || ld.erf) ? `<span class="sub">${esc([ld.suburb, ld.erf ? "Erf " + ld.erf : ""].filter(Boolean).join(" · "))}</span>` : ""}
     <span class="meta">
+      ${ld && ld.owners.length ? `<span class="mi">${ICON.people} ${ld.owners.length}</span>` : ""}
+      ${ld && ld.url ? `<span class="mi">${ICON.eye} P24</span>` : ""}
+      ${c.done ? `<span class="mi">${ICON.check} done</span>` : ""}
       ${c.checklist.length ? `<span class="mi">${ICON.check} ${doneN}/${c.checklist.length}</span>` : ""}
       ${(c.comments || []).length ? `<span class="mi">${ICON.chat} ${c.comments.length}</span>` : ""}
       ${(c.files || []).length ? `<span class="mi">${ICON.file} ${c.files.length}</span>` : ""}
@@ -1976,10 +1980,30 @@ function renderModal(){
     const c = S.board.cards.find(x => x.id === id);
     if (!c) return closeCard();
     title = c.title; sub = (listsOf(curBoard()).find(x => x.id === c.list) || { name:"" }).name;
-    const doneN = c.checklist.filter(x => x[1]).length;
+    const doneN = c.checklist.filter(x => x[1]).length, ld = c.lead;
+    if (ld && (ld.suburb || ld.erf)) sub += " · " + [ld.suburb, ld.erf ? "Erf " + ld.erf : ""].filter(Boolean).join(" · ");
     body = `
-      <div class="mblock"><div class="eyebrow">Notes</div>
-        <textarea id="cdesc" style="min-height:64px" placeholder="Add a note…">${esc(c.desc || "")}</textarea></div>
+      ${ld ? `<div class="mblock"><div class="eyebrow">The property</div>
+        <p style="margin:0;font-size:13px"><b>${esc(ld.address || c.title)}</b>${ld.suburb ? `, ${esc(ld.suburb)}` : ""}${ld.erf ? ` <span class="chip c-mute mono">Erf ${esc(ld.erf)}</span>` : ""}</p>
+        ${ld.url ? `<a class="btn btn-s" style="display:inline-flex;margin-top:9px;text-decoration:none" href="${esc(ld.url)}" target="_blank" rel="noopener">${ICON.eye} Open the listing ↗</a>` : ""}</div>
+      <div class="mblock"><div class="eyebrow">The owner</div>
+        ${ld.owners.length ? ld.owners.map(o => `<div class="check" style="flex-direction:column;align-items:stretch;gap:6px">
+          <b style="font-size:13px">${esc(o.name || "Owner")}</b>
+          ${o.phones.map(ph => `<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+            <span class="mono" style="font-size:12.5px">${esc(ph.n)}</span>${ph.note ? `<span style="font-size:11.5px;color:var(--t3)">— ${esc(ph.note)}</span>` : ""}
+            <span style="flex:1"></span>
+            <a class="btn btn-s" style="text-decoration:none" href="tel:+${waNumber(ph.n)}">Call</a>
+            <a class="btn btn-g btn-s" style="text-decoration:none" href="https://wa.me/${waNumber(ph.n)}" target="_blank" rel="noopener">${ICON.chat} WhatsApp</a></div>`).join("")}
+          ${o.email ? `<a class="mono" style="font-size:12px" href="mailto:${esc(o.email)}">${esc(o.email)}</a>` : ""}
+        </div>`).join("") : `<p style="margin:0;font-size:12.5px;color:var(--t2)">No owner details on this card yet.</p>`}</div>
+      <div class="mblock"><div class="eyebrow">Log a call</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="clog" placeholder="What happened — no answer, WhatsApp sent, sole mandate till March…" style="flex:2;min-width:180px">
+          <input type="date" id="clognext" title="Next reminder" style="flex:1;min-width:130px">
+          <button class="btn btn-p btn-s" data-act="clog">Log it</button></div>
+        <p style="margin:6px 0 0;font-size:11px;color:var(--t3)">Adds a dated line to the notes and, if you give a date, moves the reminder.</p></div>` : ""}
+      <div class="mblock"><div class="eyebrow">${ld ? "Notes and feedback" : "Notes"}</div>
+        <textarea id="cdesc" style="min-height:${ld ? 110 : 64}px" placeholder="Add a note…">${esc(c.desc || "")}</textarea></div>
       <div class="mblock"><div class="eyebrow">Checklist${c.checklist.length ? ` — ${doneN} of ${c.checklist.length}` : ""}</div>
         ${c.checklist.length ? `<div class="bar-mini"><i style="width:${doneN / c.checklist.length * 100}%"></i></div>` : ""}
         ${c.checklist.map((x, i) => `<div class="check ${x[1] ? "on" : ""}">
@@ -3378,6 +3402,15 @@ document.addEventListener("click", e => {
     c.activity.push({ who:S.me, ts:new Date().toISOString(), what:`${on ? "took" : "put"} ${m === S.me ? "themselves" : P[m].name.split(" ")[0]} ${on ? "off" : "on"} this card` });
     renderModal(); save(); }
   else if (a === "cfile"){ pending = { cardFile:S.card.id }; fileInput.click(); }
+  else if (a === "clog"){ const c = S.board.cards.find(x => x.id === S.card.id);
+    const what = (document.getElementById("clog") || {}).value || "", next = (document.getElementById("clognext") || {}).value;
+    if (!what.trim() && !next){ toast("Say what happened, or set the next date"); return; }
+    const now = new Date(), stamp = String(now.getDate()).padStart(2, "0") + "/" + String(now.getMonth() + 1).padStart(2, "0");
+    c.desc = (document.getElementById("cdesc").value || c.desc || "").trim();
+    if (what.trim()) c.desc = (c.desc ? c.desc + "\n" : "") + `${stamp} ${what.trim()}${next ? " — reminder " + dstr(next) : ""}`;
+    if (next){ c.due = new Date(next).toISOString(); c.done = false; }
+    c.activity.push({ who:S.me, ts:now.toISOString(), what:what.trim() ? "logged a call" : "moved the reminder" });
+    renderModal(); save(); toast(next ? "Logged — reminder set for " + dstr(next) : "Logged"); }
   else if (a === "cunfile"){ const c = S.board.cards.find(x => x.id === S.card.id);
     c.files.splice(+btn.dataset.i, 1); renderModal(); save(); }
   else if (a === "ccomment"){ const c = S.board.cards.find(x => x.id === S.card.id);
@@ -3399,8 +3432,12 @@ document.addEventListener("click", e => {
     S.board.cards = S.board.cards.filter(x => x.id !== S.card.id); closeCard(); toast("Card deleted"); render(); }
   else if (a === "syncin"){ syncSignIn(); }
   else if (a === "reset"){
-    if (confirm("Reset the demo? Every deal room goes back to how it started, and any room you created is removed.")){
-      S = fresh(); render(); toast("Demo reset"); }
+    if (confirm("Reset the demo? Every deal room goes back to how it started, and any room you created is removed.\n\nBoards you brought across from Trello are kept.")){
+      const keepB = S.boards.filter(b => b.kind !== "pipeline"), keepIds = new Set(keepB.map(b => b.id));
+      const keepC = S.board.cards.filter(c => keepIds.has(c.board)), people = S.people, next = S.board.next;
+      S = fresh(); S.boards.push(...keepB); S.board.cards.push(...keepC); S.board.next = Math.max(S.board.next, next);
+      S.people = people; Object.assign(P, people);
+      render(); toast("Demo reset"); }
   }
 });
 document.getElementById("rolebtn").addEventListener("click", e => {
@@ -3486,6 +3523,73 @@ trelloImport.addEventListener("change", () => {
   };
   r.readAsText(f);
 });
+/* ══ Reading a prospecting card ═════════════════════════════════════
+   The team's cards carry a listing link, the erf and address, the owner's
+   names and numbers and dated call notes — all as text pasted in from
+   WhatsApp. This pulls the structure back out, so a card can show the
+   owner's number as a button and the notes as notes. Whatever it cannot
+   place stays in the notes; the original text is kept on the card. */
+const SA_PHONE = /^(?:\+27|0)\s?\d{2}[\s-]?\d{3}[\s-]?\d{4}/;
+const SUBURBS = ["Faerie Glen", "Garsfontein", "Equestria", "Moreleta Park", "Murrayfield", "The Hills", "Wapadrand", "Olympus",
+  "Lynnwood", "Silver Lakes", "Woodlands", "Tijger Vallei", "Silverton", "Boardwalk", "Pretoria East", "Pretoria", "Centurion",
+  "Constantia Park", "Elardus Park", "Waterkloof", "Menlo Park", "Die Wilgers", "Willow Park Manor", "Lynnwood Ridge", "Rietvalleirand"];
+const tidyCase = w => w.replace(/^([A-Z][A-Z'’&-]+)(?=[,.]?$)/, m => m[0] + m.slice(1).toLowerCase());
+const tidy = str => String(str).split(/\s+/).map(tidyCase).join(" ");
+function readLead(name, desc){
+  const clean = String(desc)
+    .replace(/\[([^\]]*)\]\((\S+?)(?:\s+"[^"]*")?\)/g, (m, txt, url) => /^https?:/.test(url) && !/^mailto:/.test(url) ? url : txt)
+    .replace(/^\s*\[[^\]\n]{3,40}\]\s*[^:\n]{0,60}?:\s*/gm, "")             // "[09/04, 08:15] Someone at the office:"
+    .replace(/[\u200c\u200b\u00a0]/g, " ").replace(/\\\*|\*|_{1,2}|^#+\s*/gm, "");
+  const lines = clean.split("\n").map(l => l.trim());
+  const kind = l => !l ? "blank" : /^https?:\/\//i.test(l) ? "url" : /^erf\s+[\w\/]+/i.test(l) ? "erf"
+    : SA_PHONE.test(l) ? "phone" : /\S+@\S+\.\S+/.test(l) ? "email" : "text";
+  const kinds = lines.map(kind);
+  const nextK = i => { for (let j = i + 1; j < lines.length; j++) if (kinds[j] !== "blank") return kinds[j]; return "blank"; };
+  let url = "", erf = "", addr = [], owners = [], notes = [], cur = null, inAddr = false, addrDone = false;
+  lines.forEach((l, i) => {
+    const k = kinds[i];
+    if (k === "url"){ if (!url) url = l.replace(/[)\s]+$/, ""); return; }
+    if (k === "erf"){ const m = l.match(/^erf\s+([\w\/]+)/i); if (!erf) erf = m[1]; inAddr = !addrDone; return; }
+    if (k === "phone"){
+      const m = l.match(SA_PHONE), note = l.slice(m[0].length).replace(/^[\s:–-]+/, "");
+      if (!cur){ cur = { name:"", phones:[], email:"" }; owners.push(cur); }
+      cur.phones.push({ n:m[0].replace(/\s|-/g, ""), note }); inAddr = false; addrDone = true; return; }
+    if (k === "email"){ const m = l.match(/\S+@\S+\.\S+/);
+      if (!cur){ cur = { name:"", phones:[], email:"" }; owners.push(cur); }
+      if (!cur.email) cur.email = m[0].replace(/^mailto:/, "").replace(/[),.]+$/, ""); inAddr = false; addrDone = true; return; }
+    if (k === "blank"){ if (inAddr && addr.length){ inAddr = false; addrDone = true; } return; }
+    // a line of text: an owner if a number or an email follows it
+    const nk = nextK(i);
+    if (nk === "phone" || nk === "email"){
+      const nm = l.replace(/^[\s*]+|[\s*]+$/g, "");
+      const parts = nm.split(",").map(x => x.trim());
+      cur = { name:tidy(parts.length === 2 ? parts[1] + " " + parts[0] : nm), phones:[], email:"" };
+      owners.push(cur); inAddr = false; addrDone = true; return; }
+    if ((inAddr || (!addrDone && i === kinds.findIndex(x => x !== "blank" && x !== "url"))) && !/:$/.test(l) && l.length < 60){
+      addr.push(l); inAddr = true; return; }
+    notes.push(l);
+  });
+  // the title, when the description had no address block
+  const tparts = String(name).split(/\n|\s{2,}/).map(x => x.trim()).filter(Boolean);
+  let tAddr = tparts.filter(x => !/^erf\s+[\w\/]+$/i.test(x));
+  if (!erf){ const m = String(name).match(/\berf\s+([\w\/]+)/i); if (m) erf = m[1]; }
+  if (!addr.length){
+    if (tAddr.length === 1){
+      let one = tAddr[0].replace(/^\d+\s+erf\s+[\w\/]+\s+/i, "").replace(/^erf\s+[\w\/]+\s+/i, "");
+      const sb = SUBURBS.find(sname => new RegExp("\\s" + sname.replace(/\s/g, "\\s") + "\\s*$", "i").test(one));
+      if (sb) one = one.replace(new RegExp("\\s" + sb.replace(/\s/g, "\\s") + "\\s*$", "i"), "");
+      addr = one ? [one] : []; if (sb) addr.push(sb);
+    } else addr = tAddr;
+  }
+  let suburb = "";
+  const known = l => SUBURBS.some(sname => l.toLowerCase().startsWith(sname.toLowerCase()));
+  if (addr.length >= 2 && (known(addr[addr.length - 1]) || addr.length >= 3)) suburb = addr.pop();
+  const address = addr.map(tidy).join(", ").replace(/\s*,\s*/g, ", ");
+  const isLead = !!(url || erf || owners.length);
+  const notesTxt = notes.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { isLead, url, erf, address, suburb:tidy(suburb), owners, notes:notesTxt || (isLead ? "" : String(desc)),
+    title:isLead && address ? address : String(name).replace(/\s*\n\s*/g, ", ").replace(/\s{2,}/g, ", ").trim() };
+}
 function adoptTrello(t){
   if (!t || !Array.isArray(t.lists) || !Array.isArray(t.cards))
     throw new Error("no lists or cards in the file");
@@ -3510,22 +3614,41 @@ function adoptTrello(t){
         .map(ci => [ci.name, ci.state === "complete"]));
   });
 
-  let n = 0;
-  t.cards.filter(c => !c.closed && known.has(listBy[c.idList])).forEach(c => {
-    S.board.cards.push({
-      id:"c" + (S.board.next++), board:bid, list:listBy[c.idList],
-      title:c.name || "Untitled card", desc:c.desc || "",
+  const listPos = Object.fromEntries(t.lists.map(l => [l.id, l.pos || 0]));
+  const incoming = t.cards.filter(c => !c.closed && known.has(listBy[c.idList])).map(c => {
+    const lead = readLead(c.name || "", c.desc || "");
+    return { src:c, lead, card:{
+      id:null, board:bid, list:listBy[c.idList],
+      title:lead.title || c.name || "Untitled card", desc:lead.notes,
+      lead:lead.isLead ? { erf:lead.erf, address:lead.address, suburb:lead.suburb, url:lead.url, owners:lead.owners, raw:c.desc || "" } : null,
       labels:(c.labels || []).map(l => ({ name:l.name || l.color || "Label", col:TRELLO_COL[l.color] || "#8A8A94" })),
       members:(c.idMembers || []).map(id => memberBy[id]).filter(Boolean),
-      due:c.due || null, checklist:checksBy[c.id] || [], pos:c.pos || 0,
-      files:[], comments:[], activity:[{ who:S.me, ts:new Date().toISOString(), what:"brought this card across from Trello" }],
-    });
-    n++;
+      due:c.due || null, done:!!c.dueComplete, checklist:checksBy[c.id] || [], pos:c.pos || 0,
+      files:[], comments:[], activity:[{ who:S.me, ts:new Date().toISOString(), what:"brought this card across from Trello" }] } };
   });
+  /* The same property pasted twice — once when it was a new call, again
+     when it became a follow-up — becomes one card in the later list. */
+  const byKey = {}, merged = [];
+  incoming.forEach(x => {
+    const k = x.lead.url || (x.lead.erf && x.lead.suburb ? x.lead.erf + "|" + x.lead.suburb.toLowerCase() : null);
+    if (!k) return merged.push(x);
+    const prev = byKey[k];
+    if (!prev){ byKey[k] = x; merged.push(x); return; }
+    const later = listPos[x.src.idList] >= listPos[prev.src.idList] ? x : prev, earlier = later === x ? prev : x;
+    const a = later.card, b = earlier.card;
+    if (b.desc && !a.desc.includes(b.desc)) a.desc = (a.desc ? a.desc + "\n\n" : "") + b.desc;
+    if (a.lead && b.lead) b.lead.owners.forEach(o => { if (!a.lead.owners.some(p => p.name === o.name)) a.lead.owners.push(o); });
+    a.members = [...new Set([...a.members, ...b.members])];
+    a.activity.push({ who:S.me, ts:new Date().toISOString(), what:`folded in a duplicate card from "${(t.lists.find(l => l.id === earlier.src.idList) || {}).name || "another list"}"` });
+    if (later !== prev){ merged[merged.indexOf(prev)] = later; byKey[k] = later; }
+  });
+  let n = 0, leads = 0;
+  merged.forEach(x => { x.card.id = "c" + (S.board.next++); S.board.cards.push(x.card); n++; if (x.card.lead) leads++; });
   if (!lists.length) throw new Error("every list in that board is archived");
   S.boards.push({ id:bid, name:t.name || "Imported board", kind:"custom", lists, owner:S.me, shared:[] });
   S.boardId = bid; S.view = "board"; S.card = null;
-  toast(`${t.name || "Board"} brought across — ${n} card${n === 1 ? "" : "s"} in ${lists.length} lists`);
+  const dup = incoming.length - n;
+  toast(`${t.name || "Board"} brought across — ${n} card${n === 1 ? "" : "s"} in ${lists.length} lists${dup ? `, ${dup} duplicate${dup > 1 ? "s" : ""} folded in` : ""}`);
   render(); window.scrollTo({ top:0 });
 }
 

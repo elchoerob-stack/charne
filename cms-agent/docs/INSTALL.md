@@ -164,3 +164,16 @@ Restart Foreman. The database (`server\data\`) is kept.
 | Promoted playbooks | `cms-agent\server\knowledge\playbooks.custom.json` |
 | Eval cases and results | `cms-agent\server\eval\` |
 | Settings | `cms-agent\server\.env` |
+
+## Known dependency advisories
+
+`npm audit` reports a few findings on a fresh install. Current status:
+
+| Package | Severity | Status |
+|---|---|---|
+| nodemailer | high | **Fixed** — upgraded to 10.x |
+| xlsx (SheetJS) | high | Not fixed on npm. The npm registry copy is frozen at 0.18.5; SheetJS publishes patched builds only from `cdn.sheetjs.com`. The advisories (prototype pollution, ReDoS) apply when parsing a **hostile** workbook. Foreman parses exports you generate from CMS yourself, so the practical exposure is low. To pin the patched build anyway: `npm i https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` — note this makes `npm install` depend on that CDN being reachable. |
+| express / body-parser / qs | moderate | Not fixed. The patched `qs` only arrives via Express 5, whose router (path-to-regexp v8) drops the inline pattern syntax used by the report-download route, so the upgrade is a real refactor rather than a version bump. The advisories are denial-of-service and parameter-parsing bypasses against a server that, in this deployment, listens on your LAN behind an access token. |
+
+Neither remaining item blocks use. Revisit if Foreman is ever exposed to the
+public internet or fed workbooks from outside the dealer group.

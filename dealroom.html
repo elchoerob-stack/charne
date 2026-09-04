@@ -538,14 +538,19 @@ const P = {
   karin:     { name:"Karin Smit",      ini:"KS", kind:"Buyer",       role:"buyer",       org:"Purchaser",  mobile:"079 555 0159", email:"karin.smit@gmail.com" },
   andre:     { name:"André Venter",    ini:"AV", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"081 555 0182", email:"aventer@gmail.com" },
   susan:     { name:"Susan Meyer",     ini:"SM", kind:"Seller",      role:"seller",      org:"Registered owner", mobile:"082 555 0192", email:"susanm@gmail.com" },
+  jacques:   { name:"Jacques",         ini:"JA", kind:"Admin",       role:"admin",       org:"RB Brand Real Estate · setting up", mobile:"—", email:"—" },
 };
 const COL = r => `var(--p-${r})`;
-const isPrincipal = id => !!P[id] && P[id].kind === "Principal";
+/* Oversight (progress, houses, the team) is the principal's and the admin's.
+   Money is the principal's alone; the staff list is the admin's alone. */
+const isOwner = id => !!P[id] && P[id].kind === "Principal";
+const isAdmin = id => !!P[id] && P[id].role === "admin";
+const isPrincipal = id => isOwner(id) || isAdmin(id);
 /* Charné and Rassie work as a pair: separate files, one shared board. */
 const TEAM = ["charne", "rassie"];
 const inTeam = id => TEAM.includes(id);
 const teamOf = id => inTeam(id) ? TEAM : [id];
-const STAFF = ["charne", "rassie", "riaan", "lerato"];
+const STAFF = ["charne", "rassie", "riaan", "lerato", "jacques"];
 [["hendrik","Hendrik Meyer","Buyer"],["annelie","Annelie Roux","Seller"],
  ["zanele","Zanele Mthembu","Buyer"],["kobus","Kobus Grobler","Seller"],
  ["fatima","Fatima Ismail","Buyer"],["deon","Deon Swanepoel","Seller"],
@@ -883,7 +888,7 @@ const SEED_RECEIPTS = () => {
 /* ══ State ══════════════════════════════════════════════════════════ */
 const KEY = "rb_dealroom_v4";
 let S;
-const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{},
+const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{}, prefill:null, staff:null,
   card:null, send:null, form:null, signing:null, rev:{}, money:{}, receipts:SEED_RECEIPTS(), boardFilter:null, boardId:"pipeline",
   boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
   board:{ cards:SEED_CARDS.map(c => ({ ...c, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
@@ -900,7 +905,12 @@ function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r
   if (!S.boards) { S.boards = fresh().boards; S.boardId = "pipeline"; }
   S.board.cards.forEach(c => { if (!c.board) c.board = "pipeline";
     c.files = c.files || []; c.comments = c.comments || []; c.activity = c.activity || []; });
-  S.card = null; S.send = null; S.form = null; S.signing = null;
+  S.card = null; S.send = null; S.form = null; S.signing = null; S.prefill = null;
+  /* The roster: who works here and how far they see. Seeded from the demo
+     team, then whatever the admin adds. People added here also join the
+     identity switcher so they can be tried out before the project is live. */
+  if (!S.staff) S.staff = STAFF.map(id => ({ as:id, role:P[id].role, since:new Date().toISOString() }));
+  S.staff.forEach(x => { if (P[x.as] && !STAFF.includes(x.as)) STAFF.push(x.as); });
   Object.assign(P, S.people);                      // parties added on new deals survive a reload
   if (!P[S.me]) S.me = "charne"; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
@@ -992,14 +1002,15 @@ function dealViews(){
   if (staff) v.push(DEAL_VIEWS_DOCS);
   return v.concat(DEAL_VIEWS_BASE.slice(1));
 }
-const homeView = () => isPrincipal(S.me) || me().role === "agent" ? "today" : myDeals().length ? "portfolio" : "listings";
+const homeView = () => isAdmin(S.me) ? "staff" : isPrincipal(S.me) || me().role === "agent" ? "today" : myDeals().length ? "portfolio" : "listings";
 function navItems(){
   if (S.deal) return dealViews();
   if (S.listing) { const v = [{ id:"house", label:"The house", short:"House", ic:"house" }];
     if (canDocs()) v.push(DEAL_VIEWS_DOCS);
     return v; }
   const v = [], r = me().role;
-  if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  if (r === "admin") v.push({ id:"staff", label:"Staff & access", short:"Staff", ic:"shield" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  else if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
     v.push({ id:"today", label:"Today", short:"Today", ic:"home" });
     if (r === "agent") v.push({ id:"money", label:"Money", short:"Money", ic:"key" },
@@ -1048,7 +1059,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1059,6 +1070,8 @@ function renderChrome(){
     return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
   }).join("") + `<div class="rail-note" style="text-align:left">${syncPill()}
     ${sync.needsSignIn ? `<button class="btn btn-s" data-act="syncin" style="margin:9px 0 4px">Sign in to sync</button>` : ""}
+    ${sync.status === "pending" ? `<div style="margin-top:8px">Signed in as <b>${esc(sync.user && sync.user.email || "")}</b>. An admin has to approve you before the team's work appears — nothing to do but wait. <button class="btn btn-s" data-act="syncout" style="margin-top:6px">Sign out</button></div>` : ""}
+    ${sync.on ? `<div style="margin-top:8px">Signed in as <b>${esc(sync.user && sync.user.email || "")}</b> <button class="btn btn-s" data-act="syncout" style="margin-left:4px">Sign out</button></div>` : ""}
     <div style="margin-top:9px"></div><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
 
   /* A phone shows five slots. If there are more views than that, the fifth
@@ -1106,8 +1119,13 @@ function renderPop(){
       ${disabled ? `<span class="chip c-mute">Not joined</span>` : ""}</button>`;
   const el = document.createElement("div");
   el.className = "pop"; el.setAttribute("role", "menu");
+  if (sync.as){
+    el.innerHTML = `<div class="pop-h eyebrow">Signed in</div>${row(sync.as, `${P[sync.as].kind} · ${esc(sync.user && sync.user.email || "")}`)}
+      <button class="pop-i" data-act="syncout" role="menuitem"><span class="n"><b>Sign out</b><span>Back to the sign-in screen</span></span></button>`;
+    document.body.appendChild(el); return;
+  }
   el.innerHTML = `<div class="pop-h eyebrow">RB Brand team</div>`
-    + STAFF.map(id => row(id, `${P[id].kind} · ${Object.values(S.deals).filter(x => x.meta.agent === id).length || "all"} deal rooms`)).join("")
+    + STAFF.map(id => row(id, `${P[id].kind} · ${isAdmin(id) ? "manages access" : (Object.values(S.deals).filter(x => x.meta.agent === id).length || "all") + " deal rooms"}`)).join("")
     + (d ? `<div class="pop-group eyebrow">In this deal room</div>`
         + ["buyer", "seller", "conveyancer"].map(r => row(d.meta[r], `${P[d.meta[r]].kind} · ${d.access[r] === "joined" ? "joined" : d.access[r] === "invited" ? "invite sent" : "not invited"}`, d.access[r] !== "joined")).join("")
         + (d.extra || []).map(x => row(x.person, `${EXTRA_ROLES[x.preset].label} · ${x.status === "joined" ? "joined" : "invite sent"}`, x.status !== "joined")).join("") : "")
@@ -1155,6 +1173,61 @@ function vPortfolio(){
     ${me().role === "agent" ? `<div><button class="btn btn-g" data-act="view" data-v="new">${ICON.plus} Open a new deal room</button></div>` : ""}
     <div class="deals">${filtered.map(dealCard).join("")}</div>
     ${filtered.length ? "" : `<div class="empty"><b>No deal rooms yet</b>Open one from a signed offer and invite the parties to it.</div>`}
+  </div>`;
+}
+
+/* ══ View: staff & access (admin) ═══════════════════════════════════
+   Locally this is the roster. With the project connected it is the real
+   door: someone signs in with Google, appears here as a request, and has
+   access from the moment the admin approves them — and none from the
+   moment they are removed. ═════════════════════════════════════════ */
+const ROLE_LABEL = { agent:"Agent", principal:"Principal", admin:"Admin" };
+function vStaff(){
+  const roster = S.staff || [], live = sync.on && sync.role === "admin";
+  const req = sync.requests || [], staff = sync.staff || [];
+  const roleSel = (id, cur) => `<select data-role="${id}" style="width:auto">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${v}</option>`).join("")}</select>`;
+  const asSel = (id, cur) => `<select data-as="${id}" style="width:auto"><option value="">Someone new</option>${STAFF.filter(x => P[x]).map(x => `<option value="${x}" ${x === cur ? "selected" : ""}>${esc(P[x].name)}</option>`).join("")}</select>`;
+  return `<div class="stack">
+    <div class="sec-h"><h2>Staff &amp; access</h2><p>${live ? "Live — approving someone here is what lets them in" : sync.on ? "Connected, but only an admin can manage access" : "Not connected to the project yet — this is the roster the demo uses"}</p></div>
+    <div class="note">${ICON.shield}<div><b>How access works.</b> Each person signs in once with Google. Until an admin approves them here they see nothing of the team's work. Remove someone and their access ends immediately, on every device. To hand over, make Charné an admin and then remove yourself.</div></div>
+
+    ${live ? `<div class="card"><div class="card-h">${ICON.people}<h2>Waiting for approval</h2>${req.length ? `<span class="chip c-wait">${req.length}</span>` : `<span class="chip c-go">Nobody waiting</span>`}</div>
+      <div class="card-b">${req.length ? req.map(x => `<div class="person">
+        <span class="av" style="background:var(--p-buyer)">${esc((x.name || x.email || "?").slice(0, 2).toUpperCase())}</span>
+        <div class="pi"><b>${esc(x.name || "No name")}</b><span class="mono">${esc(x.email || "")} · signed in ${ago(new Date(x.ts || Date.now()).toISOString())}</span></div>
+        <span style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">${asSel(x.uid, x.as || "")}${roleSel(x.uid, "agent")}
+          <button class="btn btn-g btn-s" data-act="approve" data-u="${x.uid}">${ICON.check} Approve</button>
+          <button class="btn btn-s" data-act="decline" data-u="${x.uid}">Decline</button></span></div>`).join("")
+        : `<div class="empty"><b>Nobody waiting</b>When someone opens the app and signs in with Google, they appear here.</div>`}</div></div>
+
+    <div class="card"><div class="card-h">${ICON.check}<h2>Has access</h2><span class="chip c-mute">${staff.length}</span></div>
+      <div class="card-b">${staff.map(x => `<div class="person">
+        ${x.as && P[x.as] ? avatar(x.as, 38) : `<span class="av" style="width:38px;height:38px;background:var(--p-principal)">${esc((x.name || "?").slice(0, 2).toUpperCase())}</span>`}
+        <div class="pi"><b>${esc(x.name || (x.as && P[x.as] ? P[x.as].name : "Unnamed"))}</b><span class="mono">${esc(x.email || "")}${x.as && P[x.as] ? " · works as " + esc(P[x.as].name) : ""}</span></div>
+        <span class="chip ${x.role === "admin" ? "c-gold" : "c-mute"}">${ROLE_LABEL[x.role] || x.role}</span>
+        ${x.uid === sync.uid ? `<span class="chip c-go">You</span>` : `<span style="display:flex;gap:7px">${roleSel("s:" + x.uid, x.role)}<button class="btn btn-s" data-act="setrole" data-u="${x.uid}">Change</button><button class="btn btn-s" data-act="removestaff" data-u="${x.uid}" style="color:var(--stop)">Remove</button></span>`}
+      </div>`).join("")}</div></div>` : ""}
+
+    <div class="card"><div class="card-h">${ICON.team}<h2>${live ? "The roster in the app" : "The roster"}</h2><span class="chip c-mute">${roster.length}</span></div>
+      <div class="card-b">
+        <p style="margin:0 0 10px;font-size:12.5px;color:var(--t2)">Who the app knows as the team. ${live ? "Approvals above map a real sign-in onto one of these people." : "Add an agent here and they appear in the identity switcher straight away."}</p>
+        ${roster.map(x => P[x.as] ? `<div class="person">${avatar(x.as, 38)}
+          <div class="pi"><b>${esc(P[x.as].name)}</b><span>${esc(P[x.as].email)} · ${esc(P[x.as].mobile)}</span></div>
+          <span class="chip ${x.role === "admin" ? "c-gold" : "c-mute"}">${ROLE_LABEL[x.role] || x.role}</span>
+          ${x.as === S.me ? `<span class="chip c-go">You</span>` : `<span style="display:flex;gap:7px">${roleSel("r:" + x.as, x.role)}<button class="btn btn-s" data-act="rosterrole" data-p="${x.as}">Change</button><button class="btn btn-s" data-act="rosterdel" data-p="${x.as}" style="color:var(--stop)">Remove</button></span>`}
+        </div>` : "").join("")}
+        <form id="staffadd" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+          <div class="subhead" style="border:0;padding:0;margin:0 0 11px">Add someone to the team</div>
+          <div class="form">
+            <div class="field"><label for="sa_name">Full name</label><input type="text" id="sa_name" required placeholder="Mpho Sithole"></div>
+            <div class="field"><label for="sa_mail">Email</label><input type="email" id="sa_mail" placeholder="name@rbbrand.co.za"></div>
+            <div class="field"><label for="sa_mob">Mobile</label><input type="tel" id="sa_mob" placeholder="082 000 0000"></div>
+            <div class="field"><label for="sa_role">Role</label><select id="sa_role" style="width:100%">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></div>
+          </div>
+          <button type="submit" class="btn btn-g" style="margin-top:13px">${ICON.plus} Add to the team</button>
+        </form>
+      </div></div>
+    ${!sync.on ? `<div class="note">${ICON.warn}<div><b>Until the project is connected, this changes the demo only.</b> Once Charné and Rassie have signed in on the live link, their requests appear at the top of this screen and you approve them there.</div></div>` : ""}
   </div>`;
 }
 
@@ -1240,19 +1313,20 @@ function vTeam(){
 
 /* ══ View: open a new deal room ═════════════════════════════════════ */
 function vNew(){
-  const t = new Date().toISOString().slice(0, 10), b = d0(21).toISOString().slice(0, 10);
+  const t = new Date().toISOString().slice(0, 10), b = d0(21).toISOString().slice(0, 10), pf = S.prefill || {};
   return `<div class="stack">
     <div class="sec-h"><h2>Open a new deal room</h2><p>One sale, one room — sealed off from every other file</p></div>
+    ${pf.card ? `<div class="note">${ICON.board}<div><b>Carried across from the board.</b> The property and the seller are filled in from the prospecting card; add the purchaser and the attorney. The card stays on the board, linked to this room.</div></div>` : ""}
     <div class="card"><div class="card-b">
       <form id="newdeal">
         <div class="subhead">The property</div>
         <div class="form">
-          <div class="field wide"><label for="f_addr">Street address</label><input type="text" id="f_addr" required placeholder="18 Protea Avenue"></div>
-          <div class="field"><label for="f_area">Suburb</label><input type="text" id="f_area" required placeholder="Faerie Glen"></div>
-          <div class="field"><label for="f_city">Town or city</label><input type="text" id="f_city" required value="Pretoria East"></div>
-          <div class="field"><label for="f_price">Purchase price (R)</label><input type="number" id="f_price" required min="0" step="1000" placeholder="2450000"></div>
+          <div class="field wide"><label for="f_addr">Street address</label><input type="text" id="f_addr" required placeholder="18 Protea Avenue" value="${esc(pf.addr || "")}"></div>
+          <div class="field"><label for="f_area">Suburb</label><input type="text" id="f_area" required placeholder="Faerie Glen" value="${esc(pf.area || "")}"></div>
+          <div class="field"><label for="f_city">Town or city</label><input type="text" id="f_city" required value="${esc(pf.city || "Pretoria East")}"></div>
+          <div class="field"><label for="f_price">Purchase price (R)</label><input type="number" id="f_price" required min="0" step="1000" placeholder="2450000" value="${pf.price || ""}"></div>
           <div class="field"><label for="f_dep">Deposit (R)</label><input type="number" id="f_dep" min="0" step="1000" placeholder="245000"></div>
-          <div class="field wide"><label for="f_url">Listing link</label><input type="text" id="f_url" placeholder="https://www.rbbrandrealestate.co.za/..."><span class="hint">Optional — the buyer and seller can open the live listing from inside the room.</span></div>
+          <div class="field wide"><label for="f_url">Listing link</label><input type="text" id="f_url" placeholder="https://www.rbbrandrealestate.co.za/..." value="${esc(pf.url || "")}"><span class="hint">Optional — the buyer and seller can open the live listing from inside the room.</span></div>
           <div class="field"><label for="f_otp">Offer signed on</label><input type="date" id="f_otp" value="${t}"></div>
           <div class="field"><label for="f_bond">Bond condition due</label><input type="date" id="f_bond" value="${b}"><span class="hint">The suspensive date in the OTP.</span></div>
         </div>
@@ -1266,9 +1340,9 @@ function vNew(){
 
         <div class="subhead">The seller</div>
         <div class="form">
-          <div class="field"><label for="f_sname">Full name</label><input type="text" id="f_sname" required placeholder="Pieter en Anna Botha"></div>
-          <div class="field"><label for="f_smob">Mobile</label><input type="tel" id="f_smob" placeholder="082 000 0000"></div>
-          <div class="field"><label for="f_smail">Email</label><input type="email" id="f_smail" placeholder="name@email.co.za"></div>
+          <div class="field"><label for="f_sname">Full name</label><input type="text" id="f_sname" required placeholder="Pieter en Anna Botha" value="${esc(pf.sname || "")}"></div>
+          <div class="field"><label for="f_smob">Mobile</label><input type="tel" id="f_smob" placeholder="082 000 0000" value="${esc(pf.smob || "")}"></div>
+          <div class="field"><label for="f_smail">Email</label><input type="email" id="f_smail" placeholder="name@email.co.za" value="${esc(pf.smail || "")}"></div>
         </div>
 
         <div class="subhead">The transferring attorney</div>
@@ -1455,7 +1529,7 @@ function vDash(){
           <p style="margin:6px 0 0;font-size:12.5px;color:var(--t2)">${d.meta.type} · sold by ${esc(P[d.meta.seller].name)} to ${esc(P[d.meta.buyer].name)} · transfer handled by ${esc(d.meta.firm)}.</p>
           ${d.meta.listing ? `<a class="btn btn-s" style="display:inline-block;margin-top:11px;text-decoration:none" href="${esc(d.meta.listing)}" target="_blank" rel="noopener">View the live listing ↗</a>` : ""}
         </div>
-        <div class="specs">${d.meta.beds ? `<span><b>${d.meta.beds}</b> beds</span><span><b>${d.meta.baths}</b> baths</span><span><b>${d.meta.garages}</b> garages</span>` : ""}${d.meta.erf ? `<span><b>${d.meta.erf}</b> m² erf</span>` : ""}<span><b>${d.meta.ref}</b></span></div>
+        <div class="specs">${d.meta.beds ? `<span><b>${d.meta.beds}</b> beds</span><span><b>${d.meta.baths}</b> baths</span><span><b>${d.meta.garages}</b> garages</span>` : ""}${d.meta.erf ? `<span>Erf <b>${esc(d.meta.erf)}</b></span>` : ""}<span><b>${d.meta.ref}</b></span></div>
       </div>
       <div class="card">
         <div class="card-h">${ICON.log}<h2>Latest activity</h2></div>
@@ -1627,6 +1701,8 @@ function vHouse(){
   const openSlots = l.viewings.filter(v => !v.person), myView = l.viewings.find(v => v.person === S.me);
 
   return `<div class="stack">
+    ${l.fromCard && S.board.cards.some(c => c.id === l.fromCard) && (isAgent || r === "principal") ? `<div class="note">${ICON.board}<div style="flex:1"><b>Came off the prospecting board.</b> The calls that won this mandate are on the card.</div>
+      <button class="btn btn-s" data-act="opencardfrom" data-id="${l.fromCard}" data-b="${(S.board.cards.find(c => c.id === l.fromCard) || {}).board}">Open the card</button></div>` : ""}
     ${l.status === "under_offer" && l.dealId ? `<div class="card"><div class="card-b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">
       <span class="stripe" style="background:var(--go);height:38px"></span>
       <div style="flex:1;min-width:190px"><div class="eyebrow">Under offer</div>
@@ -1648,7 +1724,7 @@ function vHouse(){
         </div>
         ${l.meta.listing ? `<a class="btn btn-s" style="display:inline-block;margin-top:12px;text-decoration:none" href="${esc(l.meta.listing)}" target="_blank" rel="noopener">View the live listing ↗</a>` : ""}
       </div>
-      <div class="specs">${l.meta.beds ? `<span><b>${l.meta.beds}</b> beds</span><span><b>${l.meta.baths}</b> baths</span><span><b>${l.meta.garages}</b> garages</span>` : ""}${l.meta.erf ? `<span><b>${l.meta.erf}</b> m² erf</span>` : ""}<span>Sold by <b>${esc(P[l.meta.seller].name)}</b></span></div>
+      <div class="specs">${l.meta.beds ? `<span><b>${l.meta.beds}</b> beds</span><span><b>${l.meta.baths}</b> baths</span><span><b>${l.meta.garages}</b> garages</span>` : ""}${l.meta.erf ? `<span>Erf <b>${esc(l.meta.erf)}</b></span>` : ""}<span>Sold by <b>${esc(P[l.meta.seller].name)}</b></span></div>
     </div>
 
     <div class="card">
@@ -1846,6 +1922,14 @@ function dueChip(iso2){
   const txt = n < 0 ? Math.abs(n) + (Math.abs(n) === 1 ? "d over" : "d over") : n === 0 ? "today" : n === 1 ? "tomorrow" : new Date(iso2).toLocaleDateString("en-ZA", { day:"numeric", month:"short" });
   return `<span class="mi due ${cls}">${ICON.log} ${txt}</span>`;
 }
+/* A house under another agency's mandate: the date it lapses is the call. */
+function mandateChip(iso2){
+  const n = dayDiff(iso2), cls = n < 0 ? "late" : n <= 14 ? "soon" : "ok";
+  const txt = n < 0 ? `mandate lapsed ${Math.abs(n)}d ago` : n === 0 ? "mandate ends today" : n <= 14 ? `mandate ends in ${n}d` : "mandate ends " + new Date(iso2).toLocaleDateString("en-ZA", { day:"numeric", month:"short" });
+  return `<span class="mi due ${cls}">${ICON.key} ${txt}</span>`;
+}
+const mandateWatch = () => S.board.cards.filter(c => c.lead && c.lead.mandateEnds && boardsFor(S.me).some(b => b.id === c.board))
+  .map(c => ({ c, n:dayDiff(c.lead.mandateEnds) })).filter(x => x.n <= 14 && x.n >= -30).sort((a, b) => a.n - b.n);
 function dealCardMini(d){
   const c = current(d), out = c.tasks.filter(t => !d.done[t.id]).length, doneN = c.tasks.length - out;
   const members = ["agent", "buyer", "seller", "conveyancer"].map(r => avatar(d.meta[r], 22)).join("");
@@ -1888,6 +1972,7 @@ function manualCardMini(c){
     <span class="meta">
       ${ld && ld.owners.length ? `<span class="mi">${ICON.people} ${ld.owners.length}</span>` : ""}
       ${ld && ld.url ? `<span class="mi">${ICON.eye} P24</span>` : ""}
+      ${ld && ld.mandateEnds ? mandateChip(ld.mandateEnds) : ""}
       ${c.done ? `<span class="mi">${ICON.check} done</span>` : ""}
       ${c.checklist.length ? `<span class="mi">${ICON.check} ${doneN}/${c.checklist.length}</span>` : ""}
       ${(c.comments || []).length ? `<span class="mi">${ICON.chat} ${c.comments.length}</span>` : ""}
@@ -2001,7 +2086,23 @@ function renderModal(){
           <input type="text" id="clog" placeholder="What happened — no answer, WhatsApp sent, sole mandate till March…" style="flex:2;min-width:180px">
           <input type="date" id="clognext" title="Next reminder" style="flex:1;min-width:130px">
           <button class="btn btn-p btn-s" data-act="clog">Log it</button></div>
-        <p style="margin:6px 0 0;font-size:11px;color:var(--t3)">Adds a dated line to the notes and, if you give a date, moves the reminder.</p></div>` : ""}
+        <p style="margin:6px 0 0;font-size:11px;color:var(--t3)">Adds a dated line to the notes and, if you give a date, moves the reminder.</p></div>
+      <div class="mblock"><div class="eyebrow">Their mandate elsewhere</div>
+        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+          <input type="date" id="cmand" value="${ld.mandateEnds ? new Date(ld.mandateEnds).toISOString().slice(0, 10) : ""}" style="max-width:200px">
+          ${ld.mandateEnds ? mandateChip(ld.mandateEnds) : `<span style="font-size:11.5px;color:var(--t3)">If another agency holds the mandate, put its end date here and Today will remind you the fortnight before.</span>`}
+        </div></div>
+      <div class="mblock"><div class="eyebrow">Where this goes next</div>
+        ${c.link && c.link.listing && S.listings[c.link.listing] ? `<div class="act"><span class="stripe" style="background:var(--go)"></span>
+            <div class="act-t"><b>On the Pipeline as a house</b><span>${esc(S.listings[c.link.listing].meta.ref)} · ${LSTATUS[S.listings[c.link.listing].status].txt}</span></div>
+            <button class="btn btn-s" data-act="gotohouse" data-id="${c.link.listing}">Open the house</button></div>` : ""}
+        ${c.link && c.link.deal && S.deals[c.link.deal] ? `<div class="act"><span class="stripe" style="background:var(--gold)"></span>
+            <div class="act-t"><b>In transfer</b><span>${esc(S.deals[c.link.deal].meta.ref)} · stage ${current(S.deals[c.link.deal]).n} of 7</span></div>
+            <button class="btn btn-s" data-act="gotodeal" data-id="${c.link.deal}">Open the deal room</button></div>` : ""}
+        ${!(c.link && c.link.deal) ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:${c.link ? 10 : 0}px">
+          ${!(c.link && c.link.listing) ? `<button class="btn btn-g btn-s" data-act="cwin">${ICON.house} Won the mandate — list it as a house</button>` : ""}
+          <button class="btn btn-s" data-act="cdeal">${ICON.deals} Offer in — open a deal room</button></div>
+        <p style="margin:7px 0 0;font-size:11px;color:var(--t3)">Both carry the address, the erf and the owner across, so nothing is typed twice. The card stays here, linked.</p>` : ""}</div>` : ""}
       <div class="mblock"><div class="eyebrow">${ld ? "Notes and feedback" : "Notes"}</div>
         <textarea id="cdesc" style="min-height:${ld ? 110 : 64}px" placeholder="Add a note…">${esc(c.desc || "")}</textarea></div>
       <div class="mblock"><div class="eyebrow">Checklist${c.checklist.length ? ` — ${doneN} of ${c.checklist.length}` : ""}</div>
@@ -2052,8 +2153,12 @@ function renderModal(){
 function inbox(){
   const out = [];
   const seen = S.inboxSeen || {};
+  // a mandate elsewhere that is about to lapse — the moment to phone
+  mandateWatch().forEach(({ c, n }) => out.push({ rank:n <= 0 ? 0 : 1, id:"mand" + c.id, kind:"card", cardId:c.id, board:c.board, urgent:n <= 3,
+    title:n < 0 ? `Their mandate lapsed ${Math.abs(n)} day${Math.abs(n) === 1 ? "" : "s"} ago — phone them` : n === 0 ? "Their mandate ends today" : `Their mandate ends in ${n} day${n === 1 ? "" : "s"}`,
+    why:`${c.title}${c.lead.suburb ? ", " + c.lead.suburb : ""} — the owner can list with you the day it lapses`, ts:c.lead.mandateEnds }));
   // cards assigned to me that are due
-  S.board.cards.filter(c => c.members.includes(S.me) && c.due).forEach(c => {
+  S.board.cards.filter(c => c.members.includes(S.me) && c.due && !(c.lead && c.lead.mandateEnds === c.due)).forEach(c => {
     const n = dayDiff(c.due);
     if (n <= 2) out.push({ rank:n < 0 ? 0 : 2, id:"due" + c.id, kind:"card", cardId:c.id, board:c.board, urgent:n < 0,
       title:c.title, why:n < 0 ? `${Math.abs(n)} day${Math.abs(n) === 1 ? "" : "s"} overdue` : n === 0 ? "due today" : n === 1 ? "due tomorrow" : `due in ${n} days`, ts:c.due });
@@ -2146,6 +2251,20 @@ function vToday(){
         + (items.length > 8 ? `<p style="margin:12px 0 0;font-size:12px;color:var(--t3)">and ${items.length - 8} more waiting</p>` : "")
         : `<div class="empty"><b>Nothing waiting</b>Every step on your desk is done.</div>`}</div>
     </div>
+
+    ${(() => { const w = mandateWatch(); if (!w.length) return "";
+      return `<div class="card">
+      <div class="card-h">${ICON.key}<h2>Mandates about to lapse</h2><span class="chip c-gold">${w.length}</span></div>
+      <div class="card-b">
+        <p style="margin:0 0 10px;font-size:12.5px;color:var(--t2)">Houses under another agency's mandate. The week it runs out is when the owner will listen.</p>
+        ${w.map(({ c, n }) => { const ph = (c.lead.owners.flatMap(o => o.phones)[0] || {}).n;
+          return `<div class="act"><span class="stripe" style="background:${n <= 3 ? "var(--stop)" : "var(--gold)"}"></span>
+          <div class="act-t"><b>${esc(c.title)}${c.lead.suburb ? `, ${esc(c.lead.suburb)}` : ""}</b>
+            <span>${n < 0 ? `lapsed ${Math.abs(n)} days ago` : n === 0 ? "ends today" : `ends in ${n} day${n === 1 ? "" : "s"}`} · ${dstr(c.lead.mandateEnds)}${c.lead.owners[0] ? " · " + esc(c.lead.owners[0].name || "owner") : ""}</span></div>
+          <span style="display:flex;gap:7px;flex-wrap:wrap">
+            ${ph ? `<a class="btn btn-s" style="text-decoration:none" href="tel:+${waNumber(ph)}">Call</a><a class="btn btn-g btn-s" style="text-decoration:none" href="https://wa.me/${waNumber(ph)}" target="_blank" rel="noopener">${ICON.chat}</a>` : ""}
+            <button class="btn btn-s" data-act="opencardfrom" data-id="${c.id}" data-b="${c.board}">Open</button></span></div>`; }).join("")}
+      </div></div>`; })()}
 
     ${viewings.length ? `<div class="card">
       <div class="card-h">${ICON.log}<h2>Viewings coming up</h2></div>
@@ -2276,7 +2395,7 @@ function renderSend(){
   document.body.appendChild(el);
 }
 
-const SOURCES = ["Property24", "Private Property", "MyProperty", "Board / walk-in", "Show day",
+const SOURCES = ["Canvassing — Property24", "Property24", "Private Property", "MyProperty", "Board / walk-in", "Show day",
   "Referral — past client", "Referral — another agent", "Repeat client", "Social media", "Cold call", "Other"];
 
 /* ══ Commission ═════════════════════════════════════════════════════
@@ -2302,8 +2421,8 @@ function commCalc(d){
 /* Who may see money. A client never does — not their own deal, not any other. */
 function canSeeComm(d){
   if (!d) return false;
-  if (isPrincipal(S.me)) return true;
-  if (P[S.me] && P[S.me].role !== "agent") return false;      // buyers, sellers, attorneys: never
+  if (isOwner(S.me)) return true;
+  if (P[S.me] && P[S.me].role !== "agent") return false;      // buyers, sellers, attorneys, the admin: never
   if (d.meta.agent === S.me) return true;
   return (commOf(d).splits || []).some(s => s.id === S.me);   // named in a split
 }
@@ -2315,7 +2434,7 @@ const oddsOf = d => isClosed(d) ? 1 : (atRisk(d) ? 0.7 : 1) * (STAGE_ODDS[curren
 
 function commissionCard(d){
   if (!canSeeComm(d)) return "";
-  const c = commCalc(d), mine = myShare(d), editable = d.meta.agent === S.me || isPrincipal(S.me);
+  const c = commCalc(d), mine = myShare(d), editable = d.meta.agent === S.me || isOwner(S.me);
   return `<div class="card">
     <div class="card-h">${ICON.key}<h2>Commission</h2><span class="chip c-mute">${ICON.lock} Never shown to clients</span></div>
     <div class="card-b">
@@ -2393,7 +2512,7 @@ function vComm(){
 
 /* ══ Earnings ═══════════════════════════════════════════════════════ */
 function vEarn(){
-  const staffView = isPrincipal(S.me);
+  const staffView = isOwner(S.me);
   const deals = Object.values(S.deals).filter(d => staffView || d.meta.agent === S.me || (commOf(d).splits || []).some(s => s.id === S.me));
   const rows = deals.map(d => ({ d, mine:myShare(d), odds:oddsOf(d), closed:isClosed(d), total:commCalc(d).total }));
   const banked = rows.filter(r => r.closed).reduce((n, r) => n + r.mine, 0);
@@ -2991,7 +3110,7 @@ function vMoney(){
 }
 
 /* ══ Render ═════════════════════════════════════════════════════════ */
-const RENDER = { today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { staff:vStaff, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (S.deal && !S.deals[S.deal]) { S.deal = null; S.view = homeView(); }
   if (S.listing && !S.listings[S.listing]) { S.listing = null; S.view = homeView(); }
@@ -3006,7 +3125,9 @@ function render(){
   if (S.deal && S.view === "comm" && !canSeeComm(D())) S.view = "dash";
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
   if (S.deal && !dealViews().some(v => v.id === S.view)) S.view = "dash";
-  if (!S.deal && S.view === "team" && me().role !== "principal") S.view = "portfolio";
+  if (!S.deal && S.view === "team" && !isPrincipal(S.me)) S.view = "portfolio";
+  if (S.view === "staff" && !isAdmin(S.me)) S.view = homeView();
+  if (!S.deal && ["money", "earn"].includes(S.view) && !(me().role === "agent" || isOwner(S.me))) S.view = homeView();
   if (!S.deal && S.view === "new" && me().role !== "agent") S.view = "portfolio";
   renderChrome();
   document.getElementById("view").innerHTML = RENDER[S.view]();
@@ -3052,6 +3173,7 @@ function storePack(packId, name, size){
   toast(`${PACKD[packId].name} added — private until you share it`);
   render();
 }
+function setRoleOf(id, role){ if (!P[id]) return; P[id].role = role; P[id].kind = ROLE_LABEL[role] || P[id].kind; if (S.people[id]) S.people[id] = P[id]; }
 function newPerson(prefix, name, mobile, email, kind, role, org){
   const pid = prefix + Date.now() + Math.floor(Math.random() * 99);
   S.people[pid] = P[pid] = { name, ini:name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -3083,6 +3205,22 @@ function acceptOffer(offerId){
   toast("Offer accepted — now invite the seller and the attorney");
   render(); window.scrollTo({ top:0 });
 }
+/* A prospect she has won becomes a house on the Pipeline, owner and all. */
+function listFromCard(c, price){
+  const ld = c.lead || { owners:[] }, o = (ld.owners || [])[0], now = new Date().toISOString();
+  const seller = newPerson("s_", o && o.name ? o.name : "Owner", o ? ((o.phones[0] || {}).n || "") : "", o ? (o.email || "") : "", "Seller", "seller", "Registered owner");
+  const id = "l" + Date.now();
+  S.listings[id] = { meta:{ id, ref:"RB-" + (S.nextRef++), address:ld.address || c.title, area:ld.suburb || "", city:"Pretoria East", price:+price || 0,
+      type:"House", beds:0, baths:0, garages:0, erf:ld.erf || null, agent:S.me, seller, listedAgo:0, desc:"", hero:"linear-gradient(145deg,#14243F,#3C5C8A)", listing:ld.url || "" },
+    status:"active", dealId:null, pack:{}, visitors:[], prospects:[], viewings:[], offers:[], source:"Canvassing — Property24",
+    mandateEnds:iso(d0(90)), fromCard:c.id,
+    log:[{ ts:now, who:S.me, act:"Listing created", det:`Mandate won on the prospecting board · ${c.title}` }] };
+  c.link = { ...(c.link || {}), listing:id };
+  c.activity.push({ who:S.me, ts:now, what:"won the mandate — now a house on the Pipeline" });
+  const B = S.boards.find(b => b.id === c.board), L2 = B && B.kind !== "pipeline" && (B.lists || []).find(l => /listing/i.test(l.name));
+  if (L2 && c.list !== L2.id){ c.list = L2.id; c.pos = Date.now(); }
+  return id;
+}
 function markDone(d, id, quiet){
   const t = TASK[id];
   d.done[id] = true;
@@ -3110,6 +3248,19 @@ function createDeal(f){
     access:{ buyer:"none", seller:"none", conveyancer:"none" },
     otpDate:new Date(f.otp || Date.now()).toISOString(), bondDue:f.bond ? new Date(f.bond).toISOString() : null,
     log:[{ ts:new Date().toISOString(), who:S.me, act:"Deal room opened", det:`${f.addr}, ${f.area} · ${meta.ref}` }] };
+  /* Opened from a prospecting card: link the two, and if the house is
+     already on the Pipeline, it goes under offer. */
+  const pf = S.prefill, c = pf && pf.card && S.board.cards.find(x => x.id === pf.card);
+  if (c){
+    meta.source = "Canvassing — Property24";
+    c.link = { ...(c.link || {}), deal:id };
+    c.activity.push({ who:S.me, ts:new Date().toISOString(), what:"offer in — a deal room is open for this house" });
+    const B = S.boards.find(b => b.id === c.board), L2 = B && B.kind !== "pipeline" && (B.lists || []).find(l => /\botp\b|offer/i.test(l.name));
+    if (L2 && c.list !== L2.id){ c.list = L2.id; c.pos = Date.now(); }
+    if (c.link.listing && S.listings[c.link.listing]){ const l = S.listings[c.link.listing]; l.status = "under_offer"; l.dealId = id;
+      l.log.unshift({ ts:new Date().toISOString(), who:S.me, act:"Offer accepted", det:`Deal room ${meta.ref} opened from the board` }); }
+  }
+  S.prefill = null;
   S.deal = id; S.view = "people";
   toast("Deal room created — now invite the parties");
   render();
@@ -3402,6 +3553,16 @@ document.addEventListener("click", e => {
     c.activity.push({ who:S.me, ts:new Date().toISOString(), what:`${on ? "took" : "put"} ${m === S.me ? "themselves" : P[m].name.split(" ")[0]} ${on ? "off" : "on"} this card` });
     renderModal(); save(); }
   else if (a === "cfile"){ pending = { cardFile:S.card.id }; fileInput.click(); }
+  else if (a === "cwin"){ const c = S.board.cards.find(x => x.id === S.card.id);
+    const price = prompt(`Asking price for ${c.title} (R)?\n\nThis lists it as a house on the Pipeline with the owner as seller. You can change everything afterwards.`, "");
+    if (price === null) return;
+    const id = listFromCard(c, +String(price).replace(/[^\d]/g, "") || 0);
+    S.card = null; S.listing = id; S.deal = null; S.view = "house"; toast("Listed — the mandate is yours"); render(); window.scrollTo({ top:0 }); }
+  else if (a === "cdeal"){ const c = S.board.cards.find(x => x.id === S.card.id), ld = c.lead || {}, o = (ld.owners || [])[0] || { phones:[] };
+    const lst = c.link && c.link.listing && S.listings[c.link.listing];
+    S.prefill = { card:c.id, addr:ld.address || c.title, area:ld.suburb || "", city:"Pretoria East", url:ld.url || "", price:lst ? lst.meta.price : "",
+      sname:lst ? P[lst.meta.seller].name : (o.name || ""), smob:lst ? P[lst.meta.seller].mobile : ((o.phones[0] || {}).n || ""), smail:lst ? P[lst.meta.seller].email : (o.email || "") };
+    S.card = null; S.deal = null; S.listing = null; S.view = "new"; render(); window.scrollTo({ top:0 }); }
   else if (a === "clog"){ const c = S.board.cards.find(x => x.id === S.card.id);
     const what = (document.getElementById("clog") || {}).value || "", next = (document.getElementById("clognext") || {}).value;
     if (!what.trim() && !next){ toast("Say what happened, or set the next date"); return; }
@@ -3425,12 +3586,27 @@ document.addEventListener("click", e => {
     c.desc = document.getElementById("cdesc").value;
     const dv = document.getElementById("cdue").value, was = c.due;
     c.due = dv ? new Date(dv).toISOString() : null;
+    const mv = (document.getElementById("cmand") || {}).value;
+    if (c.lead){ const nm = mv ? new Date(mv).toISOString() : null;
+      if (nm !== c.lead.mandateEnds) c.activity.push({ who:S.me, ts:new Date().toISOString(), what:nm ? "noted when their mandate elsewhere ends" : "cleared the mandate date" });
+      c.lead.mandateEnds = nm; }
     if (was !== c.due) c.activity.push({ who:S.me, ts:new Date().toISOString(), what:c.due ? "set the due date" : "cleared the due date" });
     closeCard(); toast("Card saved"); render();
   }
   else if (a === "cdelete"){ if (!confirm("Delete this card?")) return;
     S.board.cards = S.board.cards.filter(x => x.id !== S.card.id); closeCard(); toast("Card deleted"); render(); }
   else if (a === "syncin"){ syncSignIn(); }
+  else if (a === "syncout"){ syncSignOut(); }
+  else if (a === "rosterrole"){ const x = S.staff.find(y => y.as === btn.dataset.p), sel = document.querySelector(`[data-role="r:${btn.dataset.p}"]`);
+    if (!x || !sel) return; setRoleOf(btn.dataset.p, sel.value); x.role = sel.value; toast(`${P[btn.dataset.p].name.split(" ")[0]} is now ${ROLE_LABEL[sel.value].toLowerCase()}`); render(); }
+  else if (a === "rosterdel"){ const id = btn.dataset.p;
+    if (!confirm(`Take ${P[id].name} off the team?`)) return;
+    S.staff = S.staff.filter(y => y.as !== id); const i = STAFF.indexOf(id); if (i >= 0) STAFF.splice(i, 1);
+    toast("Removed"); render(); }
+  else if (a === "approve"){ approveRequest(btn.dataset.u); }
+  else if (a === "decline"){ declineRequest(btn.dataset.u); }
+  else if (a === "setrole"){ const sel = document.querySelector(`[data-role="s:${btn.dataset.u}"]`); if (sel) setStaffRole(btn.dataset.u, sel.value); }
+  else if (a === "removestaff"){ removeStaff(btn.dataset.u); }
   else if (a === "reset"){
     if (confirm("Reset the demo? Every deal room goes back to how it started, and any room you created is removed.\n\nBoards you brought across from Trello are kept.")){
       const keepB = S.boards.filter(b => b.kind !== "pipeline"), keepIds = new Set(keepB.map(b => b.id));
@@ -3461,6 +3637,14 @@ document.addEventListener("input", e => {
 });
 document.addEventListener("submit", e => {
   const g = id => (document.getElementById(id) || {}).value || "";
+  if (e.target.id === "staffadd"){
+    e.preventDefault();
+    const role = g("sa_role"), kind = ROLE_LABEL[role] || "Agent";
+    const pid = newPerson("st_", g("sa_name"), g("sa_mob"), g("sa_mail"), kind, role, "RB Brand Real Estate");
+    S.staff.push({ as:pid, role, since:new Date().toISOString() }); STAFF.push(pid);
+    toast(`${g("sa_name").split(" ")[0]} added as ${kind.toLowerCase()}`); render();
+    return;
+  }
   if (e.target.id === "pinvite"){
     e.preventDefault();
     const l = L(), preset = g("p_role") || null;
@@ -3617,10 +3801,12 @@ function adoptTrello(t){
   const listPos = Object.fromEntries(t.lists.map(l => [l.id, l.pos || 0]));
   const incoming = t.cards.filter(c => !c.closed && known.has(listBy[c.idList])).map(c => {
     const lead = readLead(c.name || "", c.desc || "");
+    const listName = (t.lists.find(l => l.id === c.idList) || {}).name || "";
+    if (lead.isLead && c.due && /mandat/i.test(listName)) lead.mandateEnds = c.due;   // their list of houses under someone else's mandate
     return { src:c, lead, card:{
       id:null, board:bid, list:listBy[c.idList],
       title:lead.title || c.name || "Untitled card", desc:lead.notes,
-      lead:lead.isLead ? { erf:lead.erf, address:lead.address, suburb:lead.suburb, url:lead.url, owners:lead.owners, raw:c.desc || "" } : null,
+      lead:lead.isLead ? { erf:lead.erf, address:lead.address, suburb:lead.suburb, url:lead.url, owners:lead.owners, mandateEnds:lead.mandateEnds || null, raw:c.desc || "" } : null,
       labels:(c.labels || []).map(l => ({ name:l.name || l.color || "Label", col:TRELLO_COL[l.color] || "#8A8A94" })),
       members:(c.idMembers || []).map(id => memberBy[id]).filter(Boolean),
       due:c.due || null, done:!!c.dueComplete, checklist:checksBy[c.id] || [], pos:c.pos || 0,
@@ -3823,7 +4009,7 @@ function syncStatus(st){ sync.status = st;
 function syncPill(){
   const m = { local:["c-mute", "On this device"], connecting:["c-wait", "Connecting…"],
     synced:["c-go", "Synced with the team"], offline:["c-wait", "Offline — will catch up"],
-    error:["c-stop", "Sync problem"] }[sync.status] || ["c-mute", ""];
+    pending:["c-wait", "Waiting for approval"], error:["c-stop", "Sync problem"] }[sync.status] || ["c-mute", ""];
   return `<span class="chip ${m[0]}" id="syncpill" title="${sync.on ? "Team sync is on" : "No project connected — nothing leaves this device"}">${m[1]}</span>`;
 }
 async function startSync(){
@@ -3837,10 +4023,23 @@ async function startSync(){
     const app = initializeApp(cfg);
     const A = auth.getAuth(app);
     const user = A.currentUser || await new Promise(res => auth.onAuthStateChanged(A, res));
+    sync.auth = { auth, A };
     if (!user){ syncStatus("local"); sync.needsSignIn = { auth, A }; render(); return; }
-    sync.uid = user.uid;
-    sync.db = fs.getFirestore(app); sync.fs = fs; sync.on = true;
+    sync.uid = user.uid; sync.user = { name:user.displayName || "", email:user.email || "" };
+    sync.db = fs.getFirestore(app); sync.fs = fs;
+    /* The door. A staff document with this uid is what lets a person in;
+       without one they leave a request for the admin and wait. */
+    const mine = await fs.getDoc(fs.doc(sync.db, "staff", user.uid)).catch(() => null);
+    if (!mine || !mine.exists()){
+      await fs.setDoc(fs.doc(sync.db, "requests", user.uid), { name:sync.user.name, email:sync.user.email, ts:Date.now() }, { merge:true }).catch(err => console.warn("request", err));
+      syncStatus("pending"); render(); return;
+    }
+    const st = mine.data() || {};
+    sync.role = st.role || "agent";
+    if (st.as && P[st.as]){ S.me = st.as; sync.as = st.as; }        // a real sign-in is one person, not a switcher
+    sync.on = true;
     sync.ws = (window.RB_CONFIG.workspace || "rb-brand");
+    if (sync.role === "admin") watchStaff();
     Object.keys(SYNC_KINDS).forEach(coll => {
       fs.onSnapshot(fs.collection(sync.db, "ws", sync.ws, coll), snap => {
         let touched = false;
@@ -3883,6 +4082,44 @@ async function flushSync(){
     }));
     syncStatus(navigator.onLine ? "synced" : "offline");
   } catch (err){ console.warn("sync write", err); syncStatus(navigator.onLine ? "error" : "offline"); }
+}
+/* The admin sees who is waiting and who is in, live. */
+function watchStaff(){
+  const fs = sync.fs;
+  fs.onSnapshot(fs.collection(sync.db, "requests"), snap => { sync.requests = snap.docs.map(d => ({ uid:d.id, ...d.data() })); if (S.view === "staff") render(); },
+    err => console.warn("requests", err));
+  fs.onSnapshot(fs.collection(sync.db, "staff"), snap => { sync.staff = snap.docs.map(d => ({ uid:d.id, ...d.data() })); if (S.view === "staff") render(); },
+    err => console.warn("staff", err));
+}
+async function approveRequest(uid){
+  const fs = sync.fs, r = (sync.requests || []).find(x => x.uid === uid); if (!fs || !r) return;
+  const role = (document.querySelector(`[data-role="${uid}"]`) || {}).value || "agent";
+  const as = (document.querySelector(`[data-as="${uid}"]`) || {}).value || "";
+  try {
+    await fs.setDoc(fs.doc(sync.db, "staff", uid), { name:r.name || "", email:r.email || "", role, as, approvedBy:sync.uid, ts:Date.now() });
+    await fs.deleteDoc(fs.doc(sync.db, "requests", uid));
+    if (as && S.staff && !S.staff.some(x => x.as === as)) S.staff.push({ as, role, since:new Date().toISOString() });
+    toast(`${(r.name || r.email || "They").split(" ")[0]} now has access as ${ROLE_LABEL[role].toLowerCase()}`);
+  } catch (err){ console.warn(err); toast("Could not approve — check the rules are published"); }
+}
+async function declineRequest(uid){
+  const fs = sync.fs; if (!fs) return;
+  if (!confirm("Decline this request? They can sign in again later.")) return;
+  try { await fs.deleteDoc(fs.doc(sync.db, "requests", uid)); toast("Declined"); } catch (err){ console.warn(err); toast("Could not decline"); }
+}
+async function setStaffRole(uid, role){
+  const fs = sync.fs; if (!fs) return;
+  try { await fs.updateDoc(fs.doc(sync.db, "staff", uid), { role }); toast(`Now ${ROLE_LABEL[role].toLowerCase()}`); } catch (err){ console.warn(err); toast("Could not change the role"); }
+}
+async function removeStaff(uid){
+  const fs = sync.fs, x = (sync.staff || []).find(y => y.uid === uid); if (!fs || !x) return;
+  if (!confirm(`Remove ${x.name || x.email || "this person"}? Their access ends immediately.`)) return;
+  try { await fs.deleteDoc(fs.doc(sync.db, "staff", uid)); toast("Removed"); } catch (err){ console.warn(err); toast("Could not remove"); }
+}
+async function syncSignOut(){
+  if (!sync.auth) return;
+  try { await sync.auth.auth.signOut(sync.auth.A); } catch {}
+  location.reload();
 }
 async function syncSignIn(){
   if (!sync.needsSignIn) return;

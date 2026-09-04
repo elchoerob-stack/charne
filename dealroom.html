@@ -1070,6 +1070,7 @@ function renderChrome(){
     return `<button data-act="view" data-v="${v.id}" aria-current="${S.view === v.id}">${ICON[v.ic]}<span>${v.label}</span>${b ? `<span class="cnt">${b}</span>` : ""}</button>`;
   }).join("") + `<div class="rail-note" style="text-align:left">${syncPill()}
     ${sync.needsSignIn ? `<button class="btn btn-s" data-act="syncin" style="margin:9px 0 4px">Sign in to sync</button>` : ""}
+    <div id="syncwhy" style="margin-top:6px;color:var(--stop);word-break:break-word">${esc(sync.err || "")}</div>
     ${sync.status === "pending" ? `<div style="margin-top:8px">Signed in as <b>${esc(sync.user && sync.user.email || "")}</b>. An admin has to approve you before the team's work appears — nothing to do but wait. <button class="btn btn-s" data-act="syncout" style="margin-top:6px">Sign out</button></div>` : ""}
     ${sync.on ? `<div style="margin-top:8px">Signed in as <b>${esc(sync.user && sync.user.email || "")}</b> <button class="btn btn-s" data-act="syncout" style="margin-left:4px">Sign out</button></div>` : ""}
     <div style="margin-top:9px"></div><b>Concept preview.</b> Every deal room keeps its own documents, tasks and history — nothing you do in one file appears in another. Everything is stored on this device only.<br><br><button class="btn btn-s" data-act="reset">Reset the demo</button></div>`;
@@ -4003,8 +4004,11 @@ function applyRemote(path, body){
   } else if (coll === "people"){ S.people[id] = body; P[id] = body; }
 }
 function syncStatus(st){ sync.status = st;
+  if (st !== "error") sync.err = "";
   const el = document.getElementById("syncpill");
   if (el) el.outerHTML = syncPill();
+  const why = document.getElementById("syncwhy");
+  if (why) why.textContent = sync.err || "";
 }
 function syncPill(){
   const m = { local:["c-mute", "On this device"], connecting:["c-wait", "Connecting…"],
@@ -4047,14 +4051,14 @@ async function startSync(){
           if (ch.type === "removed") return;
           const d = ch.doc.data(), path = coll + "/" + ch.doc.id;
           if ((S.rev[path] || 0) >= d.rev) return;      // ours is newer or the same
-          S.rev[path] = d.rev; applyRemote(path, d.body); touched = true;
+          S.rev[path] = d.rev; applyRemote(path, typeof d.body === "string" ? JSON.parse(d.body) : d.body); touched = true;
         });
         if (touched){ sync.applying = true; save(); render(); sync.applying = false; }
-      }, err => { console.warn("sync read", err); syncStatus("error"); });
+      }, err => { console.warn("sync read", err); sync.err = "Reading " + coll + ": " + (err && err.message || err); syncStatus("error"); });
     });
     syncStatus("synced");
     pushLocal(true);
-  } catch (err){ console.warn("sync unavailable", err); syncStatus("error"); }
+  } catch (err){ console.warn("sync unavailable", err); sync.err = err && err.message || String(err); syncStatus("error"); }
 }
 /* Debounced: a burst of edits becomes one write per changed document. */
 function pushLocal(all){
@@ -4078,10 +4082,10 @@ async function flushSync(){
     await Promise.all(batch.map(([path, body]) => {
       const [coll, id] = path.split("/"), rev = Date.now();
       S.rev[path] = rev;
-      return fs.setDoc(fs.doc(sync.db, "ws", sync.ws, coll, id), { rev, body });
+      return fs.setDoc(fs.doc(sync.db, "ws", sync.ws, coll, id), { rev, body:JSON.stringify(body) });
     }));
     syncStatus(navigator.onLine ? "synced" : "offline");
-  } catch (err){ console.warn("sync write", err); syncStatus(navigator.onLine ? "error" : "offline"); }
+  } catch (err){ console.warn("sync write", err); sync.err = "Writing: " + (err && err.message || err); syncStatus(navigator.onLine ? "error" : "offline"); }
 }
 /* The admin sees who is waiting and who is in, live. */
 function watchStaff(){

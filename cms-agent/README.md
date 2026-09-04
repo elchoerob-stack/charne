@@ -1,17 +1,21 @@
 # Foreman — the CMS Agent
 
-**Foreman** is a Claude-powered support, reporting and problem-solving agent
-for the CMS Workshop Module, with a workflow recorder that turns real
-dealership sessions into SOPs and diagnostic evidence. The name is the job:
-the foreman runs the floor, knows every job on the board, and sorts out the
-problem before it reaches the dealer principal.
+**Foreman** does two jobs for CMS Systems dealerships.
 
-It takes the useful parts of the Grok "agent bot" feature set (server-side
-tools, DeepSearch-style investigation, visible thinking, multi-agent
-cross-checking, memory, workspaces, scheduled follow-ups, vision, voice) and
-adds what a workshop support agent actually needs: a diagnostic method with
-playbooks, evidence and confidence, plus a learning loop from resolved cases.
-The capability mapping is in `docs/GROK_CAPABILITIES.md`.
+**1. It answers and diagnoses.** Describe what is going wrong at a dealership
+and it works the problem with you — ranking causes from playbooks, checking
+Evolve/Infomedia/SMS health, reading the evidence out of a recording, and
+giving you steps to fix and verify. Feed it a workshop export or a Marketing
+Contacts export and it builds the report or the campaign list and talks you
+through the numbers.
+
+**2. It does the work.** Record a job once with the recorder extension, press
+*Make a task*, and Foreman then performs that job itself — in its own browser,
+in the background, as many times as you like, with different data each run,
+while you carry on with something else. See `docs/TASKS.md`.
+
+The name is the job: the foreman runs the floor, knows every job on the board,
+and sorts out the problem before it reaches the dealer principal.
 
 ## What you get
 
@@ -24,6 +28,11 @@ The capability mapping is in `docs/GROK_CAPABILITIES.md`.
   eVHC tablets, dispatch board, printing, sessions and performance. Ranks
   hypotheses, asks the single most informative question, produces a plan when
   confident and an escalation packet when not, and learns from resolved cases.
+- **Tasks** (`server/src/tasks/`): a recording compiled into something
+  repeatable — values you typed become named fields, and the job runs in a
+  background queue in its own browser. Every step carries several ways to find
+  its element, and Claude repairs the ones that break, writing the fix back so
+  it sticks. See `docs/TASKS.md`.
 - **Workflow recorder** (`recorder-extension/` + `server/src/recorder/`):
   Chrome extension that captures clicks, fields, screens, screenshots,
   console errors and failed requests with POPIA masking; the server compiles
@@ -116,6 +125,7 @@ used when blank).
 - `docs/GROK_CAPABILITIES.md` — Grok capability inventory and the CMS Agent mapping
 - `docs/PROBLEM_SOLVING.md` — the diagnostic engine
 - `docs/WORKFLOW_RECORDER.md` — capture, masking, SOP compilation, replay
+- `docs/TASKS.md` — record a job once, then let Foreman run it
 - `docs/REPORTS.md` — workshop dashboard and campaign list tools
 - `docs/EVALS.md` — the eval harness and how to grow the case set
 - `docs/ARCHITECTURE.md` — layout, turn flow, modes, storage

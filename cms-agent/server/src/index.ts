@@ -7,6 +7,7 @@ import { apiRoutes } from "./routes.js";
 import { recorderRoutes } from "./recorder/routes.js";
 import { reportRoutes } from "./reports/routes.js";
 import { reviewRoutes } from "./review.js";
+import { taskRoutes } from "./tasks/routes.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -31,6 +32,7 @@ app.use("/api", apiRoutes);
 app.use("/api", recorderRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", reviewRoutes);
+app.use("/api", taskRoutes);
 
 // The console is a static single-page app in ../web (served from dist or src).
 const webDir = [path.join(here, "../../web"), path.join(here, "../web")].find((p) => p) as string;

@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Bookings</title></head>
+<body style="font-family:system-ui;padding:24px;max-width:640px">
+<h1 id="heading">New booking</h1>
+<form id="f" onsubmit="event.preventDefault();done()">
+  <p><label for="customer">Customer name</label><br><input id="customer" name="customer"></p>
+  <p><label for="reg">Vehicle registration</label><br><input id="reg" name="reg"></p>
+  <p><label for="franchise">Franchise</label><br>
+    <select id="franchise"><option>Choose</option><option>Morgan Isuzu Ermelo</option><option>Morgan Kimberley</option></select></p>
+  <p><button type="submit" data-testid="btn-save">Save booking</button></p>
+</form>
+<div id="result" hidden><h2 data-testid="confirmation">Booking saved</h2><p id="summary"></p></div>
+<script>
+function done(){
+  document.getElementById('f').hidden = true;
+  document.getElementById('result').hidden = false;
+  document.getElementById('summary').textContent =
+    document.getElementById('customer').value + ' | ' +
+    document.getElementById('reg').value + ' | ' +
+    document.getElementById('franchise').value;
+}
+</script>
+</body></html>

@@ -50,6 +50,72 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 .attach{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 6px}.attach img{height:44px;border-radius:5px;border:1px solid var(--line)}
 .hint{color:var(--t3);font-size:12px}
 .empty{color:var(--t3);font-size:12.5px}
+
+/* ── Phone layout (S25+ and similar) ─────────────────────────────────── */
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;min-height:auto}
+  .side{border-left:0;border-top:1px solid var(--line)}
+  .bar{gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;flex-wrap:wrap}
+  .bar>div>span{display:none}
+  .bar .sp{display:none}
+  .bar img{height:24px!important}
+  .bar .btn{padding:9px 12px;font-size:13px;min-height:40px}
+  .bar #newSession,.bar #reviewLink,.bar #qrBtn{display:none}   /* these live in the More tab */
+  .bar #install{padding:7px 11px;font-size:12px}
+  .bar label{flex:1 1 100%;order:9;display:flex;align-items:center;gap:8px}
+  .bar label input{flex:1;width:auto!important;min-height:40px;font-size:16px}
+
+  /* One pane at a time, chosen by the bottom tabs. */
+  .chat{display:none}
+  .side{display:none;border-top:0}
+  body[data-tab="chat"] .chat{display:flex}
+  body[data-tab="chat"] .msgs{min-height:calc(100vh - 320px)}
+  body[data-tab="work"] .side,body[data-tab="more"] .side{display:block}
+  body[data-tab="work"] .sec[data-group="more"]{display:none}
+  body[data-tab="more"] .sec[data-group="work"]{display:none}
+
+  .app{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .compose{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding:8px 10px}
+  .compose textarea{font-size:16px;min-height:48px;line-height:1.35}  /* 16px stops the browser zooming on focus */
+  .btn{min-height:44px}                                /* comfortable thumb target */
+  .item .acts button{font-size:13px;padding:8px 12px;min-height:40px}
+  .modes button{padding:12px;min-height:56px}
+  .msgs{padding:12px}
+  .m,.think,.act{max-width:100%}
+  html,body{overflow-x:hidden;max-width:100vw}
+  .app,.chat,.side,.sec{max-width:100vw;min-width:0}
+  .tabs{display:flex}
+}
+@media (min-width:901px){ .tabs{display:none} }
+
+/* Bottom tab bar, phone only */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);justify-content:space-around}
+.tabs button{flex:1;background:none;border:0;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:11px;color:var(--t3);min-height:56px}
+.tabs button.on{color:var(--gold)}
+.tabs button b{font-size:19px;line-height:1;font-weight:400}
+.tabs button .badge{position:absolute;transform:translate(15px,-6px);background:var(--gold);color:#0F2040;border-radius:999px;
+  font-size:10px;font-weight:700;padding:1px 5px;min-width:16px}
+
+/* Modal sheet: the QR popup and run details */
+.scrim{position:fixed;inset:0;background:rgba(8,14,28,.62);z-index:60;display:grid;place-items:center;padding:16px}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:420px;width:100%;
+  max-height:86vh;overflow:auto;padding:18px}
+.sheet h3{margin:0 0 4px;font-size:16px}
+.sheet .close{position:absolute;top:14px;right:16px;background:none;border:0;font-size:22px;color:var(--t3)}
+@media (max-width:900px){ .scrim{align-items:end;padding:0} .sheet{max-width:none;border-radius:16px 16px 0 0;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom))} }
+
+/* Tasks */
+.run{border-left:3px solid var(--line);padding-left:9px;margin-top:6px;font-size:12px;color:var(--t2)}
+.run.running{border-color:var(--gold)}.run.succeeded{border-color:var(--go)}
+.run.failed,.run.needs_attention{border-color:var(--stop)}
+.prog{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:5px}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.runlog{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.5;white-space:pre-wrap;
+  background:var(--surface2);border-radius:8px;padding:9px;max-height:300px;overflow:auto;margin-top:8px}
+.runlog .error{color:var(--stop)}.runlog .heal{color:var(--gold)}.runlog .step{color:var(--t1)}
 </style>
 </head>
 <body>
@@ -58,7 +124,8 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
   <div><b>Foreman</b><span>CMS Agent · support · reports · problem solving · recorder</span></div>
   <div class="sp"></div>
   <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
-  <a href="/review.html" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Review</a>
+  <button class="btn" id="qrBtn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">Phone</button>
+  <a href="/review.html" id="reviewLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Review</a>
   <button class="btn" id="install" hidden style="background:var(--gold);border-color:var(--gold);color:#0F2040">Install app</button>
   <button class="btn" id="newSession" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">New session</button>
 </div>
@@ -66,22 +133,24 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 <div class="app">
   <section class="chat">
     <div class="msgs" id="msgs">
-      <div class="m agent"><div class="who">Foreman</div>Hi Jacques. Tell me what is going wrong at a dealership, ask how to do something in CMS, or drop a workshop export or Marketing Contacts export on the right and I will build the dashboard or the campaign list and talk you through it.
+      <div class="m agent"><div class="who">Foreman</div>Hi Jacques. Two things I do:
 
-Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i>, <i>"Build the workshop report and tell me who to worry about"</i>, or <i>"How many of these contacts can we actually reach?"</i></div>
+<b>Answer and diagnose</b> — tell me what is going wrong at a dealership and I work through it with you, or drop in a workshop export or Marketing Contacts export and I will build the report and talk you through it.
+
+<b>Do the work</b> — record a job once with the recorder extension, press <b>Make a task</b> on it, and I will then do that job myself, in the background, as often as you like, while you carry on with something else. Tasks live under <b>Work</b>.</div>
     </div>
     <div class="attach" id="attach"></div>
     <div class="compose">
       <button class="btn" id="mic" title="Dictate (Web Speech)">🎙</button>
       <button class="btn" id="img" title="Attach a screenshot">🖼</button>
       <input type="file" id="file" accept="image/*" multiple hidden>
-      <textarea id="text" placeholder="Describe the problem or ask a question…  (Enter to send, Shift+Enter for a new line, paste screenshots)"></textarea>
+      <textarea id="text" placeholder="Describe the problem, or ask a question…" title="Enter to send · Shift+Enter for a new line · paste a screenshot"></textarea>
       <button class="btn primary" id="send">Send</button>
     </div>
   </section>
 
   <aside class="side">
-    <div class="sec">
+    <div class="sec" data-group="work">
       <h3>Mode</h3>
       <div class="modes" id="modes">
         <button data-mode="quick"><b>Quick</b><small>Direct answer, few tools</small></button>
@@ -90,23 +159,35 @@ Try: <i>"Invoice on job card 48812 is not posting to Evolve at Kimberley"</i>, <
         <button data-mode="council"><b>Council</b><small>3 specialists cross-check</small></button>
       </div>
     </div>
-    <div class="sec"><h3>Reports &amp; campaign lists</h3>
+    <div class="sec" data-group="work"><h3>Reports &amp; campaign lists</h3>
       <div class="row" style="display:flex;gap:6px;margin-bottom:8px"><button class="btn" id="upWorkshop" style="flex:1;font-size:12px;padding:6px">＋ Workshop export</button><button class="btn" id="upContacts" style="flex:1;font-size:12px;padding:6px">＋ Marketing contacts</button></div>
       <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" hidden>
       <div class="list" id="reports"><div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div></div>
     </div>
-    <div class="sec"><h3>Connect your phone</h3>
-      <div class="hint" style="margin-bottom:6px">Scan with the phone camera on the same Wi-Fi (or Tailscale), then Add to Home screen.</div>
-      <div id="qr" style="background:#fff;padding:8px;border-radius:8px;display:inline-block"></div>
-      <div class="hint" id="qrUrl" style="margin-top:6px;word-break:break-all"></div>
+    <div class="sec" data-group="work"><h3>Tasks <button class="btn" id="cmsConnect" style="float:right;padding:3px 9px;font-size:11px">Connect CMS</button></h3>
+      <div class="hint" style="margin-bottom:6px">Record a job once with the extension, turn it into a task, and Foreman does it for you — in the background, as many times as you like.</div>
+      <div class="list" id="tasks"><div class="empty">No tasks yet. Record a workflow, then press "Make a task" on it below.</div></div>
     </div>
-    <div class="sec"><h3>Integration health <button class="btn" id="checkAll" style="float:right;padding:2px 8px;font-size:11px">Check all</button></h3><div class="list" id="health"><div class="empty">No checks run yet.</div></div></div>
-    <div class="sec"><h3>Recordings <input type="file" id="recFile" accept="application/json" hidden><button class="btn" id="recUpload" style="float:right;padding:2px 8px;font-size:11px">Upload JSON</button></h3><div class="list" id="recs"><div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div></div></div>
-    <div class="sec"><h3>Cases</h3><div class="list" id="cases"><div class="empty">No cases.</div></div></div>
-    <div class="sec"><h3>Dealer memory</h3><div class="list" id="memory"><div class="empty">Set a dealer code to see what the agent remembers.</div></div></div>
-    <div class="sec"><h3>Playbooks</h3><div class="list" id="playbooks"></div></div>
+    <div class="sec" data-group="more"><h3>Session</h3>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="location.href='/review.html'" style="flex:1">Playbook review</button>
+        <button class="btn" onclick="document.getElementById('newSession').click()" style="flex:1">New session</button>
+      </div>
+    </div>
+    <div class="sec" data-group="more"><h3>Integration health <button class="btn" id="checkAll" style="float:right;padding:2px 8px;font-size:11px">Check all</button></h3><div class="list" id="health"><div class="empty">No checks run yet.</div></div></div>
+    <div class="sec" data-group="work"><h3>Recordings <input type="file" id="recFile" accept="application/json" hidden><button class="btn" id="recUpload" style="float:right;padding:2px 8px;font-size:11px">Upload JSON</button></h3><div class="list" id="recs"><div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div></div></div>
+    <div class="sec" data-group="more"><h3>Cases</h3><div class="list" id="cases"><div class="empty">No cases.</div></div></div>
+    <div class="sec" data-group="more"><h3>Dealer memory</h3><div class="list" id="memory"><div class="empty">Set a dealer code to see what the agent remembers.</div></div></div>
+    <div class="sec" data-group="more"><h3>Playbooks</h3><div class="list" id="playbooks"></div></div>
   </aside>
 </div>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="chat" class="on"><b>&#128172;</b>Ask</button>
+  <button data-tab="work"><b>&#9881;</b>Work<span class="badge" id="tabBadge" hidden>0</span></button>
+  <button data-tab="more"><b>&#9776;</b>More</button>
+  <button id="qrTab"><b>&#128241;</b>Phone</button>
+</nav>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
@@ -226,17 +307,18 @@ async function loadSide() {
   try {
     const recs = await api("/recordings");
     $("#recs").innerHTML = recs.length ? recs.slice(0, 12).map((r) => `<div class="item"><b>${esc(r.title)}</b><div class="meta">${r.purpose} · ${r.dealer || "—"} · ${r.event_count} events · ${new Date(r.started_at).toLocaleString("en-ZA")}</div>
-      <div class="acts"><a href="/api/recordings/${r.id}/sop?format=md" target="_blank"><button>SOP</button></a><a href="/api/recordings/${r.id}/sop?format=playwright" target="_blank"><button>Playwright</button></a><button onclick="ask('Please analyse recording ${r.id} and diagnose what went wrong.')">Diagnose</button><button onclick="ask('Write the SOP for recording ${r.id} as numbered steps for a service advisor.')">Explain</button></div></div>`).join("") : '<div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div>';
+      <div class="acts"><a href="/api/recordings/${r.id}/sop?format=md" target="_blank"><button>SOP</button></a><a href="/api/recordings/${r.id}/sop?format=playwright" target="_blank"><button>Playwright</button></a><button onclick="ask('Please analyse recording ${r.id} and diagnose what went wrong.')">Diagnose</button><button onclick="ask('Write the SOP for recording ${r.id} as numbered steps for a service advisor.')">Explain</button><button onclick="makeTask('${r.id}')">Make a task</button></div></div>`).join("") : '<div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div>';
     const reps = await api("/reports");
     $("#reports").innerHTML = reps.length ? reps.slice(0, 10).map((r) => `<div class="item"><b>${esc(r.title)} <span class="pill">${r.kind}</span></b><div class="meta">${r.dealer || "—"} · ${new Date(r.created_at).toLocaleString("en-ZA")}</div>
       <div class="acts"><a href="/api/reports/${r.id}/html" target="_blank"><button>Open</button></a>${r.xlsx_path ? `<a href="/api/reports/${r.id}/xlsx"><button>Excel</button></a><a href="/api/reports/${r.id}/sms.csv"><button>SMS CSV</button></a><a href="/api/reports/${r.id}/email.csv"><button>E-mail CSV</button></a>` : ""}<button onclick="ask('Read report ${r.id} and give me the headline numbers and the three things to act on.')">Discuss</button></div></div>`).join("") : '<div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div>';
     const cases = await api("/cases" + (dealer ? `?dealer=${encodeURIComponent(dealer)}` : ""));
     $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button><button onclick="escalate('${c.id}')">Escalate</button>${c.status === "escalated" ? `<a href="/api/cases/${c.id}/packet" target="_blank"><button>Packet</button></a>` : ""}</div></div>`).join("") : '<div class="empty">No cases.</div>';
     if (dealer) { const mem = await api("/memory/" + encodeURIComponent(dealer)); $("#memory").innerHTML = mem.length ? mem.map((m) => `<div class="item">${esc(m.fact)}</div>`).join("") : '<div class="empty">Nothing remembered for this dealer yet.</div>'; }
+    loadTasks();
     const pbs = await api("/playbooks"); $("#playbooks").innerHTML = pbs.map((p) => `<div class="item"><b>${esc(p.title)}</b><div class="meta">${p.domain} · ${p.checks} checks · prior ${Math.round(p.prior * 100)}%</div></div>`).join("");
   } catch (e) { console.error(e); }
 }
-window.ask = (t) => { $("#text").value = t; sendMsg(); };
+window.ask = (t) => { $("#text").value = t; sendMsg(); if (innerWidth <= 900) setTab("chat"); };
 window.escalate = async (id) => {
   if (!confirm("Send this case to the support desk with the full evidence packet?")) return;
   try {
@@ -272,14 +354,217 @@ $("#xlsxFile").onchange = async () => {
 $("#recUpload").onclick = () => $("#recFile").click();
 $("#recFile").onchange = async () => { const f = $("#recFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const r = await api("/recordings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(j) }); add("agent", `Recording uploaded as ${r.id}: ${r.stats.steps} steps, ${r.stats.errors} console errors, ${r.stats.failedRequests} failed requests.`); loadSide(); } catch (e) { add("agent", "Upload failed: " + e.message); } $("#recFile").value = ""; };
 
-(async () => {
+/* ── Modal sheet ──────────────────────────────────────────────────────── */
+function openSheet(html) {
+  closeSheet();
+  const scrim = document.createElement("div");
+  scrim.className = "scrim";
+  scrim.id = "scrim";
+  scrim.innerHTML = `<div class="sheet" style="position:relative"><button class="close" aria-label="Close">&times;</button>${html}</div>`;
+  scrim.addEventListener("click", (e) => { if (e.target === scrim || e.target.classList.contains("close")) closeSheet(); });
+  document.body.appendChild(scrim);
+  return scrim;
+}
+function closeSheet() { document.getElementById("scrim")?.remove(); }
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+
+/* ── Connect your phone: a popup that closes once the phone has it ────── */
+async function showQr() {
+  let c;
+  try { c = await api("/connect"); } catch (e) { return add("agent", "Could not work out this machine's address: " + e.message); }
+  const warn = c.isLocalhost
+    ? `<div class="insight warn" style="background:var(--surface2);border-left:3px solid var(--stop);padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:12.5px">
+         This machine only reports a loopback address, so the phone cannot reach it. Set <code>PUBLIC_URL</code> in <code>server/.env</code> to this PC's Wi-Fi address and restart Foreman.</div>`
+    : "";
+  const sheet = openSheet(`
+    <h3>Open Foreman on your phone</h3>
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 12px">Same Wi-Fi as this computer. Scan with the phone's camera, then use the browser menu to <b>Add to Home screen</b>.</p>
+    ${warn}
+    <div id="qrBox" style="background:#fff;padding:12px;border-radius:10px;display:grid;place-items:center"></div>
+    <p class="mono" style="font-size:12px;word-break:break-all;color:var(--t2);margin:10px 0 0">${esc(c.publicUrl)}</p>
+    ${c.hasToken ? '<p style="font-size:12px;color:var(--t3);margin:6px 0 0">The access token is built into the link, so the phone will not ask for it.</p>' : ""}
+    <div class="row" style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn" id="copyLink" style="flex:1">Copy link</button>
+      <button class="btn primary" id="qrDone" style="flex:1">Done</button>
+    </div>`);
+  const box = sheet.querySelector("#qrBox");
+  if (window.qrcode) { const q = qrcode(0, "M"); q.addData(c.url); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 5, margin: 1 }); }
+  else box.innerHTML = `<a href="${esc(c.url)}" style="word-break:break-all">${esc(c.url)}</a>`;
+  sheet.querySelector("#qrDone").onclick = () => { try { localStorage.setItem("cms_phone_paired", "1"); } catch {} closeSheet(); };
+  sheet.querySelector("#copyLink").onclick = async () => {
+    try { await navigator.clipboard.writeText(c.url); sheet.querySelector("#copyLink").textContent = "Copied"; } catch {}
+  };
+}
+$("#qrBtn").onclick = showQr;
+$("#qrTab").onclick = showQr;
+
+/* ── Bottom tabs (phone) ──────────────────────────────────────────────── */
+function setTab(name) {
+  document.body.dataset.tab = name;
+  document.querySelectorAll("#tabs button[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll("#tabs button[data-tab]").forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
+setTab("chat");
+
+/* ── Tasks ────────────────────────────────────────────────────────────── */
+const runState = new Map();   // runId -> latest run summary
+let activeTaskId = null;
+
+function statusLabel(s) {
+  return { queued: "Queued", running: "Running", succeeded: "Done", failed: "Failed", cancelled: "Cancelled", needs_attention: "Needs you" }[s] || s;
+}
+
+async function loadTasks() {
+  let tasks = [];
+  try { tasks = await api("/tasks" + ($("#dealer").value.trim() ? `?dealer=${encodeURIComponent($("#dealer").value.trim())}` : "")); } catch { return; }
+  const el = $("#tasks");
+  if (!tasks.length) {
+    el.innerHTML = '<div class="empty">No tasks yet. Record a workflow with the extension, then press "Make a task" on it in Recordings.</div>';
+    return;
+  }
+  el.innerHTML = tasks.map((t) => {
+    const running = [...runState.values()].filter((r) => r.taskId === t.id && (r.status === "running" || r.status === "queued"));
+    const live = running[0];
+    return `<div class="item">
+      <b>${esc(t.title)}</b>
+      <div class="meta">${t.steps} steps · ${t.variables.length} field(s) · ${t.runCount} run(s)${t.lastRunStatus ? ` · last ${statusLabel(t.lastRunStatus)}` : ""}</div>
+      ${live ? `<div class="run ${live.status}">${statusLabel(live.status)} — step ${live.currentStep || 0} of ${live.totalSteps}
+                 <div class="prog"><i style="width:${Math.round(((live.currentStep || 0) / Math.max(live.totalSteps, 1)) * 100)}%"></i></div></div>` : ""}
+      <div class="acts">
+        <button onclick="runTask('${t.id}')">Run</button>
+        <button onclick="showRuns('${t.id}')">History</button>
+        ${live ? `<button onclick="cancelRun('${live.id}')">Stop</button>` : ""}
+        <button onclick="deleteTask('${t.id}')">Delete</button>
+      </div></div>`;
+  }).join("");
+  const busy = [...runState.values()].filter((r) => r.status === "running" || r.status === "queued").length;
+  $("#tabBadge").hidden = busy === 0;
+  $("#tabBadge").textContent = String(busy);
+}
+
+window.makeTask = async (recordingId) => {
   try {
-    const c = await api("/connect");
-    $("#qrUrl").textContent = c.publicUrl + (c.hasToken ? " (token included in the QR link)" : "");
-    if (window.qrcode) { const q = qrcode(0, "M"); q.addData(c.url); q.make(); $("#qr").innerHTML = q.createSvgTag({ cellSize: 3, margin: 0 }); }
-    else $("#qr").innerHTML = `<a href="${c.url}">${c.url}</a>`;
-  } catch {}
-})();
+    const r = await api("/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recording_id: recordingId }) });
+    add("agent", `Made the task **${r.task.title}** from that recording: ${r.task.steps.length} steps, ${r.task.variables.length} field(s) you can change per run.\n\nPress **Run** on it under Tasks. The first time, you will be asked to connect CMS once so it can log in as you.`);
+    loadTasks(); setTab("work");
+  } catch (e) { add("agent", "Could not make a task: " + e.message); }
+};
+
+window.runTask = async (taskId) => {
+  let task;
+  try { task = await api(`/tasks/${taskId}`); } catch (e) { return add("agent", e.message); }
+  const fields = task.variables.map((v) => `
+    <label style="display:block;font-size:11px;color:var(--t2);margin:9px 0 3px">${esc(v.label)}${v.sensitive ? " (required — was masked when recorded)" : ""}</label>
+    <input data-var="${esc(v.name)}" value="${esc(v.sensitive ? "" : v.example)}" placeholder="${esc(v.example || v.label)}"
+      style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font-size:16px">`).join("");
+  const sheet = openSheet(`
+    <h3>Run: ${esc(task.title)}</h3>
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 6px">${task.steps.length} steps. It runs in its own browser window in the background — carry on with your own work while it goes.</p>
+    ${fields || '<p style="color:var(--t3);font-size:13px">This task has no variable fields; it repeats exactly as recorded.</p>'}
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px">
+      <input type="checkbox" id="watchRun" style="width:18px;height:18px"> Watch it happen (show the browser)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px">
+      <input type="checkbox" id="dryRun" style="width:18px;height:18px"> Practice run (walk the steps without touching CMS)</label>
+    <div class="row" style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" onclick="closeSheet()" style="flex:1">Cancel</button>
+      <button class="btn primary" id="go" style="flex:1">Start</button>
+    </div>`);
+  sheet.querySelector("#go").onclick = async () => {
+    const inputs = {};
+    sheet.querySelectorAll("[data-var]").forEach((i) => (inputs[i.dataset.var] = i.value));
+    const body = { inputs, headless: !sheet.querySelector("#watchRun").checked, dryRun: sheet.querySelector("#dryRun").checked };
+    try {
+      const r = await api(`/tasks/${taskId}/run`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      closeSheet();
+      activeTaskId = taskId;
+      add("agent", `Started **${task.title}**. It is running in the background — watch it under Tasks, or carry on here.`);
+      setTab("work");
+      loadTasks();
+    } catch (e) {
+      const msg = String(e.message || "");
+      if (msg.includes("needsSession") || msg.includes("Connect CMS")) { closeSheet(); connectCms(); }
+      else add("agent", "Could not start: " + msg);
+    }
+  };
+};
+
+window.cancelRun = async (runId) => { try { await api(`/runs/${runId}/cancel`, { method: "POST" }); loadTasks(); } catch {} };
+
+window.deleteTask = async (taskId) => {
+  if (!confirm("Delete this task? The recording it came from is kept.")) return;
+  try { await api(`/tasks/${taskId}`, { method: "DELETE" }); loadTasks(); } catch (e) { add("agent", e.message); }
+};
+
+window.showRuns = async (taskId) => {
+  let runs = [];
+  try { runs = await api(`/runs?task=${encodeURIComponent(taskId)}`); } catch (e) { return add("agent", e.message); }
+  openSheet(`<h3>Run history</h3>${runs.length ? runs.map((r) => `
+    <div class="run ${r.status}" style="margin-top:10px">
+      <b>${statusLabel(r.status)}</b> · ${new Date(r.createdAt).toLocaleString("en-ZA")}
+      ${r.batchId ? ` · row ${(r.batchIndex ?? 0) + 1}` : ""}
+      <div>step ${r.currentStep || 0} of ${r.totalSteps}</div>
+      ${r.error ? `<div style="color:var(--stop)">${esc(r.error)}</div>` : ""}
+      <button class="btn" style="margin-top:6px;padding:5px 10px;font-size:12px" onclick="showRunLog('${r.id}')">Open log</button>
+    </div>`).join("") : '<p style="color:var(--t3)">No runs yet.</p>'}`);
+};
+
+window.showRunLog = async (runId) => {
+  let run;
+  try { run = await api(`/runs/${runId}`); } catch (e) { return add("agent", e.message); }
+  const lines = run.log.map((l) => `<span class="${l.level}">${esc(l.at.slice(11, 19))}  ${esc(l.message)}</span>`).join("\n");
+  const shots = run.log.filter((l) => l.screenshot);
+  openSheet(`<h3>${statusLabel(run.status)}</h3>
+    <div class="runlog">${lines || "no output"}</div>
+    ${shots.map((l) => `<img src="/api/runs/${run.id}/shot/${encodeURIComponent(l.screenshot)}" style="width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--line)">`).join("")}`);
+};
+
+async function connectCms() {
+  const sheet = openSheet(`
+    <h3>Connect CMS once</h3>
+    <p style="color:var(--t2);font-size:13px">A browser window will open. Log into CMS as you normally would. Foreman keeps only the session cookie so tasks can work as you — <b>your password is never stored</b>.</p>
+    <label style="display:block;font-size:11px;color:var(--t2);margin:12px 0 3px">CMS address</label>
+    <input id="cmsUrl" placeholder="https://cms.example.co.za" value="${esc(localStorage.getItem("cms_url") || "")}"
+      style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font-size:16px">
+    <div class="row" style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" onclick="closeSheet()" style="flex:1">Cancel</button>
+      <button class="btn primary" id="cmsGo" style="flex:1">Open browser</button>
+    </div>
+    <div class="hint" id="cmsMsg" style="margin-top:10px"></div>`);
+  sheet.querySelector("#cmsGo").onclick = async () => {
+    const url = sheet.querySelector("#cmsUrl").value.trim();
+    if (!/^https?:\/\//i.test(url)) { sheet.querySelector("#cmsMsg").textContent = "Enter the full address, starting with https://"; return; }
+    try { localStorage.setItem("cms_url", url); } catch {}
+    sheet.querySelector("#cmsMsg").textContent = "A browser window is opening on the computer running Foreman. Log in there, then come back.";
+    try {
+      const r = await api("/cms-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+      closeSheet();
+      add("agent", r.message);
+    } catch (e) { sheet.querySelector("#cmsMsg").textContent = e.message; }
+  };
+}
+$("#cmsConnect").onclick = connectCms;
+
+/* ── Live run feed ────────────────────────────────────────────────────── */
+function watchRuns() {
+  const es = new EventSource("/api/runs-stream");
+  es.addEventListener("update", (ev) => {
+    const run = JSON.parse(ev.data);
+    runState.set(run.id, run);
+    loadTasks();
+    if (run.status === "succeeded") add("agent", `Task finished: **${run.taskId}** completed all ${run.totalSteps} steps.`);
+    if (run.status === "failed") add("agent", `Task stopped at step ${run.currentStep}: ${run.error || "unknown error"}. Open the log under Tasks to see the screenshot.`);
+    if (run.status === "needs_attention") add("agent", `A task needs you: ${run.attention}`);
+  });
+  es.addEventListener("status", (ev) => {
+    const st = JSON.parse(ev.data);
+    if (st.active) runState.set(st.active.id, { ...st.active, status: "running" });
+    loadTasks();
+  });
+  es.onerror = () => { es.close(); setTimeout(watchRuns, 5000); };
+}
+watchRuns();
+
 (async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
 </script>
 </body>

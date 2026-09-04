@@ -9,7 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "browser": "playwright install chromium"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
@@ -18,6 +19,7 @@
     "express": "^4.21.2",
     "nanoid": "^5.1.5",
     "nodemailer": "^10.0.0",
+    "playwright": "^1.62.1",
     "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },

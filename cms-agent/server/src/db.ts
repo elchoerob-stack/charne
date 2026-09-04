@@ -100,6 +100,30 @@ CREATE TABLE IF NOT EXISTS reports (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  dealer TEXT,
+  recording_id TEXT,
+  data TEXT NOT NULL,             -- JSON: Task
+  run_count INTEGER NOT NULL DEFAULT 0,
+  last_run_at TEXT,
+  last_run_status TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS task_runs (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  batch_id TEXT,
+  status TEXT NOT NULL,
+  data TEXT NOT NULL,             -- JSON: TaskRun
+  created_at TEXT NOT NULL,
+  finished_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_runs_task ON task_runs(task_id, created_at);
+
 CREATE TABLE IF NOT EXISTS followups (
   id TEXT PRIMARY KEY,
   case_id TEXT,

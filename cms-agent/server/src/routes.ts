@@ -1,4 +1,5 @@
 import { Router } from "express";
+import os from "node:os";
 import { db, getOrCreateSession } from "./db.js";
 import { config, isAgentMode } from "./config.js";
 import { runTurn } from "./agent/agent.js";
@@ -32,11 +33,29 @@ apiRoutes.post("/chat", async (req, res) => {
   }
 });
 
-/** What the phone needs to connect: the public URL and (if set) the access token. Only available once the caller is authenticated. */
-apiRoutes.get("/connect", (req, res) => {
-  const base = (process.env.PUBLIC_URL || `http://${req.hostname}:${config.port}`).replace(/\/$/, "");
+/**
+ * What the phone needs to connect. PUBLIC_URL wins when set; otherwise find
+ * this machine's address on the LAN. Never fall back to req.hostname: that is
+ * "localhost" when the console is open on the same PC, and a QR code saying
+ * localhost points the phone at itself.
+ */
+function lanUrl(): string {
+  for (const addrs of Object.values(os.networkInterfaces())) {
+    for (const a of addrs ?? []) {
+      // Node has reported family as both "IPv4" and 4 across versions.
+      const family = String(a.family);
+      if ((family !== "IPv4" && family !== "4") || a.internal) continue;
+      if (a.address.startsWith("169.254.")) continue; // link-local, not routable
+      return `http://${a.address}:${config.port}`;
+    }
+  }
+  return `http://localhost:${config.port}`;
+}
+
+apiRoutes.get("/connect", (_req, res) => {
+  const base = (process.env.PUBLIC_URL || lanUrl()).replace(/\/$/, "");
   const url = config.token ? `${base}/?token=${encodeURIComponent(config.token)}` : `${base}/`;
-  res.json({ url, publicUrl: base, hasToken: Boolean(config.token) });
+  res.json({ url, publicUrl: base, hasToken: Boolean(config.token), isLocalhost: /localhost|127\.0\.0\.1/.test(base) });
 });
 
 apiRoutes.get("/sessions", (_req, res) => {

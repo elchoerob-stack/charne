@@ -64,6 +64,26 @@ mind?"* to see the reasoning.
 Use SOP captures during rollouts: record each task once and you have the
 training pack for the next dealership.
 
+## 4b. Turn a recording into a task Foreman runs for you
+
+This is the difference between Foreman telling you how to do a job and Foreman
+doing it.
+
+1. Record the job as in §4, and send it to CMS Agent.
+2. In **Recordings**, press **Make a task**. Foreman strips out the noise and
+   turns everything you typed into named fields.
+3. Under **Tasks**, press **Run**. The first time it asks you to **Connect
+   CMS**: a browser opens, you log in once, and only the session cookie is
+   kept — your password is never stored.
+4. Change any of the fields (they are pre-filled with what you typed while
+   recording), then press Start. Tick **Practice run** the first time to walk
+   the steps without touching CMS, or **Watch it happen** to see the browser.
+5. The run goes into the background. Carry on working; check progress under
+   **Work**, and open the log for any run to see each step and a screenshot if
+   something failed.
+
+Full detail, including how it survives CMS being redesigned: `docs/TASKS.md`.
+
 ## 5. Build a workshop report
 
 1. Export the bookings from CMS (the `Bookings MTD` export from the workshop

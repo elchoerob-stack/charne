@@ -15,6 +15,8 @@ cms-agent/
     src/problem-solving/    Playbooks + Bayesian-style engine (pure, tested)
     src/recorder/           Zod schema, SOP compiler, renderers, evidence extraction, routes
     src/reports/            Workshop dashboard + campaign list builders (xlsx in, HTML/xlsx/CSV out), store, routes
+    src/tasks/              Recording -> repeatable Task; Playwright runner with locator fallbacks and
+                            Claude self-healing; background run queue; store; routes
     knowledge/cms-kb.json   Seed knowledge base
     test/                   node:test suites
 ```
@@ -50,7 +52,8 @@ cms-agent/
 ## Storage
 
 SQLite (`better-sqlite3`, WAL) at `CMS_AGENT_DB`. Tables: sessions, messages,
-memory, recordings, cases, learned_playbooks, followups, files, reports.
+memory, recordings, cases, learned_playbooks, followups, files, reports,
+tasks, task_runs.
 Uploaded workbooks and generated report files live next to the database under
 `data/files` and `data/reports`.
 

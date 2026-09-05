@@ -120,6 +120,9 @@ used when blank).
 
 ## Guides
 
+- **In the app: press *Guide*** (or open `/guide.html`) — how to use Foreman,
+  with a first-hour checklist that remembers where you got to
+
 - `docs/INSTALL.md` — install on the laptop, as a desktop app, and on the phone
 - `docs/USER_GUIDE.md` — step-by-step use of every feature
 

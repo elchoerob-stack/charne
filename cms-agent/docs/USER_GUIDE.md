@@ -1,5 +1,9 @@
 # Foreman user guide
 
+> There is a friendlier version of this built into the app: press **Guide** in
+> the top bar, or open `/guide.html`. It has a first-hour checklist, works on
+> the phone, and prints. This file is the longer written reference.
+
 Foreman is your workshop agent. It diagnoses CMS problems with playbooks and
 evidence, builds workshop reports and campaign lists, turns recordings into
 SOPs, and escalates cleanly when it cannot fix something. This guide walks

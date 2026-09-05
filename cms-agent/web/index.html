@@ -61,7 +61,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
   .bar .sp{display:none}
   .bar img{height:24px!important}
   .bar .btn{padding:9px 12px;font-size:13px;min-height:40px}
-  .bar #newSession,.bar #reviewLink,.bar #qrBtn,.bar #boardLink{display:none}   /* these live in the More tab */
+  .bar #newSession,.bar #reviewLink,.bar #qrBtn,.bar #boardLink,.bar #guideLink{display:none}   /* these live in the More tab */
   .bar #install{padding:7px 11px;font-size:12px}
   .bar label{flex:1 1 100%;order:9;display:flex;align-items:center;gap:8px}
   .bar label input{flex:1;width:auto!important;min-height:40px;font-size:16px}
@@ -125,6 +125,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
   <div><b>Foreman</b><span>Ask · automate · report</span></div>
   <div class="sp"></div>
   <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
+  <a href="/guide.html" id="guideLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Guide</a>
   <a href="/board.html" id="boardLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Board</a>
   <button class="btn" id="qrBtn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">Phone</button>
   <a href="/review.html" id="reviewLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Review</a>
@@ -139,7 +140,9 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 
 <b>Answer and diagnose</b> — tell me what is going wrong at a dealership and I work through it with you, or drop in a workshop export or Marketing Contacts export and I will build the report and talk you through it.
 
-<b>Do the work</b> — record a job once with the recorder extension, press <b>Make a task</b> on it, and I will then do that job myself, in the background, as often as you like, while you carry on with something else. Tasks live under <b>Work</b>.</div>
+<b>Do the work</b> — record a job once with the recorder extension, press <b>Make a task</b> on it, and I will then do that job myself, in the background, as often as you like, while you carry on with something else. Tasks live under <b>Work</b>.
+
+New here? <a href="/guide.html" style="color:var(--gold)">Open the guide</a> — it has a first-hour checklist.</div>
     </div>
     <div class="attach" id="attach"></div>
     <div class="compose">
@@ -172,6 +175,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
     </div>
     <div class="sec" data-group="more"><h3>Session</h3>
       <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="location.href='/guide.html'" style="flex:1">How to use Foreman</button>
         <button class="btn" onclick="location.href='/board.html'" style="flex:1">Task board</button>
         <button class="btn" onclick="location.href='/review.html'" style="flex:1">Playbook review</button>
         <button class="btn" onclick="document.getElementById('newSession').click()" style="flex:1">New session</button>

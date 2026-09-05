@@ -5,6 +5,11 @@ franchised dealership workshops in South Africa. Ordered by impact per week of
 effort. "Capacity" items are about doing more work per day without Jacques in
 the loop; "capability" items are about doing things no competitor does.
 
+> **Updated 5 Sep 2026.** Tiers 1–2 have moved a long way: the task runner,
+> scheduler, agents, board and remote access are all built. What remains in
+> Tier 1 is the one thing that needs something outside this repo — real
+> endpoints — plus the discipline items that only pay off with real use.
+
 ## What already sets it apart
 
 - A diagnostic method (playbooks, evidence, confidence, one question at a
@@ -15,6 +20,9 @@ the loop; "capability" items are about doing things no competitor does.
   tablets, carry-over abuse, pre-inspection, DMS linkage.
 - Reports that a dealer principal can open on a phone, built from the export
   they already have, and an agent that can discuss the numbers.
+- It does the work, not just describes it: a job recorded once becomes a task
+  that runs itself on a schedule, survives CMS being redesigned, and reports
+  back — with an agent layer on top that owns a set of tasks.
 
 ## Tier 1 — do these next (days each)
 
@@ -23,10 +31,12 @@ the loop; "capability" items are about doing things no competitor does.
    add read-only lookups: job card posting log, authorisation send log, VIN
    decode. Every one of these turns a question to the user into an automatic
    check, which is the single biggest jump in diagnostic accuracy.
-2. **Scheduled routines.** A cron runner over the `followups` table plus a
-   WhatsApp/e-mail notifier so Foreman chases "did the Evolve retry post?"
-   without being asked, and sends the Monday workshop report to each dealer
-   principal automatically (Grok Tasks, but for dealers).
+2. ✅ **Scheduled routines** (done: `tasks/scheduler.ts`, agents, the board).
+   **Still open — the notifier.** Schedules fire and agents report into the
+   console, but nothing reaches you when the app is closed. A WhatsApp or
+   e-mail step on the end of an agent run is the missing half: it is what turns
+   "Foreman did the bookings" into something you find out about over coffee
+   rather than by opening a laptop.
 3. ✅ **Case-to-ticket bridge** (done: `escalate_case`, webhook/Jira/e-mail/draft). Push escalation packets straight into the CMS
    support desk system (Jira/Zendesk/e-mail) with recording links, so an
    escalation is one click and arrives complete.
@@ -38,6 +48,22 @@ the loop; "capability" items are about doing things no competitor does.
    that produced learned playbooks, with one-click promotion into the seeded
    list after a human confirms. Ten playbooks becomes a hundred in a quarter.
 
+### What is genuinely next, in order
+
+1. **Prove one task against live CMS.** Everything is proven against a test
+   page. Record one real job, run it as a practice run, then for real while
+   watching. Until that has happened once, nothing else on this list matters.
+2. **The notifier** (Tier 1 item 2 above). An agent that finishes at 07:00 and
+   tells nobody is half a feature.
+3. **Live integration adapters** (Tier 1 item 1). The single biggest jump in
+   diagnostic accuracy, and it needs URLs from CMS rather than code from here.
+4. **Replace the synthetic eval cases with real ones.** The 52 cases were
+   written from the playbooks, which is the weakest possible source. Fifty
+   real support conversations make every future change measurable.
+5. **A second real task, and a third.** One task is a demo. Five tasks running
+   on schedules is a product, and the fifth is where the rough edges in the
+   recorder will show up.
+
 ## Tier 2 — capability (weeks each)
 
 6. **Screen-aware guidance.** The recorder already knows the current screen
@@ -46,6 +72,8 @@ the loop; "capability" items are about doing things no competitor does.
    leaves CMS.
 7. **Voice on the floor.** Speech in is done; add speech out and a hands-free
    mode for technicians on tablets ("Foreman, the eVHC upload is stuck").
+   Now more valuable than before: a task running in the background is exactly
+   the thing you want announced rather than watched.
 8. **Multi-dealer memory and benchmarks.** Group-level views across all 14
    Morgan franchises (the group report skill), with week-on-week deltas and
    automatic "who moved" commentary.
@@ -82,10 +110,26 @@ the loop; "capability" items are about doing things no competitor does.
     under two minutes, escalates the rest with a complete packet." Measured
     by the eval set and the outcome data above.
 
+## Known rough edges (worth fixing before they bite)
+
+- **One CMS session, shared.** Every task and agent uses the same saved
+  cookie. When it expires, everything scheduled quietly skips until you
+  reconnect. A "session is stale" warning on the board would cost an hour.
+- **Runs are strictly sequential.** Correct for safety, but a slow task blocks
+  the queue behind it. Per-dealer queues would fix that without risking
+  duplicate bookings.
+- **Self-healing is not yet observable.** Repairs are written back onto the
+  task silently. A "steps repaired" count on the board would tell you when a
+  recording has drifted far enough to be worth re-recording.
+- **The task board has no dealer filter on the phone.** Fine with five tasks,
+  annoying with fifty.
+
 ## For Jacques personally
 
-- Get the eval harness running first; it turns intuition into evidence and is
-  the same discipline as the walk-forward testing in the trading bots.
+- Get one real task working end to end before adding a sixth capability. The
+  build has run ahead of the proving, and that is the gap worth closing.
+- Then the eval harness on real cases; it turns intuition into evidence, the
+  same discipline as the walk-forward testing in the trading bots.
 - Record every rollout session with the extension; the SOP library builds
   itself and becomes the onboarding pack for the next dealer.
 - Keep learned playbooks reviewed weekly; that is the compounding asset.

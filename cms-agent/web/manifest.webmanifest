@@ -34,12 +34,12 @@
       "url": "/board.html"
     },
     {
-      "name": "New session",
-      "url": "/?new=1"
+      "name": "How to use Foreman",
+      "url": "/guide.html"
     },
     {
-      "name": "Playbook review",
-      "url": "/review.html"
+      "name": "New session",
+      "url": "/?new=1"
     }
   ]
 }

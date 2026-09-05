@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Foreman · How to use it</title>
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0F2040">
+<link rel="icon" href="/assets/foreman-icon.svg" type="image/svg+xml">
+<style>
+:root{--ink:#0F2040;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--wait:#8A6100;--wait-bg:#FBF1DC}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--stop:#E28080;--stop-bg:#331919;--wait:#D9A93C;--wait-bg:#332715}}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--t1);font:15px/1.6 system-ui,"Segoe UI",sans-serif}
+.bar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 14px 9px;position:sticky;top:0;z-index:10}
+.bar b{font-size:15px}.bar a{color:#fff;margin-left:auto;font-size:12.5px;opacity:.85;text-decoration:none}
+main{max-width:760px;margin:0 auto;padding:18px 16px calc(40px + env(safe-area-inset-bottom))}
+h1{font-size:24px;margin:6px 0 4px;letter-spacing:-.02em}
+.lede{color:var(--t2);font-size:15px;margin:0 0 18px}
+h2{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:18px 0 5px}
+p{margin:0 0 10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:620px){.two{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{margin-top:0}
+.card p:last-child{margin-bottom:0}
+ol,ul{margin:0 0 10px;padding-left:22px}li{margin-bottom:6px}
+code,kbd{background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+kbd{font-weight:600;background:var(--ink);color:#fff;border-color:var(--ink)}
+.step{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;cursor:pointer;transition:border-color .15s}
+.step:hover{border-color:var(--gold)}
+.step.done{background:var(--go-bg);border-color:var(--go)}
+.step .box{flex:0 0 22px;height:22px;border:2px solid var(--line);border-radius:6px;display:grid;place-items:center;margin-top:2px;font-weight:700;color:transparent;font-size:14px}
+.step.done .box{background:var(--go);border-color:var(--go);color:#fff}
+.step .n{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.step b.t{display:block;margin:1px 0 3px;font-size:15.5px}
+.step p{margin:0;font-size:13.5px;color:var(--t2)}
+.step.done b.t{text-decoration:line-through;text-decoration-thickness:1px;opacity:.75}
+.note{border-left:3px solid var(--gold);background:var(--surface2);padding:10px 13px;border-radius:0 9px 9px 0;margin:12px 0;font-size:14px}
+.note.warn{border-color:var(--stop);background:var(--stop-bg)}
+.note b{color:var(--t1)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.say{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 9px 9px 0;padding:9px 12px;margin:7px 0;font-style:italic;color:var(--t2);font-size:14px}
+.progress{position:sticky;top:52px;background:var(--paper);padding:8px 0 10px;z-index:5}
+.progress .track{height:6px;background:var(--surface2);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.progress .track i{display:block;height:100%;background:var(--gold);width:0;transition:width .3s}
+.progress span{font-size:12px;color:var(--t3);display:block;margin-top:5px}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--wait-bg);color:var(--wait);vertical-align:middle}
+.pill.go{background:var(--go-bg);color:var(--go)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--t3);font-size:12.5px}
+a{color:var(--gold)}
+@media print{.bar,.progress,footer{display:none}body{background:#fff}.card,.step{break-inside:avoid}}
+</style></head>
+<body>
+<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>How to use Foreman</b><a href="/">← Back</a></div>
+<main>
+
+<h1>Foreman does two jobs</h1>
+<p class="lede">It <b>answers and diagnoses</b> — you describe a problem, it works it out with you.
+And it <b>does the work</b> — you record a job once, and it performs that job itself, in the background, as often as you like.</p>
+
+<div class="two">
+  <div class="card"><h3>Ask it something</h3>
+    <p>Describe a fault in the advisor's own words. Foreman ranks the likely causes from its playbooks, checks Evolve/Infomedia/SMS, asks you <em>one</em> question, then gives you numbered steps and how to verify the fix.</p></div>
+  <div class="card"><h3>Give it a job</h3>
+    <p>Record a booking once with the Recorder. Press <b>Make a task</b>. Now Foreman can do that booking itself — with different data each time, on a schedule, while you are doing something else.</p></div>
+</div>
+
+<h2>Your first hour</h2>
+<p>Tap each one as you finish it. Your progress is kept on this device.</p>
+<div class="progress"><div class="track"><i id="bar"></i></div><span id="pct">0 of 8 done</span></div>
+<div id="steps"></div>
+
+<h2>1 · Asking it things</h2>
+<p>Set the <b>dealer code</b> first (top of the screen) — everything is filed under it. Then just type, or press 🎙 to dictate, or 🖼 to attach a photo of the screen.</p>
+<div class="say">"Invoice on job card 48812 is not posting to Evolve at Kimberley"</div>
+<div class="say">"Customer says she never got the OTP for the brake authorisation"</div>
+<div class="say">"How many of these contacts can we actually reach?" <span style="font-style:normal">(after uploading a contacts export)</span></div>
+<p>Watch the grey <b>activity feed</b> under your question — it shows every check it ran, so you can see <em>why</em> it concluded what it did.</p>
+
+<h3>Four modes</h3>
+<table>
+<tr><th>Mode</th><th>Use it when</th></tr>
+<tr><td><b>Quick</b></td><td>You want one fact, fast.</td></tr>
+<tr><td><b>Think</b> <span class="pill go">default</span></td><td>A real problem. It gathers evidence before answering.</td></tr>
+<tr><td><b>Deep</b></td><td>Something odd, or outside CMS — browser, tablet, carrier, Windows. Adds web search.</td></tr>
+<tr><td><b>Council</b></td><td>Stubborn. Three specialists each write a brief and Foreman cross-checks them.</td></tr>
+</table>
+<div class="note"><b>The bit that makes it smarter over time:</b> when something is fixed, tell it — <em>"that fixed it"</em>. Foreman writes the resolution onto the case, and that becomes a playbook it recognises next time. Skip this and it never learns.</div>
+
+<h2>2 · Reports</h2>
+<p>In the <b>Work</b> tab, under Reports:</p>
+<ul>
+  <li><b>＋ Workshop export</b> — a CMS bookings export becomes a dashboard: close rates, advisor and dealer tables, carry-over abuse, weekly trend, and the things to act on.</li>
+  <li><b>＋ Marketing contacts</b> — a contacts export becomes a validated SMS and e-mail send list, with the five-sheet workbook and CSVs.</li>
+</ul>
+<p>Then press <b>Discuss</b> and ask it things like <em>"which advisor at Ermelo should I coach first?"</em></p>
+<div class="note">These come out in <b>CMS branding</b>, on purpose — they are what you hand to a dealer principal or the CMS team. The app itself is Foreman; the reports are CMS.</div>
+
+<h2>3 · Recording a job</h2>
+<ol>
+  <li>Open the CMS screen where the job <em>starts</em>.</li>
+  <li>Click the <b>Foreman Recorder</b> extension → give it a title → <b>Start</b>.</li>
+  <li>Do the job exactly as you normally would. If something goes wrong, add a <b>note</b> at that moment.</li>
+  <li><b>Stop</b> → <b>Send to Foreman</b>.</li>
+</ol>
+<p>The recording is useful three ways: <b>SOP</b> writes it up as a training procedure, <b>Diagnose</b> mines the errors and failed requests it captured, and <b>Make a task</b> turns it into work Foreman can repeat.</p>
+<div class="note"><b>Privacy:</b> ID numbers, phone numbers, e-mail addresses and passwords are masked <em>in the browser</em>, before anything is sent. Masked values never end up in a task — you supply them per run.</div>
+
+<h2>4 · Turning it into a task</h2>
+<ol>
+  <li>On the recording, press <b>Make a task</b>. Everything you typed becomes a named field you can change per run.</li>
+  <li>First run only: <b>Connect CMS</b>. A browser opens, you log in once. Only the session cookie is kept — <b>your password is never stored</b>.</li>
+  <li>Press <b>Run</b>. Tick <b>Practice run</b> the first time to walk the steps without touching CMS, or <b>Watch it happen</b> to see the browser.</li>
+</ol>
+<p>The run goes into a background queue. Carry on working; check it under <b>Work</b>, and open the log of any run to see each step and a screenshot if it failed.</p>
+<div class="note"><b>Why it does not break every time CMS changes:</b> each step remembers seven ways to find its element — test id, role, label, placeholder, id, visible text, CSS. If they all miss, Claude looks at the page and picks the right one, then writes that repair onto the task so it sticks. If it is not confident, it stops rather than guessing — a wrong click makes a real booking.</div>
+
+<h2>5 · The board, schedules and agents</h2>
+<p>Press <b>Board</b>. Five lanes, and <b>dragging a card does the real thing</b>:</p>
+<table>
+<tr><th>Drop it in</th><th>What happens</th></tr>
+<tr><td><b>To do</b></td><td>Manual lane. Any schedule switches off.</td></tr>
+<tr><td><b>Scheduled</b></td><td>Schedule switches on and the next run is worked out.</td></tr>
+<tr><td><b>Paused</b></td><td>Keeps the schedule but stops it firing.</td></tr>
+<tr><td><b>Done / Needs attention</b></td><td>Filled in from the last run.</td></tr>
+</table>
+<p>Dragging works with your thumb on the phone, not just a mouse.</p>
+<h3>Schedules</h3>
+<p>⏰ on any card: daily, chosen weekdays, every N minutes, or cron. Times are <b>Centurion wall-clock</b> — "08:00" means 08:00 where you are.</p>
+<h3>Agents</h3>
+<p>An agent is a named worker with a job description and the tasks it owns. It runs them in order, then <b>writes you a report</b>: what got done, what did not and why, and what to do next. It appears on the board and in your chat.</p>
+<div class="note"><b>Build this one first:</b> an agent called <em>Morning bookings</em>, brief "Loads and confirms the day's service bookings before the workshop opens", owning your booking task, scheduled weekdays at 07:00. You read the result over coffee instead of doing the work.</div>
+<div class="note warn"><b>Scheduled runs are skipped if there is no saved CMS session.</b> If a schedule seems not to have fired, that is the first thing to check — reconnect under Work → Connect CMS.</div>
+
+<h2>6 · Your phone</h2>
+<p>Press <b>Phone</b> for a QR code. Scan it, then use the browser menu → <b>Add to Home screen</b>. Everything works there: dictate the advisor's description, photograph the error, read the steps back on the workshop floor.</p>
+<h3>Away from the Wi-Fi</h3>
+<ul>
+  <li><b>Tailscale</b> <span class="pill go">recommended</span> — install on the laptop and the phone, sign both in. The address then works anywhere, nothing is exposed to the internet, nothing to switch on.</li>
+  <li><b>Cloudflare tunnel</b> — a public link that works on any device. Foreman refuses to open one unless your access token is 20+ characters, because this puts a server that can drive your live CMS session on the open internet. Treat the link like a password.</li>
+</ul>
+
+<h2>7 · Monday, ten minutes</h2>
+<ol>
+  <li><b>Review</b> → promote the good playbooks Foreman learned from resolved cases; archive the one-offs.</li>
+  <li>Glance at open escalations and anything in <b>Needs attention</b>.</li>
+  <li>Ask it: <em>"What did we learn this week?"</em></li>
+</ol>
+
+<h2>When something is wrong</h2>
+<table>
+<tr><th>What you see</th><th>What to do</th></tr>
+<tr><td>"No Claude API credentials"</td><td>Add <code>ANTHROPIC_API_KEY</code> to <code>server/.env</code> and restart. Reports, recordings and tasks still work without it.</td></tr>
+<tr><td>Phone cannot reach it</td><td>Same Wi-Fi, or Tailscale. Use the laptop's address, never <code>localhost</code> — on the phone that means the phone.</td></tr>
+<tr><td>A task stopped at a login screen</td><td>The saved session expired. Work → <b>Connect CMS</b> again.</td></tr>
+<tr><td>A scheduled task never ran</td><td>Almost always the missing CMS session (above).</td></tr>
+<tr><td>Upload says "no booking rows"</td><td>The sheet has no recognisable Status/Progress column.</td></tr>
+<tr><td>Recorder captured nothing</td><td>Reload the CMS tab after installing the extension. It only records the tab you pressed Start in.</td></tr>
+</table>
+
+<footer>
+Deeper detail lives in the repo: <code>docs/TASKS.md</code>, <code>docs/AGENTS_AND_SCHEDULING.md</code>,
+<code>docs/REMOTE_ACCESS.md</code>, <code>docs/REPORTS.md</code>, <code>docs/PROBLEM_SOLVING.md</code>.
+This page prints cleanly if you want it on paper.
+</footer>
+</main>
+
+<script>
+const STEPS = [
+  ["Start Foreman", "In PowerShell: <code>cd $HOME\\Documents\\charne\\cms-agent\\server</code> then <code>npm run dev</code>. Leave the window open."],
+  ["Install it as an app", "Open <code>http://localhost:8787</code> in Chrome and press <b>Install app</b> in the top bar."],
+  ["Put it on your phone", "Press <b>Phone</b>, scan the QR on the S25+, then Add to Home screen."],
+  ["Load the Recorder", "<code>chrome://extensions</code> → Developer mode → Load unpacked → the <code>recorder-extension</code> folder. Set the server URL in its popup."],
+  ["Ask it a real question", "Set a dealer code, then describe a fault you actually had this week. Answer the one question it asks."],
+  ["Build a report", "Work → ＋ Workshop export, drop in a bookings export, then press Discuss."],
+  ["Record one job", "Record a short CMS job with the extension, send it to Foreman, and press <b>Make a task</b>."],
+  ["Run it as a practice run", "Work → Connect CMS once, then Run the task with <b>Practice run</b> ticked. Watch the log."],
+];
+const KEY = "foreman_guide_done";
+let done = new Set();
+try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch {}
+const host = document.getElementById("steps");
+function render() {
+  host.innerHTML = STEPS.map(([t, d], i) => `
+    <div class="step ${done.has(i) ? "done" : ""}" data-i="${i}">
+      <div class="box">✓</div>
+      <div><span class="n">Step ${i + 1}</span><b class="t">${t}</b><p>${d}</p></div>
+    </div>`).join("");
+  host.querySelectorAll(".step").forEach((el) => el.onclick = () => {
+    const i = +el.dataset.i;
+    done.has(i) ? done.delete(i) : done.add(i);
+    try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch {}
+    render();
+  });
+  document.getElementById("bar").style.width = (done.size / STEPS.length * 100) + "%";
+  document.getElementById("pct").textContent = `${done.size} of ${STEPS.length} done`;
+}
+render();
+</script>
+</body></html>

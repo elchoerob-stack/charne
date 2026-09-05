@@ -1,7 +1,6 @@
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import * as XLSX from "xlsx";
+import { resource } from "../paths.js";
 
 /** CMS Systems corporate identity (CMS eco, 2026 guide). */
 export const CI = {
@@ -15,15 +14,12 @@ export const STATUS_COLOURS: Record<string, string> = {
   Closed: "#27ae60", Confirmed: "#2980b9", "In Progress": "#e67e22", "Carried-Over": "#8e44ad", Delayed: "#e74c3c", Unknown: "#95a5a6",
 };
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-
 let logoCache: string | undefined;
 /** CMS eco full-colour logo as a data URL (embedded so reports work offline). */
 export function logoDataUrl(): string {
   if (logoCache !== undefined) return logoCache;
-  const candidates = [path.join(here, "../../../web/assets/cms-eco-logo-full-colour.png"), path.join(here, "../../web/assets/cms-eco-logo-full-colour.png"), path.resolve("../web/assets/cms-eco-logo-full-colour.png")];
-  const p = candidates.find((c) => fs.existsSync(c));
-  logoCache = p ? `data:image/png;base64,${fs.readFileSync(p).toString("base64")}` : "";
+  const p = resource("web", "assets", "cms-eco-logo-full-colour.png");
+  logoCache = fs.existsSync(p) ? `data:image/png;base64,${fs.readFileSync(p).toString("base64")}` : "";
   return logoCache;
 }
 

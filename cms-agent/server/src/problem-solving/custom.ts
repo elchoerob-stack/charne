@@ -1,19 +1,17 @@
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { Playbook } from "./types.js";
+import path from "node:path";
+import { dataDir } from "../paths.js";
 
 /**
- * Promoted playbooks live in knowledge/playbooks.custom.json so they survive
- * restarts and can be edited by hand or through the review screen. They are
- * loaded alongside the seeded PLAYBOOKS on every diagnosis.
+ * Promoted playbooks live in the data folder, not next to the program, so they
+ * survive restarts *and* updates: an update replaces Foreman's own files
+ * wholesale, and anything Jacques promoted would go with them otherwise. They
+ * are loaded alongside the seeded PLAYBOOKS on every diagnosis.
  */
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-
 export function customPlaybooksPath(): string {
-  const candidates = [path.join(here, "../../knowledge/playbooks.custom.json"), path.join(here, "../knowledge/playbooks.custom.json"), path.resolve("knowledge/playbooks.custom.json")];
-  return candidates.find((p) => fs.existsSync(path.dirname(p))) ?? candidates[0];
+  return path.join(dataDir(), "playbooks.custom.json");
 }
 
 export interface CustomPlaybook {

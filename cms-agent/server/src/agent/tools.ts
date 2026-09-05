@@ -1,7 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { db, newId, now } from "../db.js";
 import { diagnose, playbookFromCase, tokenize } from "../problem-solving/engine.js";
 import type { Evidence, Playbook } from "../problem-solving/types.js";
@@ -10,6 +8,7 @@ import { Recording } from "../recorder/schema.js";
 import { checkIntegration, type HealthResult, type SystemName } from "./integrations.js";
 import { buildReport, getReport, listFiles, listReports, type ReportKind } from "../reports/store.js";
 import { loadCustomPlaybooks } from "../problem-solving/custom.js";
+import { resource } from "../paths.js";
 
 /* ── Tool plumbing ─────────────────────────────────────────────────────── */
 
@@ -26,16 +25,13 @@ export interface AgentTool {
   run: (input: Record<string, unknown>, ctx: ToolContext) => Promise<unknown>;
 }
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-
 /* ── Knowledge base ────────────────────────────────────────────────────── */
 
 interface KbArticle { id: string; title: string; domain: string; tags: string[]; body: string }
 
 function loadKb(): KbArticle[] {
-  const candidates = [path.join(here, "../../knowledge/cms-kb.json"), path.join(here, "../knowledge/cms-kb.json"), path.resolve("knowledge/cms-kb.json")];
-  for (const p of candidates) if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
-  return [];
+  const p = resource("knowledge", "cms-kb.json");
+  return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf8")) : [];
 }
 const KB = loadKb();
 

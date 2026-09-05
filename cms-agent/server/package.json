@@ -1,6 +1,6 @@
 {
   "name": "cms-agent-server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "CMS Agent: a Claude-powered workshop support agent with a problem-solving engine and workflow recorder backend",
@@ -10,7 +10,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test test/*.test.ts",
-    "browser": "playwright install chromium"
+    "browser": "playwright install chromium",
+    "payload": "tsx scripts/build-payload.ts",
+    "launcher": "tsx scripts/build-launcher.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
@@ -29,7 +31,8 @@
     "@types/node": "^22.15.0",
     "@types/nodemailer": "^6.4.24",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "esbuild": "^0.28.2"
   },
   "engines": {
     "node": ">=22.13"

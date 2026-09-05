@@ -1,4 +1,4 @@
-// CMS Workflow Recorder — content script.
+// Foreman Recorder — content script.
 // Captures user actions and page signals and forwards them to the background
 // service worker. Nothing is stored here; the background owns the recording.
 (() => {

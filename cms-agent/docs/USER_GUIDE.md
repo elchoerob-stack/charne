@@ -49,7 +49,7 @@ mind?"* to see the reasoning.
 ## 4. Record a workflow (SOP or problem capture)
 
 1. On the laptop, open the CMS screen where the task starts.
-2. Click the **CMS Workflow Recorder** extension → title (e.g. *Create a
+2. Click the **Foreman Recorder** extension → title (e.g. *Create a
    booking with an OEM menu*) → purpose **SOP / training** or **Problem
    capture** → dealer code → **Start**.
 3. Work through the task normally. Add a **note** at the moment something

@@ -75,7 +75,7 @@ export function buildPacket(c: CaseRow, opts: { to?: string; baseUrl?: string; i
     facts.length ? `## Known dealer facts\n${facts.map((f) => `- ${f}`).join("\n")}\n` : "",
     `## Timeline\n${timeline.map((t) => `- ${t.at}: ${t.note}`).join("\n")}`, "",
     `## Still needed from the dealer\n${include.map((i) => `- [ ] ${i}`).join("\n")}`, "",
-    `_Prepared by Foreman (CMS Agent) ${new Date().toISOString()}_`,
+    `_Prepared by Foreman ${new Date().toISOString()}_`,
   ].filter((l) => l !== "").join("\n");
 
   return { caseId: c.id, title: c.title, dealer: c.dealer ?? "—", to, summary, symptom: c.symptom, hypothesis: c.hypothesis ?? undefined, tried, evidence, recording, dealerFacts: facts, timeline, include, markdown: md, generatedAt: new Date().toISOString() };

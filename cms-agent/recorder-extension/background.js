@@ -1,4 +1,4 @@
-// CMS Workflow Recorder — background service worker. Owns the recording.
+// Foreman Recorder — background service worker. Owns the recording.
 const state = { active: false, t0: 0, rec: null, lastShot: 0, tabId: null };
 
 async function load() {

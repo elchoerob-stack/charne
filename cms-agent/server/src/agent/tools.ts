@@ -112,7 +112,7 @@ export const TOOLS: AgentTool[] = [
   tool(
     {
       name: "list_recordings",
-      description: "List workflow recordings captured with the CMS Workflow Recorder (SOP captures and problem captures), newest first.",
+      description: "List workflow recordings captured with the Foreman Recorder extension (SOP captures and problem captures), newest first.",
       input_schema: {
         type: "object",
         properties: {

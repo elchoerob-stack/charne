@@ -7,6 +7,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0F2040">
 <link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="icon" href="/assets/foreman-icon.svg" type="image/svg+xml">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
@@ -120,8 +121,8 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 </head>
 <body>
 <div class="bar">
-  <img src="/assets/cms-eco-logo-white.png" alt="CMS eco" style="height:30px">
-  <div><b>Foreman</b><span>CMS Agent · support · reports · problem solving · recorder</span></div>
+  <img src="/assets/foreman-mark.svg" alt="Foreman" style="height:30px">
+  <div><b>Foreman</b><span>Ask · automate · report</span></div>
   <div class="sp"></div>
   <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
   <a href="/board.html" id="boardLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Board</a>
@@ -230,7 +231,7 @@ function md(s) {
 }
 function add(role, text, imgs = []) {
   const d = document.createElement("div"); d.className = "m " + role;
-  d.innerHTML = `<div class="who">${role === "user" ? "You" : "CMS Agent"}</div>` + imgs.map((i) => `<img src="data:${i.mediaType};base64,${i.data}">`).join("") + (role === "user" ? esc(text) : md(text));
+  d.innerHTML = `<div class="who">${role === "user" ? "You" : "Foreman"}</div>` + imgs.map((i) => `<img src="data:${i.mediaType};base64,${i.data}">`).join("") + (role === "user" ? esc(text) : md(text));
   $("#msgs").appendChild(d); $("#msgs").scrollTop = $("#msgs").scrollHeight; return d;
 }
 
@@ -586,7 +587,7 @@ watchRuns();
   es.onerror = () => { es.close(); setTimeout(watchAgents, 8000); };
 })();
 
-(async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
+(async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs, tasks and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
 </script>
 </body>
 </html>

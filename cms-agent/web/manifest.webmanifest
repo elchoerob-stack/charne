@@ -1,7 +1,7 @@
 {
-  "name": "Foreman \u2014 CMS Agent",
+  "name": "Foreman",
   "short_name": "Foreman",
-  "description": "Workshop support, reports and problem solving for CMS Systems dealerships.",
+  "description": "Ask, automate and report on dealership workshop work.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

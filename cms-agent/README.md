@@ -1,4 +1,4 @@
-# Foreman — the CMS Agent
+# Foreman
 
 **Foreman** does two jobs for CMS Systems dealerships.
 
@@ -125,7 +125,7 @@ used when blank).
 
 ## Docs
 
-- `docs/GROK_CAPABILITIES.md` — Grok capability inventory and the CMS Agent mapping
+- `docs/GROK_CAPABILITIES.md` — Grok capability inventory and how Foreman maps to it
 - `docs/PROBLEM_SOLVING.md` — the diagnostic engine
 - `docs/WORKFLOW_RECORDER.md` — capture, masking, SOP compilation, replay
 - `docs/TASKS.md` — record a job once, then let Foreman run it

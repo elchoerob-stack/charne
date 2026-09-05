@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "CMS Workflow Recorder",
+  "name": "Foreman Recorder",
   "version": "0.2.0",
-  "description": "Records CMS workshop workflows (clicks, fields, screens, errors) into SOPs and problem captures for CMS Agent. Masks personal information (POPIA).",
+  "description": "Records a workshop job once so Foreman can turn it into an SOP, a problem capture, or a task it runs for you. Masks personal information (POPIA).",
   "permissions": ["activeTab", "tabs", "storage", "scripting", "webRequest"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html", "default_title": "CMS Workflow Recorder" },
+  "action": { "default_popup": "popup.html", "default_title": "Foreman Recorder" },
   "content_scripts": [{ "matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_start", "all_frames": false }],
   "icons": {}
 }

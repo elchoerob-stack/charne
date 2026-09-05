@@ -48,7 +48,7 @@ startScheduler(listTasks);
 setInterval(() => { try { tickAgents(); } catch (err) { console.error("agent tick failed:", (err as Error).message); } }, 30_000).unref();
 
 app.listen(config.port, () => {
-  console.log(`Foreman (CMS Agent) listening on http://localhost:${config.port}  (model ${config.model})`);
+  console.log(`Foreman listening on http://localhost:${config.port}  (model ${config.model})`);
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
     console.log("No ANTHROPIC_API_KEY set: the SDK will look for an `ant auth login` profile. Chat will fail without credentials; recordings, SOPs and /api/diagnose still work.");
   }

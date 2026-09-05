@@ -1,7 +1,7 @@
-# CMS Workflow Recorder (browser extension)
+# Foreman Recorder (browser extension)
 
 Records a CMS workflow in the current tab and turns it into an SOP or a problem
-capture for CMS Agent.
+capture for Foreman — or into a task Foreman runs for you.
 
 What it captures:
 
@@ -22,7 +22,7 @@ customer data.
 
 1. Open `chrome://extensions`, enable Developer mode.
 2. Load unpacked → select this `recorder-extension` folder.
-3. Click the extension, open Server settings and enter the CMS Agent URL
+3. Click the extension, open Server settings and enter the Foreman server URL
    (default `http://localhost:8787`) and the token if the server uses one.
 
 ## Use
@@ -30,9 +30,9 @@ customer data.
 1. Open the CMS screen where the workflow starts. Click the extension, enter a
    title, pick SOP or Problem capture, and Start.
 2. Work through the task. Add notes at the point where something went wrong.
-3. Stop, then Send to CMS Agent (or Download JSON and upload it later via
+3. Stop, then Send to Foreman (or Download JSON and upload it later via
    `POST /api/recordings`).
 
-In the CMS Agent console the recording appears under Recordings with a
+In the Foreman console the recording appears under Recordings with a
 generated SOP (markdown), a Playwright replay script, and a one-click
 "Diagnose from this recording" action.

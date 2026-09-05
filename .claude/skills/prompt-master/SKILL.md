@@ -32,6 +32,19 @@ thing it was supposed to *save*. Guard against that hard:
 - If the incoming request is already clear, just do it. Say nothing about
   prompting.
 
+**Do not narrate the artifact.** The most common way a good answer turns
+wasteful is a tour of the thing that was just delivered — a section listing the
+flags a `--help` already prints, a walkthrough of checks the code states plainly,
+a recap of the plan immediately below the plan. The artifact documents itself.
+What genuinely cannot be read off it is worth saying: the assumptions you made,
+the one non-obvious decision, the thing that will bite. Everything else is
+padding the user pays for on every later turn of that thread.
+
+A rough calibration: framing costs a sentence or two, the deliverable costs
+whatever it costs, and the prose around the deliverable should be shorter than
+you first want it to be. If a paragraph would not change what the user does, cut
+it.
+
 ## Step 1 — Triage the request
 
 **Path A — one job, one session.** A bug, a feature, a document, an analysis, a
@@ -110,6 +123,10 @@ For each step give:
   session knows nothing.
 - **Where to run it** — fresh session or continue, and which model (below).
 
+The prompts are the payload; the prose around them is scaffolding. A line or two
+per step to say why it sits where it does is plenty — a plan padded with
+commentary about the plan is the Path B version of narrating the artifact.
+
 Batch aggressively. Ten small mechanical edits belong in one prompt, not ten.
 Anything the user can hand off to a cheaper model or a script should not be
 spending premium capacity.
@@ -150,12 +167,28 @@ to what the user is actually doing.
 - **Ask for the artifact, not the tour.** "Do it, and note your assumptions at
   the end" gets in one turn what "explain your plan, then implement it" takes two
   to get.
+- **Ask for the diff, not the file.** A rewritten 400-line file is expensive to
+  produce and then sits in context inflating every later turn. A patch says the
+  same thing in twenty lines. This applies doubly to anything that regenerates a
+  whole component on each revision.
+- **Batch revisions.** Five small changes sent as one message cost one
+  regeneration; sent one at a time they cost five, each against a context that
+  has grown by the last one. Collect them, then send.
 - **Don't order options you won't use.** Three approaches costs three times the
   output when the user will pick one anyway. Ask for a recommendation.
 
 `references/patterns.md` holds worked before/after examples of vague asks turned
 into first-time-right prompts. Read it when a rewrite is not coming easily, or
 when the user wants to learn the pattern rather than just get their work done.
+
+## When the honest answer is "buy more capacity"
+
+Not every limit problem is a technique problem. Someone running three real
+projects through one plan may simply be under-provisioned, and an hour of
+prompt-tuning will not fix a genuine mismatch. Say so plainly when it is true:
+name the upgrade or the pay-as-you-go route, and note that work use is usually
+expensable. Optimising around a limit that costs less to raise is bad advice,
+however well-crafted. `references/routing.md` covers how to tell the two apart.
 
 ## When to say nothing
 

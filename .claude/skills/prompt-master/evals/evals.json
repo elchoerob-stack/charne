@@ -8,11 +8,12 @@
       "expected_output": "Sharpens the ask inline (states the reading + assumptions in a line or two), then delivers a working validation script in the same turn. Does not stop to ask clarifying questions, and does not print a formal 'optimised prompt' block for approval.",
       "files": [],
       "assertions": [
-        "Delivers a working, runnable validation script in the same turn (a script file exists in outputs, not just prose describing one)",
-        "States its reading of the request and the assumptions it is running with (e.g. expected columns, RSA phone/email formats)",
-        "Does not stop and ask the user a clarifying question instead of doing the work",
-        "Does not print a formal 'optimised prompt' block for the user to approve before proceeding",
-        "Prose outside of code is under 400 words"
+        "Delivers a working, runnable validation script in the same turn",
+        "States its reading of the request and the assumptions it is running with",
+        "Does not stop and ask a clarifying question instead of doing the work",
+        "Does not print a formal 'optimised prompt' block for approval",
+        "Does not narrate the artifact: no walkthrough section restating flags or checks the script already self-documents",
+        "Prose outside of code is under 350 words"
       ]
     },
     {
@@ -26,8 +27,9 @@
         "Each step names the concrete artifact it produces",
         "Each step includes a self-contained prompt the user could paste into a fresh session",
         "Each step says where to run it (fresh session vs continue) and/or which model to use",
-        "The highest-uncertainty step (getting and validating historical data) is placed first",
-        "Ends by offering to start step one rather than silently starting it"
+        "The highest-uncertainty step is placed first",
+        "Ends by offering to start step one rather than silently starting it",
+        "Connective prose is minimal: no step carries more than about three sentences of commentary outside its prompt block"
       ]
     },
     {
@@ -37,12 +39,14 @@
       "expected_output": "Concrete, concise triage tied to the three named workstreams - model routing, chat vs Claude Code for repo work, session boundaries, scripting the repetitive report work. Not a generic prompt-engineering lecture.",
       "files": [],
       "assertions": [
-        "Advice is tied to the three named workstreams (bot code, workshop reports, React app), not generic prompt-engineering tips",
-        "Recommends model routing, naming at least two of Opus / Sonnet / Haiku with the kind of work each suits",
+        "Advice is tied to the three named workstreams, not generic prompt-engineering tips",
+        "Recommends model routing, naming at least two of Opus / Sonnet / Haiku with the work each suits",
         "Recommends Claude Code over chat for the multi-file repo work",
         "Recommends turning the repeated workshop-report work into a script or a reusable skill",
         "Mentions session boundaries or context growth as a cost driver",
-        "Under 500 words"
+        "Recommends asking for diffs/patches over full-file rewrites, or batching revisions into one message",
+        "Addresses whether this is a capacity mismatch rather than only a technique problem",
+        "Under 450 words"
       ]
     },
     {
@@ -52,10 +56,10 @@
       "expected_output": "Just does the edit. No prompt-engineering commentary, no efficiency advice, no restating of the request as an improved prompt. The guard against the skill becoming the waste it is meant to prevent.",
       "files": [],
       "assertions": [
-        "The edit was actually made: in the edited file the consent check appears before the loading check",
+        "The edit was actually made: the consent check precedes the loading check in the edited file",
         "Contains no prompt-engineering or usage-efficiency commentary",
         "Does not restate the user's request as an improved or 'sharpened' prompt",
-        "Response is under 150 words",
+        "Applies a fix for the regression it identifies rather than stopping to ask which fix the user wants",
         "Any caveat raised is about the code's behaviour, not about how the user phrased the request"
       ]
     }

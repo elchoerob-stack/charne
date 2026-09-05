@@ -70,6 +70,23 @@ Some work should not be a Claude turn at all:
 - **Facts with an authoritative source.** Checking documentation directly is
   faster and more reliable than a turn spent recalling it.
 
+## The regeneration tax
+
+Some ways of working re-emit whole artifacts on every small change, and the cost
+compounds twice — once to produce the output, and again on every later turn that
+carries it.
+
+- A component regenerated in full for each tweak means eight small revisions on a
+  600-line file emit roughly 4,800 lines, all of which then sit in context.
+- A full-file rewrite where a patch would do is the same tax in a different
+  shape.
+
+Two habits remove most of it: ask for diffs or patches rather than whole files,
+and collect revisions into one message rather than sending them as they occur.
+Where the work is a real codebase rather than a single artifact, moving it into
+Claude Code removes the tax entirely, because files are read on demand rather
+than re-emitted.
+
 ## When the user is near a limit
 
 If someone says they are close to running out, the useful help is triage, not
@@ -82,3 +99,25 @@ technique. Establish what actually has to land today, and route accordingly:
 
 Do not spend the remaining capacity discussing how to spend the remaining
 capacity. Two or three lines, then act.
+
+## When it is a capacity problem, not a technique problem
+
+Be willing to reach the honest conclusion. If someone is running several real
+projects — one of them work deliverables — through a single plan, and they are
+already keeping threads short and routing models sensibly, then there is no
+technique left to recover and the shortfall is real.
+
+Signs it is provisioning rather than habit: the threads are already short, the
+work is genuinely substantial rather than chatty, and the limit is hit while
+doing the thing they actually needed to do rather than while going round in
+circles.
+
+Say it plainly when it is true. The routes are a higher plan, or moving the
+development work onto pay-as-you-go API access or a metered surface so it stops
+competing with everything else for the same allowance. And note the part people
+often miss: if some of the work is for their employer or their business, that
+spend is usually expensable, which changes the calculation entirely.
+
+Optimising around a limit that costs less to raise is bad advice, however
+well-crafted. Diagnose first, and do not sell technique to someone who has
+already run out of it.

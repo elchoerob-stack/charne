@@ -470,6 +470,32 @@ body.auth .shell{grid-template-columns:minmax(0,1fr);padding:0;max-width:none;ga
 .spin{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--gold);margin:6px auto 0;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+/* ── Diary ──────────────────────────────── */
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.cal-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.cal-h b{flex:1;font-family:Spectral,serif;font-size:16px;font-weight:600}
+.cal-nav{width:32px;height:32px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);display:grid;place-items:center;color:var(--t2)}
+.cal-nav:hover{border-color:var(--gold);color:var(--gold-ink)}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);padding:9px 6px 3px;gap:2px}
+.cal-dow span{text-align:center;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 6px 8px}
+.cal-d{aspect-ratio:1/1;min-height:42px;max-height:76px;border:1px solid transparent;border-radius:9px;background:none;display:flex;
+  flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:5px 2px 0;position:relative}
+.cal-d .n{font-size:13px;font-variant-numeric:tabular-nums;color:var(--t1);line-height:1}
+.cal-d.out .n{color:var(--t3);opacity:.45}
+.cal-d.wknd .n{color:var(--t2)}
+.cal-d:hover{background:var(--surface-2)}
+.cal-d.today{border-color:var(--gold)}
+.cal-d.today .n{font-weight:700;color:var(--gold-ink)}
+.cal-d.sel{background:var(--ink);border-color:var(--ink)}
+.cal-d.sel .n{color:#fff;font-weight:700}
+.cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:100%}
+.cal-dots i{width:5px;height:5px;border-radius:50%;display:block}
+.cal-d.sel .cal-dots i{outline:1px solid rgba(255,255,255,.5)}
+.cal-more{font-size:9px;color:var(--t3);line-height:1}
+.cal-d.sel .cal-more{color:rgba(255,255,255,.7)}
+@media (max-width:400px){.cal-d{min-height:38px;padding-top:4px}.cal-d .n{font-size:12px}}
+
 /* ── Getting started ────────────────────── */
 .step{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
 .step:last-child{border-bottom:0}
@@ -883,7 +909,10 @@ function buildListing(L){
     mandateEnds:iso(d0(90 - L.listedAgo)), source:L.source || "",
     prospects:L.prospects.map(([person, status, agoD, preset]) => ({ person, status, preset:preset || null,
       ts:iso(d0(-agoD)), token:token() })),
-    viewings:L.viewings.map(([inD, person], i) => ({ id:L.id + "v" + i, when:iso(d0(inD)), person:person || null })),
+    viewings:L.viewings.map(([inD, person], i) => { const w = d0(inD);       // real show slots, not whatever o'clock it is now
+      const slot = [10, 11.5, 14, 15.5][i % 4];
+      w.setHours(Math.floor(slot), (slot % 1) * 60, 0, 0);
+      return { id:L.id + "v" + i, when:iso(w), person:person || null }; }),
     offers:L.offers.map(([person, amount, deposit, status, agoD, cond], i) => ({ id:L.id + "o" + i, person, amount,
       deposit, status, cond, ts:iso(d0(-agoD)) })) };
   PACK.forEach((d, i) => {
@@ -1056,6 +1085,7 @@ function navItems(){
     if (myListings().length) v.push({ id:"listings", label:r === "agent" ? "My houses" : "Houses", short:"Houses", ic:"house" });
     if (myDeals().length || r === "agent") v.push({ id:"portfolio", label:r === "agent" ? "My deals" : "My transfers", short:r === "agent" ? "Deals" : "Transfers", ic:"deals" });
   }
+  if (r === "agent" || diary().length) v.push({ id:"cal", label:"Diary", short:"Diary", ic:"log" });
   if (r === "agent") v.push({ id:"new", label:"New deal room", short:"New", ic:"plus" });
   if (r === "agent" || isPrincipal(S.me)) v.push({ id:"guide", label:"How this works", short:"Help", ic:"shield" });
   v.push({ id:"road", label:"The road to a sale", short:"Road", ic:"track" });
@@ -1097,7 +1127,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "cal" ? "Diary" : S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -2310,6 +2340,119 @@ function renderModal(){
   document.body.appendChild(el);
 }
 
+/* ══ The diary ══════════════════════════════════════════════════════
+   Everything the app knows that happens on a day: viewings, the dates a
+   sale hangs on, and mandates running out. Read from the same records the
+   rest of the app uses, so nothing has to be entered twice. ══════════ */
+const dayKey = d => { const x = new Date(d);
+  return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
+const atTime = d => new Date(d).toLocaleTimeString("en-ZA", { hour:"2-digit", minute:"2-digit", hour12:false });
+const DIARY_KIND = {
+  viewing:{ label:"Viewing",        col:"var(--p-buyer)" },
+  card:   { label:"On the board",   col:"var(--gold)" },
+  bond:   { label:"Bond condition", col:"var(--stop)" },
+  mandate:{ label:"Mandate ends",   col:"var(--p-seller)" },
+  theirs: { label:"Their mandate ends", col:"var(--p-conveyancer)" },
+};
+function diary(){
+  if (isAdmin(S.me)) return [];                 // an access role, not a working diary
+  const out = [], staff = P[S.me] && (P[S.me].role === "agent" || isPrincipal(S.me));
+  Object.values(S.listings).forEach(l => {
+    const r = listingRole(l, S.me); if (!r) return;
+    (l.viewings || []).forEach(v => {
+      if (r === "prospect" && v.person !== S.me) return;        // a buyer sees only their own
+      out.push({ when:v.when, timed:true, kind:"viewing", id:"v" + v.id,
+        title:l.meta.address, note:v.person ? (v.person === S.me ? "Your viewing" : P[v.person].name) : "Open slot",
+        go:{ act:"openhouse", l:l.meta.id }, listing:l.meta.id, person:v.person, mins:45 });
+    });
+    if (staff && l.meta.agent === S.me && l.status === "active" && l.mandateEnds)
+      out.push({ when:l.mandateEnds, kind:"mandate", id:"m" + l.meta.id, title:l.meta.address,
+        note:"Your mandate runs out", go:{ act:"openhouse", l:l.meta.id } });
+  });
+  if (staff) S.board.cards.filter(c => c.due && c.members.includes(S.me) && boardsFor(S.me).some(b => b.id === c.board))
+    .forEach(c => out.push({ when:c.due, kind:"card", id:"c" + c.id, title:c.title,
+      note:(S.boards.find(b => b.id === c.board) || {}).name || "Board", go:{ act:"opencardfrom", id:c.id, b:c.board } }));
+  if (staff) S.board.cards.filter(c => c.lead && c.lead.mandateEnds && boardsFor(S.me).some(b => b.id === c.board))
+    .forEach(c => out.push({ when:c.lead.mandateEnds, kind:"theirs", id:"t" + c.id, title:c.title,
+      note:(c.lead.suburb ? c.lead.suburb + " — " : "") + "another agency's mandate ends",
+      go:{ act:"opencardfrom", id:c.id, b:c.board },
+      phone:((c.lead.owners.flatMap(o => o.phones)[0]) || {}).n }));
+  myDeals().forEach(d => { if (d.bondDue && !d.done.t2c && !isClosed(d))
+    out.push({ when:d.bondDue, kind:"bond", id:"b" + d.meta.id, title:d.meta.address,
+      note:"Bond approval must be confirmed", go:{ act:"open", d:d.meta.id } }); });
+  return out.sort((a, b) => new Date(a.when) - new Date(b.when));
+}
+function vCalendar(){
+  const items = diary(), byDay = {};
+  items.forEach(x => (byDay[dayKey(x.when)] = byDay[dayKey(x.when)] || []).push(x));
+  const today = new Date(), todayK = dayKey(today);
+  S.cal = S.cal || {};
+  const cur = S.cal.month ? new Date(S.cal.month + "-01T12:00:00") : new Date(today.getFullYear(), today.getMonth(), 1);
+  const sel = S.cal.day || todayK;
+  const first = new Date(cur.getFullYear(), cur.getMonth(), 1);
+  const lead = (first.getDay() + 6) % 7;                        // weeks start on Monday
+  const start = new Date(first.getFullYear(), first.getMonth(), 1 - lead);
+  const cells = [];
+  for (let i = 0; i < 42; i++){
+    const dte = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const k = dayKey(dte), list = byDay[k] || [];
+    cells.push({ dte, k, list, out:dte.getMonth() !== cur.getMonth(), wknd:[0, 6].includes(dte.getDay()) });
+  }
+  const selList = (byDay[sel] || []);
+  const selDate = new Date(sel + "T12:00:00");
+  const soon = items.filter(x => { const n = dayDiff(x.when); return n >= 0 && n <= 7; });
+  const monthLabel = cur.toLocaleDateString("en-ZA", { month:"long", year:"numeric" });
+
+  const row = x => `<div class="act">
+    <span class="stripe" style="background:${DIARY_KIND[x.kind].col}"></span>
+    <div class="act-t"><b>${x.timed ? atTime(x.when) + " · " : ""}${esc(x.title)}</b>
+      <span>${esc(DIARY_KIND[x.kind].label)} · ${esc(x.note)}</span></div>
+    <span style="display:flex;gap:7px;flex-wrap:wrap">
+      ${x.kind === "viewing" && x.person && x.person !== S.me && listingRole(S.listings[x.listing], S.me) === "agent"
+        ? `<button class="btn btn-s" data-act="send" data-ctx='${esc(JSON.stringify({ listing:x.listing, to:x.person, tpl:"viewing_confirm", when:x.when, mins:x.mins }))}'>${ICON.chat} Confirm</button>` : ""}
+      ${x.phone ? `<a class="btn btn-s" style="text-decoration:none" href="tel:+${waNumber(x.phone)}">Call</a>` : ""}
+      <button class="btn btn-s" data-act="${x.go.act}"${x.go.l ? ` data-l="${x.go.l}"` : ""}${x.go.d ? ` data-d="${x.go.d}"` : ""}${x.go.id ? ` data-id="${x.go.id}" data-b="${x.go.b}"` : ""}>Open</button>
+    </span></div>`;
+
+  return `<div class="stack">
+    <div class="sec-h"><h2>Diary</h2><p>${items.length ? `${soon.length} in the next seven days` : "Nothing booked yet"}</p></div>
+
+    <div class="cal">
+      <div class="cal-h">
+        <button class="cal-nav" data-act="calmove" data-n="-1" aria-label="Previous month">${ICON.back}</button>
+        <b>${esc(monthLabel)}</b>
+        <button class="btn btn-s" data-act="caltoday">Today</button>
+        <button class="cal-nav" data-act="calmove" data-n="1" aria-label="Next month" style="transform:scaleX(-1)">${ICON.back}</button>
+      </div>
+      <div class="cal-dow">${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => `<span>${d[0]}</span>`).join("")}</div>
+      <div class="cal-grid">${cells.map(c => `<button class="cal-d ${c.out ? "out" : ""} ${c.wknd ? "wknd" : ""} ${c.k === todayK ? "today" : ""} ${c.k === sel ? "sel" : ""}"
+        data-act="calday" data-k="${c.k}" aria-label="${c.dte.toLocaleDateString("en-ZA", { weekday:"long", day:"numeric", month:"long" })}${c.list.length ? ", " + c.list.length + " items" : ""}">
+        <span class="n">${c.dte.getDate()}</span>
+        ${c.list.length ? `<span class="cal-dots">${c.list.slice(0, 4).map(x => `<i style="background:${DIARY_KIND[x.kind].col}"></i>`).join("")}</span>` : ""}
+        ${c.list.length > 4 ? `<span class="cal-more">+${c.list.length - 4}</span>` : ""}
+      </button>`).join("")}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.log}<h2>${sel === todayK ? "Today" : esc(selDate.toLocaleDateString("en-ZA", { weekday:"long", day:"numeric", month:"long" }))}</h2>
+        ${selList.length ? `<span class="chip c-mute">${selList.length}</span>` : ""}</div>
+      <div class="card-b">${selList.length ? selList.map(row).join("")
+        : `<div class="empty"><b>Nothing on this day</b>Viewings you book on a house, dates a sale hangs on and mandates running out all appear here.</div>`}</div>
+    </div>
+
+    ${soon.length ? `<div class="card">
+      <div class="card-h">${ICON.track}<h2>The next seven days</h2><span class="chip c-mute">${soon.length}</span></div>
+      <div class="card-b">${soon.map(x => `<div class="act">
+        <span class="stripe" style="background:${DIARY_KIND[x.kind].col}"></span>
+        <div class="act-t"><b>${esc(x.title)}</b>
+          <span>${new Date(x.when).toLocaleDateString("en-ZA", { weekday:"short", day:"numeric", month:"short" })}${x.timed ? " · " + atTime(x.when) : ""} · ${esc(DIARY_KIND[x.kind].label)}</span></div>
+        <button class="btn btn-s" data-act="calday" data-k="${dayKey(x.when)}">Show</button></div>`).join("")}</div>
+    </div>` : ""}
+
+    <div class="note">${ICON.log}<div><b>This is the app's own diary.</b> It reads the viewings, deadlines and mandate dates already in the app — nothing is typed twice. Putting these into your phone's own calendar comes next; for now a viewing can be added one at a time from the message sheet when you confirm it.</div></div>
+  </div>`;
+}
+
 /* ══ What needs me ══════════════════════════════════════════════════ */
 function inbox(){
   const out = [];
@@ -2430,7 +2573,7 @@ function vToday(){
       </div></div>`; })()}
 
     ${viewings.length ? `<div class="card">
-      <div class="card-h">${ICON.log}<h2>Viewings coming up</h2></div>
+      <div class="card-h">${ICON.log}<h2>Viewings coming up</h2><span style="flex:1"></span><button class="btn btn-s" data-act="view" data-v="cal">Open the diary</button></div>
       <div class="card-b">${viewings.slice(0, 5).map(({ l, v }) => `<div class="act">
         <span class="stripe" style="background:${v.person ? "var(--go)" : "var(--line-2)"}"></span>
         <div class="act-t"><b>${new Date(v.when).toLocaleString("en-ZA", { weekday:"long", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</b>
@@ -3302,7 +3445,7 @@ function vMoney(){
 
 /* ══ Render ═════════════════════════════════════════════════════════ */
 let lastWhere = "";
-const RENDER = { staff:vStaff, guide:vGuide, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { staff:vStaff, guide:vGuide, cal:vCalendar, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (sync.gate !== "in" && sync.gate !== "demo"){ renderAuth(); return; }
   document.body.classList.remove("auth");
@@ -3323,6 +3466,7 @@ function render(){
   if (!S.deal && S.view === "team" && !isPrincipal(S.me)) S.view = "portfolio";
   if (S.view === "staff" && !isAdmin(S.me)) S.view = homeView();
   if (S.view === "guide" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
+  if (S.view === "cal" && !navItems().some(v => v.id === "cal")) S.view = homeView();
   if (!S.deal && ["money", "earn"].includes(S.view) && !(me().role === "agent" || isOwner(S.me))) S.view = homeView();
   if (!S.deal && S.view === "new" && me().role !== "agent") S.view = "portfolio";
   const where = [S.view, S.deal, S.listing, S.boardId].join("|");
@@ -3840,6 +3984,14 @@ document.addEventListener("click", e => {
     toast("Removed"); render(); }
   else if (a === "staffinvite"){ S.invited[btn.dataset.p] = new Date().toISOString();
     openSend({ to:btn.dataset.p, tpl:"staff_invite" }); save(); }
+  else if (a === "calday"){ S.cal = S.cal || {}; S.cal.day = btn.dataset.k; S.cal.month = btn.dataset.k.slice(0, 7);
+    if (S.view !== "cal"){ S.view = "cal"; S.deal = null; S.listing = null; } render(); }
+  else if (a === "calmove"){ S.cal = S.cal || {};
+    const base = S.cal.month ? new Date(S.cal.month + "-01T12:00:00") : new Date();
+    const nx = new Date(base.getFullYear(), base.getMonth() + (+btn.dataset.n), 1);
+    S.cal.month = nx.getFullYear() + "-" + String(nx.getMonth() + 1).padStart(2, "0"); render(); }
+  else if (a === "caltoday"){ const t2 = new Date();
+    S.cal = { month:t2.getFullYear() + "-" + String(t2.getMonth() + 1).padStart(2, "0"), day:dayKey(t2) }; render(); }
   else if (a === "hidesetup"){ S.tour.setupHidden = true; toast("Hidden — it lives under How this works"); render(); }
   else if (a === "welclose"){ S.welcomed[isAdmin(S.me) ? "admin" : me().role] = true; toast("Hidden — it lives under How this works"); render(); }
   else if (a === "dropdemo"){

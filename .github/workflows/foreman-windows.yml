@@ -1,0 +1,104 @@
+# Build Foreman.exe.
+#
+# Everything Foreman is gets packed into one file: the server as a bundle, the
+# console, the knowledge base and Playwright, all embedded inside a Node
+# runtime. The machine it lands on needs no Node, no npm, no git and no
+# terminal — the first double-click unpacks it and starts it.
+#
+# Run this from the Actions tab (Run workflow), or push a tag like v1.0.0 to
+# get a release with the executable attached.
+name: Foreman for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: cms-agent/server
+        shell: pwsh
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+          cache-dependency-path: cms-agent/server/package-lock.json
+
+      - name: Install build dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Check the code still type-checks and the tests still pass
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Build the payload, the launcher and the icon
+        run: |
+          npm run payload
+          npm run launcher
+          npm run icon
+
+      - name: Prepare the single-executable blob
+        working-directory: cms-agent/server/build
+        run: node --experimental-sea-config sea-config.json
+
+      - name: Assemble Foreman.exe
+        working-directory: cms-agent/server/build
+        run: |
+          Copy-Item (Get-Command node).Source -Destination Foreman.exe
+          # node.exe ships signed; the signature does not survive having a blob
+          # injected into it, so it comes off first rather than being left
+          # broken. Missing signtool is not fatal — the copy is then unsigned
+          # already.
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if ($signtool) { & $signtool.FullName remove /s Foreman.exe } else { Write-Host "signtool not found; continuing" }
+          npx --yes postject@1.0.0-alpha.6 Foreman.exe NODE_SEA_BLOB sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+          $version = (Get-Content version.txt -Raw).Trim()
+          npx --yes rcedit@5.0.2 Foreman.exe `
+            --set-icon foreman.ico `
+            --set-version-string ProductName "Foreman" `
+            --set-version-string FileDescription "Foreman - records a job once, then does it for you" `
+            --set-file-version $version `
+            --set-product-version $version
+
+      - name: Check the executable answers for itself
+        working-directory: cms-agent/server/build
+        run: |
+          $version = & .\Foreman.exe --version
+          Write-Host "Foreman.exe reports version $version"
+          if (-not $version) { throw "Foreman.exe did not report a version" }
+          & .\Foreman.exe --help
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Foreman-windows-x64
+          path: cms-agent/server/build/Foreman.exe
+          if-no-files-found: error
+
+      - name: Attach it to the release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cms-agent/server/build/Foreman.exe
+          body: |
+            Download `Foreman.exe`, put it wherever you like, and double-click it.
+
+            The first run unpacks Foreman into your account folder, generates
+            an access code and fetches the browser it drives (about 150 MB,
+            once). Every run after that starts in a few seconds. Nothing else
+            needs installing.
+
+            `Foreman.exe --where` prints the folders, the address for your
+            phone and the access code.

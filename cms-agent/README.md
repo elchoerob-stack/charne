@@ -72,17 +72,16 @@ website you sign it into.
 
 ## Quick start
 
-Windows, one command in PowerShell (installs Node and Git if needed, builds,
-configures, autostarts, opens the console):
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force
-irm https://raw.githubusercontent.com/elchoerob-stack/charne/claude/grokbot-cms-agent-5vkq13/cms-agent/setup.ps1 | iex
-```
+**Windows: download `Foreman.exe` from Releases and double-click it.** That is
+the whole install. The file carries the entire program inside it, so there is
+no Node, no Git, no `npm install` and nothing to type — the first run unpacks
+it, generates an access code, fetches the browser it drives and opens the
+console. Every run after that takes seconds. See `docs/INSTALL.md`, and
+`docs/PACKAGING.md` for how it is built.
 
 Mac/Linux: `bash cms-agent/setup.sh`. Docker: `docker compose up -d` in `cms-agent/`.
 
-Manual:
+From the source, for working on it:
 
 ```bash
 cd cms-agent/server
@@ -142,6 +141,7 @@ used when blank).
 - `docs/HOW_IT_COPES.md` — the three layers that keep it working when pages change
 - `docs/AGENTS_AND_SCHEDULING.md` — the board, schedules and agents
 - `docs/REMOTE_ACCESS.md` — using the phone away from the Wi-Fi
+- `docs/PACKAGING.md` — how Foreman becomes one double-clickable file
 - `docs/REPORTS.md` — workshop dashboard and campaign list tools
 - `docs/EVALS.md` — the eval harness and how to grow the case set
 - `docs/ARCHITECTURE.md` — layout, turn flow, modes, storage

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import os from "node:os";
 import { remoteStatus } from "./remote.js";
+import { localAddresses, pickAddress } from "./net.js";
 import { db, getOrCreateSession } from "./db.js";
 import { config, isAgentMode } from "./config.js";
 import { runTurn } from "./agent/agent.js";
@@ -41,16 +41,8 @@ apiRoutes.post("/chat", async (req, res) => {
  * localhost points the phone at itself.
  */
 function lanUrl(): string {
-  for (const addrs of Object.values(os.networkInterfaces())) {
-    for (const a of addrs ?? []) {
-      // Node has reported family as both "IPv4" and 4 across versions.
-      const family = String(a.family);
-      if ((family !== "IPv4" && family !== "4") || a.internal) continue;
-      if (a.address.startsWith("169.254.")) continue; // link-local, not routable
-      return `http://${a.address}:${config.port}`;
-    }
-  }
-  return `http://localhost:${config.port}`;
+  const best = pickAddress(localAddresses());
+  return best ? `http://${best}:${config.port}` : `http://localhost:${config.port}`;
 }
 
 apiRoutes.get("/connect", (req, res) => {

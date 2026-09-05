@@ -13,8 +13,15 @@ export const config = {
   dbPath: process.env.CMS_AGENT_DB ?? path.join(dataDir(), "cms-agent.db"),
   webSearch: flag(process.env.WEB_SEARCH, true),
   token: process.env.CMS_AGENT_TOKEN || undefined,
-  /** Loopback only unless asked otherwise: a laptop on dealer Wi-Fi is not a safe place to listen on every interface. */
-  bindHost: process.env.FOREMAN_BIND || (process.env.FOREMAN_LAN ? "0.0.0.0" : "127.0.0.1"),
+  /**
+   * Which interfaces to listen on.
+   *
+   * The whole point is that the phone can reach it, so with an access code set
+   * Foreman listens everywhere and every request has to carry that code. With
+   * no code set it stays on loopback, because an open Foreman on dealer Wi-Fi
+   * would let anyone on that network drive a signed-in browser.
+   */
+  bindHost: process.env.FOREMAN_BIND || (process.env.CMS_AGENT_TOKEN ? "0.0.0.0" : "127.0.0.1"),
   evolveHealthUrl: process.env.EVOLVE_HEALTH_URL || undefined,
   infomediaHealthUrl: process.env.INFOMEDIA_HEALTH_URL || undefined,
   /** Hard ceiling on tool-use iterations per turn, per mode. */

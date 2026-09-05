@@ -1,179 +1,166 @@
 # Installing Foreman
 
-Foreman is a small server that runs on your Windows laptop (the Acer) and a
-web console you install as an app on the laptop and on your phone. The phone
-talks to the laptop over the network, so nothing is uploaded anywhere except
-the Claude API calls the server makes.
+Foreman is one file. Download it, double-click it, and it does everything
+else. No terminal, no Git, no Node, no `npm install`, and nothing to type
+again the next time you want to use it.
 
-## The shortest way (Windows, double-click)
+---
 
-Download `cms-agent/Install-Foreman.cmd` from the repo and double-click it. It
-opens an admin PowerShell window and runs the installer below. Click Yes on
-the Windows permission prompt so the firewall rule for the phone is added.
+## On the laptop (Windows)
 
-After it finishes, the console shows a **Connect your phone** QR code: scan it
-with the phone camera on the same Wi-Fi and tap Add to Home screen.
+1. Go to the repository's **Releases** page and download **`Foreman.exe`**.
+   If there is no release yet, open the **Actions** tab, run the workflow
+   called **Foreman for Windows**, and download `Foreman-windows-x64` from the
+   finished run.
+2. Put the file somewhere you will find it again — the Desktop is fine.
+3. Double-click it.
 
-## The short way (Windows, one command)
+The first run takes a few minutes because it unpacks itself and downloads the
+browser it drives (about 150 MB, once). It prints something like this and
+opens the console in your browser:
 
-Open PowerShell (Start → type PowerShell → Enter) and paste:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force
-irm https://raw.githubusercontent.com/elchoerob-stack/charne/claude/grokbot-cms-agent-5vkq13/cms-agent/setup.ps1 | iex
+```
+[foreman] Installed Foreman 1.0.0 in C:\Users\Jacques\AppData\Local\Foreman
+[foreman] Fetching the browser Foreman drives (about 150 MB, once). It downloads in the background.
+[foreman] Foreman 1.0.0 is running.
+[foreman]   this computer            http://127.0.0.1:8787
+[foreman]   works on this Wi-Fi      http://192.168.1.24:8787
+[foreman]   access code              9ecd138cbc0b990a032939471b342cff
+[foreman] Close this window to stop Foreman.
 ```
 
-The installer installs Node.js and Git if needed, clones the repo to
-`Documents\charne`, builds the server, asks for your Anthropic API key,
-generates the phone access token, sets the LAN address, registers Foreman to
-start at logon, starts it and opens the console. Re-running it later updates
-to the latest code. Run it from an **admin** PowerShell if you also want the
-firewall rule for the phone added automatically; otherwise it prints the one
-line to run.
+Every run after the first starts in a few seconds.
 
-Mac or Linux: `bash cms-agent/setup.sh` does the same (launchd on macOS,
-systemd user service on Linux).
+**The small black window is Foreman itself.** Leave it open while you work —
+closing it stops Foreman, which is how you switch it off. Minimise it if it
+is in the way.
 
-Hosting it somewhere always on (a NAS, a VPS, Railway/Render/Fly): from the
-`cms-agent` folder run `docker compose up -d` with your settings in
-`server/.env`. The database lives in the `foreman-data` volume.
+Windows will show a **"Windows protected your PC"** box the first time, and
+possibly a **Windows Defender Firewall** prompt.
 
-## The long way — the server on your computer (about 15 minutes)
+* On the blue SmartScreen box: click **More info** → **Run anyway**. It says
+  that because the file is not signed by a company Microsoft recognises, not
+  because anything is wrong with it.
+* On the firewall prompt: tick **Private networks** and click **Allow
+  access**. Without that your phone cannot reach it.
 
-1. **Install Node.js 22 LTS or newer** (22.13+ required; Node 24 is fine). Download from https://nodejs.org (the "LTS"
-   button), run the installer, accept defaults. Open a new PowerShell window
-   and check:
-   ```powershell
-   node --version    # v22.x
+### Where things end up
+
+| What | Where |
+| --- | --- |
+| The program | `C:\Users\<you>\AppData\Local\Foreman\versions\` |
+| Your database, signed-in sites, promoted playbooks | `…\Foreman\data\` |
+| Settings (access code, API key, port) | `…\Foreman\foreman.env` |
+| Logs, when something goes wrong | `…\Foreman\logs\` |
+| Finished work (downloads, spreadsheets, notes) | `C:\Users\<you>\Foreman\` |
+
+An update replaces the program folder and never touches the rest. To see all
+of this at any time, open a Command Prompt where the file is and run
+`Foreman.exe --where`, or make a shortcut with `--where` on the end.
+
+### Starting it automatically
+
+Press <kbd>Win</kbd>+<kbd>R</kbd>, type `shell:startup`, press Enter, and drop
+a shortcut to `Foreman.exe` into the folder that opens. It will then start
+when you log in.
+
+---
+
+## Add your Claude API key
+
+Foreman records and replays tasks without a key. It needs one for the parts
+that *think*: chat, diagnosis, the report an agent writes, and — most
+importantly — working out what to do when a page has changed and a recorded
+step no longer fits.
+
+1. Open `C:\Users\<you>\AppData\Local\Foreman\foreman.env` in Notepad
+   (`Foreman.exe --where` prints the exact path).
+2. Add a line:
+
    ```
-2. **Install Git** from https://git-scm.com/download/win (defaults are fine),
-   or download the repository as a ZIP from GitHub and unzip it.
-3. **Get the code.**
-   ```powershell
-   cd $HOME\Documents
-   git clone https://github.com/elchoerob-stack/charne.git
-   cd charne
-   git checkout claude/grokbot-cms-agent-5vkq13
-   cd cms-agent\server
-   ```
-4. **Install dependencies.**
-   ```powershell
-   npm install
-   ```
-   Foreman has no native dependencies — it uses Node's own built-in SQLite —
-   so there is nothing to compile and no Visual Studio needed. If `npm install`
-   fails, the message names the package; send it over.
-5. **Configure.** Copy `.env.example` to `.env` and open it in Notepad:
-   ```powershell
-   copy .env.example .env
-   notepad .env
-   ```
-   Set at least:
-   - `ANTHROPIC_API_KEY=` your key from https://console.anthropic.com
-     (or run `ant auth login` once and leave it blank)
-   - `CMS_AGENT_TOKEN=` a long random string if the phone will reach the
-     server over anything other than your own Wi-Fi
-   - `PUBLIC_URL=http://<laptop-ip>:8787` so links inside tickets work from
-     other devices (find the IP with `ipconfig`, e.g. `192.168.1.23`)
-   - the ticket channel section if you want escalations sent automatically
-     (see `docs/USER_GUIDE.md` → Escalating)
-6. **Run it.**
-   ```powershell
-   npm run dev
-   ```
-   You should see `Foreman (CMS Agent) listening on http://localhost:8787`.
-   Open that address in Chrome or Edge.
-7. **Check the tests once** (no API key needed):
-   ```powershell
-   npm test
-   npx tsx eval\run.ts
+   ANTHROPIC_API_KEY=sk-ant-…
    ```
 
-### Start Foreman automatically at logon (recommended)
+3. Save, close the Foreman window, and start it again.
 
-1. Create `C:\Users\<you>\Documents\charne\cms-agent\server\start-foreman.cmd`:
-   ```
-   @echo off
-   cd /d %~dp0
-   npm run build
-   node dist\index.js
-   ```
-2. Task Scheduler → Create Task → Trigger "At log on" → Action "Start a
-   program" pointing at that `.cmd` → tick "Run only when user is logged on".
-   Foreman then runs in its own window like the cTrader agent does.
+---
 
-### Allow the phone through Windows Firewall
+## On the phone (Samsung S25+)
 
-Run once in an elevated PowerShell:
-```powershell
-New-NetFirewallRule -DisplayName "Foreman 8787" -Direction Inbound -Protocol TCP -LocalPort 8787 -Action Allow -Profile Private
-```
+The console is a web app, so there is nothing to install from the Play Store.
 
-## Part 2 — install the console as a computer app
+1. With the phone on the same Wi-Fi as the laptop, open the console on the
+   laptop and tap **Connect phone**. A QR code appears.
+2. Scan it with the phone camera and open the link. The access code travels in
+   the link, so you are signed in straight away.
+3. In Chrome, tap **⋮ → Add to Home screen**. You now have a Foreman icon that
+   opens full screen, with no browser bars.
 
-1. In Chrome or Edge open `http://localhost:8787`.
-2. Click the gold **Install app** button in the top bar (or the install icon
-   in the address bar → Install).
-3. Foreman now opens in its own window from the Start menu, with the CMS eco
-   icon. Pin it to the taskbar.
+### Making it work away from the Wi-Fi
 
-## Part 3 — install on your phone (Galaxy S25 Plus)
+The QR code above contains a Wi-Fi address, which stops working the moment you
+leave the building. To have the phone reach Foreman from Upington, a hotel or
+the car, install [Tailscale](https://tailscale.com/download) on the laptop and
+on the phone and sign both into the same account — it is free for personal
+use.
 
-Foreman is a progressive web app, so it installs from the browser without an
-app store.
+Foreman notices the Tailscale address on its own and starts handing that one
+out instead. The QR code then contains an address that does not change when
+you move, so the app on your home screen keeps working. See
+[REMOTE_ACCESS.md](REMOTE_ACCESS.md) for the details and for the alternative
+if you cannot install Tailscale.
 
-1. Put the phone on the **same Wi-Fi** as the laptop, or install
-   **Tailscale** on both (free; https://tailscale.com) so the phone can reach
-   the laptop from anywhere, including a dealership. With Tailscale use the
-   laptop's Tailscale IP (100.x.x.x) below.
-2. Open **Chrome** on the phone and go to `http://<laptop-ip>:8787`
-   (for example `http://192.168.1.23:8787`).
-3. If you set `CMS_AGENT_TOKEN`, the page will ask for it once; it is kept
-   on the phone.
-4. Tap the **⋮ menu → Add to Home screen → Install** (or the **Install app**
-   button in the top bar).
-5. Foreman opens full-screen from the home screen with the icon. Dictation
-   (🎙) uses Samsung/Google speech recognition; allow the microphone when
-   asked. Photos of a screen can be attached with 🖼 or pasted.
+---
 
-Samsung Internet also works: **☰ → Add page to → Home screen**.
+## Is this safe?
 
-## Part 4 — the Workflow Recorder extension (Chrome on the laptop)
+* **Every request needs an access code.** Foreman generates a 32-character one
+  on the first run and puts it in `foreman.env`. There is no way to reach the
+  data without it, on any network.
+* **It listens beyond your own machine only because it has that code.** With
+  no code set, Foreman refuses to listen anywhere but the laptop itself.
+* **Nothing is published to the internet.** Tailscale is a private link
+  between your own devices. The optional Cloudflare tunnel *is* public, so
+  Foreman refuses to start one unless the access code is strong.
+* **Your passwords are never stored.** You sign into a site once in a real
+  browser window; Foreman keeps the session cookie, not the password.
+* **Your data stays on your laptop.** The only thing that leaves is the text
+  of what you ask Claude.
 
-1. `chrome://extensions` → Developer mode on → **Load unpacked** →
-   choose `cms-agent\recorder-extension`.
-2. Click the extension → Server settings → URL `http://localhost:8787` and
-   the token if set → Save.
-3. Pin it to the toolbar so it is one click away during a rollout.
+If you ever think the access code has leaked, delete the
+`CMS_AGENT_TOKEN=` line from `foreman.env` and restart — a new one is
+generated, and every device has to be paired again.
+
+---
 
 ## Updating
 
+Download the newer `Foreman.exe` and replace the old one. Your database,
+signed-in sites and settings are in a different folder and are left alone. The
+previous version is kept in `versions\` in case you want to go back to it.
+
+---
+
+## If something goes wrong
+
+| What you see | What to do |
+| --- | --- |
+| "Port 8787 is taken by something else, so this copy is on 8788." | Nothing — an older copy or another program had the port and Foreman moved aside. The address it prints is the one to use. |
+| "Foreman is already running on port 8787." | It is. The console opens; there is only ever one copy against one database. |
+| "Foreman keeps stopping." | Open the log it names in `…\Foreman\logs\foreman.log`; the reason is at the bottom. |
+| "The browser download did not finish." | Everything except running recorded tasks still works. It tries again next time you start it. Check `logs\browser-install.log` if it keeps failing. |
+| The phone shows "can't reach this site" | Either the firewall prompt was refused (allow `Foreman.exe` on private networks in Windows Defender Firewall) or you are no longer on that Wi-Fi — that is what Tailscale is for. |
+
+---
+
+## Running from the source instead
+
+You do not need this. It is here for when you want to change the code.
+
 ```powershell
-cd $HOME\Documents\charne
-git pull
-cd cms-agent\server
-npm install
+cd $HOME\Documents\charne; git pull; cd cms-agent\server; npm install; npm run dev
 ```
-Restart Foreman. The database (`server\data\`) is kept.
 
-## Where things live
-
-| What | Where |
-|---|---|
-| Database, uploaded exports, built reports | `cms-agent\server\data\` |
-| Promoted playbooks | `cms-agent\server\knowledge\playbooks.custom.json` |
-| Eval cases and results | `cms-agent\server\eval\` |
-| Settings | `cms-agent\server\.env` |
-
-## Known dependency advisories
-
-`npm audit` reports a few findings on a fresh install. Current status:
-
-| Package | Severity | Status |
-|---|---|---|
-| nodemailer | high | **Fixed** — upgraded to 10.x |
-| xlsx (SheetJS) | high | Not fixed on npm. The npm registry copy is frozen at 0.18.5; SheetJS publishes patched builds only from `cdn.sheetjs.com`. The advisories (prototype pollution, ReDoS) apply when parsing a **hostile** workbook. Foreman parses exports you generate from CMS yourself, so the practical exposure is low. To pin the patched build anyway: `npm i https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` — note this makes `npm install` depend on that CDN being reachable. |
-| express / body-parser / qs | moderate | Not fixed. The patched `qs` only arrives via Express 5, whose router (path-to-regexp v8) drops the inline pattern syntax used by the report-download route, so the upgrade is a real refactor rather than a version bump. The advisories are denial-of-service and parameter-parsing bypasses against a server that, in this deployment, listens on your LAN behind an access token. |
-
-Neither remaining item blocks use. Revisit if Foreman is ever exposed to the
-public internet or fed workbooks from outside the dealer group.
+Needs Node 22.13 or newer. `npm test` runs the test suite; `npm run payload`,
+`npm run launcher` and `npm run icon` build the pieces the Windows workflow
+assembles into `Foreman.exe`.

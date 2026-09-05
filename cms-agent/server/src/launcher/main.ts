@@ -1,7 +1,8 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { describeAddress, localAddresses } from "../net.js";
 import { clearRunning, ensureInstalled, ensureSettings, installedVersion, layout, noteRunning, pruneOldVersions, readRunning, type Layout } from "./install.js";
 
 /**
@@ -124,26 +125,34 @@ function openBrowser(url: string): void {
   } catch { log(`Open this in your browser: ${url}`); }
 }
 
-/** Every 100.x address Tailscale has given this machine, so the phone gets an address that works off the Wi-Fi. */
+/** Every address Foreman answers on, said plainly enough to pick one for the phone. */
 function addresses(port: number): { label: string; url: string }[] {
-  const out: { label: string; url: string }[] = [];
-  out.push({ label: "this computer", url: `http://127.0.0.1:${port}` });
-  for (const [, list] of Object.entries(os.networkInterfaces())) {
-    for (const nic of list ?? []) {
-      if (nic.family !== "IPv4" || nic.internal) continue;
-      out.push({ label: nic.address.startsWith("100.") ? "any network (Tailscale)" : "same Wi-Fi", url: `http://${nic.address}:${port}` });
-    }
-  }
-  return out;
+  return [
+    { label: "this computer", url: `http://127.0.0.1:${port}` },
+    ...localAddresses().map((a) => ({ label: describeAddress(a), url: `http://${a}:${port}` })),
+  ];
 }
 
 /* ── Roles ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Load a file from disk.
+ *
+ * Inside a packaged executable the ambient `require` resolves built-in modules
+ * and nothing else, so it cannot load the unpacked program — it reports the
+ * absolute path as an unknown built-in. `createRequire` anchored to the file
+ * itself gives back an ordinary CommonJS loader, which is what both of the
+ * child roles below need.
+ */
+function loadFromDisk(file: string): void {
+  createRequire(file)(file);
+}
 
 /** Run the server itself. Reached by re-running the executable with FOREMAN_ROLE=server. */
 function runServer(): void {
   const entry = process.env.FOREMAN_SERVER_ENTRY;
   if (!entry) throw new Error("FOREMAN_SERVER_ENTRY is not set");
-  require(entry);
+  loadFromDisk(entry);
 }
 
 /** Download Chromium once. Playwright does the work; we only give it a home and wait. */
@@ -152,27 +161,39 @@ function runBrowserInstall(): void {
   if (!cli) throw new Error("FOREMAN_PLAYWRIGHT_CLI is not set");
   // Playwright's CLI reads process.argv, so set it up and hand over.
   process.argv = [process.argv[0], cli, "install", "chromium"];
-  require(cli);
+  loadFromDisk(cli);
 }
 
-async function ensureBrowser(l: Layout, dir: string): Promise<void> {
+/**
+ * Fetch Chromium in the background.
+ *
+ * It is a 150 MB download from someone else's CDN, so it must not stand
+ * between a double-click and a working console. Everything except driving a
+ * browser works without it, and on a slow or blocked connection waiting for it
+ * would look exactly like Foreman failing to start.
+ */
+function ensureBrowser(l: Layout, dir: string): void {
   const marker = path.join(l.browsers, ".chromium-ok");
   if (fs.existsSync(marker)) return;
   const cli = path.join(dir, "node_modules", "playwright-core", "cli.js");
-  if (!fs.existsSync(cli)) { log("Playwright is missing from this build; skipping the browser download."); return; }
-  log("Fetching the browser Foreman drives (about 150 MB, once).");
-  await new Promise<void>((resolve) => {
-    const child = spawn(process.execPath, selfArgs(), {
-      env: { ...process.env, FOREMAN_ROLE: "browser-install", FOREMAN_PLAYWRIGHT_CLI: cli, PLAYWRIGHT_BROWSERS_PATH: l.browsers },
-      stdio: "inherit",
-    });
-    child.on("exit", (code) => {
-      if (code === 0) fs.writeFileSync(marker, new Date().toISOString());
-      else log(`Browser download exited with code ${code}. Foreman will still start; tasks that drive a browser will ask again.`);
-      resolve();
-    });
-    child.on("error", () => resolve());
+  if (!fs.existsSync(cli)) { log("Playwright is missing from this build; tasks that drive a browser will not run."); return; }
+
+  log("Fetching the browser Foreman drives (about 150 MB, once). It downloads in the background.");
+  const logFile = fs.openSync(path.join(l.logs, "browser-install.log"), "a");
+  const child = spawn(process.execPath, selfArgs(), {
+    env: { ...process.env, FOREMAN_ROLE: "browser-install", FOREMAN_PLAYWRIGHT_CLI: cli, PLAYWRIGHT_BROWSERS_PATH: l.browsers },
+    stdio: ["ignore", logFile, logFile],
   });
+  child.on("exit", (code) => {
+    if (code === 0) {
+      fs.writeFileSync(marker, new Date().toISOString());
+      log("The browser is ready. Recorded tasks can run now.");
+    } else {
+      appendLog(l, `browser install exited with code ${code}`);
+      log(`The browser download did not finish (code ${code}); see ${path.join(l.logs, "browser-install.log")}. Everything else works, and Foreman tries again next time it starts.`);
+    }
+  });
+  child.on("error", (err) => log(`The browser download could not start: ${err.message}`));
 }
 
 /* ── The launcher ──────────────────────────────────────────────────────── */
@@ -242,8 +263,6 @@ async function launch(): Promise<void> {
   if (installed) log(`Installed Foreman ${version} in ${l.home}`);
   pruneOldVersions(l);
 
-  await ensureBrowser(l, dir);
-
   startServer(l, dir, version, settings, port);
   const up = await waitUntilAlive(port);
   if (!up) {
@@ -252,6 +271,7 @@ async function launch(): Promise<void> {
   }
 
   noteRunning(l, { port, pid: process.pid, version, startedAt: new Date().toISOString() });
+  ensureBrowser(l, dir);
   const url = `http://127.0.0.1:${port}/?token=${encodeURIComponent(token)}`;
   log(`Foreman ${version} is running.`);
   for (const a of addresses(port)) log(`  ${a.label.padEnd(24)} ${a.url}`);

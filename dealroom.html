@@ -3301,6 +3301,7 @@ function vMoney(){
 }
 
 /* ══ Render ═════════════════════════════════════════════════════════ */
+let lastWhere = "";
 const RENDER = { staff:vStaff, guide:vGuide, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (sync.gate !== "in" && sync.gate !== "demo"){ renderAuth(); return; }
@@ -3324,8 +3325,17 @@ function render(){
   if (S.view === "guide" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (!S.deal && ["money", "earn"].includes(S.view) && !(me().role === "agent" || isOwner(S.me))) S.view = homeView();
   if (!S.deal && S.view === "new" && me().role !== "agent") S.view = "portfolio";
+  const where = [S.view, S.deal, S.listing, S.boardId].join("|");
+  const same = where === lastWhere;
+  const wrapNow = document.querySelector(".boardwrap");
+  const keepX = same && wrapNow ? wrapNow.scrollLeft : 0;
+  const keepY = same ? (window.scrollY || document.documentElement.scrollTop || 0) : 0;
+  lastWhere = where;
+
   renderChrome();
   document.getElementById("view").innerHTML = RENDER[S.view]();
+  if (keepX){ const w2 = document.querySelector(".boardwrap"); if (w2) w2.scrollLeft = keepX; }
+  if (keepY) window.scrollTo(0, keepY);
   if (S.signing) initSigPad();
   renderPop();
   renderModal();
@@ -4080,8 +4090,8 @@ document.addEventListener("pointerdown", e => {
   const card = cardAt(e); if (!card) return;
   const touch = e.pointerType !== "mouse";
   drag = { card, id:card.dataset.id, kind:card.dataset.kind, free:card.dataset.drag === "free",
-    x0:e.clientX, y0:e.clientY, live:false, pointer:e.pointerId,
-    timer:touch ? setTimeout(() => startDrag(e.clientX, e.clientY), 220) : null, touch };
+    x0:e.clientX, y0:e.clientY, live:false, pointer:e.pointerId, moved:false,
+    timer:touch ? setTimeout(() => { if (drag && !drag.moved) startDrag(drag.x0, drag.y0); }, 260) : null, touch };
 }, { passive:true });
 function startDrag(x, y){
   if (!drag || drag.live) return;
@@ -4106,8 +4116,9 @@ function moveLayer(x, y){ drag.layer.style.left = (x - drag.dx) + "px"; drag.lay
 document.addEventListener("pointermove", e => {
   if (!drag) return;
   const far = Math.abs(e.clientX - drag.x0) + Math.abs(e.clientY - drag.y0);
+  if (far > 6) drag.moved = true;
   if (!drag.live){
-    if (drag.touch){ if (far > 12){ clearTimeout(drag.timer); drag = null; } return; }   // let the board scroll
+    if (drag.touch){ if (far > 8){ clearTimeout(drag.timer); drag = null; } return; }    // let the board scroll
     if (far > 6) startDrag(e.clientX, e.clientY); else return;
   }
   e.preventDefault();

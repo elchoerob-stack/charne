@@ -169,9 +169,13 @@ New here? <a href="/guide.html" style="color:var(--gold)">Open the guide</a> —
       <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" hidden>
       <div class="list" id="reports"><div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div></div>
     </div>
-    <div class="sec" data-group="work"><h3>Tasks <button class="btn" id="cmsConnect" style="float:right;padding:3px 9px;font-size:11px">Connect CMS</button></h3>
-      <div class="hint" style="margin-bottom:6px">Record a job once with the extension, turn it into a task, and Foreman does it for you — in the background, as many times as you like.</div>
+    <div class="sec" data-group="work"><h3>Tasks <button class="btn" id="sitesBtn" style="float:right;padding:3px 9px;font-size:11px">Sites</button></h3>
+      <div class="hint" style="margin-bottom:6px">Record a job once, turn it into a task, and Foreman does it for you — in its own browser, in the background, while you carry on working.</div>
       <div class="list" id="tasks"><div class="empty">No tasks yet. Record a workflow, then press "Make a task" on it below.</div></div>
+    </div>
+    <div class="sec" data-group="work"><h3>Documents <button class="btn" id="openWs" style="float:right;padding:3px 9px;font-size:11px">Folder</button></h3>
+      <div class="hint" id="wsPath" style="margin-bottom:6px">Anything a task downloads or writes is saved on this computer.</div>
+      <div class="list" id="files"><div class="empty">Nothing saved yet.</div></div>
     </div>
     <div class="sec" data-group="more"><h3>Session</h3>
       <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -323,6 +327,7 @@ async function loadSide() {
     $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button><button onclick="escalate('${c.id}')">Escalate</button>${c.status === "escalated" ? `<a href="/api/cases/${c.id}/packet" target="_blank"><button>Packet</button></a>` : ""}</div></div>`).join("") : '<div class="empty">No cases.</div>';
     if (dealer) { const mem = await api("/memory/" + encodeURIComponent(dealer)); $("#memory").innerHTML = mem.length ? mem.map((m) => `<div class="item">${esc(m.fact)}</div>`).join("") : '<div class="empty">Nothing remembered for this dealer yet.</div>'; }
     loadTasks();
+    loadFiles();
     const pbs = await api("/playbooks"); $("#playbooks").innerHTML = pbs.map((p) => `<div class="item"><b>${esc(p.title)}</b><div class="meta">${p.domain} · ${p.checks} checks · prior ${Math.round(p.prior * 100)}%</div></div>`).join("");
   } catch (e) { console.error(e); }
 }
@@ -504,7 +509,7 @@ window.runTask = async (taskId) => {
       loadTasks();
     } catch (e) {
       const msg = String(e.message || "");
-      if (msg.includes("needsSession") || msg.includes("Connect CMS")) { closeSheet(); connectCms(); }
+      if (msg.includes("needsSession") || msg.includes("No site is signed in")) { closeSheet(); showSites(); }
       else add("agent", "Could not start: " + msg);
     }
   };
@@ -540,31 +545,50 @@ window.showRunLog = async (runId) => {
     ${shots.map((l) => `<img src="/api/runs/${run.id}/shot/${encodeURIComponent(l.screenshot)}" style="width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--line)">`).join("")}`);
 };
 
-async function connectCms() {
+async function showSites() {
+  let d = { sites: [], stale: [], workspace: "" };
+  try { d = await api("/sites"); } catch (e) { return add("agent", e.message); }
+  const rows = d.sites.length ? d.sites.map((s) => `
+    <div class="item"><b>${esc(s.host)}${d.stale.includes(s.host) ? ' <span class="pill" style="background:var(--stop-bg);color:var(--stop)">may have expired</span>' : ""}</b>
+      <div class="meta">signed in ${s.ageDays === 0 ? "today" : `${s.ageDays} day(s) ago`} · ${s.cookies} cookie(s)</div>
+      <div class="acts"><button onclick="addSite('${esc(s.url)}')">Sign in again</button><button onclick="forgetSite('${esc(s.host)}')">Forget</button></div>
+    </div>`).join("") : '<div class="empty">No sites yet. Add the first one below.</div>';
   const sheet = openSheet(`
-    <h3>Connect CMS once</h3>
-    <p style="color:var(--t2);font-size:13px">A browser window will open. Log into CMS as you normally would. Foreman keeps only the session cookie so tasks can work as you — <b>your password is never stored</b>.</p>
-    <label style="display:block;font-size:11px;color:var(--t2);margin:12px 0 3px">CMS address</label>
-    <input id="cmsUrl" placeholder="https://cms.example.co.za" value="${esc(localStorage.getItem("cms_url") || "")}"
-      style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font-size:16px">
-    <div class="row" style="display:flex;gap:8px;margin-top:16px">
-      <button class="btn" onclick="closeSheet()" style="flex:1">Cancel</button>
-      <button class="btn primary" id="cmsGo" style="flex:1">Open browser</button>
+    <h3>Signed-in sites</h3>
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 10px">Foreman signs in once per site, in a real browser you drive, and keeps only the session cookie. <b>Your passwords are never stored.</b> A task can use several sites in one run.</p>
+    ${rows}
+    <label style="display:block;font-size:11px;color:var(--t2);margin:14px 0 3px">Add a site</label>
+    <input id="siteUrl" placeholder="https://…" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font-size:16px">
+    <div class="row" style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" onclick="closeSheet()" style="flex:1">Close</button>
+      <button class="btn primary" id="siteGo" style="flex:1">Open browser</button>
     </div>
-    <div class="hint" id="cmsMsg" style="margin-top:10px"></div>`);
-  sheet.querySelector("#cmsGo").onclick = async () => {
-    const url = sheet.querySelector("#cmsUrl").value.trim();
-    if (!/^https?:\/\//i.test(url)) { sheet.querySelector("#cmsMsg").textContent = "Enter the full address, starting with https://"; return; }
-    try { localStorage.setItem("cms_url", url); } catch {}
-    sheet.querySelector("#cmsMsg").textContent = "A browser window is opening on the computer running Foreman. Log in there, then come back.";
-    try {
-      const r = await api("/cms-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-      closeSheet();
-      add("agent", r.message);
-    } catch (e) { sheet.querySelector("#cmsMsg").textContent = e.message; }
-  };
+    <div class="hint" id="siteMsg" style="margin-top:10px"></div>`);
+  sheet.querySelector("#siteGo").onclick = () => addSite(sheet.querySelector("#siteUrl").value.trim());
 }
-$("#cmsConnect").onclick = connectCms;
+window.addSite = async (url) => {
+  if (!/^https?:\/\//i.test(url || "")) { const m = document.querySelector("#siteMsg"); if (m) m.textContent = "Enter the full address, starting with https://"; return; }
+  const m = document.querySelector("#siteMsg");
+  if (m) m.textContent = "A browser is opening on the computer running Foreman. Sign in there, then close it or come back.";
+  try { const r = await api("/sites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }); closeSheet(); add("agent", r.message); loadTasks(); }
+  catch (e) { if (m) m.textContent = e.message; }
+};
+window.forgetSite = async (host) => { if (!confirm(`Forget the sign-in for ${host}?`)) return; await api(`/sites/${encodeURIComponent(host)}`, { method: "DELETE" }); showSites(); };
+$("#sitesBtn").onclick = showSites;
+
+async function loadFiles() {
+  try {
+    const d = await api("/workspace");
+    $("#wsPath").textContent = `Saved into ${d.workspace}`;
+    $("#files").innerHTML = d.recent.length
+      ? d.recent.slice(0, 8).map((f) => `<div class="item"><b>${esc(f.name)}</b><div class="meta">${new Date(f.modified).toLocaleString("en-ZA")}</div></div>`).join("")
+      : '<div class="empty">Nothing saved yet. Files a task downloads land here.</div>';
+  } catch { /* workspace is optional */ }
+}
+$("#openWs").onclick = async () => {
+  try { const d = await api("/workspace"); add("agent", `Documents are saved to:\n\n\`${d.workspace}\`\n\nOpen that folder on this computer. Set \`WORKSPACE_DIR\` in \`server/.env\` to put them somewhere else, such as your Desktop or a synced drive.`); }
+  catch (e) { add("agent", e.message); }
+};
 
 /* ── Live run feed ────────────────────────────────────────────────────── */
 function watchRuns() {

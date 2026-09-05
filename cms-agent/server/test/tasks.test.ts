@@ -73,5 +73,5 @@ test("each step carries several ways to find its element, cheapest first", () =>
   assert.ok(s.some((x) => x.how.startsWith("role=")));
   assert.ok(s[s.length - 1].how.startsWith("css="), "the brittle CSS path is the last resort");
   const healed = strategiesFor({ tag: "button", name: "Save", selector: "#x" }, "#save_v2");
-  assert.ok(healed[0].how.startsWith("healed:"), "a previous repair is tried before anything else");
+  assert.ok(healed[0].how.startsWith("learned:"), "somewhere it previously found the thing is tried before anything else");
 });

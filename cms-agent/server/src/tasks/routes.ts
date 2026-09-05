@@ -5,7 +5,9 @@ import { newId, now } from "../db.js";
 import { loadRecording } from "../agent/tools.js";
 import { compileTask, missingRequired, resolveInputs } from "./compile.js";
 import { enqueueBatch, queue } from "./queue.js";
-import { captureSession, hasSavedSession, runShotsDir } from "./runner.js";
+import { connectSite, hasSavedSession, runShotsDir } from "./runner.js";
+import { forgetSite, listSites, staleSites } from "./sites.js";
+import { workspaceDir } from "./workspace.js";
 import { deleteTask, getRun, getTask, listRuns, listTasks, newRun, saveTask } from "./store.js";
 
 export const taskRoutes = Router();
@@ -70,7 +72,7 @@ taskRoutes.post("/tasks/:id/run", (req, res) => {
   };
 
   if (!options.dryRun && !hasSavedSession()) {
-    return res.status(409).json({ error: "No saved CMS session. Click 'Connect CMS' first: a browser opens, you log in once, and only the session cookie is kept — never your password.", needsSession: true });
+    return res.status(409).json({ error: "No site is signed in yet. Add one under Sites: a browser opens, you sign in once, and only the session cookie is kept — never your password.", needsSession: true });
   }
 
   if (Array.isArray(rows) && rows.length) {
@@ -132,16 +134,41 @@ taskRoutes.get("/runs-stream", (req, res) => {
 
 taskRoutes.get("/queue", (_req, res) => res.json({ ...queue.status(), hasSession: hasSavedSession() }));
 
-/** One-time CMS login: opens a real browser, keeps only the cookies. */
-taskRoutes.post("/cms-session", async (req, res) => {
+/* ── Signed-in sites ──────────────────────────────────────────────────── */
+
+/** Sign in to a site once, in a real browser. Only cookies are kept. */
+taskRoutes.post("/sites", async (req, res) => {
   const url = String(req.body?.url ?? "").trim();
-  if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: "A CMS URL is required, e.g. https://cms.example.co.za" });
+  if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: "A full address is needed, e.g. https://example.com" });
   try {
-    const result = await captureSession(url);
-    res.json({ saved: result.saved, url: result.url, message: result.saved ? "Session saved. Tasks can now run on their own." : "No session was captured; try again and complete the login before closing the browser." });
+    const r = await connectSite(url);
+    res.json({ ...r, message: `Signed in to ${r.host}. Tasks can use it from now on.` });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-taskRoutes.get("/cms-session", (_req, res) => res.json({ hasSession: hasSavedSession() }));
+taskRoutes.get("/sites", (_req, res) => {
+  const sites = listSites();
+  res.json({ sites, stale: staleSites().map((s) => s.host), workspace: workspaceDir() });
+});
+
+taskRoutes.delete("/sites/:host", (req, res) => res.json({ forgotten: forgetSite(req.params.host) }));
+
+/** Where documents land, and what is in there. */
+taskRoutes.get("/workspace", (_req, res) => {
+  const dir = workspaceDir();
+  let recent: { name: string; path: string; modified: string }[] = [];
+  try {
+    const walk = (d: string, depth = 0): string[] =>
+      depth > 2 ? [] : fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+        const full = path.join(d, e.name);
+        return e.isDirectory() ? walk(full, depth + 1) : [full];
+      });
+    recent = walk(dir)
+      .map((f) => ({ name: path.basename(f), path: f, modified: fs.statSync(f).mtime.toISOString() }))
+      .sort((a, b) => b.modified.localeCompare(a.modified))
+      .slice(0, 40);
+  } catch { /* an empty or unreadable workspace is not an error */ }
+  res.json({ workspace: dir, recent });
+});

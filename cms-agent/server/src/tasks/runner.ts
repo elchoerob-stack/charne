@@ -4,29 +4,34 @@ import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config.js";
 import type { Target } from "../recorder/schema.js";
 import { resolveInputs } from "./compile.js";
+import { anySiteSaved, hostOf, mergedState, saveSite, type StorageState } from "./sites.js";
+import { pruneIfEmpty, recordFile, runFolder, type SavedFile } from "./workspace.js";
 import { DEFAULT_RUNNER_OPTIONS, type RunLogEntry, type RunnerOptions, type Task, type TaskRun, type TaskStep } from "./types.js";
 
 /**
- * Executes a Task in a real browser, separately from whatever Jacques is doing
- * in his own Chrome. Two ideas carry the whole design:
+ * Runs a learned task in a browser of its own.
  *
- *  1. Never trust one selector. A recorded CSS path breaks the moment CMS
- *     re-renders a table. Each step carries several ways to find its element
- *     and they are tried cheapest-first.
- *  2. When they all fail, ask rather than die. Claude gets the page's
- *     interactive elements and picks the intended one; the repair is written
- *     back onto the task so the next run goes straight there.
+ * Three ideas carry the design:
+ *
+ *  1. **It is not your browser.** Every run launches its own browser with its
+ *     own input. Nothing here moves the operating system's pointer, so a run
+ *     cannot interfere with whatever you are doing at the same time.
+ *  2. **Never trust one selector.** A recorded CSS path breaks the moment a
+ *     page re-renders, so each step carries several ways to find its element,
+ *     tried most-durable first.
+ *  3. **When the page has moved on, work it out.** If none of them match, the
+ *     step is handed to Claude as an *intent* — "enter the registration",
+ *     "open the job card" — with the page in front of it. It may take several
+ *     actions to get there: dismiss a banner, open a menu, search for the
+ *     record. That is the difference between a macro and something that copes.
  */
 
 const dataDir = path.dirname(config.dbPath);
-const sessionPath = path.join(dataDir, "cms-session.json");
 const shotsDir = path.join(dataDir, "run-shots");
 fs.mkdirSync(shotsDir, { recursive: true });
+export const runShotsDir = shotsDir;
 
-export const hasSavedSession = () => fs.existsSync(sessionPath);
-export const savedSessionPath = () => sessionPath;
-
-/* ── Playwright is loaded on demand ───────────────────────────────────── */
+/* ── Browser ──────────────────────────────────────────────────────────── */
 
 type Chromium = typeof import("playwright")["chromium"];
 let chromiumCache: Chromium | undefined;
@@ -38,14 +43,13 @@ export async function loadChromium(): Promise<Chromium> {
     chromiumCache = pw.chromium;
     return chromiumCache;
   } catch {
-    throw new Error("Playwright is not installed. Run `npm install` then `npx playwright install chromium` in cms-agent/server.");
+    throw new Error("Playwright is not installed. Run `npm install`, then `npm run browser` in the server folder.");
   }
 }
 
 /**
- * Which browser to drive. Most people running this already have Chrome or Edge
- * installed, so BROWSER_CHANNEL=chrome avoids downloading a second copy of a
- * browser onto the machine. BROWSER_PATH points at an executable directly.
+ * Which browser to drive. Most machines already have Chrome, so
+ * BROWSER_CHANNEL=chrome avoids downloading a second one.
  */
 export function browserLaunchOptions(): { executablePath?: string; channel?: string } {
   const explicit = process.env.BROWSER_PATH?.trim();
@@ -55,18 +59,15 @@ export function browserLaunchOptions(): { executablePath?: string; channel?: str
   return {};
 }
 
-/* ── Locator strategies ───────────────────────────────────────────────── */
+/* ── Finding things ───────────────────────────────────────────────────── */
 
 export interface Strategy { how: string; run: (page: any) => any }
 
-/**
- * Ordered cheapest and most stable first. A test id survives a redesign; a
- * generated CSS path barely survives a sort order change, so it goes last.
- */
+/** Ordered most-durable first: a test id survives a redesign, a CSS path barely survives a re-sort. */
 export function strategiesFor(t: Target | undefined, healed?: string): Strategy[] {
   const out: Strategy[] = [];
   if (!t) return out;
-  if (healed) out.push({ how: `healed:${healed}`, run: (p) => p.locator(healed) });
+  if (healed) out.push({ how: `learned:${healed}`, run: (p) => p.locator(healed) });
   if (t.testId) out.push({ how: `testId=${t.testId}`, run: (p) => p.getByTestId(t.testId!) });
 
   const roleFromTag: Record<string, string> = { button: "button", a: "link", select: "combobox", textarea: "textbox" };
@@ -88,10 +89,8 @@ function inputRole(t: Target): string | undefined {
     default: return "textbox";
   }
 }
-
 const cssEscape = (s: string) => s.replace(/([^a-zA-Z0-9_-])/g, "\\$1");
 
-/** Try each strategy until one matches exactly one visible element. */
 async function resolve(page: any, step: TaskStep, timeoutMs: number): Promise<{ locator: any; how: string } | undefined> {
   const strategies = strategiesFor(step.target, step.healedSelector);
   const per = Math.max(1200, Math.floor(timeoutMs / Math.max(strategies.length, 1)));
@@ -105,101 +104,189 @@ async function resolve(page: any, step: TaskStep, timeoutMs: number): Promise<{ 
   return undefined;
 }
 
-/* ── Self-healing ─────────────────────────────────────────────────────── */
+/* ── Seeing the page ──────────────────────────────────────────────────── */
 
-interface Candidate { i: number; tag: string; role: string; name: string; text: string; testId: string; placeholder: string; selector: string }
+interface Candidate { i: number; tag: string; role: string; name: string; text: string; testId: string; placeholder: string; value: string; selector: string }
 
-/** A compact inventory of what a person could actually click or type into. */
-async function interactiveElements(page: any): Promise<Candidate[]> {
-  return page.evaluate(() => {
-    const sel = "button, a[href], input, select, textarea, [role=button], [role=link], [role=tab], [role=menuitem], [role=checkbox], [role=radio], [role=combobox], [role=textbox]";
-    const nodes = Array.from(document.querySelectorAll(sel)).slice(0, 120);
-    const clean = (s: string | null | undefined) => (s || "").replace(/\s+/g, " ").trim().slice(0, 80);
-    const path = (el: Element) => {
-      const parts: string[] = [];
-      let n: Element | null = el;
-      while (n && n.nodeType === 1 && parts.length < 5) {
-        if ((n as HTMLElement).id) { parts.unshift(`#${(n as HTMLElement).id}`); break; }
-        let p = n.tagName.toLowerCase();
-        const parent: Element | null = n.parentElement;
-        if (parent) {
-          const same = Array.from(parent.children).filter((c) => c.tagName === n!.tagName);
-          if (same.length > 1) p += `:nth-of-type(${same.indexOf(n) + 1})`;
-        }
-        parts.unshift(p);
-        n = parent;
+/**
+ * A compact inventory of everything a person could actually click or type into.
+ *
+ * Passed to the browser as a source string on purpose. Handing `page.evaluate`
+ * a function means the *compiled* function is serialised, and the dev runner
+ * (esbuild, via tsx) rewrites named inner functions to call a `__name` helper
+ * that does not exist inside the page — so the snapshot throws there while
+ * working fine in the built server. A string is immune to whatever the build
+ * does to this file.
+ */
+const SNAPSHOT_JS = `(() => {
+  const sel = "button, a[href], input, select, textarea, [role=button], [role=link], [role=tab], [role=menuitem], [role=checkbox], [role=radio], [role=combobox], [role=textbox], [onclick]";
+  const nodes = Array.prototype.slice.call(document.querySelectorAll(sel), 0, 140);
+  const clean = function (s) { return (s || "").replace(/\\s+/g, " ").trim().slice(0, 80); };
+  const cssPath = function (el) {
+    const parts = [];
+    let n = el;
+    while (n && n.nodeType === 1 && parts.length < 5) {
+      if (n.id) { parts.unshift("#" + n.id); break; }
+      let p = n.tagName.toLowerCase();
+      const parent = n.parentElement;
+      if (parent) {
+        const same = Array.prototype.filter.call(parent.children, function (c) { return c.tagName === n.tagName; });
+        if (same.length > 1) p += ":nth-of-type(" + (Array.prototype.indexOf.call(same, n) + 1) + ")";
       }
-      return parts.join(" > ");
-    };
-    return nodes.map((el, i) => {
-      const he = el as HTMLElement & { placeholder?: string; labels?: NodeListOf<HTMLLabelElement> };
-      const visible = !!(he.offsetWidth || he.offsetHeight || he.getClientRects().length);
-      return {
-        i, visible,
-        tag: el.tagName.toLowerCase(),
-        role: clean(el.getAttribute("role")),
-        name: clean(el.getAttribute("aria-label") || (he.labels && he.labels[0] && he.labels[0].textContent) || ""),
-        text: clean(el.textContent),
-        testId: clean(el.getAttribute("data-testid") || el.getAttribute("data-test") || el.getAttribute("data-cy")),
-        placeholder: clean(he.placeholder),
-        selector: path(el),
-      };
-    }).filter((c: any) => c.visible);
-  });
+      parts.unshift(p);
+      n = parent;
+    }
+    return parts.join(" > ");
+  };
+  const out = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const el = nodes[i];
+    const visible = !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    if (!visible) continue;
+    out.push({
+      i: i,
+      tag: el.tagName.toLowerCase(),
+      role: clean(el.getAttribute("role")),
+      name: clean(el.getAttribute("aria-label") || (el.labels && el.labels[0] && el.labels[0].textContent) || ""),
+      text: clean(el.textContent),
+      testId: clean(el.getAttribute("data-testid") || el.getAttribute("data-test") || el.getAttribute("data-cy")),
+      placeholder: clean(el.placeholder),
+      value: clean(typeof el.value === "string" ? el.value : ""),
+      selector: cssPath(el)
+    });
+  }
+  return out;
+})()`;
+
+async function interactiveElements(page: any): Promise<Candidate[]> {
+  return page.evaluate(SNAPSHOT_JS) as Promise<Candidate[]>;
 }
+
+/* ── Working it out ───────────────────────────────────────────────────── */
 
 const client = new Anthropic();
 
-/** Ask Claude which element on the page is the one the step meant. */
-async function healStep(page: any, step: TaskStep): Promise<{ selector: string; why: string } | undefined> {
-  let candidates: Candidate[];
-  try { candidates = await interactiveElements(page); } catch { return undefined; }
-  if (!candidates.length) return undefined;
-  const t = step.target;
-  const wanted = [t?.name && `name "${t.name}"`, t?.text && `text "${t.text}"`, t?.testId && `test id "${t.testId}"`, t?.placeholder && `placeholder "${t.placeholder}"`, t?.role && `role ${t.role}`, t?.tag && `tag <${t.tag}>`].filter(Boolean).join(", ");
+type AgentAction =
+  | { action: "click"; index: number; why: string }
+  | { action: "fill"; index: number; value: string; why: string }
+  | { action: "select"; index: number; value: string; why: string }
+  | { action: "press"; key: string; why: string }
+  | { action: "scroll"; why: string }
+  | { action: "done"; why: string }
+  | { action: "give_up"; why: string };
 
+const ACTION_SCHEMA = {
+  type: "object",
+  properties: {
+    action: { type: "string", enum: ["click", "fill", "select", "press", "scroll", "done", "give_up"] },
+    index: { type: "integer", description: "Index of the element from the list. Required for click, fill and select." },
+    value: { type: "string", description: "Text to type or option to choose. Required for fill and select." },
+    key: { type: "string", description: "Key name for press, e.g. Enter." },
+    why: { type: "string", description: "One short sentence on why this action gets closer to the intent." },
+  },
+  required: ["action", "why"],
+  additionalProperties: false,
+} as const;
+
+export interface FigureOutResult { satisfied: boolean; actions: string[] }
+
+export interface DecisionContext {
+  step: TaskStep; task: Task; value: string; url: string;
+  elements: { i: number; tag: string; role: string; name: string; text: string; testId: string; placeholder: string; value: string }[];
+  tried: string[];
+}
+/** Chooses the next action towards a step's intent. Claude, unless overridden. */
+export type Decider = (ctx: DecisionContext) => Promise<AgentAction | undefined>;
+
+export const askClaude: Decider = async (ctx) => {
+  const t = ctx.step.target;
+  const recorded = [t?.name && `name "${t.name}"`, t?.text && `text "${t.text}"`, t?.testId && `test id "${t.testId}"`, t?.placeholder && `placeholder "${t.placeholder}"`, t?.role && `role ${t.role}`, t?.tag && `tag <${t.tag}>`].filter(Boolean).join(", ");
+  const neighbours = ctx.task.steps.filter((s) => Math.abs(s.n - ctx.step.n) <= 2 && s.n !== ctx.step.n).map((s) => `${s.n}. ${s.text}`).join("\n");
   const res = await client.messages.create({
     model: config.model,
     max_tokens: 900,
-    output_config: {
-      effort: "low",
-      format: {
-        type: "json_schema",
-        schema: {
-          type: "object",
-          properties: {
-            index: { type: "integer", description: "Index of the matching element, or -1 if none of them is a safe match." },
-            confidence: { type: "number" },
-            why: { type: "string" },
-          },
-          required: ["index", "confidence", "why"],
-          additionalProperties: false,
-        },
-      },
-    },
+    output_config: { effort: "low", format: { type: "json_schema", schema: ACTION_SCHEMA } },
     system:
-      "You repair a broken step in a recorded browser workflow for a car-dealership workshop system. " +
-      "The recorded element could not be found, probably because the page changed. Choose the element on the current page that the step clearly intended. " +
-      "Be conservative: if nothing is an obvious match, return index -1. A wrong click in a live dealership system creates real bookings and real invoices, so a refusal is far better than a guess.",
+      "You are driving a web page to carry out one step of a task a person recorded earlier. The page has changed since it was recorded, so the original element cannot be found.\n\n" +
+      "Work out what to do next to carry out the step's intent. You may need more than one action: dismiss a cookie banner or dialog that is in the way, open a menu or tab, search for a record, scroll. Reply with a single next action each time.\n\n" +
+      "Reply `done` once you have actually carried out the step (for example you clicked the right button, or typed into the right field) — not merely when the page looks ready.\n" +
+      "Reply `give_up` if the intended thing is genuinely not on this page, or if doing it would be a guess.\n\n" +
+      "Be careful. This is a live business system: a wrong click can create a real record, send a real message or delete real work. Prefer reversible, obviously-correct actions. If two elements could plausibly be the one meant, give up rather than pick.",
     messages: [{
       role: "user",
       content:
-        `Step to perform: ${step.action} — "${step.text}"\n` +
-        `Recorded element had: ${wanted || "no distinguishing attributes"}\n` +
-        (step.value ? `Value involved: ${step.value}\n` : "") +
-        `\nElements currently on the page:\n` +
-        candidates.map((c) => `[${c.i}] <${c.tag}${c.role ? ` role=${c.role}` : ""}> name="${c.name}" text="${c.text}" testid="${c.testId}" placeholder="${c.placeholder}"`).join("\n"),
+        `Task: ${ctx.task.title}\n` +
+        `Step ${ctx.step.n} of ${ctx.task.steps.length} — intent: ${ctx.step.text}\n` +
+        (ctx.value ? `Value to use: "${ctx.value}"\n` : "") +
+        (recorded ? `The recorded element had: ${recorded}\n` : "") +
+        (neighbours ? `\nSurrounding steps:\n${neighbours}\n` : "") +
+        `\nPage: ${ctx.url}\n` +
+        (ctx.tried.length ? `\nAlready tried:\n${ctx.tried.map((x) => `- ${x}`).join("\n")}\n` : "") +
+        `\nElements on the page now:\n` +
+        ctx.elements.map((c) => `[${c.i}] <${c.tag}${c.role ? ` role=${c.role}` : ""}> name="${c.name}" text="${c.text}" testid="${c.testId}" placeholder="${c.placeholder}"${c.value ? ` value="${c.value}"` : ""}`).join("\n"),
     }],
   });
-
   if (res.stop_reason === "refusal") return undefined;
   const block = res.content.find((b): b is Anthropic.TextBlock => b.type === "text");
   if (!block) return undefined;
-  let parsed: { index: number; confidence: number; why: string };
-  try { parsed = JSON.parse(block.text); } catch { return undefined; }
-  if (parsed.index < 0 || parsed.confidence < 0.6) return undefined;
-  const chosen = candidates.find((c) => c.i === parsed.index);
-  return chosen ? { selector: chosen.selector, why: parsed.why } : undefined;
+  try { return JSON.parse(block.text) as AgentAction; } catch { return undefined; }
+};
+
+/**
+ * Achieve a step's intent on a page that no longer matches the recording.
+ * Bounded: a handful of actions, then it stops rather than flailing.
+ */
+async function figureOut(
+  page: any, step: TaskStep, value: string, task: Task,
+  log: (level: RunLogEntry["level"], message: string, stepN?: number) => void,
+  decide: Decider = askClaude,
+  maxActions = 6,
+): Promise<FigureOutResult> {
+  const tried: string[] = [];
+
+  for (let i = 0; i < maxActions; i++) {
+    let elements: Candidate[];
+    try { elements = await interactiveElements(page); } catch { return { satisfied: false, actions: tried }; }
+    if (!elements.length) return { satisfied: false, actions: tried };
+
+    let act: AgentAction | undefined;
+    try {
+      act = await decide({ step, task, value, url: page.url(), elements, tried });
+    } catch (err) {
+      log("warn", `Could not work out step ${step.n}: ${(err as Error).message}`, step.n);
+      return { satisfied: false, actions: tried };
+    }
+    if (!act) return { satisfied: false, actions: tried };
+
+    if (act.action === "done") { log("heal", `Worked out step ${step.n}: ${act.why}`, step.n); return { satisfied: true, actions: tried }; }
+    if (act.action === "give_up") { log("warn", `Could not work out step ${step.n}: ${act.why}`, step.n); return { satisfied: false, actions: tried }; }
+
+    const target = "index" in act && typeof act.index === "number" ? elements.find((c) => c.i === act.index) : undefined;
+    const describe = target ? `${act.action} [${target.i}] ${target.name || target.text || target.placeholder || target.tag}` : `${act.action}`;
+    try {
+      if (act.action === "press") await page.keyboard.press(act.key || "Enter");
+      else if (act.action === "scroll") await page.mouse.wheel(0, 600);
+      else {
+        if (!target) return { satisfied: false, actions: tried };
+        const loc = page.locator(target.selector).first();
+        await loc.waitFor({ state: "visible", timeout: 4000 });
+        if (act.action === "click") await loc.click({ timeout: 8000 });
+        else if (act.action === "fill") await loc.fill(act.value ?? value, { timeout: 8000 });
+        else if (act.action === "select") {
+          try { await loc.selectOption({ label: act.value ?? value }, { timeout: 4000 }); }
+          catch { await loc.selectOption(act.value ?? value, { timeout: 4000 }); }
+        }
+        // Remember where the thing actually was, so next run goes straight there.
+        if (act.action === step.action || (act.action === "fill" && step.action === "type")) step.healedSelector = target.selector;
+      }
+      tried.push(`${describe} — ${act.why}`);
+      log("heal", `Step ${step.n}: ${describe} (${act.why})`, step.n);
+      await page.waitForTimeout(400);
+    } catch (err) {
+      tried.push(`${describe} failed: ${(err as Error).message}`);
+    }
+  }
+  return { satisfied: false, actions: tried };
 }
 
 /* ── Execution ────────────────────────────────────────────────────────── */
@@ -207,8 +294,10 @@ async function healStep(page: any, step: TaskStep): Promise<{ selector: string; 
 export interface RunHooks {
   onLog: (entry: RunLogEntry) => void;
   isCancelled: () => boolean;
-  /** Persist a healed locator so the repair sticks for future runs. */
   onHeal?: (stepN: number, selector: string) => void;
+  onFile?: (file: SavedFile) => void;
+  /** Overrides how the next recovery action is chosen. Claude by default. */
+  decide?: Decider;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -224,13 +313,29 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
   try {
     browser = await chromium.launch({ headless: opts.headless, slowMo: opts.slowMoMs, ...browserLaunchOptions() });
   } catch (err) {
-    throw new Error(`Could not start the browser: ${(err as Error).message}. If this mentions a missing executable, run: npx playwright install chromium`);
+    throw new Error(`Could not start the browser: ${(err as Error).message}. If it mentions a missing executable, run: npm run browser`);
   }
 
+  const folder = runFolder(task.title, run.id);
   const context = await browser.newContext({
-    storageState: hasSavedSession() ? sessionPath : undefined,
+    storageState: mergedState() as any,
     viewport: { width: 1440, height: 900 },
+    acceptDownloads: true,
   });
+
+  // Anything the task downloads lands in this run's folder on disk.
+  context.on("download", async (download: any) => {
+    try {
+      const name = download.suggestedFilename() || `download-${Date.now()}`;
+      await download.saveAs(path.join(folder, name));
+      const file = recordFile(folder, name);
+      hooks.onFile?.(file);
+      log("info", `Saved ${file.name} (${Math.max(1, Math.round(file.bytes / 1024))} KB) to ${folder}`);
+    } catch (err) {
+      log("warn", `A download could not be saved: ${(err as Error).message}`);
+    }
+  });
+
   const page = await context.newPage();
   const shot = async (name: string): Promise<string | undefined> => {
     try {
@@ -244,11 +349,10 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
     log("info", `Opening ${task.startUrl}`);
     await page.goto(task.startUrl, { waitUntil: "domcontentloaded", timeout: opts.stepTimeoutMs });
 
-    // A login screen means the saved session is gone; stop rather than typing
-    // a booking into a password box.
     if (await looksLikeLogin(page)) {
       const s = await shot("login");
-      throw Object.assign(new Error("CMS is asking for a login. Reconnect the saved session from the Tasks panel, then run again."), { attention: true, screenshot: s });
+      const host = hostOf(page.url()) || hostOf(task.startUrl);
+      throw Object.assign(new Error(`${host || "The site"} is asking for a login — its saved sign-in has expired. Reconnect it under Sites, then run again.`), { attention: true, screenshot: s });
     }
 
     for (const step of task.steps) {
@@ -259,7 +363,7 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
       const value = step.variable ? (values[step.variable] ?? step.value ?? "") : (step.value ?? "");
       const label = step.variable ? `${step.text} → "${value}"` : step.text;
 
-      if (opts.dryRun) { log("step", `[dry run] ${label}`, step.n); continue; }
+      if (opts.dryRun) { log("step", `[practice] ${label}`, step.n); continue; }
 
       try {
         await runStep(page, step, value, opts.stepTimeoutMs, hooks, task, log);
@@ -276,8 +380,11 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
     const s = await shot("done");
     log("info", "Finished", undefined, s);
   } finally {
+    // Give a download that started on the last click a moment to land.
+    await sleep(600);
     await context.close().catch(() => {});
     await browser.close().catch(() => {});
+    pruneIfEmpty(folder);
   }
 }
 
@@ -292,26 +399,20 @@ async function runStep(
   if (step.action === "wait") { await sleep(Number(step.value ?? 1000)); return; }
   if (step.action === "press") { await page.keyboard.press(step.value || "Enter"); return; }
 
-  let found = await resolve(page, step, timeoutMs);
+  const found = await resolve(page, step, timeoutMs);
 
-  if (!found && task.selfHeal) {
-    log("heal", `Could not find the element for step ${step.n}; asking Claude to identify it`, step.n);
-    const healed = await healStep(page, step);
-    if (healed) {
-      try {
-        const loc = page.locator(healed.selector).first();
-        await loc.waitFor({ state: "visible", timeout: 4000 });
-        found = { locator: loc, how: `healed:${healed.selector}` };
-        step.healedSelector = healed.selector;
-        hooks.onHeal?.(step.n, healed.selector);
-        log("heal", `Repaired step ${step.n}: ${healed.why}`, step.n);
-      } catch { /* the repair did not hold either */ }
+  if (!found) {
+    if (!task.selfHeal) throw new Error("element not found on the page");
+    log("heal", `Step ${step.n}: the recorded element is gone — working out how to do it instead`, step.n);
+    const outcome = await figureOut(page, step, value, task, log, hooks.decide ?? askClaude);
+    if (outcome.satisfied) {
+      if (step.healedSelector) hooks.onHeal?.(step.n, step.healedSelector);
+      return; // carried out by working it out
     }
+    throw new Error(outcome.actions.length ? `could not work it out after ${outcome.actions.length} attempt(s)` : "element not found and nothing on the page matched the intent");
   }
 
-  if (!found) throw new Error("element not found on the page");
   const loc = found.locator;
-
   switch (step.action) {
     case "click": await loc.click({ timeout: timeoutMs }); break;
     case "type": await loc.fill(value, { timeout: timeoutMs }); break;
@@ -326,36 +427,36 @@ async function runStep(
 }
 
 async function looksLikeLogin(page: any): Promise<boolean> {
-  try {
-    const pw = await page.locator('input[type="password"]').count();
-    return pw > 0;
-  } catch { return false; }
+  try { return (await page.locator('input[type="password"]').count()) > 0; } catch { return false; }
 }
 
-/* ── One-time session capture ─────────────────────────────────────────── */
+/* ── Signing in to a site, once ───────────────────────────────────────── */
 
 /**
- * Opens a visible browser so a human can log into CMS once. Only the resulting
- * cookies are saved — the password never touches Foreman.
+ * Opens a visible browser so a person can sign in. Only the resulting cookies
+ * are kept — the password is typed into a real browser and never seen here.
  */
-export async function captureSession(startUrl: string, waitMs = 180000): Promise<{ saved: boolean; url: string }> {
+export async function connectSite(startUrl: string, waitMs = 300000): Promise<{ saved: boolean; host: string; url: string }> {
   const chromium = await loadChromium();
   const browser = await chromium.launch({ headless: false, ...browserLaunchOptions() });
-  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const context = await browser.newContext({ storageState: mergedState() as any, viewport: { width: 1400, height: 900 } });
   const page = await context.newPage();
   await page.goto(startUrl, { waitUntil: "domcontentloaded" }).catch(() => {});
   const deadline = Date.now() + waitMs;
-  // Wait until the password box is gone, i.e. the login went through.
+  // Wait until the password box is gone — that is the sign-in going through —
+  // or until the person closes the window.
   while (Date.now() < deadline) {
     await sleep(2000);
     if (page.isClosed()) break;
     try { if ((await page.locator('input[type="password"]').count()) === 0) break; } catch { break; }
   }
   const url = page.isClosed() ? startUrl : page.url();
-  await context.storageState({ path: sessionPath });
+  const state = (await context.storageState()) as StorageState;
   await context.close().catch(() => {});
   await browser.close().catch(() => {});
-  return { saved: fs.existsSync(sessionPath), url };
+  const site = saveSite(url || startUrl, state);
+  return { saved: true, host: site.host, url: site.url };
 }
 
-export const runShotsDir = shotsDir;
+/** Anything signed in at all? A run with nothing would only hit a login wall. */
+export const hasSavedSession = anySiteSaved;

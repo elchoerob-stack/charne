@@ -70,6 +70,23 @@ These are deliberate, and worth knowing about:
   to see what it is actually doing.
 - **Every run keeps a log** with a screenshot at the point of failure.
 
+## Signing in to sites
+
+Foreman works across as many sites as you sign it into — the system you start
+in, the one you pull a number from, the one you file the result in. Add each
+under **Sites**: a real browser opens, you sign in, and only the session cookie
+is kept. Passwords are typed into a real browser and never reach Foreman.
+
+Cookie jars go stale. When one does, a run stops at the login screen rather
+than blundering on, and the Sites panel flags anything older than two weeks.
+
+## Where documents go
+
+Anything a task downloads or writes is saved to your machine, in a folder per
+task and run, under whatever you set as `WORKSPACE_DIR` (a "Foreman" folder in
+your home directory by default — point it at your Desktop or a synced drive).
+Each run lists the files it produced.
+
 ## Which browser it drives
 
 Foreman drives a browser separate from your own, so your Chrome stays yours.
@@ -85,10 +102,10 @@ once to fetch Playwright's own Chromium.
 
 ## Honest limits
 
-- It drives the **web** CMS. It cannot work the tablet apps or a desktop
-  program.
-- It has been proven end to end against a test page, **not yet against live
-  CMS**. Expect to record a real job and fix a step or two the first time.
+- It drives **web pages**. Desktop programs and phone apps are not driven.
+- It has been proven end to end against test pages, **not yet against a live
+  system you use daily**. Expect to record a real job and adjust a step or two
+  the first time.
 - Nothing is scheduled yet: runs start when you press Run. A cron trigger is a
   small addition on the same queue.
 - One run at a time, by design.

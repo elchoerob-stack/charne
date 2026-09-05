@@ -54,15 +54,18 @@ a{color:var(--gold)}
 <div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>How to use Foreman</b><a href="/">← Back</a></div>
 <main>
 
-<h1>Foreman does two jobs</h1>
-<p class="lede">It <b>answers and diagnoses</b> — you describe a problem, it works it out with you.
-And it <b>does the work</b> — you record a job once, and it performs that job itself, in the background, as often as you like.</p>
+<h1>Watch once. Then it does it.</h1>
+<p class="lede">Foreman is for the tedious things that come round again and again — the same form, the same export, the same five-minute job you do forty times a month. You do it <b>once</b> with the recorder running. After that it does the job itself, in a browser of its own, while you get on with something else.</p>
 
 <div class="two">
-  <div class="card"><h3>Ask it something</h3>
-    <p>Describe a fault in the advisor's own words. Foreman ranks the likely causes from its playbooks, checks Evolve/Infomedia/SMS, asks you <em>one</em> question, then gives you numbered steps and how to verify the fix.</p></div>
-  <div class="card"><h3>Give it a job</h3>
-    <p>Record a booking once with the Recorder. Press <b>Make a task</b>. Now Foreman can do that booking itself — with different data each time, on a schedule, while you are doing something else.</p></div>
+  <div class="card"><h3>It does not use your mouse</h3>
+    <p>Every run happens in a separate browser with its own input. Nothing moves your pointer or steals your keyboard, so a task can be running while you are typing an e-mail. Two things at once, genuinely.</p></div>
+  <div class="card"><h3>It copes when things move</h3>
+    <p>Pages change. Each step knows seven ways to find its element, and when they all fail it works out how to do the step anyway — clearing a banner, opening a tab, finding the renamed field. Then it remembers.</p></div>
+  <div class="card"><h3>Documents land on your machine</h3>
+    <p>Anything a task downloads or writes is saved into a folder you choose — Desktop, OneDrive, a network share — one folder per task and run.</p></div>
+  <div class="card"><h3>It also answers questions</h3>
+    <p>Describe a problem and it works it through with you. This side knows a lot about CMS, Evolve and Infomedia, because that is where a lot of the tedious work lives.</p></div>
 </div>
 
 <h2>Your first hour</h2>
@@ -96,7 +99,7 @@ And it <b>does the work</b> — you record a job once, and it performs that job 
 <p>Then press <b>Discuss</b> and ask it things like <em>"which advisor at Ermelo should I coach first?"</em></p>
 <div class="note">These come out in <b>CMS branding</b>, on purpose — they are what you hand to a dealer principal or the CMS team. The app itself is Foreman; the reports are CMS.</div>
 
-<h2>3 · Recording a job</h2>
+<h2>3 · Recording a job <span class="pill">the important one</span></h2>
 <ol>
   <li>Open the CMS screen where the job <em>starts</em>.</li>
   <li>Click the <b>Foreman Recorder</b> extension → give it a title → <b>Start</b>.</li>
@@ -105,15 +108,16 @@ And it <b>does the work</b> — you record a job once, and it performs that job 
 </ol>
 <p>The recording is useful three ways: <b>SOP</b> writes it up as a training procedure, <b>Diagnose</b> mines the errors and failed requests it captured, and <b>Make a task</b> turns it into work Foreman can repeat.</p>
 <div class="note"><b>Privacy:</b> ID numbers, phone numbers, e-mail addresses and passwords are masked <em>in the browser</em>, before anything is sent. Masked values never end up in a task — you supply them per run.</div>
+<div class="note"><b>What makes a good first task:</b> something you do at least weekly, that lives entirely in a browser, takes under five minutes, and has an obvious "it worked" at the end. Resist starting with the hardest thing you do.</div>
 
 <h2>4 · Turning it into a task</h2>
 <ol>
   <li>On the recording, press <b>Make a task</b>. Everything you typed becomes a named field you can change per run.</li>
-  <li>First run only: <b>Connect CMS</b>. A browser opens, you log in once. Only the session cookie is kept — <b>your password is never stored</b>.</li>
+  <li>First run only: add the site under <b>Sites</b>. A browser opens, you sign in once. Only the session cookie is kept — <b>your password is never stored</b>. Add as many sites as a task needs; one run can move between them.</li>
   <li>Press <b>Run</b>. Tick <b>Practice run</b> the first time to walk the steps without touching CMS, or <b>Watch it happen</b> to see the browser.</li>
 </ol>
 <p>The run goes into a background queue. Carry on working; check it under <b>Work</b>, and open the log of any run to see each step and a screenshot if it failed.</p>
-<div class="note"><b>Why it does not break every time CMS changes:</b> each step remembers seven ways to find its element — test id, role, label, placeholder, id, visible text, CSS. If they all miss, Claude looks at the page and picks the right one, then writes that repair onto the task so it sticks. If it is not confident, it stops rather than guessing — a wrong click makes a real booking.</div>
+<div class="note"><b>Why it does not break every time a page changes:</b> each step remembers seven ways to find its element. If they all miss, the step becomes an <em>intent</em> — "enter the registration", "save the booking" — and Claude takes as many actions as it needs to achieve it: dismiss the banner, open the tab, fill the renamed field. Whatever works gets written back onto the task, so the next run is fast again. If two things could plausibly be the one meant, it gives up rather than guessing — a wrong click makes a real record. Detail: <code>docs/HOW_IT_COPES.md</code>.</div>
 
 <h2>5 · The board, schedules and agents</h2>
 <p>Press <b>Board</b>. Five lanes, and <b>dragging a card does the real thing</b>:</p>
@@ -152,7 +156,8 @@ And it <b>does the work</b> — you record a job once, and it performs that job 
 <tr><th>What you see</th><th>What to do</th></tr>
 <tr><td>"No Claude API credentials"</td><td>Add <code>ANTHROPIC_API_KEY</code> to <code>server/.env</code> and restart. Reports, recordings and tasks still work without it.</td></tr>
 <tr><td>Phone cannot reach it</td><td>Same Wi-Fi, or Tailscale. Use the laptop's address, never <code>localhost</code> — on the phone that means the phone.</td></tr>
-<tr><td>A task stopped at a login screen</td><td>The saved session expired. Work → <b>Connect CMS</b> again.</td></tr>
+<tr><td>A task stopped at a login screen</td><td>That site's saved sign-in expired. Work → <b>Sites</b> → Sign in again.</td></tr>
+<tr><td>Where did the file go?</td><td>Work → <b>Documents</b> shows the folder. Change it with <code>WORKSPACE_DIR</code> in <code>server/.env</code>.</td></tr>
 <tr><td>A scheduled task never ran</td><td>Almost always the missing CMS session (above).</td></tr>
 <tr><td>Upload says "no booking rows"</td><td>The sheet has no recognisable Status/Progress column.</td></tr>
 <tr><td>Recorder captured nothing</td><td>Reload the CMS tab after installing the extension. It only records the tab you pressed Start in.</td></tr>
@@ -171,10 +176,10 @@ const STEPS = [
   ["Install it as an app", "Open <code>http://localhost:8787</code> in Chrome and press <b>Install app</b> in the top bar."],
   ["Put it on your phone", "Press <b>Phone</b>, scan the QR on the S25+, then Add to Home screen."],
   ["Load the Recorder", "<code>chrome://extensions</code> → Developer mode → Load unpacked → the <code>recorder-extension</code> folder. Set the server URL in its popup."],
-  ["Ask it a real question", "Set a dealer code, then describe a fault you actually had this week. Answer the one question it asks."],
-  ["Build a report", "Work → ＋ Workshop export, drop in a bookings export, then press Discuss."],
+  ["Pick your first job", "Something you do weekly, lives in a browser, takes under five minutes, and has an obvious \"it worked\" at the end."],
+  ["Sign in to the site", "Work → Sites → add the address. A browser opens; sign in once. Only the cookie is kept."],
   ["Record one job", "Record a short CMS job with the extension, send it to Foreman, and press <b>Make a task</b>."],
-  ["Run it as a practice run", "Work → Connect CMS once, then Run the task with <b>Practice run</b> ticked. Watch the log."],
+  ["Run it as a practice run", "Run the task with <b>Practice run</b> ticked — it walks every step and touches nothing. Then run it for real while watching."],
 ];
 const KEY = "foreman_guide_done";
 let done = new Set();

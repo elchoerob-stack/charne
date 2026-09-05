@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Bookings</title></head>
+<body style="font-family:system-ui;padding:24px;max-width:680px">
+<!-- The same job as fake-cms.html, but the app has been rebuilt:
+     - a cookie banner now blocks the page
+     - the form is behind a "New booking" tab that must be opened first
+     - the fields are renamed and the save button's test id is gone
+     A recording made against the old page cannot replay here by selector
+     alone; the intent has to be worked out. -->
+<div id="cookies" style="background:#222;color:#fff;padding:14px;border-radius:8px;margin-bottom:16px">
+  We use cookies. <button id="ok-cookies" onclick="document.getElementById('cookies').remove()">Accept all</button>
+</div>
+<nav style="margin-bottom:16px">
+  <button id="tab-list" onclick="show('list')">All bookings</button>
+  <button id="tab-new" onclick="show('new')">New booking</button>
+</nav>
+<div id="list">No bookings today.</div>
+<div id="new" hidden>
+  <p><label for="f_client">Client full name</label><br><input id="f_client"></p>
+  <p><label for="f_plate">Registration number</label><br><input id="f_plate"></p>
+  <p><label for="f_branch">Branch</label><br>
+    <select id="f_branch"><option>Choose</option><option>Morgan Isuzu Ermelo</option><option>Morgan Kimberley</option></select></p>
+  <p><button id="commit" onclick="save()">Commit booking</button></p>
+</div>
+<div id="done" hidden><h2 data-testid="confirmation">Booking saved</h2><p id="summary"></p></div>
+<script>
+function show(w){document.getElementById('list').hidden = w!=='list';document.getElementById('new').hidden = w!=='new';}
+function save(){
+  document.getElementById('new').hidden=true;document.getElementById('done').hidden=false;
+  document.getElementById('summary').textContent =
+    f_client.value + ' | ' + f_plate.value + ' | ' + f_branch.value;
+}
+show('list');
+</script>
+</body></html>

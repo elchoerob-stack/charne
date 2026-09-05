@@ -112,6 +112,8 @@ export interface TaskRun {
   error?: string;
   /** Set when the run stopped for a human decision rather than a hard failure. */
   attention?: string;
+  /** Documents the run downloaded or wrote, on disk where you can open them. */
+  files?: { name: string; path: string; bytes: number; savedAt: string }[];
   createdAt: string;
 }
 

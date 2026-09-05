@@ -91,6 +91,11 @@ class RunQueue extends EventEmitter {
           const s = task.steps.find((x) => x.n === stepN);
           if (s) { s.healedSelector = selector; saveTask(task); }
         },
+        onFile: (file) => {
+          (run.files ??= []).push(file);
+          saveRun(run);
+          this.emit("log", { runId: run.id, entry: { at: file.savedAt, level: "info", message: `File saved: ${file.name}` } });
+        },
       }, options);
       run.status = this.cancelled.has(run.id) ? "cancelled" : "succeeded";
     } catch (err) {

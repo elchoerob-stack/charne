@@ -1,24 +1,31 @@
 # Foreman
 
-**Foreman** does two jobs for CMS Systems dealerships.
+**Foreman watches you do a job once, learns it, and then does it for you** —
+in a browser of its own, in the background, on a schedule if you want, while
+you get on with something else.
 
-**1. It answers and diagnoses.** Describe what is going wrong at a dealership
-and it works the problem with you — ranking causes from playbooks, checking
-Evolve/Infomedia/SMS health, reading the evidence out of a recording, and
-giving you steps to fix and verify. Feed it a workshop export or a Marketing
-Contacts export and it builds the report or the campaign list and talks you
-through the numbers.
+It is built for the tedious things that come round again and again: the same
+form, the same export, the same five-minute job you do forty times a month.
+You do it once with the recorder running. Foreman turns that into a task it
+can repeat with different data, working out for itself where things have
+moved when the site changes underneath it.
 
-**2. It does the work.** Record a job once with the recorder extension, press
-*Make a task*, and Foreman then performs that job itself — in its own browser,
-in the background, as many times as you like, with different data each run,
-while you carry on with something else. Put tasks on a schedule, arrange them
-on a drag-and-drop board, or hand a set of them to a named **agent** that runs
-them and reports back. See `docs/TASKS.md` and
-`docs/AGENTS_AND_SCHEDULING.md`.
+Three things make it usable rather than a toy:
 
-The name is the job: the foreman runs the floor, knows every job on the board,
-and sorts out the problem before it reaches the dealer principal.
+- **It is not your browser.** Runs happen in a separate browser with its own
+  input. Nothing touches your mouse or keyboard, so it works while you work.
+- **It copes with change.** Each step knows seven ways to find its element,
+  and when they all fail it works out how to achieve the step's intent
+  instead — clearing a banner, opening a tab, finding the renamed field. Then
+  it remembers, so the next run is fast again. See `docs/HOW_IT_COPES.md`.
+- **The output lands on your machine.** Anything a task downloads or writes is
+  saved into a folder you choose, one per task and run.
+
+It also **answers and diagnoses**: describe a problem and it works it through
+with you. That side ships knowing a lot about CMS Systems, Evolve DMS and
+Infomedia, because that is where most of Jacques' own tedious work lives —
+but the automation itself has nothing to do with workshops and works on any
+website you sign it into.
 
 ## What you get
 
@@ -132,6 +139,7 @@ used when blank).
 - `docs/PROBLEM_SOLVING.md` — the diagnostic engine
 - `docs/WORKFLOW_RECORDER.md` — capture, masking, SOP compilation, replay
 - `docs/TASKS.md` — record a job once, then let Foreman run it
+- `docs/HOW_IT_COPES.md` — the three layers that keep it working when pages change
 - `docs/AGENTS_AND_SCHEDULING.md` — the board, schedules and agents
 - `docs/REMOTE_ACCESS.md` — using the phone away from the Wi-Fi
 - `docs/REPORTS.md` — workshop dashboard and campaign list tools

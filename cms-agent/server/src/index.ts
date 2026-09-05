@@ -8,6 +8,9 @@ import { recorderRoutes } from "./recorder/routes.js";
 import { reportRoutes } from "./reports/routes.js";
 import { reviewRoutes } from "./review.js";
 import { taskRoutes } from "./tasks/routes.js";
+import { boardRoutes, tickAgents } from "./tasks/board-routes.js";
+import { startScheduler } from "./tasks/scheduler.js";
+import { listTasks } from "./tasks/store.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -33,10 +36,16 @@ app.use("/api", recorderRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", taskRoutes);
+app.use("/api", boardRoutes);
 
 // The console is a static single-page app in ../web (served from dist or src).
 const webDir = [path.join(here, "../../web"), path.join(here, "../web")].find((p) => p) as string;
 app.use(express.static(webDir));
+
+// Time-based triggers for tasks and agents. Runs every 30 s; a due task or
+// agent is queued exactly once and its schedule rolled forward.
+startScheduler(listTasks);
+setInterval(() => { try { tickAgents(); } catch (err) { console.error("agent tick failed:", (err as Error).message); } }, 30_000).unref();
 
 app.listen(config.port, () => {
   console.log(`Foreman (CMS Agent) listening on http://localhost:${config.port}  (model ${config.model})`);

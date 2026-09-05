@@ -12,7 +12,10 @@ through the numbers.
 **2. It does the work.** Record a job once with the recorder extension, press
 *Make a task*, and Foreman then performs that job itself — in its own browser,
 in the background, as many times as you like, with different data each run,
-while you carry on with something else. See `docs/TASKS.md`.
+while you carry on with something else. Put tasks on a schedule, arrange them
+on a drag-and-drop board, or hand a set of them to a named **agent** that runs
+them and reports back. See `docs/TASKS.md` and
+`docs/AGENTS_AND_SCHEDULING.md`.
 
 The name is the job: the foreman runs the floor, knows every job on the board,
 and sorts out the problem before it reaches the dealer principal.
@@ -126,6 +129,8 @@ used when blank).
 - `docs/PROBLEM_SOLVING.md` — the diagnostic engine
 - `docs/WORKFLOW_RECORDER.md` — capture, masking, SOP compilation, replay
 - `docs/TASKS.md` — record a job once, then let Foreman run it
+- `docs/AGENTS_AND_SCHEDULING.md` — the board, schedules and agents
+- `docs/REMOTE_ACCESS.md` — using the phone away from the Wi-Fi
 - `docs/REPORTS.md` — workshop dashboard and campaign list tools
 - `docs/EVALS.md` — the eval harness and how to grow the case set
 - `docs/ARCHITECTURE.md` — layout, turn flow, modes, storage
@@ -140,5 +145,6 @@ Also done from the roadmap: case-to-ticket bridge, eval set, weekly playbook
 review, installable phone/desktop app.
 
 Not yet: live Evolve/Infomedia health endpoints (adapters are simulated until
-URLs are configured), scheduled routines with notifications, speech output,
-and an MCP connection to dealership systems.
+URLs are configured), speech output, and an MCP connection to dealership
+systems. The task runner, scheduler and agents are proven against a test page
+and the API, not yet against live CMS.

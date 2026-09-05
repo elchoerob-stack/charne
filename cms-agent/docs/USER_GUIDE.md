@@ -84,6 +84,21 @@ doing it.
 
 Full detail, including how it survives CMS being redesigned: `docs/TASKS.md`.
 
+## 4c. The board, schedules and agents
+
+Press **Board** (top bar, or the bottom tab on the phone).
+
+- **Drag a card** between lanes. Dropping it in *Scheduled* switches its
+  schedule on, *Paused* switches it off, *To do* is the manual lane. It works
+  with a thumb on the phone.
+- **⏰ Schedule** on any card: daily, chosen weekdays, every N minutes, or a
+  cron expression. Times are Centurion wall-clock.
+- **+ New agent**: give it a name, say what it is for, tick the tasks it owns.
+  Press *Run now*, or schedule it. When it finishes it writes you a short
+  report — on the board and in the chat.
+
+Detail: `docs/AGENTS_AND_SCHEDULING.md`.
+
 ## 5. Build a workshop report
 
 1. Export the bookings from CMS (the `Bookings MTD` export from the workshop
@@ -175,7 +190,9 @@ The recorder extension is laptop-only.
 | Symptom | Fix |
 |---|---|
 | "No Claude API credentials" note in chat | Set `ANTHROPIC_API_KEY` in `.env` and restart. Reports and recordings still work without it. |
-| Phone cannot reach the server | Same Wi-Fi or Tailscale; firewall rule for port 8787; use the laptop IP, not `localhost`. |
+| Phone cannot reach the server | Same Wi-Fi or Tailscale; firewall rule for port 8787; use the laptop IP, not `localhost`. See `docs/REMOTE_ACCESS.md`. |
+| Phone does not work away from home | Install Tailscale on the laptop and phone, or open a Cloudflare tunnel from the Phone popup. `docs/REMOTE_ACCESS.md`. |
+| A scheduled task never ran | Scheduled runs are skipped when there is no saved CMS session — reconnect under Tasks → Connect CMS. |
 | Upload says "No booking rows found" | The export sheet has no recognisable columns; check the sheet has a Status/Progress column. |
 | Escalation "not sent" | Channel is `draft` or the channel's settings in `.env` are incomplete; the packet is still saved. |
 | Recorder shows nothing | Reload the CMS tab after installing the extension; it only records the tab where you pressed Start. |

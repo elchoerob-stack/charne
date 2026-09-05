@@ -40,9 +40,36 @@ export interface TaskVariable {
   stepN: number;
 }
 
+/**
+ * When a task runs on its own. Times are wall-clock in `timezone`
+ * (Africa/Johannesburg by default), so "08:00 daily" means 08:00 in Centurion
+ * whatever the server's clock is set to.
+ */
+export interface TaskSchedule {
+  enabled: boolean;
+  kind: "interval" | "daily" | "weekly" | "cron";
+  everyMinutes?: number;          // interval
+  atTime?: string;                // "HH:MM" for daily / weekly
+  weekdays?: number[];            // 0 = Sunday … 6 = Saturday, for weekly
+  cron?: string;                  // 5-field cron for cron
+  timezone?: string;
+  /** Variable values to run with. Missing ones fall back to the recorded example. */
+  inputs?: Record<string, string>;
+  nextRunAt?: string;
+  lastRunAt?: string;
+}
+
+export type BoardColumn = "todo" | "scheduled" | "paused" | "done" | "attention";
+
 export interface Task {
   id: string;
   title: string;
+  schedule?: TaskSchedule;
+  /** Manual position on the task board; lower sorts first. */
+  boardOrder?: number;
+  /** Set when the user parks a task; overrides the derived column. */
+  boardColumn?: BoardColumn;
+  agentId?: string;
   dealer?: string;
   recordingId?: string;
   /** Where the task starts; every run navigates here first. */

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import os from "node:os";
+import { remoteStatus } from "./remote.js";
 import { db, getOrCreateSession } from "./db.js";
 import { config, isAgentMode } from "./config.js";
 import { runTurn } from "./agent/agent.js";
@@ -52,10 +53,12 @@ function lanUrl(): string {
   return `http://localhost:${config.port}`;
 }
 
-apiRoutes.get("/connect", (_req, res) => {
-  const base = (process.env.PUBLIC_URL || lanUrl()).replace(/\/$/, "");
+apiRoutes.get("/connect", (req, res) => {
+  const remote = remoteStatus();
+  const preferRemote = req.query.remote !== "0" && remote.url;
+  const base = (preferRemote ? remote.url! : process.env.PUBLIC_URL || lanUrl()).replace(/\/$/, "");
   const url = config.token ? `${base}/?token=${encodeURIComponent(config.token)}` : `${base}/`;
-  res.json({ url, publicUrl: base, hasToken: Boolean(config.token), isLocalhost: /localhost|127\.0\.0\.1/.test(base) });
+  res.json({ url, publicUrl: base, lanUrl: process.env.PUBLIC_URL || lanUrl(), hasToken: Boolean(config.token), isLocalhost: /localhost|127\.0\.0\.1/.test(base), remote: { mode: remote.mode, url: remote.url, tokenOk: remote.tokenOk, cloudflaredInstalled: remote.cloudflaredInstalled } });
 });
 
 apiRoutes.get("/sessions", (_req, res) => {

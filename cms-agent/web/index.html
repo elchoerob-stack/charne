@@ -60,7 +60,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
   .bar .sp{display:none}
   .bar img{height:24px!important}
   .bar .btn{padding:9px 12px;font-size:13px;min-height:40px}
-  .bar #newSession,.bar #reviewLink,.bar #qrBtn{display:none}   /* these live in the More tab */
+  .bar #newSession,.bar #reviewLink,.bar #qrBtn,.bar #boardLink{display:none}   /* these live in the More tab */
   .bar #install{padding:7px 11px;font-size:12px}
   .bar label{flex:1 1 100%;order:9;display:flex;align-items:center;gap:8px}
   .bar label input{flex:1;width:auto!important;min-height:40px;font-size:16px}
@@ -124,6 +124,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
   <div><b>Foreman</b><span>CMS Agent · support · reports · problem solving · recorder</span></div>
   <div class="sp"></div>
   <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
+  <a href="/board.html" id="boardLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Board</a>
   <button class="btn" id="qrBtn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">Phone</button>
   <a href="/review.html" id="reviewLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Review</a>
   <button class="btn" id="install" hidden style="background:var(--gold);border-color:var(--gold);color:#0F2040">Install app</button>
@@ -170,6 +171,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
     </div>
     <div class="sec" data-group="more"><h3>Session</h3>
       <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="location.href='/board.html'" style="flex:1">Task board</button>
         <button class="btn" onclick="location.href='/review.html'" style="flex:1">Playbook review</button>
         <button class="btn" onclick="document.getElementById('newSession').click()" style="flex:1">New session</button>
       </div>
@@ -185,6 +187,7 @@ button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inhe
 <nav class="tabs" id="tabs">
   <button data-tab="chat" class="on"><b>&#128172;</b>Ask</button>
   <button data-tab="work"><b>&#9881;</b>Work<span class="badge" id="tabBadge" hidden>0</span></button>
+  <button onclick="location.href='/board.html'"><b>&#9638;</b>Board</button>
   <button data-tab="more"><b>&#9776;</b>More</button>
   <button id="qrTab"><b>&#128241;</b>Phone</button>
 </nav>
@@ -372,17 +375,25 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet
 async function showQr() {
   let c;
   try { c = await api("/connect"); } catch (e) { return add("agent", "Could not work out this machine's address: " + e.message); }
-  const warn = c.isLocalhost
-    ? `<div class="insight warn" style="background:var(--surface2);border-left:3px solid var(--stop);padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:12.5px">
-         This machine only reports a loopback address, so the phone cannot reach it. Set <code>PUBLIC_URL</code> in <code>server/.env</code> to this PC's Wi-Fi address and restart Foreman.</div>`
-    : "";
+  const r = c.remote || {};
+  const onRoad = r.mode === "tunnel" || r.mode === "tailscale";
+  const remoteBlock = onRoad
+    ? `<div style="background:var(--go-bg);color:var(--go);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px">Works away from the Wi-Fi too: ${r.mode === "tailscale" ? "Tailscale is on" : "a Cloudflare tunnel is open"}. This code carries that address.</div>`
+    : `<div style="background:var(--surface2);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px">
+         <b>On the road?</b> This address only works on the same Wi-Fi. Two ways to fix that:<br>
+         • <b>Tailscale</b> (recommended, private): install it on this PC and the phone; the address then works anywhere, nothing to switch on.<br>
+         • <b>Cloudflare tunnel</b>: a public https link that works on any device. ${r.tokenOk ? "" : "<span style='color:var(--stop)'>Needs a strong access token in .env first.</span>"}
+         <div style="margin-top:8px"><button class="btn" id="tunnelBtn" style="width:100%" ${r.tokenOk ? "" : "disabled"}>${r.cloudflaredInstalled ? "Open a Cloudflare tunnel" : "Install cloudflared, then open a tunnel"}</button></div>
+       </div>`;
   const sheet = openSheet(`
     <h3>Open Foreman on your phone</h3>
-    <p style="color:var(--t2);font-size:13px;margin:2px 0 12px">Same Wi-Fi as this computer. Scan with the phone's camera, then use the browser menu to <b>Add to Home screen</b>.</p>
-    ${warn}
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 10px">Scan with the phone's camera, then use the browser menu to <b>Add to Home screen</b>.</p>
+    ${c.isLocalhost ? `<div style="background:var(--stop-bg);color:var(--stop);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px">This machine only reports a loopback address. Set <code>PUBLIC_URL</code> in <code>server/.env</code> and restart.</div>` : ""}
+    ${remoteBlock}
     <div id="qrBox" style="background:#fff;padding:12px;border-radius:10px;display:grid;place-items:center"></div>
     <p class="mono" style="font-size:12px;word-break:break-all;color:var(--t2);margin:10px 0 0">${esc(c.publicUrl)}</p>
-    ${c.hasToken ? '<p style="font-size:12px;color:var(--t3);margin:6px 0 0">The access token is built into the link, so the phone will not ask for it.</p>' : ""}
+    ${onRoad && c.lanUrl && c.lanUrl !== c.publicUrl ? `<p style="font-size:11.5px;color:var(--t3);margin:4px 0 0">On the Wi-Fi it is also ${esc(c.lanUrl)}</p>` : ""}
+    ${c.hasToken ? '<p style="font-size:12px;color:var(--t3);margin:6px 0 0">The access token is built into the link.</p>' : ""}
     <div class="row" style="display:flex;gap:8px;margin-top:14px">
       <button class="btn" id="copyLink" style="flex:1">Copy link</button>
       <button class="btn primary" id="qrDone" style="flex:1">Done</button>
@@ -391,8 +402,12 @@ async function showQr() {
   if (window.qrcode) { const q = qrcode(0, "M"); q.addData(c.url); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 5, margin: 1 }); }
   else box.innerHTML = `<a href="${esc(c.url)}" style="word-break:break-all">${esc(c.url)}</a>`;
   sheet.querySelector("#qrDone").onclick = () => { try { localStorage.setItem("cms_phone_paired", "1"); } catch {} closeSheet(); };
-  sheet.querySelector("#copyLink").onclick = async () => {
-    try { await navigator.clipboard.writeText(c.url); sheet.querySelector("#copyLink").textContent = "Copied"; } catch {}
+  sheet.querySelector("#copyLink").onclick = async () => { try { await navigator.clipboard.writeText(c.url); sheet.querySelector("#copyLink").textContent = "Copied"; } catch {} };
+  const tb = sheet.querySelector("#tunnelBtn");
+  if (tb) tb.onclick = async () => {
+    tb.disabled = true; tb.textContent = "Opening tunnel… (up to 40 s)";
+    try { const st = await api("/remote/tunnel", { method: "POST" }); add("agent", `Cloudflare tunnel open: ${st.url}. Anyone with this link and the token can reach Foreman, so keep both private. Close it from the Phone popup when you are done.`); showQr(); }
+    catch (e) { add("agent", "Could not open a tunnel: " + e.message); tb.disabled = false; tb.textContent = "Try again"; }
   };
 }
 $("#qrBtn").onclick = showQr;
@@ -434,6 +449,7 @@ async function loadTasks() {
       <div class="acts">
         <button onclick="runTask('${t.id}')">Run</button>
         <button onclick="showRuns('${t.id}')">History</button>
+        <button onclick="location.href='/board.html'">⏰ Schedule</button>
         ${live ? `<button onclick="cancelRun('${live.id}')">Stop</button>` : ""}
         <button onclick="deleteTask('${t.id}')">Delete</button>
       </div></div>`;
@@ -547,7 +563,7 @@ $("#cmsConnect").onclick = connectCms;
 
 /* ── Live run feed ────────────────────────────────────────────────────── */
 function watchRuns() {
-  const es = new EventSource("/api/runs-stream");
+  const es = new EventSource("/api/runs-stream" + (getToken() ? `?token=${encodeURIComponent(getToken())}` : ""));
   es.addEventListener("update", (ev) => {
     const run = JSON.parse(ev.data);
     runState.set(run.id, run);
@@ -564,6 +580,11 @@ function watchRuns() {
   es.onerror = () => { es.close(); setTimeout(watchRuns, 5000); };
 }
 watchRuns();
+(function watchAgents() {
+  const es = new EventSource("/api/agents-stream" + (getToken() ? `?token=${encodeURIComponent(getToken())}` : ""));
+  es.addEventListener("report", (ev) => { const d = JSON.parse(ev.data); add("agent", `**${d.name}** finished (${d.status}):\n\n${d.summary}`); loadTasks(); });
+  es.onerror = () => { es.close(); setTimeout(watchAgents, 8000); };
+})();
 
 (async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
 </script>

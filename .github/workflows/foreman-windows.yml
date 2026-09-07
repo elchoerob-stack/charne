@@ -82,7 +82,13 @@ jobs:
           # package.json declares no bin. It only ships a bundled
           # rcedit-x64.exe for its JS wrapper to spawn, so that binary is
           # installed and invoked directly instead.
-          npm install --no-save --no-audit --no-fund rcedit@5.0.2
+          #
+          # --prefix . matters: this directory (build/) has no package.json of
+          # its own, and npm's default behaviour is to walk up to the nearest
+          # one it finds — cms-agent/server/package.json — and install there
+          # instead. Without it, rcedit lands in ../node_modules and the path
+          # below silently does not exist.
+          npm install --no-save --no-audit --no-fund --prefix . rcedit@5.0.2
           if ($LASTEXITCODE -ne 0) { throw "installing rcedit failed (exit $LASTEXITCODE)" }
           & .\node_modules\rcedit\bin\rcedit-x64.exe Foreman.exe `
             --set-icon foreman.ico `

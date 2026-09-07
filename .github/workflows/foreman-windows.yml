@@ -77,7 +77,14 @@ jobs:
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
           if ($LASTEXITCODE -ne 0) { throw "postject failed to inject the blob (exit $LASTEXITCODE)" }
           $version = (Get-Content version.txt -Raw).Trim()
-          npx --yes rcedit@5.0.2 Foreman.exe `
+          # The rcedit npm package has no CLI of its own — `npx rcedit` fails
+          # with "could not determine executable to run" because its
+          # package.json declares no bin. It only ships a bundled
+          # rcedit-x64.exe for its JS wrapper to spawn, so that binary is
+          # installed and invoked directly instead.
+          npm install --no-save --no-audit --no-fund rcedit@5.0.2
+          if ($LASTEXITCODE -ne 0) { throw "installing rcedit failed (exit $LASTEXITCODE)" }
+          & .\node_modules\rcedit\bin\rcedit-x64.exe Foreman.exe `
             --set-icon foreman.ico `
             --set-version-string ProductName "Foreman" `
             --set-version-string FileDescription "Foreman - records a job once, then does it for you" `

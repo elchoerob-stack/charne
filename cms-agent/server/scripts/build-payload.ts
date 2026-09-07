@@ -61,9 +61,13 @@ async function main(): Promise<void> {
     path.join(payloadDir, "package.json"),
     JSON.stringify({ name: "foreman-payload", private: true, version: pkg.version, dependencies: { playwright: playwrightVersion } }, null, 2),
   );
+  // shell: true because on Windows the real executable is npm.cmd, a shim
+  // that execFileSync will not resolve through PATH on its own — without it
+  // this fails with ENOENT even though `npm` works fine from a terminal.
   execFileSync("npm", ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"], {
     cwd: payloadDir,
     stdio: "inherit",
+    shell: true,
   });
   fs.rmSync(path.join(payloadDir, "node_modules", ".bin"), { recursive: true, force: true });
   fs.rmSync(path.join(payloadDir, "package-lock.json"), { force: true });

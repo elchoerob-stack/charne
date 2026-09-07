@@ -39,14 +39,24 @@ jobs:
 
       - name: Check the code still type-checks and the tests still pass
         run: |
+          # PowerShell does not stop a multi-line script when an external
+          # command exits non-zero — it just runs the next line, and the step
+          # is marked successful because the *last* command happened to
+          # succeed. That let a real build failure slip through silently once
+          # already, so every step here checks $LASTEXITCODE explicitly.
           npm run typecheck
+          if ($LASTEXITCODE -ne 0) { throw "typecheck failed (exit $LASTEXITCODE)" }
           npm test
+          if ($LASTEXITCODE -ne 0) { throw "tests failed (exit $LASTEXITCODE)" }
 
       - name: Build the payload, the launcher and the icon
         run: |
           npm run payload
+          if ($LASTEXITCODE -ne 0) { throw "building the payload failed (exit $LASTEXITCODE)" }
           npm run launcher
+          if ($LASTEXITCODE -ne 0) { throw "building the launcher failed (exit $LASTEXITCODE)" }
           npm run icon
+          if ($LASTEXITCODE -ne 0) { throw "building the icon failed (exit $LASTEXITCODE)" }
 
       - name: Prepare the single-executable blob
         working-directory: cms-agent/server/build
@@ -65,6 +75,7 @@ jobs:
           if ($signtool) { & $signtool.FullName remove /s Foreman.exe } else { Write-Host "signtool not found; continuing" }
           npx --yes postject@1.0.0-alpha.6 Foreman.exe NODE_SEA_BLOB sea-prep.blob `
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+          if ($LASTEXITCODE -ne 0) { throw "postject failed to inject the blob (exit $LASTEXITCODE)" }
           $version = (Get-Content version.txt -Raw).Trim()
           npx --yes rcedit@5.0.2 Foreman.exe `
             --set-icon foreman.ico `
@@ -72,6 +83,7 @@ jobs:
             --set-version-string FileDescription "Foreman - records a job once, then does it for you" `
             --set-file-version $version `
             --set-product-version $version
+          if ($LASTEXITCODE -ne 0) { throw "rcedit failed to set the icon and version info (exit $LASTEXITCODE)" }
 
       - name: Check the executable answers for itself
         working-directory: cms-agent/server/build

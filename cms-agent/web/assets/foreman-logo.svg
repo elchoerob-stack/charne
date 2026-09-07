@@ -1,0 +1,16 @@
+<!-- Foreman lockup: mark plus wordmark, for light backgrounds. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" width="240" height="64" role="img" aria-label="Foreman">
+  <defs>
+    <linearGradient id="fg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E7C05A"/>
+      <stop offset="1" stop-color="#C49A2F"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#fg2)">
+    <rect x="6" y="13" width="10" height="38" rx="4"/>
+    <rect x="6" y="13" width="32" height="10" rx="4"/>
+    <rect x="6" y="29" width="22" height="10" rx="4" opacity=".72"/>
+  </g>
+  <circle cx="33.5" cy="45.5" r="4.5" fill="url(#fg2)" opacity=".45"/>
+  <text x="58" y="42" font-family="'IBM Plex Sans',system-ui,'Segoe UI',sans-serif" font-size="27" font-weight="600" letter-spacing="-.5" fill="#16203A">Foreman</text>
+</svg>

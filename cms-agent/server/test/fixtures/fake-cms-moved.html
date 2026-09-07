@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Bookings</title></head>
+<body style="font-family:system-ui;padding:24px;max-width:640px">
+<h1>New booking</h1>
+<!-- Same job, redesigned: ids renamed and the save button lost its test id.
+     A recording made against fake-cms.html must still cope with this. -->
+<form id="booking-form-v2" onsubmit="event.preventDefault();done()">
+  <p><label for="cust_name_v2">Customer name</label><br><input id="cust_name_v2"></p>
+  <p><label for="vehicle_reg_v2">Vehicle registration</label><br><input id="vehicle_reg_v2"></p>
+  <p><label for="franchise_v2">Franchise</label><br>
+    <select id="franchise_v2"><option>Choose</option><option>Morgan Isuzu Ermelo</option><option>Morgan Kimberley</option></select></p>
+  <p><button type="submit" id="save_v2">Save booking</button></p>
+</form>
+<div id="result" hidden><h2 data-testid="confirmation">Booking saved</h2><p id="summary"></p></div>
+<script>
+function done(){
+  document.getElementById('booking-form-v2').hidden = true;
+  document.getElementById('result').hidden = false;
+  document.getElementById('summary').textContent =
+    document.getElementById('cust_name_v2').value + ' | ' +
+    document.getElementById('vehicle_reg_v2').value + ' | ' +
+    document.getElementById('franchise_v2').value;
+}
+</script>
+</body></html>

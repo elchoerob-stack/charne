@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foreman</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0F2040">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="icon" href="/assets/foreman-icon.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{--ink:#0F2040;--ink2:#1B2E52;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--wait:#8A6100;--wait-bg:#FBF1DC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--r:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}}
+:root[data-theme=dark]{--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--t1);font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}input,select,textarea{font:inherit;color:inherit}
+.bar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 16px;position:sticky;top:0;z-index:5}
+.mark{width:30px;height:30px;border-radius:7px;background:linear-gradient(150deg,var(--gold),#8E6B14);display:grid;place-items:center;font-weight:700;color:var(--ink)}
+.bar b{font-size:15px}.bar span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.65;display:block}
+.bar .sp{flex:1}.bar select,.bar input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:7px;padding:5px 8px}
+.bar option{color:#000}
+.app{display:grid;grid-template-columns:1fr 340px;gap:0;min-height:calc(100vh - 52px)}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}.bar{gap:8px;padding:8px 10px;flex-wrap:wrap}.bar>div>span{display:none}.bar .sp{display:none}.bar label{margin-left:auto}.bar input{width:84px!important}.bar .btn{padding:6px 9px;font-size:12px}.bar img{height:24px!important}.bar label{flex:1 1 100%;order:9;display:flex;align-items:center;gap:6px}.bar label input{flex:1;width:auto!important}.msgs{padding:12px;min-height:46vh}.compose{padding:8px 10px}.m,.think,.act{max-width:100%}html,body{overflow-x:hidden;max-width:100vw}.app,.chat,.side,.sec{max-width:100vw;min-width:0}}
+.chat{display:flex;flex-direction:column;min-width:0}
+.msgs{flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.m{max-width:820px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);white-space:pre-wrap;overflow-wrap:anywhere}
+.m.user{align-self:flex-end;background:var(--ink);color:#fff;border-color:var(--ink)}
+.m.agent{align-self:flex-start}
+.m .who{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:4px}.m.user .who{color:rgba(255,255,255,.6)}
+.m img{max-width:220px;border-radius:6px;display:block;margin-bottom:6px}
+.m h1,.m h2,.m h3{font-size:14px;margin:8px 0 2px}.m ol,.m ul{margin:4px 0;padding-left:20px}.m code{background:var(--surface2);padding:0 4px;border-radius:4px}
+.think{font-size:12px;color:var(--t2);background:var(--surface2);border:1px dashed var(--line);border-radius:var(--r);padding:8px 12px;max-width:820px;white-space:pre-wrap}
+.think summary{cursor:pointer;color:var(--t3);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.act{font-size:12px;color:var(--t2);display:flex;flex-direction:column;gap:3px;max-width:820px}
+.act div{padding:4px 8px;border-left:3px solid var(--gold);background:var(--surface2);border-radius:4px}
+.act .err{border-color:var(--stop)}.act .ok{border-color:var(--go)}
+.compose{border-top:1px solid var(--line);background:var(--surface);padding:10px 16px;display:flex;gap:8px;align-items:flex-end}
+.compose textarea{flex:1;resize:none;min-height:44px;max-height:180px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper)}
+.btn{padding:9px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);font-weight:600}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}.btn.on{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+.btn:disabled{opacity:.5;cursor:default}
+.side{border-left:1px solid var(--line);background:var(--surface);overflow:auto}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}.sec h3{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:6px}.modes button{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);text-align:left}
+.modes button.on{border-color:var(--gold);background:var(--paper);box-shadow:inset 0 0 0 1px var(--gold)}.modes b{display:block}.modes small{color:var(--t2)}
+.list{display:flex;flex-direction:column;gap:6px}.item{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface2);font-size:12.5px}
+.item b{display:block}.item .meta{color:var(--t3);font-size:11px}.item .acts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.item .acts button{font-size:11px;padding:3px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.pill{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;background:var(--wait-bg);color:var(--wait)}.pill.up,.pill.resolved{background:var(--go-bg);color:var(--go)}.pill.down,.pill.escalated{background:var(--stop-bg);color:var(--stop)}
+.attach{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 6px}.attach img{height:44px;border-radius:5px;border:1px solid var(--line)}
+.hint{color:var(--t3);font-size:12px}
+.empty{color:var(--t3);font-size:12.5px}
+
+/* ── Phone layout (S25+ and similar) ─────────────────────────────────── */
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;min-height:auto}
+  .side{border-left:0;border-top:1px solid var(--line)}
+  .bar{gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;flex-wrap:wrap}
+  .bar>div>span{display:none}
+  .bar .sp{display:none}
+  .bar img{height:24px!important}
+  .bar .btn{padding:9px 12px;font-size:13px;min-height:40px}
+  .bar #newSession,.bar #reviewLink,.bar #qrBtn,.bar #boardLink,.bar #guideLink{display:none}   /* these live in the More tab */
+  .bar #install{padding:7px 11px;font-size:12px}
+  .bar label{flex:1 1 100%;order:9;display:flex;align-items:center;gap:8px}
+  .bar label input{flex:1;width:auto!important;min-height:40px;font-size:16px}
+
+  /* One pane at a time, chosen by the bottom tabs. */
+  .chat{display:none}
+  .side{display:none;border-top:0}
+  body[data-tab="chat"] .chat{display:flex}
+  body[data-tab="chat"] .msgs{min-height:calc(100vh - 320px)}
+  body[data-tab="work"] .side,body[data-tab="more"] .side{display:block}
+  body[data-tab="work"] .sec[data-group="more"]{display:none}
+  body[data-tab="more"] .sec[data-group="work"]{display:none}
+
+  .app{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .compose{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding:8px 10px}
+  .compose textarea{font-size:16px;min-height:48px;line-height:1.35}  /* 16px stops the browser zooming on focus */
+  .btn{min-height:44px}                                /* comfortable thumb target */
+  .item .acts button{font-size:13px;padding:8px 12px;min-height:40px}
+  .modes button{padding:12px;min-height:56px}
+  .msgs{padding:12px}
+  .m,.think,.act{max-width:100%}
+  html,body{overflow-x:hidden;max-width:100vw}
+  .app,.chat,.side,.sec{max-width:100vw;min-width:0}
+  .tabs{display:flex}
+}
+@media (min-width:901px){ .tabs{display:none} }
+
+/* Bottom tab bar, phone only */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);justify-content:space-around}
+.tabs button{flex:1;background:none;border:0;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:11px;color:var(--t3);min-height:56px}
+.tabs button.on{color:var(--gold)}
+.tabs button b{font-size:19px;line-height:1;font-weight:400}
+.tabs button .badge{position:absolute;transform:translate(15px,-6px);background:var(--gold);color:#0F2040;border-radius:999px;
+  font-size:10px;font-weight:700;padding:1px 5px;min-width:16px}
+
+/* Modal sheet: the QR popup and run details */
+.scrim{position:fixed;inset:0;background:rgba(8,14,28,.62);z-index:60;display:grid;place-items:center;padding:16px}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:420px;width:100%;
+  max-height:86vh;overflow:auto;padding:18px}
+.sheet h3{margin:0 0 4px;font-size:16px}
+.sheet .close{position:absolute;top:14px;right:16px;background:none;border:0;font-size:22px;color:var(--t3)}
+@media (max-width:900px){ .scrim{align-items:end;padding:0} .sheet{max-width:none;border-radius:16px 16px 0 0;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom))} }
+
+/* Tasks */
+.run{border-left:3px solid var(--line);padding-left:9px;margin-top:6px;font-size:12px;color:var(--t2)}
+.run.running{border-color:var(--gold)}.run.succeeded{border-color:var(--go)}
+.run.failed,.run.needs_attention{border-color:var(--stop)}
+.prog{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:5px}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.runlog{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.5;white-space:pre-wrap;
+  background:var(--surface2);border-radius:8px;padding:9px;max-height:300px;overflow:auto;margin-top:8px}
+.runlog .error{color:var(--stop)}.runlog .heal{color:var(--gold)}.runlog .step{color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <img src="/assets/foreman-mark.svg" alt="Foreman" style="height:30px">
+  <div><b>Foreman</b><span>Ask · automate · report</span></div>
+  <div class="sp"></div>
+  <label class="hint" style="color:rgba(255,255,255,.7)">Dealer <input id="dealer" placeholder="e.g. UPN01" style="width:110px"></label>
+  <a href="/guide.html" id="guideLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Guide</a>
+  <a href="/board.html" id="boardLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Board</a>
+  <button class="btn" id="qrBtn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">Phone</button>
+  <a href="/review.html" id="reviewLink" class="btn" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;text-decoration:none">Review</a>
+  <button class="btn" id="install" hidden style="background:var(--gold);border-color:var(--gold);color:#0F2040">Install app</button>
+  <button class="btn" id="newSession" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">New session</button>
+</div>
+
+<div class="app">
+  <section class="chat">
+    <div class="msgs" id="msgs">
+      <div class="m agent"><div class="who">Foreman</div>Hi Jacques. Two things I do:
+
+<b>Answer and diagnose</b> — tell me what is going wrong at a dealership and I work through it with you, or drop in a workshop export or Marketing Contacts export and I will build the report and talk you through it.
+
+<b>Do the work</b> — record a job once with the recorder extension, press <b>Make a task</b> on it, and I will then do that job myself, in the background, as often as you like, while you carry on with something else. Tasks live under <b>Work</b>.
+
+New here? <a href="/guide.html" style="color:var(--gold)">Open the guide</a> — it has a first-hour checklist.</div>
+    </div>
+    <div class="attach" id="attach"></div>
+    <div class="compose">
+      <button class="btn" id="mic" title="Dictate (Web Speech)">🎙</button>
+      <button class="btn" id="img" title="Attach a screenshot">🖼</button>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+      <textarea id="text" placeholder="Describe the problem, or ask a question…" title="Enter to send · Shift+Enter for a new line · paste a screenshot"></textarea>
+      <button class="btn primary" id="send">Send</button>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="sec" data-group="work">
+      <h3>Mode</h3>
+      <div class="modes" id="modes">
+        <button data-mode="quick"><b>Quick</b><small>Direct answer, few tools</small></button>
+        <button data-mode="think" class="on"><b>Think</b><small>Reason + evidence</small></button>
+        <button data-mode="deep"><b>Deep</b><small>Multi-step investigation + web</small></button>
+        <button data-mode="council"><b>Council</b><small>3 specialists cross-check</small></button>
+      </div>
+    </div>
+    <div class="sec" data-group="work"><h3>Reports &amp; campaign lists</h3>
+      <div class="row" style="display:flex;gap:6px;margin-bottom:8px"><button class="btn" id="upWorkshop" style="flex:1;font-size:12px;padding:6px">＋ Workshop export</button><button class="btn" id="upContacts" style="flex:1;font-size:12px;padding:6px">＋ Marketing contacts</button></div>
+      <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" hidden>
+      <div class="list" id="reports"><div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div></div>
+    </div>
+    <div class="sec" data-group="work"><h3>Tasks <button class="btn" id="sitesBtn" style="float:right;padding:3px 9px;font-size:11px">Sites</button></h3>
+      <div class="hint" style="margin-bottom:6px">Record a job once, turn it into a task, and Foreman does it for you — in its own browser, in the background, while you carry on working.</div>
+      <div class="list" id="tasks"><div class="empty">No tasks yet. Record a workflow, then press "Make a task" on it below.</div></div>
+    </div>
+    <div class="sec" data-group="work"><h3>Documents <button class="btn" id="openWs" style="float:right;padding:3px 9px;font-size:11px">Folder</button></h3>
+      <div class="hint" id="wsPath" style="margin-bottom:6px">Anything a task downloads or writes is saved on this computer.</div>
+      <div class="list" id="files"><div class="empty">Nothing saved yet.</div></div>
+    </div>
+    <div class="sec" data-group="more"><h3>Session</h3>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="location.href='/guide.html'" style="flex:1">How to use Foreman</button>
+        <button class="btn" onclick="location.href='/board.html'" style="flex:1">Task board</button>
+        <button class="btn" onclick="location.href='/review.html'" style="flex:1">Playbook review</button>
+        <button class="btn" onclick="document.getElementById('newSession').click()" style="flex:1">New session</button>
+      </div>
+    </div>
+    <div class="sec" data-group="more"><h3>Integration health <button class="btn" id="checkAll" style="float:right;padding:2px 8px;font-size:11px">Check all</button></h3><div class="list" id="health"><div class="empty">No checks run yet.</div></div></div>
+    <div class="sec" data-group="work"><h3>Recordings <input type="file" id="recFile" accept="application/json" hidden><button class="btn" id="recUpload" style="float:right;padding:2px 8px;font-size:11px">Upload JSON</button></h3><div class="list" id="recs"><div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div></div></div>
+    <div class="sec" data-group="more"><h3>Cases</h3><div class="list" id="cases"><div class="empty">No cases.</div></div></div>
+    <div class="sec" data-group="more"><h3>Dealer memory</h3><div class="list" id="memory"><div class="empty">Set a dealer code to see what the agent remembers.</div></div></div>
+    <div class="sec" data-group="more"><h3>Playbooks</h3><div class="list" id="playbooks"></div></div>
+  </aside>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="chat" class="on"><b>&#128172;</b>Ask</button>
+  <button data-tab="work"><b>&#9881;</b>Work<span class="badge" id="tabBadge" hidden>0</span></button>
+  <button onclick="location.href='/board.html'"><b>&#9638;</b>Board</button>
+  <button data-tab="more"><b>&#9776;</b>More</button>
+  <button id="qrTab"><b>&#128241;</b>Phone</button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+/* Access token (CMS_AGENT_TOKEN): stored in localStorage and mirrored to a cookie so plain links work. */
+const tokenKey = "foreman_token";
+function getToken() { try { return localStorage.getItem(tokenKey) || ""; } catch { return ""; } }
+function setToken(t) { try { localStorage.setItem(tokenKey, t); } catch {} document.cookie = `foreman_token=${encodeURIComponent(t)}; path=/; max-age=31536000; SameSite=Lax`; }
+(() => { const q = new URLSearchParams(location.search).get("token"); if (q) { setToken(q); history.replaceState(null, "", location.pathname); } else if (getToken()) setToken(getToken()); })();
+const rawFetch = window.fetch.bind(window);
+window.fetch = async (url, opts = {}) => {
+  const headers = new Headers(opts.headers || {});
+  if (String(url).startsWith("/api") && getToken()) headers.set("Authorization", "Bearer " + getToken());
+  let res = await rawFetch(url, { ...opts, headers });
+  if (res.status === 401 && String(url).startsWith("/api")) {
+    const t = prompt("This Foreman server needs its access token (CMS_AGENT_TOKEN from server/.env, shown by the installer):", getToken());
+    if (t) { setToken(t.trim()); headers.set("Authorization", "Bearer " + t.trim()); res = await rawFetch(url, { ...opts, headers }); }
+  }
+  return res;
+};
+const $ = (s) => document.querySelector(s);
+const API = "";
+let mode = "think", sessionId = null, images = [], busy = false;
+try { sessionId = localStorage.getItem("cms_session") || null; $("#dealer").value = localStorage.getItem("cms_dealer") || ""; mode = localStorage.getItem("cms_mode") || "think"; } catch {}
+document.querySelectorAll("#modes button").forEach((b) => { b.classList.toggle("on", b.dataset.mode === mode); b.onclick = () => { mode = b.dataset.mode; document.querySelectorAll("#modes button").forEach((x) => x.classList.toggle("on", x === b)); try { localStorage.setItem("cms_mode", mode); } catch {} }; });
+$("#dealer").onchange = () => { try { localStorage.setItem("cms_dealer", $("#dealer").value.trim()); } catch {} loadSide(); };
+$("#newSession").onclick = () => { sessionId = null; try { localStorage.removeItem("cms_session"); } catch {} $("#msgs").innerHTML = ""; add("agent", "New session started."); };
+
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+function md(s) {
+  let h = esc(s);
+  h = h.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c}</code></pre>`).replace(/`([^`]+)`/g, "<code>$1</code>");
+  h = h.replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/^# (.*)$/gm, "<h1>$1</h1>");
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|\s)\*([^*\n]+)\*(?=\s|$)/g, "$1<i>$2</i>");
+  h = h.replace(/^(\d+)\. (.*)$/gm, "<li value=\"$1\">$2</li>").replace(/(<li value="\d+">.*<\/li>\n?)+/g, (m) => `<ol>${m}</ol>`);
+  h = h.replace(/^[-•] (.*)$/gm, "<li>$1</li>").replace(/(<li>(?!.*value).*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`);
+  return h;
+}
+function add(role, text, imgs = []) {
+  const d = document.createElement("div"); d.className = "m " + role;
+  d.innerHTML = `<div class="who">${role === "user" ? "You" : "Foreman"}</div>` + imgs.map((i) => `<img src="data:${i.mediaType};base64,${i.data}">`).join("") + (role === "user" ? esc(text) : md(text));
+  $("#msgs").appendChild(d); $("#msgs").scrollTop = $("#msgs").scrollHeight; return d;
+}
+
+async function api(path, opts) { const r = await fetch(API + "/api" + path, opts); if (!r.ok) throw new Error(await r.text()); return r.json(); }
+
+async function sendMsg() {
+  const text = $("#text").value.trim(); if (!text || busy) return;
+  busy = true; $("#send").disabled = true; $("#text").value = "";
+  add("user", text, images); const sent = images; images = []; renderAttach();
+  const think = document.createElement("details"); think.className = "think"; think.innerHTML = "<summary>Thoughts</summary><div></div>"; think.hidden = true;
+  const act = document.createElement("div"); act.className = "act";
+  const out = add("agent", ""); const body = document.createElement("div"); out.appendChild(body);
+  $("#msgs").insertBefore(think, out); $("#msgs").insertBefore(act, out);
+  let textBuf = "", thinkBuf = "";
+  const render = () => { body.innerHTML = md(textBuf); $("#msgs").scrollTop = $("#msgs").scrollHeight; };
+  try {
+    const res = await fetch(API + "/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, dealer: $("#dealer").value.trim(), mode, text, images: sent }) });
+    if (!res.ok) throw new Error(await res.text());
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+    while (true) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        const line = chunk.split("\n").find((l) => l.startsWith("data: ")); if (!line) continue;
+        const ev = JSON.parse(line.slice(6)); handle(ev);
+      }
+    }
+  } catch (err) { textBuf += `\n\n⚠ ${err.message}`; render(); }
+  busy = false; $("#send").disabled = false; loadSide();
+
+  function handle(ev) {
+    switch (ev.type) {
+      case "session": sessionId = ev.sessionId; try { localStorage.setItem("cms_session", sessionId); } catch {} break;
+      case "text": textBuf += ev.delta; render(); break;
+      case "thinking": thinkBuf += ev.delta; think.hidden = false; think.querySelector("div").textContent = thinkBuf; break;
+      case "status": actLine(ev.text); break;
+      case "council": actLine(`Council · ${ev.title}: ${ev.brief.slice(0, 220)}${ev.brief.length > 220 ? "…" : ""}`); break;
+      case "tool_start": actLine(`▶ ${ev.name} ${short(ev.input)}`); break;
+      case "tool_result": actLine(`${ev.error ? "✖" : "✔"} ${ev.name}: ${ev.summary}`, ev.error ? "err" : "ok"); break;
+      case "health": actLine(`Health · ${ev.result.system}: ${ev.result.state}`); break;
+      case "diagnosis": actLine(`Diagnosis · ${ev.diagnosis.hypotheses.map((h) => `${h.title} ${Math.round(h.confidence * 100)}%`).join(" | ")}`); break;
+      case "case": actLine(`Case ${ev.id} ${ev.status}: ${ev.title}`); break;
+      case "followup": actLine(`⏰ Follow-up due: ${ev.note}`); break;
+      case "report": actLine(`📊 Report built: ${ev.title}`, "ok"); break;
+      case "error": textBuf += `\n\n⚠ ${ev.message}`; render(); break;
+      case "done": actLine(`Done · ${ev.usage.iterations} iteration(s), ${ev.usage.input} in / ${ev.usage.output} out tokens`); break;
+    }
+  }
+  function actLine(t, cls = "") { const d = document.createElement("div"); d.className = cls; d.textContent = t; act.appendChild(d); $("#msgs").scrollTop = $("#msgs").scrollHeight; }
+  function short(o) { try { const s = JSON.stringify(o); return s.length > 120 ? s.slice(0, 120) + "…" : s; } catch { return ""; } }
+}
+$("#send").onclick = sendMsg;
+$("#text").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
+
+/* Screenshots: file picker and paste */
+function renderAttach() { $("#attach").innerHTML = images.map((i, n) => `<img title="click to remove" data-n="${n}" src="data:${i.mediaType};base64,${i.data}">`).join(""); document.querySelectorAll("#attach img").forEach((im) => im.onclick = () => { images.splice(Number(im.dataset.n), 1); renderAttach(); }); }
+function addFile(f) { if (!f || !f.type.startsWith("image/")) return; const r = new FileReader(); r.onload = () => { images.push({ mediaType: f.type === "image/jpg" ? "image/jpeg" : f.type, data: String(r.result).split(",")[1] }); renderAttach(); }; r.readAsDataURL(f); }
+$("#img").onclick = () => $("#file").click();
+$("#file").onchange = () => { [...$("#file").files].forEach(addFile); $("#file").value = ""; };
+document.addEventListener("paste", (e) => { [...(e.clipboardData?.items || [])].forEach((it) => { if (it.type.startsWith("image/")) addFile(it.getAsFile()); }); });
+
+/* Voice input */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null;
+if (!SR) $("#mic").disabled = true;
+$("#mic").onclick = () => {
+  if (rec) { rec.stop(); return; }
+  rec = new SR(); rec.lang = "en-ZA"; rec.interimResults = true; rec.continuous = true; const base = $("#text").value;
+  rec.onresult = (e) => { let t = ""; for (const r of e.results) t += r[0].transcript; $("#text").value = (base + " " + t).trim(); };
+  rec.onend = () => { rec = null; $("#mic").classList.remove("on"); };
+  rec.start(); $("#mic").classList.add("on");
+};
+
+/* Sidebar */
+async function loadSide() {
+  const dealer = $("#dealer").value.trim();
+  try {
+    const recs = await api("/recordings");
+    $("#recs").innerHTML = recs.length ? recs.slice(0, 12).map((r) => `<div class="item"><b>${esc(r.title)}</b><div class="meta">${r.purpose} · ${r.dealer || "—"} · ${r.event_count} events · ${new Date(r.started_at).toLocaleString("en-ZA")}</div>
+      <div class="acts"><a href="/api/recordings/${r.id}/sop?format=md" target="_blank"><button>SOP</button></a><a href="/api/recordings/${r.id}/sop?format=playwright" target="_blank"><button>Playwright</button></a><button onclick="ask('Please analyse recording ${r.id} and diagnose what went wrong.')">Diagnose</button><button onclick="ask('Write the SOP for recording ${r.id} as numbered steps for a service advisor.')">Explain</button><button onclick="makeTask('${r.id}')">Make a task</button></div></div>`).join("") : '<div class="empty">No recordings yet. Use the browser extension or upload a JSON export.</div>';
+    const reps = await api("/reports");
+    $("#reports").innerHTML = reps.length ? reps.slice(0, 10).map((r) => `<div class="item"><b>${esc(r.title)} <span class="pill">${r.kind}</span></b><div class="meta">${r.dealer || "—"} · ${new Date(r.created_at).toLocaleString("en-ZA")}</div>
+      <div class="acts"><a href="/api/reports/${r.id}/html" target="_blank"><button>Open</button></a>${r.xlsx_path ? `<a href="/api/reports/${r.id}/xlsx"><button>Excel</button></a><a href="/api/reports/${r.id}/sms.csv"><button>SMS CSV</button></a><a href="/api/reports/${r.id}/email.csv"><button>E-mail CSV</button></a>` : ""}<button onclick="ask('Read report ${r.id} and give me the headline numbers and the three things to act on.')">Discuss</button></div></div>`).join("") : '<div class="empty">No reports yet. Upload a CMS workshop bookings export or a Marketing Contacts export.</div>';
+    const cases = await api("/cases" + (dealer ? `?dealer=${encodeURIComponent(dealer)}` : ""));
+    $("#cases").innerHTML = cases.length ? cases.slice(0, 10).map((c) => `<div class="item"><b>${esc(c.title)} <span class="pill ${c.status}">${c.status}</span></b><div class="meta">${c.id} · ${c.dealer || "—"} · ${new Date(c.updated_at).toLocaleString("en-ZA")}</div>${c.hypothesis ? `<div>${esc(c.hypothesis)}</div>` : ""}<div class="acts"><button onclick="ask('Give me a status update on case ${c.id} and what to do next.')">Status</button><button onclick="escalate('${c.id}')">Escalate</button>${c.status === "escalated" ? `<a href="/api/cases/${c.id}/packet" target="_blank"><button>Packet</button></a>` : ""}</div></div>`).join("") : '<div class="empty">No cases.</div>';
+    if (dealer) { const mem = await api("/memory/" + encodeURIComponent(dealer)); $("#memory").innerHTML = mem.length ? mem.map((m) => `<div class="item">${esc(m.fact)}</div>`).join("") : '<div class="empty">Nothing remembered for this dealer yet.</div>'; }
+    loadTasks();
+    loadFiles();
+    const pbs = await api("/playbooks"); $("#playbooks").innerHTML = pbs.map((p) => `<div class="item"><b>${esc(p.title)}</b><div class="meta">${p.domain} · ${p.checks} checks · prior ${Math.round(p.prior * 100)}%</div></div>`).join("");
+  } catch (e) { console.error(e); }
+}
+window.ask = (t) => { $("#text").value = t; sendMsg(); if (innerWidth <= 900) setTab("chat"); };
+window.escalate = async (id) => {
+  if (!confirm("Send this case to the support desk with the full evidence packet?")) return;
+  try {
+    const r = await api(`/cases/${id}/escalate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    if (r.sent) add("agent", `Escalated via ${r.channel}: ${r.reference || ""}${r.url ? " " + r.url : ""}`);
+    else { add("agent", `Escalation packet prepared (channel: ${r.channel}${r.error ? ", not sent: " + r.error : ""}). Open the packet from the case, or send it by e-mail from the link below.\n\n${r.packet.summary}`); window.open(r.mailto, "_blank"); }
+    loadSide();
+  } catch (e) { add("agent", "Escalation failed: " + e.message); }
+};
+/* PWA install + service worker */
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; $("#install").hidden = false; });
+$("#install").onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; $("#install").hidden = true; };
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+if (new URLSearchParams(location.search).get("new")) $("#newSession").click();
+$("#checkAll").onclick = () => ask("Check the health of CMS, Evolve, Infomedia and the SMS gateway and summarise.");
+let uploadKind = "workshop";
+$("#upWorkshop").onclick = () => { uploadKind = "workshop"; $("#xlsxFile").click(); };
+$("#upContacts").onclick = () => { uploadKind = "contacts"; $("#xlsxFile").click(); };
+$("#xlsxFile").onchange = async () => {
+  const f = $("#xlsxFile").files[0]; if (!f) return;
+  add("agent", `Uploading ${f.name} and building the ${uploadKind === "contacts" ? "campaign list" : "workshop report"}…`);
+  try {
+    const res = await fetch(`/api/files?build=1&kind=${uploadKind === "contacts" ? "campaign" : "workshop"}`, { method: "POST", headers: { "Content-Type": "application/octet-stream", "X-File-Name": encodeURIComponent(f.name), "X-Kind": uploadKind, "X-Dealer": $("#dealer").value.trim() }, body: f });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || res.statusText);
+    add("agent", `Built **${j.report.title}** (${j.report.id}).${j.warnings.length ? "\n\n⚠ " + j.warnings.join("\n⚠ ") : ""}\n\nOpen it from the Reports panel, or ask me to walk you through it.`);
+    loadSide();
+    $("#text").value = `Read report ${j.report.id} and give me the headline numbers and the three things to act on.`;
+  } catch (e) { add("agent", "Upload failed: " + e.message); }
+  $("#xlsxFile").value = "";
+};
+$("#recUpload").onclick = () => $("#recFile").click();
+$("#recFile").onchange = async () => { const f = $("#recFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const r = await api("/recordings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(j) }); add("agent", `Recording uploaded as ${r.id}: ${r.stats.steps} steps, ${r.stats.errors} console errors, ${r.stats.failedRequests} failed requests.`); loadSide(); } catch (e) { add("agent", "Upload failed: " + e.message); } $("#recFile").value = ""; };
+
+/* ── Modal sheet ──────────────────────────────────────────────────────── */
+function openSheet(html) {
+  closeSheet();
+  const scrim = document.createElement("div");
+  scrim.className = "scrim";
+  scrim.id = "scrim";
+  scrim.innerHTML = `<div class="sheet" style="position:relative"><button class="close" aria-label="Close">&times;</button>${html}</div>`;
+  scrim.addEventListener("click", (e) => { if (e.target === scrim || e.target.classList.contains("close")) closeSheet(); });
+  document.body.appendChild(scrim);
+  return scrim;
+}
+function closeSheet() { document.getElementById("scrim")?.remove(); }
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+
+/* ── Connect your phone: a popup that closes once the phone has it ────── */
+async function showQr() {
+  let c;
+  try { c = await api("/connect"); } catch (e) { return add("agent", "Could not work out this machine's address: " + e.message); }
+  const r = c.remote || {};
+  const onRoad = r.mode === "tunnel" || r.mode === "tailscale";
+  const remoteBlock = onRoad
+    ? `<div style="background:var(--go-bg);color:var(--go);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px">Works away from the Wi-Fi too: ${r.mode === "tailscale" ? "Tailscale is on" : "a Cloudflare tunnel is open"}. This code carries that address.</div>`
+    : `<div style="background:var(--surface2);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px">
+         <b>On the road?</b> This address only works on the same Wi-Fi. Two ways to fix that:<br>
+         • <b>Tailscale</b> (recommended, private): install it on this PC and the phone; the address then works anywhere, nothing to switch on.<br>
+         • <b>Cloudflare tunnel</b>: a public https link that works on any device. ${r.tokenOk ? "" : "<span style='color:var(--stop)'>Needs a strong access token in .env first.</span>"}
+         <div style="margin-top:8px"><button class="btn" id="tunnelBtn" style="width:100%" ${r.tokenOk ? "" : "disabled"}>${r.cloudflaredInstalled ? "Open a Cloudflare tunnel" : "Install cloudflared, then open a tunnel"}</button></div>
+       </div>`;
+  const sheet = openSheet(`
+    <h3>Open Foreman on your phone</h3>
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 10px">Scan with the phone's camera, then use the browser menu to <b>Add to Home screen</b>.</p>
+    ${c.isLocalhost ? `<div style="background:var(--stop-bg);color:var(--stop);padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:10px">This machine only reports a loopback address. Set <code>PUBLIC_URL</code> in <code>server/.env</code> and restart.</div>` : ""}
+    ${remoteBlock}
+    <div id="qrBox" style="background:#fff;padding:12px;border-radius:10px;display:grid;place-items:center"></div>
+    <p class="mono" style="font-size:12px;word-break:break-all;color:var(--t2);margin:10px 0 0">${esc(c.publicUrl)}</p>
+    ${onRoad && c.lanUrl && c.lanUrl !== c.publicUrl ? `<p style="font-size:11.5px;color:var(--t3);margin:4px 0 0">On the Wi-Fi it is also ${esc(c.lanUrl)}</p>` : ""}
+    ${c.hasToken ? '<p style="font-size:12px;color:var(--t3);margin:6px 0 0">The access token is built into the link.</p>' : ""}
+    <div class="row" style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn" id="copyLink" style="flex:1">Copy link</button>
+      <button class="btn primary" id="qrDone" style="flex:1">Done</button>
+    </div>`);
+  const box = sheet.querySelector("#qrBox");
+  if (window.qrcode) { const q = qrcode(0, "M"); q.addData(c.url); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 5, margin: 1 }); }
+  else box.innerHTML = `<a href="${esc(c.url)}" style="word-break:break-all">${esc(c.url)}</a>`;
+  sheet.querySelector("#qrDone").onclick = () => { try { localStorage.setItem("cms_phone_paired", "1"); } catch {} closeSheet(); };
+  sheet.querySelector("#copyLink").onclick = async () => { try { await navigator.clipboard.writeText(c.url); sheet.querySelector("#copyLink").textContent = "Copied"; } catch {} };
+  const tb = sheet.querySelector("#tunnelBtn");
+  if (tb) tb.onclick = async () => {
+    tb.disabled = true; tb.textContent = "Opening tunnel… (up to 40 s)";
+    try { const st = await api("/remote/tunnel", { method: "POST" }); add("agent", `Cloudflare tunnel open: ${st.url}. Anyone with this link and the token can reach Foreman, so keep both private. Close it from the Phone popup when you are done.`); showQr(); }
+    catch (e) { add("agent", "Could not open a tunnel: " + e.message); tb.disabled = false; tb.textContent = "Try again"; }
+  };
+}
+$("#qrBtn").onclick = showQr;
+$("#qrTab").onclick = showQr;
+
+/* ── Bottom tabs (phone) ──────────────────────────────────────────────── */
+function setTab(name) {
+  document.body.dataset.tab = name;
+  document.querySelectorAll("#tabs button[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll("#tabs button[data-tab]").forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
+setTab("chat");
+
+/* ── Tasks ────────────────────────────────────────────────────────────── */
+const runState = new Map();   // runId -> latest run summary
+let activeTaskId = null;
+
+function statusLabel(s) {
+  return { queued: "Queued", running: "Running", succeeded: "Done", failed: "Failed", cancelled: "Cancelled", needs_attention: "Needs you" }[s] || s;
+}
+
+async function loadTasks() {
+  let tasks = [];
+  try { tasks = await api("/tasks" + ($("#dealer").value.trim() ? `?dealer=${encodeURIComponent($("#dealer").value.trim())}` : "")); } catch { return; }
+  const el = $("#tasks");
+  if (!tasks.length) {
+    el.innerHTML = '<div class="empty">No tasks yet. Record a workflow with the extension, then press "Make a task" on it in Recordings.</div>';
+    return;
+  }
+  el.innerHTML = tasks.map((t) => {
+    const running = [...runState.values()].filter((r) => r.taskId === t.id && (r.status === "running" || r.status === "queued"));
+    const live = running[0];
+    return `<div class="item">
+      <b>${esc(t.title)}</b>
+      <div class="meta">${t.steps} steps · ${t.variables.length} field(s) · ${t.runCount} run(s)${t.lastRunStatus ? ` · last ${statusLabel(t.lastRunStatus)}` : ""}</div>
+      ${live ? `<div class="run ${live.status}">${statusLabel(live.status)} — step ${live.currentStep || 0} of ${live.totalSteps}
+                 <div class="prog"><i style="width:${Math.round(((live.currentStep || 0) / Math.max(live.totalSteps, 1)) * 100)}%"></i></div></div>` : ""}
+      <div class="acts">
+        <button onclick="runTask('${t.id}')">Run</button>
+        <button onclick="showRuns('${t.id}')">History</button>
+        <button onclick="location.href='/board.html'">⏰ Schedule</button>
+        ${live ? `<button onclick="cancelRun('${live.id}')">Stop</button>` : ""}
+        <button onclick="deleteTask('${t.id}')">Delete</button>
+      </div></div>`;
+  }).join("");
+  const busy = [...runState.values()].filter((r) => r.status === "running" || r.status === "queued").length;
+  $("#tabBadge").hidden = busy === 0;
+  $("#tabBadge").textContent = String(busy);
+}
+
+window.makeTask = async (recordingId) => {
+  try {
+    const r = await api("/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recording_id: recordingId }) });
+    add("agent", `Made the task **${r.task.title}** from that recording: ${r.task.steps.length} steps, ${r.task.variables.length} field(s) you can change per run.\n\nPress **Run** on it under Tasks. The first time, you will be asked to connect CMS once so it can log in as you.`);
+    loadTasks(); setTab("work");
+  } catch (e) { add("agent", "Could not make a task: " + e.message); }
+};
+
+window.runTask = async (taskId) => {
+  let task;
+  try { task = await api(`/tasks/${taskId}`); } catch (e) { return add("agent", e.message); }
+  const fields = task.variables.map((v) => `
+    <label style="display:block;font-size:11px;color:var(--t2);margin:9px 0 3px">${esc(v.label)}${v.sensitive ? " (required — was masked when recorded)" : ""}</label>
+    <input data-var="${esc(v.name)}" value="${esc(v.sensitive ? "" : v.example)}" placeholder="${esc(v.example || v.label)}"
+      style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font-size:16px">`).join("");
+  const sheet = openSheet(`
+    <h3>Run: ${esc(task.title)}</h3>
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 6px">${task.steps.length} steps. It runs in its own browser window in the background — carry on with your own work while it goes.</p>
+    ${fields || '<p style="color:var(--t3);font-size:13px">This task has no variable fields; it repeats exactly as recorded.</p>'}
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px">
+      <input type="checkbox" id="watchRun" style="width:18px;height:18px"> Watch it happen (show the browser)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px">
+      <input type="checkbox" id="dryRun" style="width:18px;height:18px"> Practice run (walk the steps without touching CMS)</label>
+    <div class="row" style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" onclick="closeSheet()" style="flex:1">Cancel</button>
+      <button class="btn primary" id="go" style="flex:1">Start</button>
+    </div>`);
+  sheet.querySelector("#go").onclick = async () => {
+    const inputs = {};
+    sheet.querySelectorAll("[data-var]").forEach((i) => (inputs[i.dataset.var] = i.value));
+    const body = { inputs, headless: !sheet.querySelector("#watchRun").checked, dryRun: sheet.querySelector("#dryRun").checked };
+    try {
+      const r = await api(`/tasks/${taskId}/run`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      closeSheet();
+      activeTaskId = taskId;
+      add("agent", `Started **${task.title}**. It is running in the background — watch it under Tasks, or carry on here.`);
+      setTab("work");
+      loadTasks();
+    } catch (e) {
+      const msg = String(e.message || "");
+      if (msg.includes("needsSession") || msg.includes("No site is signed in")) { closeSheet(); showSites(); }
+      else add("agent", "Could not start: " + msg);
+    }
+  };
+};
+
+window.cancelRun = async (runId) => { try { await api(`/runs/${runId}/cancel`, { method: "POST" }); loadTasks(); } catch {} };
+
+window.deleteTask = async (taskId) => {
+  if (!confirm("Delete this task? The recording it came from is kept.")) return;
+  try { await api(`/tasks/${taskId}`, { method: "DELETE" }); loadTasks(); } catch (e) { add("agent", e.message); }
+};
+
+window.showRuns = async (taskId) => {
+  let runs = [];
+  try { runs = await api(`/runs?task=${encodeURIComponent(taskId)}`); } catch (e) { return add("agent", e.message); }
+  openSheet(`<h3>Run history</h3>${runs.length ? runs.map((r) => `
+    <div class="run ${r.status}" style="margin-top:10px">
+      <b>${statusLabel(r.status)}</b> · ${new Date(r.createdAt).toLocaleString("en-ZA")}
+      ${r.batchId ? ` · row ${(r.batchIndex ?? 0) + 1}` : ""}
+      <div>step ${r.currentStep || 0} of ${r.totalSteps}</div>
+      ${r.error ? `<div style="color:var(--stop)">${esc(r.error)}</div>` : ""}
+      <button class="btn" style="margin-top:6px;padding:5px 10px;font-size:12px" onclick="showRunLog('${r.id}')">Open log</button>
+    </div>`).join("") : '<p style="color:var(--t3)">No runs yet.</p>'}`);
+};
+
+window.showRunLog = async (runId) => {
+  let run;
+  try { run = await api(`/runs/${runId}`); } catch (e) { return add("agent", e.message); }
+  const lines = run.log.map((l) => `<span class="${l.level}">${esc(l.at.slice(11, 19))}  ${esc(l.message)}</span>`).join("\n");
+  const shots = run.log.filter((l) => l.screenshot);
+  openSheet(`<h3>${statusLabel(run.status)}</h3>
+    <div class="runlog">${lines || "no output"}</div>
+    ${shots.map((l) => `<img src="/api/runs/${run.id}/shot/${encodeURIComponent(l.screenshot)}" style="width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--line)">`).join("")}`);
+};
+
+async function showSites() {
+  let d = { sites: [], stale: [], workspace: "" };
+  try { d = await api("/sites"); } catch (e) { return add("agent", e.message); }
+  const rows = d.sites.length ? d.sites.map((s) => `
+    <div class="item"><b>${esc(s.host)}${d.stale.includes(s.host) ? ' <span class="pill" style="background:var(--stop-bg);color:var(--stop)">may have expired</span>' : ""}</b>
+      <div class="meta">signed in ${s.ageDays === 0 ? "today" : `${s.ageDays} day(s) ago`} · ${s.cookies} cookie(s)</div>
+      <div class="acts"><button onclick="addSite('${esc(s.url)}')">Sign in again</button><button onclick="forgetSite('${esc(s.host)}')">Forget</button></div>
+    </div>`).join("") : '<div class="empty">No sites yet. Add the first one below.</div>';
+  const sheet = openSheet(`
+    <h3>Signed-in sites</h3>
+    <p style="color:var(--t2);font-size:13px;margin:2px 0 10px">Foreman signs in once per site, in a real browser you drive, and keeps only the session cookie. <b>Your passwords are never stored.</b> A task can use several sites in one run.</p>
+    ${rows}
+    <label style="display:block;font-size:11px;color:var(--t2);margin:14px 0 3px">Add a site</label>
+    <input id="siteUrl" placeholder="https://…" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font-size:16px">
+    <div class="row" style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" onclick="closeSheet()" style="flex:1">Close</button>
+      <button class="btn primary" id="siteGo" style="flex:1">Open browser</button>
+    </div>
+    <div class="hint" id="siteMsg" style="margin-top:10px"></div>`);
+  sheet.querySelector("#siteGo").onclick = () => addSite(sheet.querySelector("#siteUrl").value.trim());
+}
+window.addSite = async (url) => {
+  if (!/^https?:\/\//i.test(url || "")) { const m = document.querySelector("#siteMsg"); if (m) m.textContent = "Enter the full address, starting with https://"; return; }
+  const m = document.querySelector("#siteMsg");
+  if (m) m.textContent = "A browser is opening on the computer running Foreman. Sign in there, then close it or come back.";
+  try { const r = await api("/sites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }); closeSheet(); add("agent", r.message); loadTasks(); }
+  catch (e) { if (m) m.textContent = e.message; }
+};
+window.forgetSite = async (host) => { if (!confirm(`Forget the sign-in for ${host}?`)) return; await api(`/sites/${encodeURIComponent(host)}`, { method: "DELETE" }); showSites(); };
+$("#sitesBtn").onclick = showSites;
+
+async function loadFiles() {
+  try {
+    const d = await api("/workspace");
+    $("#wsPath").textContent = `Saved into ${d.workspace}`;
+    $("#files").innerHTML = d.recent.length
+      ? d.recent.slice(0, 8).map((f) => `<div class="item"><b>${esc(f.name)}</b><div class="meta">${new Date(f.modified).toLocaleString("en-ZA")}</div></div>`).join("")
+      : '<div class="empty">Nothing saved yet. Files a task downloads land here.</div>';
+  } catch { /* workspace is optional */ }
+}
+$("#openWs").onclick = async () => {
+  try { const d = await api("/workspace"); add("agent", `Documents are saved to:\n\n\`${d.workspace}\`\n\nOpen that folder on this computer. Set \`WORKSPACE_DIR\` in \`server/.env\` to put them somewhere else, such as your Desktop or a synced drive.`); }
+  catch (e) { add("agent", e.message); }
+};
+
+/* ── Live run feed ────────────────────────────────────────────────────── */
+function watchRuns() {
+  const es = new EventSource("/api/runs-stream" + (getToken() ? `?token=${encodeURIComponent(getToken())}` : ""));
+  es.addEventListener("update", (ev) => {
+    const run = JSON.parse(ev.data);
+    runState.set(run.id, run);
+    loadTasks();
+    if (run.status === "succeeded") add("agent", `Task finished: **${run.taskId}** completed all ${run.totalSteps} steps.`);
+    if (run.status === "failed") add("agent", `Task stopped at step ${run.currentStep}: ${run.error || "unknown error"}. Open the log under Tasks to see the screenshot.`);
+    if (run.status === "needs_attention") add("agent", `A task needs you: ${run.attention}`);
+  });
+  es.addEventListener("status", (ev) => {
+    const st = JSON.parse(ev.data);
+    if (st.active) runState.set(st.active.id, { ...st.active, status: "running" });
+    loadTasks();
+  });
+  es.onerror = () => { es.close(); setTimeout(watchRuns, 5000); };
+}
+watchRuns();
+(function watchAgents() {
+  const es = new EventSource("/api/agents-stream" + (getToken() ? `?token=${encodeURIComponent(getToken())}` : ""));
+  es.addEventListener("report", (ev) => { const d = JSON.parse(ev.data); add("agent", `**${d.name}** finished (${d.status}):\n\n${d.summary}`); loadTasks(); });
+  es.onerror = () => { es.close(); setTimeout(watchAgents, 8000); };
+})();
+
+(async () => { try { const h = await api("/health"); if (!h.hasApiKey) add("agent", "Note: no Claude API credentials are configured on the server. Recordings, SOPs, tasks and playbooks work; chat needs ANTHROPIC_API_KEY or an `ant auth login` profile."); } catch {} loadSide(); })();
+</script>
+</body>
+</html>

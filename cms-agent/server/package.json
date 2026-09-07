@@ -1,0 +1,41 @@
+{
+  "name": "cms-agent-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CMS Agent: a Claude-powered workshop support agent with a problem-solving engine and workflow recorder backend",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"test/*.test.ts\"",
+    "browser": "playwright install chromium",
+    "payload": "tsx scripts/build-payload.ts",
+    "launcher": "tsx scripts/build-launcher.ts",
+    "icon": "tsx scripts/build-icon.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "nanoid": "^5.1.5",
+    "nodemailer": "^10.0.0",
+    "playwright": "^1.62.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.15.0",
+    "@types/nodemailer": "^6.4.24",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "esbuild": "^0.28.2"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

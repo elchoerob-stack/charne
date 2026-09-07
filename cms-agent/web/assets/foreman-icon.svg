@@ -1,0 +1,20 @@
+<!-- Foreman app icon: the mark on the navy badge. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Foreman">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16264B"/>
+      <stop offset="1" stop-color="#0B1730"/>
+    </linearGradient>
+    <linearGradient id="fg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E7C05A"/>
+      <stop offset="1" stop-color="#C49A2F"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <g fill="url(#fg)">
+    <rect x="16" y="13" width="10" height="38" rx="4"/>
+    <rect x="16" y="13" width="32" height="10" rx="4"/>
+    <rect x="16" y="29" width="22" height="10" rx="4" opacity=".72"/>
+  </g>
+  <circle cx="43.5" cy="45.5" r="4.5" fill="url(#fg)" opacity=".45"/>
+</svg>

@@ -20,6 +20,10 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    # The whole build is a couple of minutes' work. Without a ceiling, a step
+    # that pins a core and never returns holds a runner for GitHub's six-hour
+    # maximum before anyone finds out.
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: cms-agent/server
@@ -62,20 +66,33 @@ jobs:
         working-directory: cms-agent/server/build
         run: node --experimental-sea-config sea-config.json
 
-      - name: Assemble Foreman.exe
+      - name: Take a copy of the Node runtime to build on
         working-directory: cms-agent/server/build
         run: |
           Copy-Item (Get-Command node).Source -Destination Foreman.exe
-          # node.exe ships signed; the signature does not survive having a blob
-          # injected into it, so it comes off first rather than being left
-          # broken. Missing signtool is not fatal — the copy is then unsigned
-          # already.
+          # node.exe ships signed, and neither the icon edit nor the payload
+          # injection below survives that signature — so it comes off first
+          # rather than being left broken. Missing signtool is not fatal: the
+          # copy is then unsigned already.
           $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
             Sort-Object FullName -Descending | Select-Object -First 1
           if ($signtool) { & $signtool.FullName remove /s Foreman.exe } else { Write-Host "signtool not found; continuing" }
-          npx --yes postject@1.0.0-alpha.6 Foreman.exe NODE_SEA_BLOB sea-prep.blob `
-            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
-          if ($LASTEXITCODE -ne 0) { throw "postject failed to inject the blob (exit $LASTEXITCODE)" }
+
+      # Deliberately before the payload goes in. Run against the finished
+      # 90 MB executable, rcedit pins a core and never returns — it ran for
+      # six hours here once before the job timed out. Against the plain
+      # runtime, with an ordinary resource table and no 5 MB blob appended,
+      # it is quick.
+      #
+      # It is also the one step whose output nobody needs: it sets the icon
+      # and the version shown in Explorer. So it gets a short leash and is
+      # allowed to fail — a Foreman.exe wearing the default Node icon still
+      # does every single thing it is meant to do.
+      - name: Give it Foreman's icon and version info
+        working-directory: cms-agent/server/build
+        timeout-minutes: 5
+        continue-on-error: true
+        run: |
           $version = (Get-Content version.txt -Raw).Trim()
           # The rcedit npm package has no CLI of its own — `npx rcedit` fails
           # with "could not determine executable to run" because its
@@ -98,8 +115,20 @@ jobs:
             --set-product-version $version
           if ($LASTEXITCODE -ne 0) { throw "rcedit failed to set the icon and version info (exit $LASTEXITCODE)" }
 
+      - name: Put Foreman inside it
+        working-directory: cms-agent/server/build
+        timeout-minutes: 10
+        run: |
+          npx --yes postject@1.0.0-alpha.6 Foreman.exe NODE_SEA_BLOB sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+          if ($LASTEXITCODE -ne 0) { throw "postject failed to inject the blob (exit $LASTEXITCODE)" }
+
+      # A short leash here too: an executable whose payload did not take runs
+      # as plain node, which reads from standard input and would otherwise
+      # sit there until the job times out rather than failing.
       - name: Check the executable answers for itself
         working-directory: cms-agent/server/build
+        timeout-minutes: 3
         run: |
           $version = & .\Foreman.exe --version
           Write-Host "Foreman.exe reports version $version"

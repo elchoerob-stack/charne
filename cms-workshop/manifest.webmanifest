@@ -1,0 +1,12 @@
+{
+  "name": "CMS Workshop",
+  "short_name": "Workshop",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#31459C",
+  "icons": [
+    { "src": "assets/logos/cms-icon-emblem.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

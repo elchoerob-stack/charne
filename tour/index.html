@@ -1236,41 +1236,87 @@ Array.prototype.forEach.call(document.querySelectorAll("nav button"), function(b
 /* The share message is written for WhatsApp: *asterisks* render as bold there,
    and it degrades to plain text everywhere else. A log full of zeros reads
    flat, so before anyone has scored we show the turnout instead. */
+/* Kick-off times in the message are always South African time, whatever
+   timezone the phone doing the sharing happens to be set to. */
+function sast(ms, opts){
+  try { return new Intl.DateTimeFormat("en-ZA", Object.assign({ timeZone:"Africa/Johannesburg" }, opts)).format(new Date(ms)); }
+  catch(e){ return new Date(ms).toString().slice(0,21); }
+}
+/* Day and month are built by hand: phones disagree on "Sep" vs "Sept" and
+   whether the day gets a leading zero. */
+function sastDate(ms){
+  var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return parseInt(sast(ms, { day:"numeric" }), 10) + " " + mon[parseInt(sast(ms, { month:"numeric" }), 10) - 1];
+}
+function sastWhen(ms){
+  return sast(ms, { weekday:"short" }) + " " + sastDate(ms) + ", " +
+    sast(ms, { hour:"2-digit", minute:"2-digit", hour12:false });
+}
+function city(vn){
+  var parts = String(vn || "").split(",");
+  return parts.length > 1 ? parts[parts.length-1].trim() : String(vn || "").trim();
+}
+/* First names on the podium, unless two players share one. */
+function logName(name, t){
+  var first = name.split(" ")[0];
+  var clash = t.filter(function(x){ return x.name.split(" ")[0].toLowerCase() === first.toLowerCase(); }).length > 1;
+  return clash ? name : first;
+}
 function shareMessage(){
   var url = location.origin + location.pathname;
   var t = table();
   var scored = t.filter(function(x){ return x.pts > 0; });
+  var open = matches.filter(function(m){ return !locked(m); })
+    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); });
+  var n = open.length;
   var L = [];
-  L.push("*SPRINGBOKS TOUR PREDICTOR*");
-  L.push("🇿🇦 Every Springbok Test, one log");
-  L.push("━━━━━━━━━━━━━━━");
-  if (scored.length) {
-    L.push("🏆 *THE LOG*");
-    t.slice(0,5).forEach(function(x){
-      var badge = x.rank === 1 ? "🥇" : x.rank === 2 ? "🥈" : x.rank === 3 ? "🥉" : "　" + x.rank + ".";
-      L.push(badge + " " + x.name + " — *" + x.pts + "* pts");
-    });
-    if (t.length > 5) L.push("　 …and " + (t.length - 5) + " more chasing");
-  } else if (t.length) {
-    L.push("👥 *" + t.length + "* " + (t.length === 1 ? "of us is" : "of us are") + " in so far" +
-      (myName ? " — including " + myName : ""));
-    L.push("Nobody's on the board yet. Wide open.");
-  } else {
-    L.push("👀 Not a single pick in yet.");
-    L.push("First one to jump in leads the log.");
-  }
-  var nx = matches.filter(function(m){ return !locked(m); })
-    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); })[0];
-  if (nx) {
+  L.push("*SPRINGBOKS TOUR PREDICTOR* 🇿🇦🏉");
+  L.push("");
+  var wiStarted = matches.some(function(m){ return WI[m.id] && m.f; });
+  if (n) {
+    L.push(wiStarted
+      ? "*" + n + " Springbok Test" + (n===1?"":"s") + "* still to pick:"
+      : "The All Blacks series is done (Boks 3–1 🙌). The predictor is back with *" + n + " more Springbok Test" + (n===1?"":"s") + "*:");
     L.push("");
-    L.push("⏱ *Next up:* " + nx.h + " v " + nx.a);
-    L.push("　 " + fmt(nx.ko));
+    open.forEach(function(m){
+      var flag = isBoks(m.h) ? m.af : m.hf;
+      L.push(flag + " *" + m.h.replace("South Africa","SA") + " v " + m.a.replace("South Africa","SA") + "*: " +
+        (m.ko ? sastWhen(m.ko) : "date TBC") + (m.vn ? " (" + city(m.vn) + ")" : ""));
+    });
+    var nx = open[0];
+    if (nx.ko) {
+      var days = (nx.ko - Date.now()) / 864e5;
+      var whenLock = days < 6 ? "on " + sast(nx.ko, { weekday:"long" }) : "on " + sast(nx.ko, { weekday:"short" }) + " " + sastDate(nx.ko);
+      L.push("");
+      L.push("⏱ *" + (nx.vn ? city(nx.vn) : nx.h + " v " + nx.a) + " picks lock at " + sast(nx.ko, { hour:"2-digit", minute:"2-digit", hour12:false }) + " " + whenLock + ".* Get yours in before then.");
+    }
+  } else {
+    L.push("Every game's been played. The final log is in 👇");
   }
   L.push("");
-  L.push("Pick the scores. *Closest wins.*");
-  L.push("30 seconds, no sign-up, works on your phone.");
+  L.push("*What's new*");
+  L.push("🤖 *Meet wi*, the CMS assistant. It tells you what to do on each screen and has a *match guide* for every game: form, head-to-head, and wi's own score prediction.");
+  L.push("🥊 *Beat wi*: wi's predictions get scored the same way as ours. Let's see who's smarter, the office or the bot.");
+  L.push("👤 *Choose your name from the list* when you open the app, so all your points stay together. Played on a different phone before? Pick the same name and your points are still there.");
+  L.push("");
+  if (scored.length) {
+    L.push("🏆 *The log so far*");
+    var medals = ["🥇","🥈","🥉"];
+    for (var r = 1; r <= 3; r++) {
+      var at = t.filter(function(x){ return x.rank === r && x.pts > 0; });
+      if (!at.length) continue;
+      L.push(medals[r-1] + " " + at.map(function(x){ return logName(x.name, t); }).join(" & ") + ": " + at[0].pts);
+    }
+    if (n) L.push("Everything's still up for grabs. An exact score is worth 10 points.");
+  } else if (t.length) {
+    L.push("👥 *" + t.length + "* of us are in so far. Nobody's on the board yet. Wide open.");
+  } else {
+    L.push("👀 Not a single pick in yet. First one in leads the log.");
+  }
   L.push("");
   L.push("👉 " + url);
+  L.push("");
+  L.push("Pick the scores. Closest wins. 30 seconds, no sign-up.");
   return L.join("\n");
 }
 document.getElementById("btn-share").onclick = function(){

@@ -89,6 +89,10 @@
      narrow phone — give the input its own line and let the pair share the next. */
   .name-row.two input{flex:1 1 100%}
   .name-row.two .btn{flex:1}
+  .nm-pick{display:block;width:100%;margin-top:8px;border:1px solid var(--line);border-radius:10px;
+    padding:12px;background:var(--card);color:var(--ink);font-family:inherit;font-size:16px}
+  .linkish{display:block;background:none;border:0;padding:0;margin-top:10px;color:var(--turq);
+    font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
   .keeps{
     margin-top:10px;background:var(--paper);border:1px solid var(--line);
     border-left:4px solid var(--turq);border-radius:10px;
@@ -259,10 +263,24 @@ var NAME_KEY = "cms-tour-name";
 var matches = [];
 var myName = null;
 var editingName = false;
+var typingNew = false;
 var tab = "today";
 var ready = false;
 var blocked = false;
+/* The same person sometimes signed in under two spellings on different
+   phones, which split their picks — and their points — across two rows on the
+   log. Each alias here is folded into one name everywhere the app reads picks,
+   so the log adds them up as one player. The saved picks themselves are left
+   exactly as entered. Keys are lower-case, as key() produces them. */
+var ALIASES = {
+  "leon": "Leon Kemp",
+  "leanie (en alyssa)": "Leanie"
+};
 try { myName = localStorage.getItem(NAME_KEY) || null; } catch (e) {}
+if (myName && canonicalName(myName) !== myName) {
+  myName = canonicalName(myName);
+  try { localStorage.setItem(NAME_KEY, myName); } catch (e) {}
+}
 
 /* ---------- helpers ---------- */
 function esc(s){
@@ -270,7 +288,9 @@ function esc(s){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
   });
 }
-function key(n){ return String(n).trim().toLowerCase().replace(/[.\/\[\]~*]/g,"_").replace(/\s+/g," "); }
+function rawKey(n){ return String(n).trim().toLowerCase().replace(/[.\/\[\]~*]/g,"_").replace(/\s+/g," "); }
+function canonicalName(n){ return ALIASES[rawKey(n)] || n; }
+function key(n){ return rawKey(canonicalName(n)); }
 function num(v){ var n = parseInt(v,10); return isNaN(n) ? 0 : Math.max(0, Math.min(200,n)); }
 function toast(msg){
   var t = document.getElementById("toast");
@@ -398,15 +418,20 @@ function table(){
 
 /* ---------- data ---------- */
 function fromDoc(d){
-  var x = d.data(), p = x.p || {}, out = {};
+  var x = d.data(), p = x.p || {}, out = {}, raw = {};
   Object.keys(p).forEach(function(k){
     var e = p[k] || {};
-    if (e.name) out[k] = { name:e.name, hs:num(e.hs), as:num(e.as) };
+    if (!e.name) return;
+    var nm = canonicalName(e.name), ck = key(nm);
+    (raw[ck] = raw[ck] || []).push(k);
+    // If one person somehow has a pick under both spellings for the same
+    // match, the one already stored under the combined name wins.
+    if (!out[ck] || k === ck) out[ck] = { name:nm, hs:num(e.hs), as:num(e.as) };
   });
   return {
     id:d.id, h:x.h, hf:x.hf||"", a:x.a, af:x.af||"", ko:x.ko||null, vn:x.vn||"",
     tbc:!!x.tbc, kind:x.kind||"test", f:(Array.isArray(x.f) && x.f.length===2) ? [num(x.f[0]),num(x.f[1])] : null,
-    p:out
+    p:out, raw:raw
   };
 }
 onSnapshot(matchesCol, function(snap){
@@ -445,7 +470,7 @@ function myStats(){
   return { picks: matches.filter(function(m){ return !!m.p[k]; }).length, pts: row ? row.pts : 0 };
 }
 function setName(n){
-  myName = n; editingName = false;
+  myName = n; editingName = false; typingNew = false;
   try { localStorage.setItem(NAME_KEY, myName); } catch(e){}
   render();
 }
@@ -461,7 +486,9 @@ function renameMe(newName){
   return Promise.all(moving.map(function(m){
     var e = m.p[oldKey], patch = {};
     patch["p." + newKey] = { name:newName, hs:e.hs, as:e.as };
-    if (newKey !== oldKey) patch["p." + oldKey] = deleteField();
+    (m.raw[oldKey] || [oldKey]).forEach(function(rk){
+      if (rk !== newKey) patch["p." + rk] = deleteField();
+    });
     return updateDoc(doc(db,"matches",m.id), patch);
   })).then(function(){
     setName(newName);
@@ -503,7 +530,31 @@ function render(){
   if (tab === "results") renderResults();
   wireName();
 }
+/* Everyone who has made at least one pick, one entry per person. */
+function knownNames(){
+  var seen = {};
+  matches.forEach(function(m){
+    Object.keys(m.p).forEach(function(k){ if (!seen[k]) seen[k] = m.p[k].name; });
+  });
+  return Object.keys(seen).map(function(k){ return seen[k]; })
+    .sort(function(a,b){ return a.localeCompare(b); });
+}
+/* A returning player on a new phone used to type their name again from memory
+   — "Leon" instead of "Leon Kemp" — and start a second, empty row on the log.
+   So the first thing they see is a list of everyone already playing; typing a
+   name is only for someone genuinely new. */
+function pickNameHtml(){
+  var names = knownNames();
+  if (!names.length) return "";
+  return '<div class="card"><label for="nm-pick" style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em">Who are you?</label>' +
+    '<select id="nm-pick" class="nm-pick"><option value="">Choose your name…</option>' +
+    names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join("") +
+    '<option value="__new">I\'m new — add my name</option></select>' +
+    '<p class="hint">Already played on another phone? Pick your name so all your points stay together.</p>' +
+    '</div>';
+}
 function nameBlockHtml(){
+  if (!myName && !editingName && !typingNew && knownNames().length) return pickNameHtml();
   if (!myName || editingName) {
     var s = editingName ? myStats() : null;
     return '<div class="card"><label for="nm" style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em">' +
@@ -517,17 +568,46 @@ function nameBlockHtml(){
         ? '<div class="keeps">Nothing is lost. Your <b>' + s.picks + ' pick' + (s.picks===1?"":"s") +
           '</b> and <b>' + s.pts + ' point' + (s.pts===1?"":"s") + '</b> move across to the new name, ' +
           'including matches already played.</div>'
-        : '<p class="hint">Used to label your picks on the log. Nothing else — no sign-up, no password.</p>') +
+        : '<p class="hint">Used to label your picks on the log. Nothing else — no sign-up, no password.</p>' +
+          (knownNames().length ? '<button class="linkish" id="nm-back">← Back to the list of names</button>' : '')) +
+      (editingName
+        ? '<button class="linkish" id="nm-switch">Not ' + esc(myName) + '? Switch player</button>'
+        : '') +
       '</div>';
   }
   return '<div class="card" style="padding:11px 12px"><div class="who">🙋 Predicting as ' + esc(myName) +
     '<button id="nm-change">Edit</button></div></div>';
 }
 function wireName(){
+  var pick = document.getElementById("nm-pick");
+  if (pick) pick.onchange = function(){
+    if (pick.value === "__new") { typingNew = true; render(); return; }
+    if (pick.value) { setName(pick.value); toast("Welcome back, " + pick.value); }
+  };
+  var back = document.getElementById("nm-back");
+  if (back) back.onclick = function(){ typingNew = false; render(); };
+  // Switching hands the phone to someone else: nothing is renamed or moved,
+  // unlike Save, which carries this player's picks across to a new name.
+  var sw = document.getElementById("nm-switch");
+  if (sw) sw.onclick = function(){
+    myName = null; editingName = false; typingNew = false;
+    try { localStorage.removeItem(NAME_KEY); } catch(e){}
+    render();
+  };
   var go = document.getElementById("nm-go");
   if (go) go.onclick = function(){
-    var v = (document.getElementById("nm").value || "").trim().replace(/\s+/g, " ");
+    var v = canonicalName((document.getElementById("nm").value || "").trim().replace(/\s+/g, " "));
     if (!v) { toast("Type your name first"); return; }
+    // A brand-new name that shares a first name with someone already playing
+    // is most likely that person on a different phone — ask before splitting
+    // them into two rows.
+    if (!myName) {
+      var k = key(v), first = k.split(" ")[0];
+      var taken = knownNames().filter(function(n){ return key(n) === k; })[0];
+      var near = knownNames().filter(function(n){ return key(n).split(" ")[0] === first; })[0];
+      if (taken) v = taken;
+      else if (near && confirm(near + " is already playing. Is that you?\n\nOK = carry on as " + near + "\nCancel = add " + v + " as a new player")) v = near;
+    }
     go.disabled = true;
     renameMe(v).catch(function(){}).then(function(){ if (go) go.disabled = false; });
   };

@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#31459C">
-<title>All Blacks Tour Predictor</title>
-<meta name="description" content="Pick the scores for every game of the All Blacks tour of South Africa. Closest wins. 30 seconds, no sign-up.">
+<title>Springboks Tour Predictor</title>
+<meta name="description" content="Pick the scores for every Springbok Test. Closest wins. 30 seconds, no sign-up.">
 <!-- Link preview card — WhatsApp, Teams and Slack all scrape these, and they
      need absolute URLs, so the live Pages address is spelled out in full. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CMS Systems">
-<meta property="og:title" content="All Blacks Tour Predictor">
-<meta property="og:description" content="🇿🇦 v 🇳🇿 — pick the scores for every game of the tour. Closest wins. 30 seconds, no sign-up.">
+<meta property="og:title" content="Springboks Tour Predictor">
+<meta property="og:description" content="🇿🇦 Pick the scores for every Springbok Test. Closest wins. 30 seconds, no sign-up.">
 <meta property="og:url" content="https://elchoerob-stack.github.io/charne/tour/">
-<meta property="og:image" content="https://elchoerob-stack.github.io/charne/tour/assets/share-card.png">
+<meta property="og:image" content="https://elchoerob-stack.github.io/charne/tour/assets/share-card.png?v=2">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="All Blacks Tour Predictor — South Africa v New Zealand">
+<meta property="og:image:alt" content="Springboks Tour Predictor">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/ball-icon-192.png">
@@ -210,7 +210,7 @@
 <header>
   <div class="wrap">
     <div class="brand"><img src="assets/cms-eco-logo-full-colour.png" alt="CMS eco"></div>
-    <h1>All Blacks Tour <span class="kick">Predictor</span></h1>
+    <h1>Springboks Tour <span class="kick">Predictor</span></h1>
     <p class="sub" id="sub">Pick the scores. Closest wins. Everyone’s picks appear once you’ve made yours.</p>
   </div>
 </header>
@@ -837,8 +837,8 @@ function shareMessage(){
   var t = table();
   var scored = t.filter(function(x){ return x.pts > 0; });
   var L = [];
-  L.push("*ALL BLACKS TOUR PREDICTOR*");
-  L.push("🇿🇦 South Africa  v  New Zealand 🇳🇿");
+  L.push("*SPRINGBOKS TOUR PREDICTOR*");
+  L.push("🇿🇦 Every Springbok Test, one log");
   L.push("━━━━━━━━━━━━━━━");
   if (scored.length) {
     L.push("🏆 *THE LOG*");

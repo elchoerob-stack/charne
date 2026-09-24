@@ -203,6 +203,109 @@
   .today-none b{color:var(--blue)}
   .warn{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--red);
     border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.55;margin-bottom:12px;color:var(--ink)}
+
+  /* ---------- wi, the assistant ----------
+     The wi artwork is placed exactly as supplied. Everything drawn around it
+     uses the CMS palette only — the wi gradient stays inside the artwork. */
+  .wi-say{display:flex;gap:11px;align-items:flex-start;margin-bottom:12px}
+  .wi-av{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:var(--paper);
+    border:1.5px solid var(--line);display:grid;place-items:center;box-shadow:0 2px 8px rgba(49,69,156,.12)}
+  .wi-av img{width:28px;height:auto;display:block}
+  .wi-bub{position:relative;flex:1;min-width:0;background:var(--paper);border:1px solid var(--line);
+    border-radius:4px 16px 16px 16px;padding:11px 13px;font-size:14px;line-height:1.5;color:var(--ink);
+    box-shadow:0 1px 2px rgba(46,46,46,.05)}
+  .wi-bub .wi-n{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--turq);margin-bottom:3px}
+  .wi-bub b{color:var(--blue)}
+  .wi-bub .caret{display:inline-block;width:2px;height:1em;background:var(--turq);vertical-align:-2px;
+    margin-left:1px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .wi-act{display:inline-flex;align-items:center;gap:6px;margin-top:9px;background:var(--blue);color:#fff;
+    border:0;border-radius:999px;padding:7px 13px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+  .wi-act:active{transform:scale(.97)}
+  .wi-guide-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;
+    background:var(--paper);border:1.5px dashed var(--turq);color:var(--blue);border-radius:12px;padding:10px;
+    font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+  .wi-guide-btn img{width:18px;height:auto}
+  .wi-guide-btn .call{color:var(--turq)}
+  .today-hero .wi-guide-btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45);color:#fff}
+  .today-hero .wi-guide-btn .call{color:var(--turq-light)}
+  /* wi sits in the bottom bar beside Share, so it never covers a score box. */
+  .share-in{display:flex;gap:12px;align-items:center;max-width:528px;margin:0 auto}
+  .share-in .btn{flex:1;margin:0}
+  .wi-fab{position:relative;flex:0 0 auto;width:52px;height:52px;
+    border-radius:50%;background:var(--paper);border:1.5px solid var(--line);cursor:pointer;display:grid;place-items:center;
+    box-shadow:0 4px 14px rgba(49,69,156,.22)}
+  .wi-fab img{width:30px;height:auto}
+  .wi-fab::before{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--turq);
+    animation:wiPulse 2.6s ease-out infinite}
+  @keyframes wiPulse{0%{transform:scale(.9);opacity:.9}70%{transform:scale(1.18);opacity:0}100%{opacity:0}}
+  .sheet-bg{position:fixed;inset:0;background:rgba(46,46,46,.45);z-index:60;opacity:0;pointer-events:none;
+    transition:opacity .22s}
+  .sheet-bg.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-height:88vh;overflow:auto;
+    background:var(--paper);border-radius:22px 22px 0 0;transform:translateY(105%);
+    transition:transform .32s cubic-bezier(.2,.9,.25,1);padding:0 18px calc(22px + env(safe-area-inset-bottom));
+    max-width:600px;margin:0 auto;box-shadow:0 -10px 30px rgba(46,46,46,.18)}
+  .sheet.open{transform:none}
+  .sheet .grab{position:sticky;top:0;background:var(--paper);padding:10px 0 6px;z-index:2;display:flex;
+    align-items:center;justify-content:center}
+  .sheet .grab i{display:block;width:42px;height:5px;border-radius:9px;background:var(--line)}
+  .sheet .x{position:absolute;right:0;top:6px;background:none;border:0;font-size:22px;color:var(--grey);
+    cursor:pointer;padding:4px 8px;font-family:inherit}
+  .g-top{background:var(--blue);color:#fff;border-radius:16px;padding:16px;position:relative;overflow:hidden}
+  .g-top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+    background:linear-gradient(90deg,var(--turq) 0 70%,var(--red) 70% 100%)}
+  .g-top .k{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--turq-light)}
+  .g-top .t{font-size:20px;font-weight:700;margin-top:5px;line-height:1.25}
+  .g-top .w{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:6px}
+  .g-sec{margin-top:16px}
+  .g-h{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--turq);margin-bottom:7px}
+  .g-story{font-size:14.5px;line-height:1.6;color:var(--ink)}
+  .g-story b{color:var(--blue)}
+  .call-card{border:1.5px solid var(--turq);border-radius:16px;padding:14px;text-align:center;background:var(--paper)}
+  .call-card .cw{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--turq)}
+  .call-card .cw img{width:20px;height:auto}
+  .call-sc{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px}
+  .call-sc .tm{flex:1;font-size:12.5px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.04em}
+  .call-sc .n{font-size:40px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums;min-width:56px}
+  .call-sc .d{color:var(--cool);font-weight:700;font-size:26px}
+  .call-why{font-size:13px;color:var(--grey);margin-top:6px;line-height:1.5}
+  .conf{margin-top:12px;text-align:left}
+  .conf .l{display:flex;justify-content:space-between;font-size:12px;color:var(--grey);margin-bottom:5px}
+  .conf .l b{color:var(--blue)}
+  .conf .bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+  .conf .bar i{display:block;height:100%;width:0;border-radius:9px;background:var(--turq);transition:width 1s .25s ease}
+  .form{display:flex;gap:6px;flex-wrap:wrap}
+  .fchip{display:flex;flex-direction:column;align-items:center;min-width:52px;border-radius:10px;padding:6px 7px;
+    border:1px solid var(--line);font-size:11px;color:var(--grey);line-height:1.3}
+  .fchip b{font-size:13px;color:#fff;border-radius:6px;width:22px;height:22px;display:grid;place-items:center;margin-bottom:3px}
+  .fchip.W b{background:var(--turq)} .fchip.L b{background:var(--red)} .fchip.D b{background:var(--grey)}
+  .h2h{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center}
+  .h2h div{padding:10px 4px;font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:.06em}
+  .h2h div+div{border-left:1px solid var(--line)}
+  .h2h b{display:block;font-size:22px;color:var(--blue);letter-spacing:0}
+  .g-list{margin:0;padding:0;list-style:none}
+  .g-list li{position:relative;padding:7px 0 7px 22px;font-size:14px;line-height:1.5;border-top:1px solid var(--line)}
+  .g-list li:first-child{border-top:0}
+  .g-list li::before{content:"";position:absolute;left:4px;top:15px;width:8px;height:8px;border-radius:50%;background:var(--turq)}
+  .tip{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:12px;
+    padding:11px 13px;font-size:13.5px;line-height:1.55}
+  .tip b{color:var(--blue)}
+  .g-note{font-size:11.5px;color:var(--grey);margin-top:16px;line-height:1.5;text-align:center}
+  .faq{border-top:1px solid var(--line)}
+  .faq button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;background:none;border:0;
+    padding:13px 2px;font:inherit;font-size:14.5px;font-weight:700;color:var(--blue);cursor:pointer;text-align:left}
+  .faq button::after{content:"+";color:var(--turq);font-size:20px;font-weight:400}
+  .faq.open button::after{content:"–"}
+  .faq .a{display:none;padding:0 2px 13px;font-size:13.5px;line-height:1.6;color:var(--ink)}
+  .faq.open .a{display:block}
+  .beat{display:flex;gap:12px;align-items:center}
+  .beat img{width:34px;height:auto}
+  .beat .bt{flex:1;font-size:13.5px;line-height:1.5}
+  .beat .bt b{color:var(--blue)}
+  .beat .bp{font-size:24px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -225,14 +328,17 @@
 <main>
   <div id="warn"></div>
   <div id="install"></div>
+  <div id="wi-say"></div>
   <section id="view-today"></section>
   <section id="view-predict"></section>
   <section id="view-log" hidden></section>
   <section id="view-results" hidden></section>
 </main>
 
-<div class="share"><button class="btn" id="btn-share">Share with the team</button></div>
+<div class="share"><div class="share-in"><button class="btn" id="btn-share">Share with the team</button><button class="wi-fab" id="wi-fab" aria-label="Ask wi, your guide"><img src="assets/wi-mark.png" alt=""></button></div></div>
 <div id="toast"></div>
+<div class="sheet-bg" id="sheet-bg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"><i></i><button class="x" id="sheet-x" aria-label="Close">×</button></div><div id="sheet-body"></div></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
@@ -529,6 +635,7 @@ function render(){
   if (tab === "log") renderLog();
   if (tab === "results") renderResults();
   wireName();
+  renderWi();
 }
 /* Everyone who has made at least one pick, one entry per person. */
 function knownNames(){
@@ -660,6 +767,7 @@ function renderToday(){
         ? '<div class="cd">' + esc(m.h) + ' ' + m.f[0] + ' — ' + m.f[1] + ' ' + esc(m.a) + '</div>'
         : started ? '<div class="cd">🔴 Kicked off — picks are locked</div>'
                   : (m.ko ? '<div class="cd">⏱ Kick-off in ' + countdown(m.ko) + '</div>' : '')) +
+      guideBtnHtml(m) +
     '</div>' +
     ((!myName || editingName)
       ? nameBlockHtml()
@@ -722,6 +830,7 @@ function renderPredict(){
       (e ? '<div class="done">✅ Saved — you can change it until kick-off</div>' : '') +
       '<button class="btn quiet save-one">' + (e ? "Update my pick" : "Save my pick") + '</button>' +
       picksHtml(m, !!e) +
+      guideBtnHtml(m) +
     '</div>';
   }).join("");
   html += '<button class="btn" id="save-all">Save all my picks</button>';
@@ -761,7 +870,7 @@ function renderLog(){
     el.innerHTML = '<div class="card"><div class="empty">No picks yet.<br>Be the first — tap <b>Predict</b>.</div></div>';
     return;
   }
-  el.innerHTML =
+  el.innerHTML = wiScoreHtml() +
     '<div class="thead"><span>#</span><span>Name</span><span class="pl">Played</span><span class="pts">Points</span></div>' +
     '<div class="rows">' + t.map(function(x){
       var medal = x.rank===1 && x.pts>0 ? "🏆 " : x.rank===2 && x.pts>0 ? "🥈 " : x.rank===3 && x.pts>0 ? "🥉 " : "";
@@ -824,6 +933,301 @@ function renderResults(){
     };
   });
 }
+
+/* ---------- wi: the in-app guide ----------
+   wi is scripted, not a live model: it reads the same data as the rest of the
+   page (your name, your picks, the log, kick-off times) to say what to do
+   next, and each match guide below is written from published results.
+   Guides are keyed by match id; a match without one still gets the computed
+   parts (form, tip, countdown), just no story or call. */
+var BOKS_2026 = [   // oldest first; later results are read from the app itself
+  { d:"2026-07-04", o:"England",     us:45, them:21 },
+  { d:"2026-07-11", o:"Scotland",    us:42, them:28 },
+  { d:"2026-07-18", o:"Wales",       us:43, them:0  },
+  { d:"2026-08-08", o:"Argentina",   us:17, them:10 },
+  { d:"2026-08-22", o:"New Zealand", us:16, them:33 },
+  { d:"2026-08-29", o:"New Zealand", us:33, them:26 },
+  { d:"2026-09-05", o:"New Zealand", us:29, them:24 },
+  { d:"2026-09-12", o:"New Zealand", us:43, them:28 }
+];
+var WI = {
+  "cms-aus": {
+    call:[21,29], conf:55, confWord:"Lean Boks",
+    story:"A one-off Test in Perth, two weeks after the Boks closed out a <b>3–1 series win over the All Blacks</b>. " +
+      "Rassie has made <b>13 changes</b> — only Eben Etzebeth and Ethan Hooker keep their spots — so this is a new-look side " +
+      "against a Wallaby team that is <b>unbeaten in five</b> (four wins and a draw).",
+    h2h:{ played:97, us:53, them:41, draw:3 },
+    facts:[
+      "Last time in Perth (Aug 2024) the Boks won <b>30–12</b>.",
+      "The last meeting went Australia's way — <b>38–22 at Ellis Park</b> in 2025, their first win there since 1963.",
+      "The Boks have won five of their last six against Australia.",
+      "Wallabies' recent form includes 27–21 and 28–28 against Argentina."
+    ],
+    why:"Depth has been the Boks' weapon all year, but 13 changes and a travelling side keep it close. Boks by about a converted try."
+  },
+  "cms-ita": {
+    call:[13,38], conf:85, confWord:"Confident",
+    story:"Turin again. Last November the Boks beat Italy <b>32–14</b> here — with 14 men for most of it after an early red card. " +
+      "Italy have beaten the Boks <b>once in 19 attempts</b>.",
+    h2h:{ played:19, us:18, them:1, draw:0 },
+    facts:[
+      "Last meeting: Italy 14 – 32 South Africa, Allianz Stadium, Nov 2025.",
+      "The Boks have scored 29+ in six of their eight Tests this year.",
+      "Nations Championship game — pool points are on the line before Finals Weekend."
+    ],
+    why:"The winner isn't really the question — the margin is. Big picks win big here: think 20-plus."
+  },
+  "cms-fra": {
+    call:[22,26], conf:45, confWord:"Coin-flip-plus",
+    story:"Friday night at the Stade de France — the fixture everyone circles. The Boks won <b>32–17</b> in Paris last November, " +
+      "and still carry the 2023 World Cup quarter-final win over France.",
+    h2h:{ played:47, us:29, them:12, draw:6 },
+    facts:[
+      "Last meeting: France 17 – 32 South Africa, Nov 2025.",
+      "France at home under lights is the toughest trip of the year.",
+      "A 22:10 SAST kick-off — lock your pick in before you head out."
+    ],
+    why:"Tight, physical and decided late. A small Bok margin is where the points are — within 3 of the real margin is worth 7."
+  },
+  "cms-ire": {
+    call:[20,23], conf:40, confWord:"Tight call",
+    story:"Dublin, the last pool game before Finals Weekend. Last November the Boks won <b>24–13</b> at the Aviva — " +
+      "their first win in Dublin since 2012 — as Ireland were shown five cards.",
+    h2h:{ played:31, us:20, them:10, draw:1 },
+    facts:[
+      "Last meeting: Ireland 13 – 24 South Africa, Nov 2025.",
+      "Before that, Ireland had won nine of the previous 14 meetings — this has been a real rivalry.",
+      "The 2024 series in South Africa was shared, Ireland winning 25–24 in Durban."
+    ],
+    why:"Ireland at home rarely lose by much. wi likes the Boks by a score — but a narrow Irish win wouldn't shock anyone."
+  }
+};
+function isBoks(n){ return /south africa/i.test(n || ""); }
+function boksForm(){
+  var list = BOKS_2026.map(function(r){ return { o:r.o, us:r.us, them:r.them }; });
+  var cut = new Date("2026-09-13").getTime();
+  matches.filter(function(m){ return m.f && m.ko && m.ko > cut && (isBoks(m.h) || isBoks(m.a)); })
+    .sort(function(a,b){ return a.ko - b.ko; })
+    .forEach(function(m){
+      var home = isBoks(m.h);
+      list.push({ o: home ? m.a : m.h, us: home ? m.f[0] : m.f[1], them: home ? m.f[1] : m.f[0] });
+    });
+  return list;
+}
+function short(n){
+  return ({ "New Zealand":"NZ", "South Africa":"SA", "Australia":"AUS", "Argentina":"ARG", "England":"ENG",
+            "Scotland":"SCO", "Wales":"WAL", "Italy":"ITA", "France":"FRA", "Ireland":"IRE" })[n] || String(n).slice(0,3).toUpperCase();
+}
+function nextOpen(){
+  return matches.filter(function(m){ return !locked(m); })
+    .sort(function(a,b){ return (a.ko||9e15) - (b.ko||9e15); })[0] || null;
+}
+
+/* What wi says at the top of each tab — always the one most useful next step. */
+function wiMessage(){
+  if (!ready) return null;
+  var open = matches.filter(function(m){ return !locked(m); });
+  var todo = myName ? open.filter(function(m){ return !mine(m); }) : open;
+  var nx = nextOpen();
+  if (!myName) return { html: "Hi, I'm <b>wi</b> 👋 I'll walk you through this. First, " +
+      (knownNames().length ? "<b>choose your name</b> from the list below — if you've played before, your points are waiting." : "<b>type your name</b> below to start."),
+    act: null };
+  if (editingName) return { html: "<b>Save</b> moves every pick and point to the new name. Handing the phone to someone else? Use <b>Switch player</b> instead.", act:null };
+  var first = myName.split(" ")[0];
+  if (tab === "today") {
+    if (!nx) return { html: "That's every game played, " + esc(first) + ". Check the <b>Log</b> to see where you finished.", act:{ t:"Open the log", go:"log" } };
+    var e = mine(nx);
+    if (!e) return { html: esc(first) + ", <b>" + esc(nx.h) + " v " + esc(nx.a) + "</b> closes in <b>" + countdown(nx.ko) +
+        "</b>. Pop your score in the boxes and tap <b>Save my pick</b>. Not sure? I've written a match guide.", act:{ t:"✨ Open wi's guide", guide:nx.id } };
+    return { html: "You're in: <b>" + esc(nx.h) + " " + e.hs + " – " + e.as + " " + esc(nx.a) + "</b>. You can change it until kick-off" +
+        (todo.length ? ", and <b>" + todo.length + " more game" + (todo.length===1?"":"s") + "</b> still need" + (todo.length===1?"s":"") + " your pick." : ". You're all caught up 🙌"),
+      act: todo.length ? { t:"Pick the rest", go:"predict" } : { t:"✨ Read the guide", guide:nx.id } };
+  }
+  if (tab === "predict") {
+    if (!open.length) return { html: "Nothing open to pick right now. New games land here as soon as they're added.", act:null };
+    if (!todo.length) return { html: "All <b>" + open.length + "</b> open games picked — nice. Tweak any of them until kick-off.", act:null };
+    return { html: "<b>" + todo.length + " of " + open.length + "</b> open games still need your pick. Save them one at a time, or fill them all and tap <b>Save all</b> at the bottom. Each card has my guide if you want a steer.", act:null };
+  }
+  if (tab === "log") {
+    var t = table(), me = t.filter(function(x){ return key(x.name) === key(myName); })[0];
+    if (!me) return { html: "You're not on the log yet — it starts counting once one of your picks has a result.", act: nx ? { t:"Make a pick", go:"today" } : null };
+    var lead = t[0];
+    if (me.rank === 1) return { html: "You're <b>top of the log</b> with <b>" + me.pts + "</b> points, " + esc(first) + ". Everyone's chasing you now 🏆", act:null };
+    var gap = lead.pts - me.pts;
+    return { html: "You're <b>" + ordinal(me.rank) + " of " + t.length + "</b> on <b>" + me.pts + "</b> points — " + gap + " behind " + esc(lead.name.split(" ")[0]) +
+        ". An exact score is worth <b>10</b>, so one sharp call " + (gap <= 12 ? "puts you right back in it." : "starts the climb."), act: nx ? { t:"Pick the next game", go:"today" } : null };
+  }
+  if (tab === "results") return { html: "Every finished game, with who scored what. Results go in once the organiser enters the final score.", act:null };
+  return null;
+}
+function ordinal(n){ var s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
+
+var wiLast = "", wiTimer = null;
+function renderWi(){
+  var el = document.getElementById("wi-say");
+  var msg = wiMessage();
+  if (!msg) { el.innerHTML = ""; wiLast = ""; return; }
+  var sig = msg.html + "|" + (msg.act ? msg.act.t : "");
+  var actHtml = msg.act ? '<button class="wi-act" ' + (msg.act.guide ? 'data-guide="' + esc(msg.act.guide) + '"' : 'data-go="' + msg.act.go + '"') + '>' + msg.act.t + '</button>' : "";
+  if (sig === wiLast) return;           // same words: leave it, no re-typing every 30s
+  // Only a number moved (the countdown ticking over): swap the text in place
+  // rather than typing the whole message out again.
+  var t = el.querySelector(".wi-t");
+  if (t && !el.querySelector(".caret") && sig.replace(/\d+/g,"#") === wiLast.replace(/\d+/g,"#")) {
+    wiLast = sig; t.innerHTML = msg.html; return;
+  }
+  wiLast = sig;
+  el.innerHTML = '<div class="wi-say"><div class="wi-av"><img src="assets/wi-mark.png" alt="wi"></div>' +
+    '<div class="wi-bub"><span class="wi-n">wi · your guide</span><span class="wi-t"></span><span class="caret"></span><div class="wi-a" hidden>' + actHtml + '</div></div></div>';
+  typeInto(el.querySelector(".wi-t"), msg.html, function(){
+    var c = el.querySelector(".caret"); if (c) c.remove();
+    var a = el.querySelector(".wi-a"); if (a) a.hidden = false;
+  });
+}
+/* Types the message out a few characters at a time. Tags are written whole so
+   bold text never shows half an element. Reduced-motion users get it at once. */
+function typeInto(node, html, done){
+  clearInterval(wiTimer);
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) { node.innerHTML = html; done(); return; }
+  var parts = html.match(/<[^>]+>|&[a-z#0-9]+;|[\s\S]/g) || [], i = 0, out = "";
+  wiTimer = setInterval(function(){
+    for (var n = 0; n < 3 && i < parts.length; i++) { out += parts[i]; if (parts[i].charAt(0) !== "<") n++; }
+    node.innerHTML = out;
+    if (i >= parts.length) { clearInterval(wiTimer); done(); }
+  }, 16);
+}
+
+/* ---------- the sheet (guides and help) ---------- */
+function openSheet(html){
+  document.getElementById("sheet-body").innerHTML = html;
+  document.getElementById("sheet").scrollTop = 0;
+  document.getElementById("sheet-bg").classList.add("open");
+  document.getElementById("sheet").classList.add("open");
+  setTimeout(function(){
+    Array.prototype.forEach.call(document.querySelectorAll("#sheet .conf .bar i"), function(b){ b.style.width = b.getAttribute("data-w") + "%"; });
+    Array.prototype.forEach.call(document.querySelectorAll("#sheet [data-count]"), countUp);
+  }, 60);
+}
+function closeSheet(){
+  document.getElementById("sheet-bg").classList.remove("open");
+  document.getElementById("sheet").classList.remove("open");
+}
+function countUp(el){
+  var to = parseInt(el.getAttribute("data-count"),10) || 0, t0 = null;
+  function step(ts){
+    if (!t0) t0 = ts;
+    var k = Math.min(1, (ts - t0) / 900);
+    el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function guideBtnHtml(m){
+  var g = WI[m.id];
+  return '<button class="wi-guide-btn" data-guide="' + esc(m.id) + '"><img src="assets/wi-mark.png" alt="">' +
+    "wi's match guide" + (g ? ' · <span class="call">call ' + g.call[0] + '–' + g.call[1] + '</span>' : "") + '</button>';
+}
+function guideHtml(m){
+  var g = WI[m.id] || null;
+  var home = isBoks(m.h), opp = home ? m.a : m.h;
+  var form = boksForm().slice(-5).reverse();
+  var html = '<div class="g-top"><div class="k">wi\'s match guide</div>' +
+    '<div class="t">' + esc(m.hf) + ' ' + esc(m.h) + ' v ' + esc(m.a) + ' ' + esc(m.af) + '</div>' +
+    '<div class="w">' + esc(fmt(m.ko)) + (m.vn ? ' · ' + esc(m.vn) : '') +
+      (m.f ? ' · Full time ' + m.f[0] + '–' + m.f[1] : locked(m) ? ' · Kicked off' : m.ko ? ' · Kick-off in ' + countdown(m.ko) : '') + '</div></div>';
+  if (g) html += '<div class="g-sec"><div class="g-story">' + g.story + '</div></div>';
+  if (g) {
+    html += '<div class="g-sec"><div class="call-card">' +
+      '<div class="cw"><img src="assets/wi-mark.png" alt="">wi\'s call</div>' +
+      '<div class="call-sc"><span class="tm">' + esc(m.h) + '</span><span class="n" data-count="' + g.call[0] + '">0</span>' +
+      '<span class="d">–</span><span class="n" data-count="' + g.call[1] + '">0</span><span class="tm">' + esc(m.a) + '</span></div>' +
+      '<div class="call-why">' + esc(g.why) + '</div>' +
+      '<div class="conf"><div class="l"><span>Confidence</span><b>' + esc(g.confWord) + '</b></div><div class="bar"><i data-w="' + g.conf + '"></i></div></div>' +
+      '</div></div>';
+  }
+  if (m.f && g) {
+    var wp = points(m, { hs:g.call[0], as:g.call[1] });
+    html += '<div class="g-sec"><div class="tip">Final score <b>' + m.f[0] + '–' + m.f[1] + '</b>. wi called ' + g.call[0] + '–' + g.call[1] +
+      ' and would have scored <b>' + wp.pts + '</b> point' + (wp.pts===1?'':'s') + '.</div></div>';
+  }
+  if (locked(m) && Object.keys(m.p).length) {
+    var t = teamAverage(m);
+    html += '<div class="g-sec"><div class="g-h">The office call</div><div class="tip">Across <b>' + t.n + '</b> pick' + (t.n===1?'':'s') +
+      ', the office averaged <b>' + Math.round(t.hs) + '–' + Math.round(t.as) + '</b>' + (g ? ' against wi\'s ' + g.call[0] + '–' + g.call[1] : '') + '.</div></div>';
+  }
+  html += '<div class="g-sec"><div class="g-h">Bok form · last 5, newest first</div><div class="form">' +
+    form.map(function(r){
+      var k = r.us > r.them ? "W" : r.us < r.them ? "L" : "D";
+      return '<div class="fchip ' + k + '"><b>' + k + '</b>' + r.us + '–' + r.them + '<span>' + esc(short(r.o)) + '</span></div>';
+    }).join("") + '</div></div>';
+  if (g && g.h2h) {
+    html += '<div class="g-sec"><div class="g-h">Head to head · ' + g.h2h.played + ' Tests</div><div class="h2h">' +
+      '<div><b data-count="' + g.h2h.us + '">0</b>Boks</div><div><b data-count="' + g.h2h.draw + '">0</b>Draws</div>' +
+      '<div><b data-count="' + g.h2h.them + '">0</b>' + esc(opp) + '</div></div></div>';
+  }
+  if (g && g.facts) html += '<div class="g-sec"><div class="g-h">Worth knowing</div><ul class="g-list">' +
+    g.facts.map(function(f){ return '<li>' + f + '</li>'; }).join("") + '</ul></div>';
+  var yr = boksForm(), pf = 0, pa = 0;
+  yr.forEach(function(r){ pf += r.us; pa += r.them; });
+  html += '<div class="g-sec"><div class="g-h">How to score big</div><div class="tip">' +
+    'Get the winner right for <b>5</b>; land the winning margin within 3 for <b>7</b>; nail it exactly for <b>10</b>. ' +
+    'Each team\'s score within 3 adds <b>+2</b>, and the closest pick of the match gets another <b>+2</b>. ' +
+    'This year the Boks have averaged <b>' + Math.round(pf/yr.length) + '–' + Math.round(pa/yr.length) + '</b> over ' + yr.length + ' Tests — a sensible starting point.</div></div>';
+  html += '<p class="g-note">wi\'s guides are written from published results and are just for fun — the ball\'s still oval.</p>';
+  return html;
+}
+function helpHtml(){
+  var nx = nextOpen();
+  var qa = [
+    ["How do I make a pick?", "Type a score in each box and tap <b>Save my pick</b>. On the <b>Predict</b> tab you can fill several and tap <b>Save all</b>. You can change a pick any time until kick-off."],
+    ["How do points work?", "🎯 Exact score <b>10</b> · 📏 right winner with the margin within 3 <b>7</b> · ✅ right winner <b>5</b> · 🔢 each team's score within 3 <b>+2</b> · 🎖 closest pick of the match <b>+2</b>."],
+    ["Why can't I see other people's picks?", "They stay hidden until you've made yours, so nobody can copy the best-looking guess. Once a game kicks off, everything is open."],
+    ["I played on another phone — where are my points?", "Tap <b>Edit</b> next to your name, then <b>Switch player</b>, and choose your name from the list. Your points follow the name, not the phone."],
+    ["When do picks lock?", "At kick-off. Times on the cards are South African time."],
+    ["Who enters the results?", "The organiser, once the final whistle has gone. The log updates straight away for everyone."],
+    ["Is wi a real AI?", "wi is the CMS assistant. Here it reads the live picks and log to tell you what to do next, and its match guides are written from published results."]
+  ];
+  return '<div class="g-top"><div class="k">Ask wi</div><div class="t">How can I help?</div>' +
+    '<div class="w">Tap a question.</div></div>' +
+    (nx ? '<div class="g-sec"><button class="wi-guide-btn" data-guide="' + esc(nx.id) + '"><img src="assets/wi-mark.png" alt="">Guide to the next game: ' + esc(short(nx.h)) + ' v ' + esc(short(nx.a)) + '</button></div>' : '') +
+    '<div class="g-sec">' + qa.map(function(x){
+      return '<div class="faq"><button>' + x[0] + '</button><div class="a">' + x[1] + '</div></div>';
+    }).join("") + '</div>';
+}
+/* wi keeps score too, off the log: its calls marked with the same rules
+   (minus the closest-pick bonus, which is for people). */
+function wiScoreHtml(){
+  var done = matches.filter(function(m){ return m.f && WI[m.id]; });
+  if (!done.length) {
+    var nx = matches.filter(function(m){ return WI[m.id] && !m.f; })[0];
+    return nx ? '<div class="card"><div class="beat"><img src="assets/wi-mark.png" alt=""><div class="bt"><b>Beat wi.</b> wi has made its calls for the Springbok Tests — they\'ll be marked here with the same rules as yours.</div></div></div>' : "";
+  }
+  var pts = 0;
+  done.forEach(function(m){ var g = WI[m.id]; pts += points(m, { hs:g.call[0], as:g.call[1] }).pts; });
+  var beat = myName ? done.reduce(function(sum, m){
+    var e = m.p[key(myName)]; return sum + (e ? points(m, e).pts : 0);
+  }, 0) : null;
+  return '<div class="card"><div class="beat"><img src="assets/wi-mark.png" alt=""><div class="bt"><b>wi</b> · ' + done.length + ' game' + (done.length===1?'':'s') + ' marked' +
+    (beat !== null ? '<br>' + (beat > pts ? 'You\'re beating wi by <b>' + (beat-pts) + '</b> 💪' : beat < pts ? 'wi is ahead of you by <b>' + (pts-beat) + '</b>' : 'You and wi are level') + ' on these games.' : '') +
+    '</div><div class="bp">' + pts + '</div></div></div>';
+}
+document.addEventListener("click", function(ev){
+  var g = ev.target.closest("[data-guide]");
+  if (g) {
+    var m = matches.filter(function(x){ return x.id === g.getAttribute("data-guide"); })[0];
+    if (m) openSheet(guideHtml(m));
+    return;
+  }
+  var go = ev.target.closest("[data-go]");
+  if (go) { tab = go.getAttribute("data-go"); render(); window.scrollTo({ top:0, behavior:"smooth" }); return; }
+  var q = ev.target.closest(".faq button");
+  if (q) { q.parentNode.classList.toggle("open"); return; }
+});
+document.getElementById("wi-fab").onclick = function(){ openSheet(helpHtml()); };
+document.getElementById("sheet-bg").onclick = closeSheet;
+document.getElementById("sheet-x").onclick = closeSheet;
+document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeSheet(); });
 
 /* ---------- nav + share ---------- */
 Array.prototype.forEach.call(document.querySelectorAll("nav button"), function(b){
@@ -933,7 +1337,7 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
 }
 renderInstall();
 render();
-setInterval(function(){ if (!ready) return; counts(); if (tab === "today") renderToday(); }, 30000);
+setInterval(function(){ if (!ready) return; counts(); if (tab === "today") renderToday(); renderWi(); }, 30000);
 </script>
 </body>
 </html>

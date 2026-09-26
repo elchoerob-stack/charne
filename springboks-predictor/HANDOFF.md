@@ -1,5 +1,16 @@
 # Handover: splitting the Springboks Tour Predictor from the Bok family predictor
 
+## Status (26 Sep 2026)
+- DONE step 3: Firebase project `springboks-predictor` created (Firestore,
+  africa-south1), rules published and tested (reads OK, picks/results OK,
+  delete/create-untagged/fixture edits denied).
+- DONE step 4: 7 office games copied and verified ALL MATCH; the live app at
+  /charne/tour/ now uses the new project. Anyone who had the page open before
+  the switch may still write a pick to the OLD project until they reload —
+  re-run `migrate.py verify` and reconcile any missing picks before step 6.
+- TODO: steps 1-2 (Jacques creates the repo; push this folder; enable Pages),
+  step 5 (forward /charne/tour/), step 6 (clean old DB), step 7.
+
 For Claude (or Jacques) continuing on another machine. Written 25 Sep 2026.
 
 ## Why

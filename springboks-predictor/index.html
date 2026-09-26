@@ -347,15 +347,17 @@ import {
   collection, doc, onSnapshot, updateDoc, deleteField
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-/* Same Firebase project as the family predictor, but this app only ever reads
-   and writes matches tagged app:"cms" — the two never see each other's data. */
+/* This app's own Firebase project — nothing is shared with any other
+   predictor. Its rules allow reading games, adding picks (p) and results (f),
+   and nothing else: fixtures can't be edited or deleted from the page.
+   Games still carry app:"cms"; the filter below keeps working unchanged. */
 var app = initializeApp({
-  apiKey: "AIzaSyA2eY7QWAlVMg2zohWVHMWWBZSHK2lMtdE",
-  authDomain: "sa-predictions.firebaseapp.com",
-  projectId: "sa-predictions",
-  storageBucket: "sa-predictions.firebasestorage.app",
-  messagingSenderId: "198757663385",
-  appId: "1:198757663385:web:9cda195986f8a9bb532e08"
+  apiKey: "AIzaSyD-srs0i3Ib4g00LG2CSjoSki0etMA77TU",
+  authDomain: "springboks-predictor.firebaseapp.com",
+  projectId: "springboks-predictor",
+  storageBucket: "springboks-predictor.firebasestorage.app",
+  messagingSenderId: "438918567576",
+  appId: "1:438918567576:web:03d5d8d5831026fd8e22ed"
 });
 var db;
 try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }

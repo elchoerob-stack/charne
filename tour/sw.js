@@ -1,24 +1,15 @@
-// Cache the shell so the app opens instantly and survives a flaky signal.
-// Predictions themselves always come from Firestore, never from this cache.
-var CACHE = "tour-v3";
-var SHELL = ["./", "./index.html", "./manifest.webmanifest",
-  "./assets/ball-icon-192.png", "./assets/ball-icon-512.png", "./assets/wi-mark.png"];
-self.addEventListener("install", function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); }).then(function(){ return self.skipWaiting(); }));
-});
+// The app moved to https://elchoerob-stack.github.io/springboks-predictor/.
+// Phones that installed it here still have the old service worker and its
+// cached copy of the app, which would keep opening the old version. This
+// replacement clears that cache, unregisters itself and reloads open tabs,
+// which then land on the forwarding page.
+self.addEventListener("install", function(){ self.skipWaiting(); });
 self.addEventListener("activate", function(e){
-  e.waitUntil(caches.keys().then(function(keys){
-    return Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
-  }).then(function(){ return self.clients.claim(); }));
-});
-self.addEventListener("fetch", function(e){
-  var url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin) return;   // never touch Firestore
-  e.respondWith(
-    fetch(e.request).then(function(res){
-      var copy = res.clone();
-      caches.open(CACHE).then(function(c){ c.put(e.request, copy); }).catch(function(){});
-      return res;
-    }).catch(function(){ return caches.match(e.request).then(function(r){ return r || caches.match("./index.html"); }); })
+  e.waitUntil(
+    caches.keys()
+      .then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); })
+      .then(function(){ return self.registration.unregister(); })
+      .then(function(){ return self.clients.matchAll({ type:"window" }); })
+      .then(function(list){ list.forEach(function(c){ c.navigate(c.url); }); })
   );
 });

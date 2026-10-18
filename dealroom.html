@@ -580,7 +580,7 @@ const ICON = {
 /* ══ People ═════════════════════════════════════════════════════════ */
 const P = {
   charne:    { name:"Charné Snyman",   ini:"CS", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0114", email:"charne@rbbrand.co.za" },
-  riaan:     { name:"Riaan Brand",     ini:"RB", kind:"Principal",   role:"principal",   org:"RB Brand Real Estate", mobile:"083 555 0100", email:"riaan@rbbrand.co.za" },
+  riaan:     { name:"Ruan Brand",      ini:"RB", kind:"Principal",   role:"principal",   org:"RB Brand Real Estate", mobile:"083 555 0100", email:"ruan@rbbrand.co.za" },
   rassie:    { name:"Rassie Venter",   ini:"RV", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0119", email:"rassie@rbbrand.co.za" },
   lerato:    { name:"Lerato Dube",     ini:"LD", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"071 555 0127", email:"lerato@rbbrand.co.za" },
   pieter:    { name:"Pieter Naudé",    ini:"PN", kind:"Agent",       role:"agent",       org:"RB Brand Real Estate", mobile:"082 555 0143", email:"pieter@rbbrand.co.za" },
@@ -1046,7 +1046,7 @@ const SEED_RECEIPTS = () => {
 };
 
 /* ══ State ══════════════════════════════════════════════════════════ */
-const KEY = "rb_dealroom_v4";
+const KEY = (window.RB_CONFIG && window.RB_CONFIG.storeKey) || "rb_dealroom_v4";
 let S;
 const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{}, prefill:null, staff:null, tour:{}, welcomed:{}, invited:{},
   card:null, send:null, form:null, signing:null, rev:{}, money:{}, receipts:SEED_RECEIPTS(), boardFilter:null, boardId:"pipeline",
@@ -5005,6 +5005,18 @@ async function syncSignIn(){
   }
 }
 
+/* ?as=riaan&view=agency — hand someone the demo already open on the screen
+   you want them to see. Ignored the moment a real project is configured,
+   where identity is Google's to decide and an admin's to approve. */
+if (!HAS_PROJECT()) try {
+  const q = new URLSearchParams(location.search);
+  const who = q.get("as"), view = q.get("view"), deal = q.get("deal"), listing = q.get("listing");
+  if (who && P[who]) S.me = who;
+  if (deal && S.deals[deal]){ S.deal = deal; S.listing = null; }
+  if (listing && S.listings[listing]){ S.listing = listing; S.deal = null; }
+  if (view && RENDER[view]) S.view = view;
+} catch {}
+
 if (HAS_PROJECT()) sync.gate = "checking";
 render();
 startSync();
@@ -5040,7 +5052,8 @@ gateWatchdog();
     const ttl = document.createElement("meta"); ttl.name = "apple-mobile-web-app-title"; ttl.content = "Deal Room"; head.appendChild(ttl);
   } catch {}
 
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  const noPWA = !!(window.RB_CONFIG && window.RB_CONFIG.demo);
+  if (!noPWA && "serviceWorker" in navigator && location.protocol.startsWith("http")){
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   }
 
@@ -5050,8 +5063,8 @@ gateWatchdog();
     if (go && ["today", "board", "listings", "portfolio"].includes(go)){ S.view = go; S.deal = null; S.listing = null; render(); }
   } catch {}
 
-  let deferred = null, dismissed = false;
-  try { dismissed = localStorage.getItem("rb_install_dismissed") === "1"; } catch {}
+  let deferred = null, dismissed = noPWA;
+  try { dismissed = dismissed || localStorage.getItem("rb_install_dismissed") === "1"; } catch {}
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   function banner(html){
     document.querySelectorAll(".install").forEach(e => e.remove());
@@ -5067,7 +5080,7 @@ gateWatchdog();
       <button class="mx" data-act="install-no" aria-label="Not now" style="color:rgba(255,255,255,.6)">×</button>`);
   });
   const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (iOS && !standalone && !dismissed && location.protocol.startsWith("http")){
+  if (iOS && !standalone && !dismissed && !noPWA && location.protocol.startsWith("http")){
     setTimeout(() => banner(`<span class="ic">${ICON.home}</span>
       <span style="flex:1"><b>Put the Deal Room on your phone</b><span>Tap Share, then “Add to Home Screen”.</span></span>
       <button class="mx" data-act="install-no" aria-label="Not now" style="color:rgba(255,255,255,.6)">×</button>`), 2500);

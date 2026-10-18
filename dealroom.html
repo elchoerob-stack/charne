@@ -1739,7 +1739,7 @@ function vDash(){
             <div class="act-t"><b>${esc(e.act)}</b><span>${P[e.who].name.split(" ")[0]} · ${ago(e.ts)}</span></div></div>`).join("")}
           <div class="comp-r" style="margin-top:12px">
             <button class="btn btn-s" data-act="view" data-v="log">Open the full audit log</button>
-            ${P[S.me] && (P[S.me].role === "agent" || isPrincipal(S.me)) ? `<button class="btn btn-s" data-act="export" data-s="deal">${ICON.up} Export this file</button>` : ""}
+            ${canDownload() && P[S.me] && (P[S.me].role === "agent" || isPrincipal(S.me)) ? `<button class="btn btn-s" data-act="export" data-s="deal">${ICON.up} Export this file</button>` : ""}
           </div>
         </div>
       </div>
@@ -1963,7 +1963,7 @@ function vHouse(){
             ${SOURCES.map(x => `<option value="${esc(x)}" ${l.source === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>
         <button class="btn btn-s" data-act="mandatesave" style="align-self:flex-end">Save</button>
         <span style="flex:1"></span>
-        <button class="btn btn-s" data-act="export" data-s="listing" style="align-self:flex-end">${ICON.up} Export this house</button>
+        ${canDownload() ? `<button class="btn btn-s" data-act="export" data-s="listing" style="align-self:flex-end">${ICON.up} Export this house</button>` : ""}
       </div></div>
 
     <div class="card">

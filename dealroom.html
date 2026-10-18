@@ -475,6 +475,8 @@ body.auth .shell{grid-template-columns:minmax(0,1fr);padding:0;max-width:none;ga
 .authcard .waiting{background:var(--wait-bg);color:var(--wait);border-radius:10px;padding:13px 14px;font-size:12.5px;line-height:1.55;text-align:left;margin-bottom:16px}
 .authcard .err{background:var(--stop-bg);color:var(--stop);border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.5;text-align:left;margin-bottom:14px;word-break:break-word}
 .authcard .who{font-size:12.5px;color:var(--t2);margin-bottom:16px}
+.authcard .link{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  font-size:12px;color:var(--t1);word-break:break-all;text-align:left;margin-bottom:10px;user-select:all}
 .spin{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--gold);margin:6px auto 0;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
@@ -726,63 +728,63 @@ const ALL_TASKS = STAGES.flatMap(s => s.tasks);
 
 /* ══ The agency's live files ════════════════════════════════════════ */
 const SEED_DEALS = [
-  { id:"d1", ref:"PTA-2501216", file:"VZK/T/4471", address:"34 Heron Street", area:"Olympus AH", city:"Pretoria East",
+  { id:"d1", ref:"PTA-2501216", file:"VZK/T/4471", source:"Show day", address:"34 Heron Street", area:"Olympus AH", city:"Pretoria East",
     price:2990000, deposit:299000, beds:3, baths:2, garages:2, erf:481, type:"House",
     agent:"charne", buyer:"thabo", seller:"marietjie", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/olympus-ah-house-for-sale-2501216",
     otpAgo:46, bondIn:12, stage:1, extra:["t1b","t1d","t1f"], lastAct:2,
     extras:[["natasha","copurchaser","joined"],["wayne","originator","joined"]], hero:"linear-gradient(145deg,#0C2E18,#2E8B57)" },
-  { id:"d2", ref:"PTA-2502487", file:"VZK/T/4390", address:"12 Willow Grove", area:"Equestria", city:"Pretoria East",
+  { id:"d2", ref:"PTA-2502487", file:"VZK/T/4390", source:"Property24", address:"12 Willow Grove", area:"Equestria", city:"Pretoria East",
     price:2099900, deposit:210000, beds:3, baths:2, garages:2, erf:null, type:"Townhouse",
     agent:"charne", buyer:"johan", seller:"ayesha", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2502487",
     otpAgo:74, bondIn:null, stage:3, extra:["t3a","t3c"], lastAct:3, hero:"linear-gradient(145deg,#2B3550,#4A5878)" },
-  { id:"d3", ref:"HBP-2487416", file:"KB/T/2210", address:"7 Dam View Drive", area:"Kosmos", city:"Hartbeespoort",
+  { id:"d3", ref:"HBP-2487416", file:"KB/T/2210", source:"Referral — past client", address:"7 Dam View Drive", area:"Kosmos", city:"Hartbeespoort",
     price:3690000, deposit:500000, beds:4, baths:2, garages:2, erf:1085, type:"House",
     agent:"charne", buyer:"sipho", seller:"linda", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
     listing:"https://www.rbbrandrealestate.co.za/kosmos-house-for-sale-2487416",
     otpAgo:118, bondIn:null, stage:5, extra:["t5a","t5b"], lastAct:5, hero:"linear-gradient(145deg,#0F2840,#1E5080)" },
-  { id:"d4", ref:"CEN-2495173", file:"KB/T/2178", address:"22 Wierda Crest", area:"Rooihuiskraal North", city:"Centurion",
+  { id:"d4", ref:"CEN-2495173", file:"KB/T/2178", source:"Board / walk-in", address:"22 Wierda Crest", area:"Rooihuiskraal North", city:"Centurion",
     price:1295000, deposit:130000, beds:2, baths:1, garages:2, erf:null, type:"Townhouse",
     agent:"lerato", buyer:"dawid", seller:"nomsa", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
     listing:"https://www.rbbrandrealestate.co.za/rooihuiskraal-north-townhouse-for-sale-2495173",
     otpAgo:141, bondIn:null, stage:6, extra:["t6a","t6b"], lastAct:4, hero:"linear-gradient(145deg,#0A2E2B,#1A6B64)" },
-  { id:"d5", ref:"PTA-2475568", file:"VZK/T/4455", address:"Stand 118, The Hills", area:"The Hills Estate", city:"Pretoria East",
+  { id:"d5", ref:"PTA-2475568", file:"VZK/T/4455", source:"Referral — another agent", address:"Stand 118, The Hills", area:"The Hills Estate", city:"Pretoria East",
     price:2000000, deposit:200000, beds:0, baths:0, garages:0, erf:940, type:"Vacant Land",
     agent:"rassie", buyer:"gerhard", seller:"susan", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475568",
     otpAgo:39, bondIn:-3, stage:2, extra:[], lastAct:17, hero:"linear-gradient(145deg,#0F3018,#1A6030)" },
-  { id:"d6", ref:"PTA-2487360", file:"KB/T/2195", address:"Unit 14, Glevera", area:"Rietvalleirand", city:"Pretoria East",
+  { id:"d6", ref:"PTA-2487360", file:"KB/T/2195", source:"Property24", address:"Unit 14, Glevera", area:"Rietvalleirand", city:"Pretoria East",
     price:1150000, deposit:115000, beds:1, baths:1, garages:0, erf:null, type:"Apartment",
     agent:"pieter", buyer:"willem", seller:"elize", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
     listing:"https://www.rbbrandrealestate.co.za/rietvalleirand-apartment-for-sale-2487360",
     otpAgo:96, bondIn:null, stage:4, extra:["t4a"], lastAct:11, hero:"linear-gradient(145deg,#1A3530,#3A7060)" },
-  { id:"d7", ref:"PTA-2489107", file:"VZK/T/4301", address:"5 Acacia Close", area:"Equestria", city:"Pretoria East",
+  { id:"d7", ref:"PTA-2489107", file:"VZK/T/4301", source:"Referral — past client", address:"5 Acacia Close", area:"Equestria", city:"Pretoria East",
     price:1250000, deposit:125000, beds:2, baths:2, garages:2, erf:null, type:"Townhouse",
     agent:"charne", buyer:"karin", seller:"andre", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2489107",
     otpAgo:132, bondIn:null, stage:8, extra:[], lastAct:9, hero:"linear-gradient(145deg,#2E1A10,#6B4028)" },
-  { id:"d8", ref:"PTA-2500406", file:"VZK/T/4372", address:"9 Rooibos Lane", area:"Equestria", city:"Pretoria East",
+  { id:"d8", ref:"PTA-2500406", file:"VZK/T/4372", source:"Canvassing — Property24", address:"9 Rooibos Lane", area:"Equestria", city:"Pretoria East",
     price:1220000, deposit:122000, beds:2, baths:1, garages:1, erf:null, type:"Townhouse",
     agent:"charne", buyer:"hendrik", seller:"annelie", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500406",
     otpAgo:88, bondIn:null, stage:4, extra:["t4a","t4b"], lastAct:6, hero:"linear-gradient(145deg,#5A2D0C,#B86830)" },
-  { id:"d9", ref:"PTA-2500347", file:"KB/T/2203", address:"3 Aloe Corner", area:"Equestria", city:"Pretoria East",
+  { id:"d9", ref:"PTA-2500347", file:"KB/T/2203", source:"Private Property", address:"3 Aloe Corner", area:"Equestria", city:"Pretoria East",
     price:860000, deposit:86000, beds:2, baths:1, garages:1, erf:null, type:"Townhouse",
     agent:"pieter", buyer:"zanele", seller:"kobus", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
     listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2500347",
     otpAgo:79, bondIn:null, stage:4, extra:["t4a"], lastAct:19, hero:"linear-gradient(145deg,#1A2E5A,#3A5A9A)" },
-  { id:"d10", ref:"PTA-2496042", file:"VZK/T/4418", address:"27 Fiscal Street", area:"Equestria", city:"Pretoria East",
+  { id:"d10", ref:"PTA-2496042", file:"VZK/T/4418", source:"Show day", address:"27 Fiscal Street", area:"Equestria", city:"Pretoria East",
     price:1450000, deposit:145000, beds:2, baths:2, garages:0, erf:null, type:"Townhouse",
     agent:"lerato", buyer:"fatima", seller:"deon", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/equestria-townhouse-for-sale-2496042",
     otpAgo:63, bondIn:null, stage:3, extra:["t3a","t3b","t3c"], lastAct:2, hero:"linear-gradient(145deg,#3A1035,#7B3068)" },
-  { id:"d11", ref:"PTA-2475037", file:"VZK/T/4344", address:"Stand 96, The Hills", area:"The Hills Estate", city:"Pretoria East",
+  { id:"d11", ref:"PTA-2475037", file:"VZK/T/4344", source:"Repeat client", address:"Stand 96, The Hills", area:"The Hills Estate", city:"Pretoria East",
     price:2200000, deposit:220000, beds:0, baths:0, garages:0, erf:863, type:"Vacant Land",
     agent:"charne", buyer:"lindiwe", seller:"marius", conveyancer:"elmarie", firm:"Van Zyl Kruger Inc., Menlyn",
     listing:"https://www.rbbrandrealestate.co.za/the-hills-game-reserve-estate-vacant-land-residential-for-sale-2475037",
     otpAgo:102, bondIn:null, stage:4, extra:["t4a","t4b","t4c"], lastAct:8, hero:"linear-gradient(145deg,#1A2A10,#3A5A20)" },
-  { id:"d12", ref:"PTA-2479682", file:"KB/T/2231", address:"41 Simon Vermooten Road", area:"Equestria", city:"Pretoria East",
+  { id:"d12", ref:"PTA-2479682", file:"KB/T/2231", source:"Referral — another agent", address:"41 Simon Vermooten Road", area:"Equestria", city:"Pretoria East",
     price:2800000, deposit:280000, beds:3, baths:3, garages:2, erf:null, type:"House",
     agent:"rassie", buyer:"chantal", seller:"themba", conveyancer:"hannes", firm:"Kruger & Botha, Centurion",
     listing:"https://www.rbbrandrealestate.co.za/equestria-house-for-sale-2479682",
@@ -890,7 +892,7 @@ const SEED_LISTINGS = [
     price:1895000, type:"House", beds:3, baths:2, garages:2, erf:702, agent:"charne", seller:"riana", listedAgo:23,
     desc:"North-facing family home in a quiet cul-de-sac. Open-plan living onto a covered patio and built-in braai, established garden, solar geyser and a double garage with direct access.",
     hero:"linear-gradient(145deg,#0C2E18,#2E8B57)", listing:"https://www.rbbrandrealestate.co.za/",
-    shared:["gallery","floor","rates","erf"],
+    source:"Canvassing — Property24", shared:["gallery","floor","rates","erf"],
     prospects:[["sizwe","joined",12,"copurchaser"],["elandri","joined",6,null],["ruan","invited",2,null]],
     viewings:[[-9,"sizwe"],[-4,"elandri"],[3,null],[6,null]],
     offers:[["sizwe",1830000,183000,"submitted",2,"Subject to bond approval of R1 647 000 within 21 days. Occupation on registration."]] },
@@ -898,24 +900,40 @@ const SEED_LISTINGS = [
     price:1090000, type:"Townhouse", beds:2, baths:1, garages:1, erf:null, agent:"charne", seller:"douglas", listedAgo:11,
     desc:"Low-maintenance ground-floor unit in a secure complex with a communal pool. Ideal first purchase or rental investment, walking distance from Equestria shops.",
     hero:"linear-gradient(145deg,#5A2D0C,#B86830)", listing:"https://www.rbbrandrealestate.co.za/",
-    shared:["gallery","floor","levy"],
+    source:"Board / walk-in", shared:["gallery","floor","levy"],
     prospects:[["precious","joined",4,null]],
     viewings:[[-2,"precious"],[4,null]], offers:[] },
   { id:"l3", ref:"RB-2503240", address:"15 Duiker Street", area:"Garsfontein", city:"Pretoria East",
     price:3150000, type:"House", beds:4, baths:3, garages:3, erf:1240, agent:"charne", seller:"yolanda", listedAgo:5,
     desc:"Substantial family home on 1 240m², flatlet with its own entrance, borehole and full solar backup. Walking distance from Garsfontein Primary.",
     hero:"linear-gradient(145deg,#0F2840,#1E5080)", listing:"https://www.rbbrandrealestate.co.za/",
-    shared:["gallery"],
+    source:"Referral — past client", shared:["gallery"],
     prospects:[["jaco","invited",1,null]], viewings:[[2,null],[5,null]], offers:[] },
+  { id:"l5", ref:"RB-2489107", address:"5 Acacia Close", area:"Equestria", city:"Pretoria East",
+    price:1250000, type:"Townhouse", beds:2, baths:2, garages:2, erf:null, agent:"charne", seller:"andre", listedAgo:168,
+    desc:"Secure two-bedroom unit with a private courtyard, a short walk from Equestria shops.",
+    hero:"linear-gradient(145deg,#2E1A10,#6B4028)", listing:"https://www.rbbrandrealestate.co.za/",
+    source:"Referral — past client", shared:["gallery","floor","rates"],
+    prospects:[["karin","joined",150,null]], viewings:[[-146,"karin"]],
+    offers:[["karin",1250000,125000,"accepted",144,"Subject to bond approval within 21 days."]],
+    deal:"d7", state:"sold" },
+  { id:"l6", ref:"RB-2502487", address:"12 Willow Grove", area:"Equestria", city:"Pretoria East",
+    price:2099900, type:"Townhouse", beds:3, baths:2, garages:2, erf:null, agent:"charne", seller:"ayesha", listedAgo:104,
+    desc:"Three-bedroom duplex in a managed complex, north-facing patio and a double garage.",
+    hero:"linear-gradient(145deg,#2B3550,#4A5878)", listing:"https://www.rbbrandrealestate.co.za/",
+    source:"Property24", shared:["gallery","floor","levy"],
+    prospects:[["johan","joined",88,null]], viewings:[[-84,"johan"]],
+    offers:[["johan",2099900,210000,"accepted",76,"Cash purchase, no bond condition."]],
+    deal:"d2", state:"under_offer" },
   { id:"l4", ref:"RB-2450016", address:"3 Melkbos Street", area:"Wapadrand", city:"Pretoria East",
     price:2450000, type:"House", beds:3, baths:2, garages:2, erf:880, agent:"lerato", seller:"frik", listedAgo:34,
     desc:"Ridge-facing home with mountain views, open-plan kitchen and a self-contained cottage let on a month-to-month basis.",
     hero:"linear-gradient(145deg,#1A2A10,#3A5A20)", listing:"https://www.rbbrandrealestate.co.za/",
-    shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
+    source:"Show day", shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
 ];
 function buildListing(L){
-  const st = { demo:true, meta:{ ...L }, status:"active", dealId:null, pack:{}, log:[], visitors:[],
-    mandateEnds:iso(d0(90 - L.listedAgo)), source:L.source || "",
+  const st = { demo:true, meta:{ ...L }, status:L.state || "active", dealId:L.deal || null, pack:{}, log:[], visitors:[],
+    mandateEnds:iso(d0(90 - L.listedAgo)), source:L.source || "", fromCard:PROSPECT_WON[L.id] || null,
     prospects:L.prospects.map(([person, status, agoD, preset]) => ({ person, status, preset:preset || null,
       ts:iso(d0(-agoD)), token:token() })),
     viewings:L.viewings.map(([inD, person], i) => { const w = d0(inD);       // real show slots, not whatever o'clock it is now
@@ -935,6 +953,69 @@ function buildListing(L){
   return st;
 }
 
+/* ══ The prospecting board ══════════════════════════════════════════
+   What an agent's canvassing actually looks like once it is here: a
+   board of houses she is working on, each with the owner and their
+   numbers, the calls she has made, and — on the ones she has won — the
+   link to the house it became. This is the shape a Trello import
+   arrives in, seeded so the agency screen has a real chain to count
+   rather than an empty first row. ════════════════════════════════ */
+const PROSPECT_LISTS = [
+  { id:"p_call",  name:"To call" },
+  { id:"p_back",  name:"Called — follow up" },
+  { id:"p_seen",  name:"Appointment set" },
+  { id:"p_their", name:"Under another mandate" },
+  { id:"p_won",   name:"Mandate won" },
+  { id:"p_lost",  name:"Lost" },
+];
+/* [list, title, suburb, erf, owner, number, notes, agent, dueIn, mandateEndsIn, becameListing] */
+const SEED_PROSPECTS = [
+  ["p_won", "8 Kiepersol Avenue", "Faerie Glen", "702", "Riana Beukes", "0825550301",
+   "14/02 Phoned — selling to be closer to the grandchildren in Centurion.\n21/02 Walked the house. Wants R1.95m, I said R1.895m.\n02/03 Signed a sole mandate, 90 days.", "charne", null, null, "l1"],
+  ["p_won", "Unit 7, Silver Oaks", "Equestria", null, "Douglas Whitfield", "0835550302",
+   "26/02 Tenant moving out end of March, owner wants it listed before then.\n05/03 Mandate signed — he is keeping the stove.", "charne", null, null, "l2"],
+  ["p_won", "15 Duiker Street", "Garsfontein", "1240", "Yolanda Mbeki", "0715550303",
+   "08/03 Referral from the Kiepersol seller.\n12/03 Met at the house. Borehole and full solar — worth the asking price.\n13/03 Signed.", "charne", null, null, "l3"],
+  ["p_won", "3 Melkbos Street", "Wapadrand", "880", "Frik van Wyk", "0825550304",
+   "19/02 Cottage is let month to month, he will give notice on offer.\n24/02 Mandate signed at R2.45m.", "lerato", null, null, "l4"],
+  ["p_won", "5 Acacia Close", "Equestria", null, "André Venter", "0815550182",
+   "Referral from a client I sold for in 2023.\nMandate signed, sold to Karin Smit within the fortnight. Registered.", "charne", null, null, "l5"],
+  ["p_won", "12 Willow Grove", "Equestria", null, "Ayesha Patel", "0735550155",
+   "Property24 enquiry on the Acacia Close listing — she was the neighbour and asked me to value hers too.\nMandate signed. Cash offer accepted, now in transfer.", "charne", null, null, "l6"],
+  ["p_seen", "41 Protea Road", "Faerie Glen", "556", "Hester Lombard", "0825550411",
+   "Valuation booked Thursday 15:00. She has had two other agents through — be ready on the price.", "charne", 3, null, null],
+  ["p_seen", "6 Wildevy Close", "Garsfontein", "1102", "Thys Pretorius", "0715550412",
+   "Showing the comparatives on Saturday morning. Wants to know what Duiker Street went for.", "rassie", 5, null, null],
+  ["p_back", "22 Sering Avenue", "Equestria", null, "Neo Mahlangu", "0765550413",
+   "11/03 Not ready — waiting on the bond approval for the new house.\n18/03 Ring back after month end.", "charne", 9, null, null],
+  ["p_back", "Unit 3, Olienhout Park", "Die Wilgers", null, "Marelize du Toit", "0845550414",
+   "Left a message twice. Try the landline in the mornings.", "rassie", 2, null, null],
+  ["p_back", "9 Kameeldoring Street", "Wapadrand", "914", "Pieter Grobler", "0835550415",
+   "Divorce — both names on the deed, needs them to agree first. Patient follow-up.", "lerato", 14, null, null],
+  ["p_their", "17 Boekenhout Street", "Faerie Glen", "688", "Sarel Jacobs", "0825550416",
+   "On with another agency since January. He was not happy about the show days.", "charne", null, 11, null],
+  ["p_their", "4 Rooiels Avenue", "Garsfontein", "1310", "Ntombi Zulu", "0715550417",
+   "Sole mandate elsewhere, lapses soon. She asked me to call the week before.", "rassie", null, 24, null],
+  ["p_call", "12 Swartbas Street", "Equestria", null, "", "",
+   "Board went up and came down again in six weeks — worth a knock.", "charne", 1, null, null],
+  ["p_call", "30 Taaibos Road", "Wapadrand", "733", "Johan Lategan", "0835550418",
+   "Neighbour mentioned they are emigrating in the new year.", "lerato", 4, null, null],
+  ["p_lost", "7 Kremetart Close", "Die Wilgers", null, "Annemarie Klopper", "0845550419",
+   "Listed with the agency on the corner. Their fee was lower. Try again in 90 days.", "charne", null, null, null],
+];
+const PROSPECT_WON = Object.fromEntries(SEED_PROSPECTS
+  .map(([, , , , , , , , , , became], i) => [became, "p" + (i + 1)]).filter(([k]) => k));
+const SEED_PROSPECT_CARDS = SEED_PROSPECTS.map(([list, title, suburb, erf, owner, phone, notes, agent, dueIn, mandIn, became], i) => ({
+  id:"p" + (i + 1), board:"prospect", list, title, desc:notes,
+  lead:{ erf, address:title, suburb, url:"", mandateEnds:mandIn === null ? null : iso(d0(mandIn)),
+    owners:owner ? [{ name:owner, phones:[{ n:phone, note:"" }], email:"" }] : [], raw:notes },
+  labels:list === "p_won" ? [{ name:"Mandate", col:"#1A6B3A" }] : list === "p_their" ? [{ name:"Theirs", col:"#8A6100" }] : [],
+  members:[agent], due:dueIn === null ? null : iso(d0(dueIn)), done:false, checklist:[], pos:i + 1,
+  files:[], comments:[], link:became ? { listing:became } : null,
+  activity:[{ who:agent, ts:iso(d0(-(18 - i))), what:"added this house to the board" },
+    ...(became ? [{ who:agent, ts:iso(d0(-(10 - i))), what:"won the mandate — now a house on the Pipeline" }] : [])],
+}));
+
 const SEED_CARDS = [
   { id:"c1", list:"market", title:"Order new photos for 15 Duiker Street", desc:"The current set was shot in winter — the garden looks bare. Book Andries for a morning shoot.",
     labels:["admin"], members:["charne"], dueIn:3, pos:1, checklist:[["Confirm with the owner", true], ["Book the photographer", false], ["Load the new set", false]] },
@@ -947,15 +1028,20 @@ const SEED_CARDS = [
 ];
 
 const SEED_RECEIPTS = () => {
-  const past = [[10, "PTA-2489107", "5 Acacia Close", 27400, "Referral — past client"],
-    [8, "PTA-2471900", "16 Sering Street", 41250, "Property24"],
-    [7, "PTA-2468221", "4 Karee Crescent", 33800, "Board / walk-in"],
-    [5, "PTA-2462014", "Unit 9, Bergsig", 19600, "Referral — past client"],
-    [4, "PTA-2455310", "31 Wag-'n-Bietjie", 52900, "Private Property"],
-    [2, "PTA-2448702", "7 Olienhout Avenue", 38150, "Show day"],
-    [1, "PTA-2441166", "22 Kameeldoring", 44300, "Repeat client"]];
-  return past.map(([ago2, ref, address, amount, source], i) => ({
-    id:"seed" + i, demo:true, who:"charne", deal:"past" + i, ref, address, amount, source,
+  const past = [[10, "PTA-2489107", "5 Acacia Close", 27400, "Referral — past client", "charne"],
+    [9, "PTA-2472881", "2 Rotsvy Street", 36900, "Show day", "rassie"],
+    [8, "PTA-2471900", "16 Sering Street", 41250, "Property24", "charne"],
+    [7, "PTA-2468221", "4 Karee Crescent", 33800, "Board / walk-in", "charne"],
+    [7, "PTA-2466104", "Unit 2, Mispel Hof", 21400, "Property24", "lerato"],
+    [5, "PTA-2462014", "Unit 9, Bergsig", 19600, "Referral — past client", "charne"],
+    [5, "PTA-2461330", "88 Vaalbos Road", 48700, "Referral — another agent", "rassie"],
+    [4, "PTA-2455310", "31 Wag-'n-Bietjie", 52900, "Private Property", "charne"],
+    [3, "PTA-2451208", "5 Swartstam Lane", 29850, "Canvassing — Property24", "lerato"],
+    [2, "PTA-2448702", "7 Olienhout Avenue", 38150, "Show day", "charne"],
+    [2, "PTA-2447015", "14 Doringboom Street", 31600, "Repeat client", "rassie"],
+    [1, "PTA-2441166", "22 Kameeldoring", 44300, "Repeat client", "charne"]];
+  return past.map(([ago2, ref, address, amount, source, who], i) => ({
+    id:"seed" + i, demo:true, who, deal:"past" + i, ref, address, amount, source,
     ts:iso(d0(-(ago2 * 30 + 4))) }));
 };
 
@@ -964,9 +1050,10 @@ const KEY = "rb_dealroom_v4";
 let S;
 const fresh = () => ({ me:"charne", view:"today", deal:null, listing:null, agentFilter:null, people:{}, prefill:null, staff:null, tour:{}, welcomed:{}, invited:{},
   card:null, send:null, form:null, signing:null, rev:{}, money:{}, receipts:SEED_RECEIPTS(), boardFilter:null, boardId:"pipeline",
-  boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] }],
-  board:{ cards:SEED_CARDS.map(c => ({ ...c, demo:true, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
-    checklist:c.checklist.map(x => [...x]) })), next:9 },
+  boards:[{ id:"pipeline", name:"Pipeline", kind:"pipeline", owner:"charne", shared:["rassie"] },
+    { id:"prospect", name:"Prospecting", kind:"board", owner:"charne", shared:["rassie", "lerato"], lists:PROSPECT_LISTS }],
+  board:{ cards:[...SEED_CARDS.map(c => ({ ...c, demo:true, board:"pipeline", due:c.dueIn === undefined ? null : iso(d0(c.dueIn)),
+    checklist:c.checklist.map(x => [...x]) })), ...SEED_PROSPECT_CARDS.map(c => ({ ...c, demo:true }))], next:9 },
   deals:Object.fromEntries(SEED_DEALS.map(D => [D.id, buildDeal(D)])),
   listings:Object.fromEntries(SEED_LISTINGS.map(L => [L.id, buildListing(L)])), nextRef:2600001 });
 function load(){ try { const r = localStorage.getItem(KEY); S = r ? JSON.parse(r) : fresh(); } catch { S = fresh(); }
@@ -1084,8 +1171,8 @@ function navItems(){
     if (canDocs()) v.push(DEAL_VIEWS_DOCS);
     return v; }
   const v = [], r = me().role;
-  if (r === "admin") v.push({ id:"staff", label:"Staff & access", short:"Staff", ic:"shield" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
-  else if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  if (r === "admin") v.push({ id:"staff", label:"Staff & access", short:"Staff", ic:"shield" }, { id:"agency", label:"The agency", short:"Agency", ic:"track" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  else if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"agency", label:"The agency", short:"Agency", ic:"track" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
     v.push({ id:"today", label:"Today", short:"Today", ic:"home" });
     if (r === "agent") v.push({ id:"money", label:"Money", short:"Money", ic:"key" },
@@ -1136,7 +1223,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "cal" ? "Diary" : S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "agency" ? "RB Brand — the agency" : S.view === "cal" ? "Diary" : S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1432,6 +1519,306 @@ function vStaff(){
 }
 
 /* ══ View: team overview (principal) ════════════════════════════════ */
+/* ══ The agency, in numbers ═════════════════════════════════════════
+   A principal's screen. Everything here is worked out from the files
+   the team has actually made — no figure is typed in and none is
+   estimated except the two that say so. Where the app has not been
+   given something (a lead source, a prospecting board) the screen says
+   so plainly instead of showing a zero that reads like a result. ═══ */
+
+/* Everyone the agency works through: whoever owns a deal, a house, or a
+   card, plus anyone on the roster the admin has set up. */
+function agencyRoster(){
+  const ids = new Set();
+  Object.values(S.deals).forEach(d => ids.add(d.meta.agent));
+  Object.values(S.listings).forEach(l => ids.add(l.meta.agent));
+  (S.board.cards || []).forEach(c => (c.members || []).forEach(m => ids.add(m)));
+  (S.staff || []).forEach(x => { if (x.role === "agent") ids.add(x.as); });
+  return [...ids].filter(id => P[id] && P[id].role === "agent" && !isPrincipal(id));
+}
+/* When a file reached a given stage, read off its own audit log. */
+const stageDoneAt = (d, n) => { const s = STAGES[n - 1];
+  const e = d.log.filter(x => x.act === "Stage complete" && x.det.startsWith(s.name)).pop();
+  return e ? e.ts : null; };
+const registeredAt = d => isClosed(d) ? (stageDoneAt(d, 7) || lastTouch(d)) : null;
+const daysToRegister = d => { const r = registeredAt(d);
+  return r ? Math.max(0, Math.round((new Date(r) - new Date(d.otpDate)) / DAY)) : null; };
+const leadCards = () => (S.board.cards || []).filter(c => c.lead);
+const pctOr = (a, b) => b > 0 ? Math.round(a / b * 100) : null;
+const med = xs => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), h = s.length >> 1;
+  return s.length % 2 ? s[h] : Math.round((s[h - 1] + s[h]) / 2); };
+
+function agencyStats(){
+  const deals = Object.values(S.deals), listings = Object.values(S.listings);
+  const live = deals.filter(d => !isClosed(d)), done = deals.filter(isClosed);
+  const cards = leadCards();
+  const ty = TAXYEAR(new Date());
+  const receipts = (S.receipts || []).filter(r => TAXYEAR(r.ts) === ty);
+
+  const agents = agencyRoster().map(id => {
+    const ds = deals.filter(d => d.meta.agent === id), ls = listings.filter(l => l.meta.agent === id);
+    const act = ds.filter(d => !isClosed(d)), reg = ds.filter(isClosed);
+    const myCards = cards.filter(c => (c.members || []).includes(id));
+    const offers = ls.reduce((n, l) => n + (l.offers || []).length, 0);
+    const banked = receipts.filter(r => r.who === id).reduce((n, r) => n + r.amount, 0);
+    const touched = [...ds.map(lastTouch), ...ls.map(l => (l.log[0] || {}).ts || null),
+      ...myCards.flatMap(c => (c.activity || []).map(a => a.ts))].filter(Boolean);
+    return { id, name:P[id].name, leads:myCards.length, mandates:ls.length,
+      won:myCards.filter(c => c.link && c.link.listing).length,
+      viewings:ls.reduce((n, l) => n + (l.viewings || []).filter(v => new Date(v.when || v.ts || 0) < Date.now()).length, 0),
+      offers, sales:ds.length, live:act.length, registered:reg.length,
+      pipeline:act.reduce((n, d) => n + d.meta.price, 0),
+      sold:reg.reduce((n, d) => n + d.meta.price, 0), banked,
+      risk:act.filter(atRisk).length,
+      last:touched.length ? touched.sort((a, b) => new Date(b) - new Date(a))[0] : null };
+  }).sort((a, b) => b.banked - a.banked || b.pipeline - a.pipeline);
+
+  /* The funnel follows the agency's own stock and nothing else, so that
+     each step is really a subset of the one above it: a name on a board
+     becomes a mandate, the mandate draws an offer, the offer opens a
+     transfer, the transfer registers. Work that arrived as a signed
+     offer on a house never on these books is counted apart — it is real
+     income, but it is not this chain, and folding it in would make the
+     conversions read better than they are. */
+  const withOffer = listings.filter(l => (l.offers || []).length);
+  const went = listings.filter(l => l.dealId && S.deals[l.dealId]);
+  const regd = went.filter(l => isClosed(S.deals[l.dealId]));
+  const funnel = [
+    { k:"Leads on the boards", n:cards.length, s:"Houses being prospected" },
+    { k:"Mandates won", n:listings.length, s:"Signed with you — on the market, under offer or sold" },
+    { k:"Drew an offer", n:withOffer.length, s:"At least one offer written" },
+    { k:"Went to transfer", n:went.length, s:"An offer was accepted" },
+    { k:"Registered", n:regd.length, s:"Ownership passed" },
+  ];
+  const offBook = deals.filter(d => !listings.some(l => l.dealId === d.meta.id));
+
+  const byStage = STAGES.map(s => { const ds = live.filter(d => current(d).n === s.n);
+    const sat = ds.map(d => { const got = s.n > 1 ? stageDoneAt(d, s.n - 1) : d.otpDate;
+      return got ? Math.round((Date.now() - new Date(got)) / DAY) : null; }).filter(x => x !== null);
+    return { s, n:ds.length, value:ds.reduce((n, d) => n + d.meta.price, 0), sat:med(sat), deals:ds }; });
+
+  /* How long each stage took on the files that are past it — the
+     agency's own times, not the textbook ones on the Road screen. */
+  const stageTook = STAGES.map(s => { const spans = deals.map(d => {
+      const got = stageDoneAt(d, s.n); if (!got) return null;
+      const from = s.n > 1 ? stageDoneAt(d, s.n - 1) : d.otpDate; if (!from) return null;
+      return Math.max(0, Math.round((new Date(got) - new Date(from)) / DAY)); }).filter(x => x !== null);
+    return { s, days:med(spans), n:spans.length }; });
+
+  const regDays = done.map(daysToRegister).filter(x => x !== null);
+  const sourceOf = l => l.source || "";
+  const srcMap = {};
+  listings.forEach(l => { const k = sourceOf(l); if (!k) return;
+    (srcMap[k] = srcMap[k] || { k, mandates:0, sales:0, banked:0 }).mandates++; });
+  deals.forEach(d => { const k = d.meta.source; if (!k) return;
+    (srcMap[k] = srcMap[k] || { k, mandates:0, sales:0, banked:0 }).sales++; });
+  receipts.forEach(r => { const k = r.source; if (!k) return;
+    (srcMap[k] = srcMap[k] || { k, mandates:0, sales:0, banked:0 }).banked += r.amount; });
+  const sources = Object.values(srcMap).sort((a, b) => b.banked - a.banked || b.mandates - a.mandates);
+  const noSource = listings.filter(l => !sourceOf(l)).length + deals.filter(d => !d.meta.source).length;
+
+  const areaMap = {};
+  deals.forEach(d => { const k = d.meta.area || "—";
+    const a = areaMap[k] = areaMap[k] || { k, n:0, value:0 }; a.n++; a.value += d.meta.price; });
+  const areas = Object.values(areaMap).sort((a, b) => b.value - a.value);
+
+  const stock = listings.filter(l => l.status === "active");
+  const expiring = stock.map(l => ({ l, n:dayDiff(l.mandateEnds) })).filter(x => x.n <= 30).sort((a, b) => a.n - b.n);
+
+  /* Commission the agency itself keeps, against what goes out to the
+     people who earned it. Only the net is split — VAT is never anyone's. */
+  const splitOf = kind => done.reduce((n, d) => n + commCalc(d).splits.filter(s => s.kind === kind)
+    .reduce((m, s) => m + s.amount, 0), 0);
+  const weighted = live.reduce((n, d) => n + commCalc(d).net * oddsOf(d), 0);
+
+  return { deals, listings, live, done, agents, funnel, byStage, stageTook, cards, offBook,
+    regDays:{ median:med(regDays), n:regDays.length },
+    sources, noSource, areas, stock, expiring, ty,
+    banked:receipts.reduce((n, r) => n + r.amount, 0),
+    house:splitOf("agency"), toAgents:splitOf("agent"), weighted,
+    pipeline:live.reduce((n, d) => n + d.meta.price, 0),
+    soldValue:done.reduce((n, d) => n + d.meta.price, 0),
+    attention:live.filter(atRisk) };
+}
+
+/* ══ View: the agency in numbers ════════════════════════════════════
+   What a principal asks at the end of a month: how many people do I
+   have, what are they bringing in, where do the files get stuck, what
+   did we earn, and where did any of it come from. Money is the owner's
+   alone — an admin gets the counts and none of the rands. ══════════ */
+function vAgency(){
+  const A = agencyStats(), money = isOwner(S.me);
+  const fmax = Math.max(1, ...A.funnel.map(f => f.n));
+  const smax = Math.max(1, ...A.byStage.map(b => b.n));
+  const emax = Math.max(1, ...A.agents.map(a => a.banked));
+  const conv = (a, b) => { const p = pctOr(a, b); return p === null ? "—" : p + "%"; };
+
+  return `<div class="stack">
+    <div class="sec-h"><h2>The agency</h2>
+      <p>${A.agents.length} agent${A.agents.length === 1 ? "" : "s"} · ${A.stock.length} house${A.stock.length === 1 ? "" : "s"} on the market · ${A.live.length} in transfer${money ? " · " + Rm(A.pipeline) + " of property" : ""}</p></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Agents</div><div class="v">${A.agents.length}</div>
+        <div class="s">${A.agents.filter(a => a.live > 0).length} with a live file${A.agents.filter(a => !a.last).length ? ` · ${A.agents.filter(a => !a.last).length} with nothing yet` : ""}</div></div>
+      <div class="tile"><div class="k">On the market</div><div class="v">${A.stock.length}</div>
+        <div class="s">${A.expiring.length ? `${A.expiring.length} mandate${A.expiring.length === 1 ? "" : "s"} ending within 30 days` : "No mandate ends this month"}${A.listings.length > A.stock.length ? ` · ${A.listings.length - A.stock.length} sold or under offer` : ""}</div></div>
+      <div class="tile"><div class="k">In transfer</div><div class="v">${A.live.length}</div>
+        <div class="s">${A.attention.length ? `${A.attention.length} not moving` : "all moving"}${money ? ` · ${Rm(A.pipeline)}` : ""}</div></div>
+      <div class="tile"><div class="k">Registered</div><div class="v">${A.done.length}</div>
+        <div class="s">${A.regDays.median !== null ? `${A.regDays.median} days from offer to registration` : "none yet"}</div></div>
+      ${money ? `<div class="tile"><div class="k">Banked ${A.ty}/${String(A.ty + 1).slice(2)}</div><div class="v">${Rm(A.banked)}</div>
+        <div class="s">Commission paid out on registration</div></div>
+      <div class="tile"><div class="k">Still to come</div><div class="v">${Rm(A.weighted)}</div>
+        <div class="s">Live files, weighted by stage</div></div>` : ""}
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.track}<h2>Lead to registration</h2><span class="chip c-mute">Everything on the books today</span></div>
+      <div class="card-b">
+        <div class="chart">${A.funnel.map((f, i) => {
+          const prev = i ? A.funnel[i - 1] : null;
+          return `<button class="crow" data-empty="${f.n ? 0 : 1}" data-tiptitle="${esc(f.k)}"
+            data-tip="${esc(f.s + (prev ? ` · ${conv(f.n, prev.n)} of ${prev.k.toLowerCase()}` : ""))}">
+            <span class="cl">${f.k}</span>
+            <span class="cbar"><i style="width:${f.n / fmax * 100}%"></i></span>
+            <span class="cv">${f.n}</span></button>`; }).join("")}</div>
+        <div class="tiles" style="margin-top:14px">
+          <div class="tile"><div class="k">Lead → mandate</div><div class="v">${conv(A.funnel[1].n, A.funnel[0].n)}</div><div class="s">Prospects that signed with you</div></div>
+          <div class="tile"><div class="k">Mandate → offer</div><div class="v">${conv(A.funnel[2].n, A.funnel[1].n)}</div><div class="s">Houses that drew a written offer</div></div>
+          <div class="tile"><div class="k">Offer → transfer</div><div class="v">${conv(A.funnel[3].n, A.funnel[2].n)}</div><div class="s">Offers that opened a deal room</div></div>
+          <div class="tile"><div class="k">Transfer → registered</div><div class="v">${conv(A.funnel[4].n, A.funnel[3].n)}</div><div class="s">Reached the Deeds Office</div></div>
+        </div>
+        ${A.offBook.length ? `<div class="note" style="margin-top:14px">${ICON.deals}<div><b>${A.offBook.length} of the ${A.deals.length} deal rooms are not in that chain.</b> They came in as a signed offer on a house that was never on these books — another agent's mandate, a private seller, a buyer who walked in. Real income, but it is not something the prospecting above produced, so counting it there would flatter every rate on this screen.</div></div>` : ""}
+        ${!A.cards.length ? `<div class="note" style="margin-top:14px">${ICON.board}<div><b>No leads are being counted.</b> A lead is a card on a prospecting board carrying an owner and a number — the kind that comes across in a Trello import. Until a board like that is here, the first row stays at nought and the conversion from it means nothing.
+          <button class="btn btn-s" data-act="view" data-v="board" style="margin-left:8px">Open the board</button></div></div>` : ""}
+        <p style="margin:12px 0 0;font-size:11.5px;color:var(--t3)">Each row is a true subset of the one above it, counted on the houses this agency holds the mandate on. It is a snapshot of everything on the books, not one month's intake followed through, so the rates tell you where the work drops away — not how a single month performed.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.team}<h2>Each agent</h2><span class="chip c-mute">${A.agents.length}</span></div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Agent</th><th>Leads</th><th>Mandates</th><th>Offers</th><th>In transfer</th><th>Registered</th><th>Lead → sale</th>${money ? "<th>Pipeline</th><th>Banked</th>" : ""}<th>Last worked</th><th></th></tr></thead>
+        <tbody>${A.agents.map(a => `<tr>
+          <td><span class="who-cell">${avatar(a.id, 26)}<b>${P[a.id].name}</b>${a.risk ? ` <span class="chip c-stop">${a.risk}</span>` : ""}</span></td>
+          <td class="num">${a.leads || "—"}</td>
+          <td class="num">${a.mandates || "—"}</td>
+          <td class="num">${a.offers || "—"}</td>
+          <td class="num">${a.live || "—"}</td>
+          <td class="num">${a.registered || "—"}</td>
+          <td class="num">${conv(a.sales, a.leads)}</td>
+          ${money ? `<td class="num">${a.pipeline ? Rm(a.pipeline) : "—"}</td><td class="num">${a.banked ? Rm(a.banked) : "—"}</td>` : ""}
+          <td>${a.last ? `<span style="font-size:12px;color:${(Date.now() - new Date(a.last)) / DAY > 14 ? "var(--stop)" : "var(--t2)"}">${ago(a.last)}</span>` : `<span class="chip c-mute">nothing yet</span>`}</td>
+          <td><button class="btn btn-s" data-act="filter" data-p="${a.id}">See deals</button></td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+      <div class="card-b" style="padding-top:0"><p style="margin:10px 0 0;font-size:11.5px;color:var(--t3)">Lead → sale is deal rooms opened against leads worked, so it only means something for an agent whose prospecting is on a board here. <b>Last worked</b> turns red after a fortnight of nothing — on any file, house or card.</p></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h">${ICON.track}<h2>Where the work is sitting</h2></div>
+        <div class="card-b">
+          <div class="chart">${A.byStage.map(b => `
+            <button class="crow" data-empty="${b.n ? 0 : 1}" data-tiptitle="${esc(b.s.n + ". " + b.s.name)}"
+              data-tip="${esc(b.n ? b.deals.map(d => `${d.meta.address} — ${P[d.meta.agent].name.split(" ")[0]}`).join(" • ") : "No files at this stage")}">
+              <span class="cl">${b.s.n}. ${b.s.name}</span>
+              <span class="cbar"><i style="width:${b.n / smax * 100}%"></i></span>
+              <span class="cv">${b.n}</span></button>`).join("")}</div>
+          <p style="margin:12px 0 0;font-size:12px;color:var(--t2)">A stack building up at one stage is where the agency is losing weeks${money ? `. The ${A.byStage.filter(b => b.n).sort((x, y) => y.value - x.value)[0] ? `heaviest is ${Rm(A.byStage.filter(b => b.n).sort((x, y) => y.value - x.value)[0].value)} sitting at ${A.byStage.filter(b => b.n).sort((x, y) => y.value - x.value)[0].s.name.toLowerCase()}` : ""}` : ""}.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">${ICON.log}<h2>What each stage takes you</h2><span class="chip c-mute">your own files</span></div>
+        <div class="tblwrap"><table>
+          <thead><tr><th>Stage</th><th>You</th><th>Usually</th><th>Files</th></tr></thead>
+          <tbody>${A.stageTook.map(x => `<tr>
+            <td style="font-size:12.5px">${x.s.n}. ${x.s.name}</td>
+            <td class="num">${x.days === null ? "—" : x.days + "d"}</td>
+            <td style="font-size:11.5px;color:var(--t3)">${x.s.days}</td>
+            <td class="num" style="color:var(--t3)">${x.n || "—"}</td>
+          </tr>`).join("")}</tbody>
+        </table></div>
+        <div class="card-b" style="padding-top:0"><p style="margin:10px 0 0;font-size:11.5px;color:var(--t3)">The middle column is the median of your own completed stages; the next is what the step normally runs in South Africa. Where yours is well over, that is the conversation to have with the attorney.</p></div>
+      </div>
+    </div>
+
+    ${money ? `<div class="card">
+      <div class="card-h">${ICON.key}<h2>Earnings</h2><span class="chip c-mute">${A.ty}/${String(A.ty + 1).slice(2)} tax year</span></div>
+      <div class="card-b">
+        <div class="chart">${A.agents.map(a => `
+          <button class="crow" data-empty="${a.banked ? 0 : 1}" data-tiptitle="${esc(P[a.id].name)}"
+            data-tip="${esc(a.banked ? `${R(a.banked)} banked on ${a.registered} registration${a.registered === 1 ? "" : "s"}` : "Nothing banked this tax year")}">
+            <span class="cl">${esc(P[a.id].name)}</span>
+            <span class="cbar"><i style="width:${a.banked / emax * 100}%"></i></span>
+            <span class="cv">${a.banked ? Rm(a.banked) : "—"}</span></button>`).join("")}</div>
+        <div class="tiles" style="margin-top:14px">
+          <div class="tile"><div class="k">The agency kept</div><div class="v">${Rm(A.house)}</div><div class="s">Its own share of every registered file</div></div>
+          <div class="tile"><div class="k">Paid to agents</div><div class="v">${Rm(A.toAgents)}</div><div class="s">${A.house + A.toAgents > 0 ? Math.round(A.toAgents / (A.house + A.toAgents) * 100) + "% of the net fee" : "nothing yet"}</div></div>
+          <div class="tile"><div class="k">Average sale</div><div class="v">${A.done.length ? Rm(A.soldValue / A.done.length) : "—"}</div><div class="s">Across ${A.done.length} registered</div></div>
+        </div>
+        <p style="margin:12px 0 0;font-size:11.5px;color:var(--t3)">Commission is counted when it is paid out on registration, never when an offer is signed — a file that lapses was never income. VAT is not in these figures; it was never the agency's.</p>
+      </div>
+    </div>` : ""}
+
+    <div class="card">
+        <div class="card-h">${ICON.tag}<h2>Where the business comes from</h2></div>
+        <div class="card-b">
+          ${A.sources.length ? `<div class="tblwrap"><table>
+            <thead><tr><th>Source</th><th>Mandates</th><th>Sales</th>${money ? "<th>Banked</th>" : ""}</tr></thead>
+            <tbody>${A.sources.map(x => `<tr><td style="font-size:12.5px">${esc(x.k)}</td>
+              <td class="num">${x.mandates || "—"}</td><td class="num">${x.sales || "—"}</td>
+              ${money ? `<td class="num">${x.banked ? Rm(x.banked) : "—"}</td>` : ""}</tr>`).join("")}</tbody>
+          </table></div>` : `<div class="empty"><b>Nothing to show yet</b>A source is picked on each house and each deal room. Once a few carry one, this becomes the only honest answer to "where should we spend the marketing money".</div>`}
+          ${A.noSource ? `<div class="note" style="margin-top:12px">${ICON.warn}<div><b>${A.noSource} file${A.noSource === 1 ? " has" : "s have"} no source recorded.</b> Whatever is spent on getting that work cannot be measured against what it brought back. It is one field on the house and on the deal room.</div></div>` : ""}
+        </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h">${ICON.house}<h2>Where you sell</h2></div>
+        <div class="card-b">
+          ${A.areas.length ? `<div class="chart">${A.areas.slice(0, 8).map(x => `
+            <button class="crow" data-tiptitle="${esc(x.k)}" data-tip="${esc(`${x.n} file${x.n === 1 ? "" : "s"}${money ? " · " + Rm(x.value) : ""}`)}">
+              <span class="cl">${esc(x.k)}</span>
+              <span class="cbar"><i style="width:${x.value / A.areas[0].value * 100}%"></i></span>
+              <span class="cv">${x.n}</span></button>`).join("")}</div>
+          <p style="margin:12px 0 0;font-size:11.5px;color:var(--t3)">By value of the files opened there. ${A.areas.length === 1 ? "Every sale is in one suburb." : `${Math.round(A.areas[0].value / A.areas.reduce((n, x) => n + x.value, 0) * 100)}% of it is ${esc(A.areas[0].k)} — a good thing while that suburb is selling, and the whole risk when it stops.`}</p>` : `<div class="empty"><b>No files yet</b>This fills in as deal rooms open.</div>`}
+        </div>
+      </div>
+    </div>
+
+    ${A.expiring.length ? `<div class="card">
+      <div class="card-h">${ICON.warn}<h2>Mandates running out</h2><span class="chip ${A.expiring.some(x => x.n < 0) ? "c-stop" : "c-wait"}">${A.expiring.length}</span></div>
+      <div class="card-b">${A.expiring.slice(0, 8).map(({ l, n }) => `<div class="act">
+        <span class="stripe" style="background:${n < 0 ? "var(--stop)" : "var(--wait)"}"></span>
+        <div class="act-t"><b>${esc(l.meta.address)}, ${esc(l.meta.area)}</b>
+          <span>${P[l.meta.agent].name.split(" ")[0]} · ${n < 0 ? `lapsed ${Math.abs(n)} days ago` : n === 0 ? "ends today" : `ends in ${n} days`} · ${dstr(l.mandateEnds)}${money ? " · " + Rm(l.meta.price) : ""}</span></div>
+        <button class="btn btn-s" data-act="openhouse" data-l="${l.meta.id}">Open</button>
+      </div>`).join("")}
+        <p style="margin:10px 0 0;font-size:11.5px;color:var(--t3)">A sole mandate that lapses is stock walking out of the door. These are the calls to make this week.</p>
+      </div>
+    </div>` : ""}
+
+    ${A.attention.length ? `<div class="card">
+      <div class="card-h" style="color:var(--stop)">${ICON.warn}<h2 style="color:var(--t1)">Files that have stopped moving</h2><span class="chip c-stop">${A.attention.length}</span></div>
+      <div class="card-b">
+        ${money ? `<p style="margin:0 0 12px;font-size:12px;color:var(--t2)"><b style="color:var(--t1)">${Rm(A.attention.reduce((n, d) => n + d.meta.price, 0))}</b> of property is sitting in these, and about <b style="color:var(--t1)">${Rm(A.attention.reduce((n, d) => n + commCalc(d).net, 0))}</b> of fee behind them.</p>` : ""}
+        ${A.attention.slice(0, 8).map(d => { const br = bondRisk(d);
+          return `<div class="act">
+            <span class="stripe" style="background:var(--stop)"></span>
+            <div class="act-t"><b>${esc(d.meta.address)}, ${esc(d.meta.area)}</b>
+              <span>${P[d.meta.agent].name.split(" ")[0]} · ${br !== null && br < 7 ? (br < 0 ? `bond condition lapsed ${Math.abs(br)} days ago` : `bond condition due in ${br} days`) : `nothing for ${Math.round((Date.now() - new Date(lastTouch(d))) / DAY)} days`} · stage ${current(d).n}</span></div>
+            <button class="btn btn-s" data-act="open" data-d="${d.meta.id}">Open file</button>
+          </div>`; }).join("")}
+      </div>
+    </div>` : ""}
+
+    <div class="note">${ICON.shield}<div><b>What these numbers are, and are not.</b> Every figure here is counted off the files the team has made — nothing is typed in, and nothing is estimated except <b>Still to come</b>, which weights each live file by how far it has come${A.cards.length ? "" : ", and the lead row, which is empty because no prospecting board has been brought across"}. The app cannot see a lead that was never written down, a viewing nobody logged, or a sale done outside it. What it measures, it measures honestly; what it has not been told, it leaves blank rather than guessing.${money ? " Commission is the principal's to see — an admin sees these counts without the rands, and no agent, client or attorney sees this screen at all." : ""}</div></div>
+  </div>`;
+}
+
 function vTeam(){
   const all = Object.values(S.deals), active = all.filter(d => !isClosed(d));
   const byStage = STAGES.map(s => ({ s, deals:active.filter(d => current(d).n === s.n) }));
@@ -3454,7 +3841,7 @@ function vMoney(){
 
 /* ══ Render ═════════════════════════════════════════════════════════ */
 let lastWhere = "";
-const RENDER = { staff:vStaff, guide:vGuide, cal:vCalendar, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { agency:vAgency, staff:vStaff, guide:vGuide, cal:vCalendar, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (sync.gate !== "in" && sync.gate !== "demo"){ renderAuth(); return; }
   document.body.classList.remove("auth");
@@ -3473,6 +3860,7 @@ function render(){
   if (!S.deal && ["dash","track","vault","chat","people","log"].includes(S.view)) S.view = homeView();
   if (S.deal && !dealViews().some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && !isPrincipal(S.me)) S.view = "portfolio";
+  if (!S.deal && S.view === "agency" && !isPrincipal(S.me)) S.view = "portfolio";
   if (S.view === "staff" && !isAdmin(S.me)) S.view = homeView();
   if (S.view === "guide" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (S.view === "cal" && !navItems().some(v => v.id === "cal")) S.view = homeView();
@@ -3513,9 +3901,15 @@ function renderAuth(){
         <div class="who">Signed in as <b style="color:var(--t1)">${esc(who.email || "")}</b></div>
         <button class="btn" data-act="syncout">Sign out</button>`
     : `<p class="sub">One place for every house you are marketing and every sale in transfer — shared with the people who need it, and nobody else.</p>
+        ${inAppBrowser() ? `<div class="waiting"><b>Open this in your own browser.</b><br>
+          You have opened the link inside another app — WhatsApp, Facebook and the rest show web pages in a small browser of their own, and Google refuses to sign anyone in from one. Nothing is wrong with your account.<br><br>
+          Tap the <b>⋮</b> menu at the top of this screen and choose <b>Open in Chrome</b> (on an iPhone, <b>Open in Safari</b>). Or copy the address and paste it into Chrome yourself.</div>
+          <div class="link mono">${esc(appLink())}</div>
+          <button class="btn" data-act="copyapp" style="margin-bottom:10px">Copy the address</button>` : ""}
         ${sync.err ? `<div class="err"><b>Could not sign you in.</b><br>${esc(sync.err)}</div>` : ""}
-        <button class="btn btn-p gbtn" data-act="syncin">${GOOGLE_G} Sign in with Google</button>
-        <div class="fine">Use the Google account your office knows you by. Signing in says who you are; an admin decides what you may see.</div>`;
+        ${sync.needsSignIn ? `<button class="btn btn-p gbtn" data-act="syncin">${GOOGLE_G} Sign in with Google</button>`
+          : `<button class="btn btn-p" data-act="syncretry">Try again</button>`}
+        <div class="fine">Use the Google account your office knows you by. Signing in says who you are; an admin decides what you may see.${inAppBrowser() ? "" : `<br><br>Nothing happening? The address is <span class="mono" style="word-break:break-all">${esc(appLink())}</span> — it works best in Chrome or Safari.`}</div>`;
   document.getElementById("view").innerHTML = `<div class="authwrap"><div class="authcard">
     <img class="lockup" style="height:auto;width:236px;margin:0 auto 6px" src="data:image/png;base64,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" alt="RB Brand Real Estate">
     <div class="wordsub" style="margin-bottom:20px">Deal Room</div>${body}</div></div>`;
@@ -3982,6 +4376,11 @@ document.addEventListener("click", e => {
   }
   else if (a === "cdelete"){ if (!confirm("Delete this card?")) return;
     S.board.cards = S.board.cards.filter(x => x.id !== S.card.id); closeCard(); toast("Card deleted"); render(); }
+  else if (a === "copyapp"){ const t = appLink();
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Address copied — paste it into Chrome"))
+      .catch(() => { const el = document.querySelector(".authcard .link"); if (el){ const r = document.createRange(); r.selectNodeContents(el);
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); } toast("Press and hold the address to copy it"); }); }
+  else if (a === "syncretry"){ sync.err = ""; sync.gate = "checking"; render(); gateWatchdog(); startSync(); }
   else if (a === "syncin"){ syncSignIn(); }
   else if (a === "syncout"){ syncSignOut(); }
   else if (a === "rosterrole"){ const x = S.staff.find(y => y.as === btn.dataset.p), sel = document.querySelector(`[data-role="r:${btn.dataset.p}"]`);
@@ -4384,6 +4783,26 @@ const SYNC_KINDS = { cards:"card", deals:"deal", listings:"listing", boards:"boa
    nothing of the agency's work until Google says who you are and an admin
    has let you in. With no project (the preview) it opens on the demo. */
 const HAS_PROJECT = () => !!(window.RB_CONFIG && window.RB_CONFIG.firebase && window.RB_CONFIG.firebase.projectId);
+/* Nothing here may wait forever. A phone on a weak signal, or a browser
+   that blocks the storage Firebase keeps a session in, can leave a
+   promise that never settles and never fails — and the page sits on
+   "Just a moment…" with a spinner, which tells the person nothing. Every
+   wait below is bounded, and a wait that runs out is an ordinary error
+   with something to read. */
+const bounded = (promise, ms, what) => Promise.race([promise,
+  new Promise((_, rej) => setTimeout(() => rej(new Error(what)), ms))]);
+/* Google will not sign anyone in from inside another app's browser —
+   WhatsApp, Facebook, Instagram and LinkedIn all open links in their
+   own, and Google answers those with "disallowed_useragent". The page
+   cannot escape one on its own, so it says so and hands over the
+   address instead of failing silently. */
+function inAppBrowser(){
+  const u = navigator.userAgent || "";
+  if (/FBAN|FBAV|FB_IAB|Instagram|LinkedInApp|Line\/|Snapchat|Pinterest|MicroMessenger|WhatsApp/i.test(u)) return true;
+  if (/; wv\)/.test(u)) return true;                                   // an Android WebView says so outright
+  if (/iPhone|iPad|iPod/i.test(u) && !/Safari|CriOS|FxiOS|EdgiOS/i.test(u)) return true;
+  return false;
+}
 let sync = { on:false, status:"local", gate:"demo", db:null, ws:null, uid:null, pending:{}, timer:null, applying:false };
 
 /* Each entity is one document, so two people editing different cards never
@@ -4428,12 +4847,18 @@ async function startSync(){
   syncStatus("connecting");
   try {
     const V = "https://www.gstatic.com/firebasejs/12.16.0/";
-    const [{ initializeApp }, auth, fs] = await Promise.all([
-      import(V + "firebase-app.js"), import(V + "firebase-auth.js"), import(V + "firebase-firestore.js")]);
+    const [{ initializeApp }, auth, fs] = await bounded(Promise.all([
+      import(V + "firebase-app.js"), import(V + "firebase-auth.js"), import(V + "firebase-firestore.js")]),
+      15000, "Could not reach the sign-in service. Check that you are online and try again.");
     const app = initializeApp(cfg);
     const A = auth.getAuth(app);
-    const user = A.currentUser || await new Promise(res => auth.onAuthStateChanged(A, res));
     sync.auth = { auth, A };
+    /* Coming back from a sign-in that left the page (a phone, where a
+       popup is no use) — this is where that trip lands. */
+    await auth.getRedirectResult(A).catch(err => { console.warn("redirect", err); sync.err = signInWhy(err); });
+    const user = A.currentUser || await bounded(
+      new Promise(res => auth.onAuthStateChanged(A, res, () => res(null))),
+      8000, "This browser would not let the app check whether you are signed in. Open the page in Chrome or Safari.");
     if (!user){ syncStatus("local"); sync.needsSignIn = { auth, A }; if (sync.gate === "checking") sync.gate = "signin"; render(); return; }
     sync.uid = user.uid; sync.user = { name:user.displayName || "", email:user.email || "" };
     sync.db = fs.getFirestore(app); sync.fs = fs;
@@ -4550,24 +4975,50 @@ async function syncSignOut(){
   try { await sync.auth.auth.signOut(sync.auth.A); } catch {}
   location.reload();
 }
+function signInWhy(err){
+  const c = (err && err.code || "").replace("auth/", "");
+  const m = err && err.message || "";
+  if (c === "popup-closed-by-user" || c === "cancelled-popup-request") return "The sign-in window closed before it finished. Try again.";
+  if (c === "unauthorized-domain") return "This web address is not on the project's list of allowed domains yet.";
+  if (c === "popup-blocked") return "Your browser blocked the sign-in window. Trying again without one.";
+  if (/disallowed_useragent/i.test(m)) return "Google will not sign you in from inside another app's browser. Open this page in Chrome or Safari.";
+  if (c === "network-request-failed") return "No connection to the sign-in service. Check your signal and try again.";
+  return m || "Something went wrong.";
+}
+/* A popup is the better sign-in where it works, and useless where it
+   does not: phones block them, and some browsers have no second window
+   to give. Falling back to a redirect costs the page a reload and
+   nothing else, so a blocked popup is never a dead end. */
 async function syncSignIn(){
   if (!sync.needsSignIn) return;
   const { auth, A } = sync.needsSignIn;
-  try { sync.err = ""; await auth.signInWithPopup(A, new auth.GoogleAuthProvider()); location.reload(); }
+  const provider = () => { const g = new auth.GoogleAuthProvider(); g.setCustomParameters({ prompt:"select_account" }); return g; };
+  sync.err = "";
+  try { await auth.signInWithPopup(A, provider()); location.reload(); return; }
   catch (err){
     console.warn(err);
     const c = (err && err.code || "").replace("auth/", "");
-    sync.err = c === "popup-closed-by-user" || c === "cancelled-popup-request" ? "The sign-in window closed before it finished. Try again."
-      : c === "unauthorized-domain" ? "This web address is not on the project's list of allowed domains yet."
-      : c === "popup-blocked" ? "Your browser blocked the sign-in window. Allow pop-ups for this page and try again."
-      : (err && err.message) || "Something went wrong.";
-    render();
+    const retry = ["popup-blocked", "operation-not-supported-in-this-environment", "web-storage-unsupported", "internal-error"];
+    if (!retry.includes(c)){ sync.err = signInWhy(err); render(); return; }
+    try { await auth.signInWithRedirect(A, provider()); }         // leaves the page; comes back through getRedirectResult
+    catch (err2){ console.warn(err2); sync.err = signInWhy(err2); render(); }
   }
 }
 
 if (HAS_PROJECT()) sync.gate = "checking";
 render();
 startSync();
+/* startSync bounds every wait it makes, but it cannot bound a browser
+   that stops running it. If the gate is still closed after twenty
+   seconds, open the sign-in page anyway: a button that might not work
+   beats a spinner that certainly does not. */
+const gateWatchdog = () => setTimeout(() => {
+  if (sync.gate !== "checking") return;
+  sync.gate = "signin";
+  if (!sync.err) sync.err = "The sign-in service did not answer. Check your signal, or open this page in Chrome or Safari.";
+  render();
+}, 20000);
+gateWatchdog();
 
 /* ══ The phone app ══════════════════════════════════════════════════
    Served from a folder, this installs to the home screen and keeps

@@ -894,7 +894,7 @@ const SEED_LISTINGS = [
     price:1895000, type:"House", beds:3, baths:2, garages:2, erf:702, agent:"charne", seller:"riana", listedAgo:23,
     desc:"North-facing family home in a quiet cul-de-sac. Open-plan living onto a covered patio and built-in braai, established garden, solar geyser and a double garage with direct access.",
     hero:"linear-gradient(145deg,#0C2E18,#2E8B57)", listing:"https://www.rbbrandrealestate.co.za/",
-    source:"Canvassing — Property24", shared:["gallery","floor","rates","erf"],
+    source:"Canvassing — Property24", visitors:[["Gerrie en Hanlie Smit","0825550451",10,"Cash buyers, selling in Faerie Glen"],["Thandi Nkosi","0715550452",10,"Needs to sell first"],["Pieter Marais","0835550453",10,""],["Anita Burger","0765550454",3,"Second visit"]], shared:["gallery","floor","rates","erf"],
     prospects:[["sizwe","joined",12,"copurchaser"],["elandri","joined",6,null],["ruan","invited",2,null]],
     viewings:[[-9,"sizwe"],[-4,"elandri"],[3,null],[6,null]],
     offers:[["sizwe",1830000,183000,"submitted",2,"Subject to bond approval of R1 647 000 within 21 days. Occupation on registration."]] },
@@ -902,14 +902,14 @@ const SEED_LISTINGS = [
     price:1090000, type:"Townhouse", beds:2, baths:1, garages:1, erf:null, agent:"charne", seller:"douglas", listedAgo:11,
     desc:"Low-maintenance ground-floor unit in a secure complex with a communal pool. Ideal first purchase or rental investment, walking distance from Equestria shops.",
     hero:"linear-gradient(145deg,#5A2D0C,#B86830)", listing:"https://www.rbbrandrealestate.co.za/",
-    source:"Board / walk-in", shared:["gallery","floor","levy"],
+    source:"Board / walk-in", visitors:[["Karel du Plessis","0825550455",5,"Investor, asked about the levy"],["Sarah Botha","0715550456",5,""]], shared:["gallery","floor","levy"],
     prospects:[["precious","joined",4,null]],
     viewings:[[-2,"precious"],[4,null]], offers:[] },
   { id:"l3", ref:"RB-2503240", address:"15 Duiker Street", area:"Garsfontein", city:"Pretoria East",
     price:3150000, type:"House", beds:4, baths:3, garages:3, erf:1240, agent:"charne", seller:"yolanda", listedAgo:5,
     desc:"Substantial family home on 1 240m², flatlet with its own entrance, borehole and full solar backup. Walking distance from Garsfontein Primary.",
     hero:"linear-gradient(145deg,#0F2840,#1E5080)", listing:"https://www.rbbrandrealestate.co.za/",
-    source:"Referral — past client", shared:["gallery"],
+    source:"Referral — past client", visitors:[["Dr M. Venter","0835550457",2,"Wants the flatlet for his mother"],["Lize Coetzer","0765550458",2,""],["Johan en Ria Steyn","0825550459",2,"Coming back Saturday"]], shared:["gallery"],
     prospects:[["jaco","invited",1,null]], viewings:[[2,null],[5,null]], offers:[] },
   { id:"l5", ref:"RB-2489107", address:"5 Acacia Close", area:"Equestria", city:"Pretoria East",
     price:1250000, type:"Townhouse", beds:2, baths:2, garages:2, erf:null, agent:"charne", seller:"andre", listedAgo:168,
@@ -931,10 +931,11 @@ const SEED_LISTINGS = [
     price:2450000, type:"House", beds:3, baths:2, garages:2, erf:880, agent:"lerato", seller:"frik", listedAgo:34,
     desc:"Ridge-facing home with mountain views, open-plan kitchen and a self-contained cottage let on a month-to-month basis.",
     hero:"linear-gradient(145deg,#1A2A10,#3A5A20)", listing:"https://www.rbbrandrealestate.co.za/",
-    source:"Show day", shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
+    source:"Show day", visitors:[["Nomsa Khumalo","0715550460",8,""]], shared:["gallery","floor"], prospects:[], viewings:[[3,null]], offers:[] },
 ];
 function buildListing(L){
-  const st = { demo:true, meta:{ ...L }, status:L.state || "active", dealId:L.deal || null, pack:{}, log:[], visitors:[],
+  const st = { demo:true, meta:{ ...L }, status:L.state || "active", dealId:L.deal || null, pack:{}, log:[],
+    visitors:(L.visitors || []).map(([name, mobile, agoD, note]) => ({ name, mobile, note:note || "", ts:iso(d0(-agoD)), by:L.agent })),
     mandateEnds:iso(d0(90 - L.listedAgo)), source:L.source || "", fromCard:PROSPECT_WON[L.id] || null,
     prospects:L.prospects.map(([person, status, agoD, preset]) => ({ person, status, preset:preset || null,
       ts:iso(d0(-agoD)), token:token() })),
@@ -950,6 +951,12 @@ function buildListing(L){
       ts:iso(d0(-L.listedAgo + i)), shared:L.shared.includes(d.id) }; });
   st.log = [{ ts:iso(d0(-L.listedAgo)), who:L.agent, act:"Listing created", det:`${L.address}, ${L.area} · ${L.ref}` },
     ...st.prospects.map(pr => ({ ts:pr.ts, who:L.agent, act:"Buyer given access", det:`${P[pr.person].name} may view this house` })),
+    ...st.visitors.map(v => ({ ts:v.ts, who:L.agent, act:"Show day visitor", det:v.name })),
+    /* A viewing that happened and was followed up — the feedback call to the
+       seller is the part an owner notices, so it is logged like any other. */
+    ...st.viewings.filter(v => v.person && new Date(v.when) < Date.now())
+      .map(v => ({ ts:iso(new Date(new Date(v.when).getTime() + 2 * 36e5)), who:L.agent,
+        act:"Message sent to client", det:`${P[L.seller].name.split(" ")[0]} · feedback after ${P[v.person].name.split(" ")[0]}'s viewing` })),
     ...st.offers.map(o => ({ ts:o.ts, who:o.person, act:"Offer submitted", det:`${R(o.amount)} · awaiting the seller` }))
   ].sort((a, b) => new Date(b.ts) - new Date(a.ts));
   return st;
@@ -1014,8 +1021,14 @@ const SEED_PROSPECT_CARDS = SEED_PROSPECTS.map(([list, title, suburb, erf, owner
   labels:list === "p_won" ? [{ name:"Mandate", col:"#1A6B3A" }] : list === "p_their" ? [{ name:"Theirs", col:"#8A6100" }] : [],
   members:[agent], due:dueIn === null ? null : iso(d0(dueIn)), done:false, checklist:[], pos:i + 1,
   files:[], comments:[], link:became ? { listing:became } : null,
-  activity:[{ who:agent, ts:iso(d0(-(18 - i))), what:"added this house to the board" },
-    ...(became ? [{ who:agent, ts:iso(d0(-(10 - i))), what:"won the mandate — now a house on the Pipeline" }] : [])],
+  activity:[
+    { who:agent, ts:iso(d0(-(26 + (i * 11) % 62))), what:"added this house to the board" },
+    /* Each dated line in the notes is a call that was made. The ones still
+       being chased have had a few more since, which is what being chased is. */
+    ...Array.from({ length:(notes.match(/^\d{2}\/\d{2}/gm) || []).length + (list === "p_back" ? 2 : list === "p_seen" ? 1 : 0) },
+      (_, k) => ({ who:agent, ts:iso(d0(-(2 + (i * 13 + k * 29) % 84))), what:"logged a call" })),
+    ...(became ? [{ who:agent, ts:iso(d0(-(8 + i * 9))), what:"won the mandate — now a house on the Pipeline" }] : []),
+  ],
 }));
 
 const SEED_CARDS = [
@@ -1173,8 +1186,8 @@ function navItems(){
     if (canDocs()) v.push(DEAL_VIEWS_DOCS);
     return v; }
   const v = [], r = me().role;
-  if (r === "admin") v.push({ id:"staff", label:"Staff & access", short:"Staff", ic:"shield" }, { id:"agency", label:"The agency", short:"Agency", ic:"track" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
-  else if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"agency", label:"The agency", short:"Agency", ic:"track" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  if (r === "admin") v.push({ id:"staff", label:"Staff & access", short:"Staff", ic:"shield" }, { id:"agency", label:"The agency", short:"Agency", ic:"track" }, { id:"work", label:"The work", short:"Work", ic:"log" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
+  else if (r === "principal") v.push({ id:"today", label:"Today", short:"Today", ic:"home" }, { id:"agency", label:"The agency", short:"Agency", ic:"track" }, { id:"work", label:"The work", short:"Work", ic:"log" }, { id:"money", label:"Money", short:"Money", ic:"key" }, { id:"earn", label:"Pipeline", short:"Pipeline", ic:"deals" }, { id:"board", label:"Board", short:"Board", ic:"board" }, { id:"team", label:"Team overview", short:"Team", ic:"team" }, { id:"listings", label:"All houses", short:"Houses", ic:"house" }, { id:"portfolio", label:"All deals", short:"Deals", ic:"deals" });
   else {
     v.push({ id:"today", label:"Today", short:"Today", ic:"home" });
     if (r === "agent") v.push({ id:"money", label:"Money", short:"Money", ic:"key" },
@@ -1225,7 +1238,7 @@ function renderChrome(){
       <div class="track"><i style="width:${pctOf(d)}%"></i></div>
     </div>`
   : `<div style="min-width:0">
-      <h1>${S.view === "agency" ? "RB Brand — the agency" : S.view === "cal" ? "Diary" : S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
+      <h1>${S.view === "agency" ? "RB Brand — the agency" : S.view === "work" ? "RB Brand — the work" : S.view === "cal" ? "Diary" : S.view === "guide" ? "How this works" : S.view === "staff" ? "Staff & access" : S.view === "money" ? "Money" : S.view === "road" ? "The road to a home sale" : S.view === "docs" ? "Paperwork" : S.view === "earn" ? "Earnings" : S.view === "today" ? "Today" : S.view === "board" ? esc(curBoard().name) : S.view === "listings" ? (isPrincipal(S.me) ? "Every house on the books" : "My houses")
         : S.view === "new" ? "New deal room" : isPrincipal(S.me) ? "RB Brand — team overview" : me().role === "agent" ? "My deal rooms" : "My transfers"}</h1>
       <div class="ref mono">${me().name} · ${esc(me().org)}</div>
     </div>`;
@@ -1818,6 +1831,192 @@ function vAgency(){
     </div>` : ""}
 
     <div class="note">${ICON.shield}<div><b>What these numbers are, and are not.</b> Every figure here is counted off the files the team has made — nothing is typed in, and nothing is estimated except <b>Still to come</b>, which weights each live file by how far it has come${A.cards.length ? "" : ", and the lead row, which is empty because no prospecting board has been brought across"}. The app cannot see a lead that was never written down, a viewing nobody logged, or a sale done outside it. What it measures, it measures honestly; what it has not been told, it leaves blank rather than guessing.${money ? " Commission is the principal's to see — an admin sees these counts without the rands, and no agent, client or attorney sees this screen at all." : ""}</div></div>
+  </div>`;
+}
+
+/* ══ The work ═══════════════════════════════════════════════════════
+   The agency screen counts results — mandates, transfers, registrations.
+   Those arrive months after the work that caused them, so a principal
+   reading only that screen is always looking at last quarter's effort.
+   This one counts the work itself: calls made, houses canvassed,
+   viewings held, people through a show day, offers written. Leading
+   indicators, in a period you choose, per agent.
+
+   Every figure is something somebody wrote down. A call made in the car
+   and never logged does not appear here, and the screen says so rather
+   than letting a quiet column be read as a lazy agent. ═══════════════ */
+const WORK_SPANS = [[7, "This week", "week"], [30, "This month", "month"], [90, "Three months", "three months"]];
+const workDays = () => S.workDays || 30;
+const inSpan = (ts, from, to) => { const t = new Date(ts).getTime(); return t >= from && t < to; };
+
+/* One agent's work between two instants. */
+function workOf(agent, from, to){
+  const cards = (S.board.cards || []).filter(c => (c.members || []).includes(agent));
+  const lst = Object.values(S.listings).filter(l => l.meta.agent === agent);
+  const dls = Object.values(S.deals).filter(d => d.meta.agent === agent);
+  const acts = cards.flatMap(c => (c.activity || []).filter(a => a.who === agent && inSpan(a.ts, from, to)));
+  const llog = lst.flatMap(l => (l.log || []).filter(e => inSpan(e.ts, from, to)));
+  const dlog = dls.flatMap(d => (d.log || []).filter(e => e.who === agent && inSpan(e.ts, from, to)));
+  const n = (arr, re) => arr.filter(x => re.test(x.what || x.act || "")).length;
+  return {
+    calls:     n(acts, /^logged a call$/),
+    canvassed: n(acts, /^added (this house to the board|this card)$/),
+    notes:     n(acts, /^commented$/),
+    viewings:  lst.flatMap(l => l.viewings || []).filter(v => v.person && inSpan(v.when, from, Math.min(to, Date.now()))).length,
+    visitors:  n(llog, /^Show day visitor$/),
+    mandates:  n(llog, /^Listing created$/),
+    offers:    lst.flatMap(l => l.offers || []).filter(o => inSpan(o.ts, from, to)).length,
+    messages:  n(llog, /^Message sent to client$/) + n(dlog, /^Message sent to client$/),
+    steps:     n(dlog, /^(Task completed|Document uploaded)$/),
+  };
+}
+const workTotal = w => w.calls + w.canvassed + w.viewings + w.visitors + w.mandates + w.offers + w.messages + w.steps;
+
+function workStats(){
+  const days = workDays(), now = Date.now();
+  const from = now - days * DAY, prev = now - days * 2 * DAY;
+  const agents = agencyRoster();
+
+  const rows = agents.map(id => {
+    const cards = (S.board.cards || []).filter(c => (c.members || []).includes(id));
+    const overdue = cards.filter(c => c.due && !c.done && new Date(c.due) < now)
+      .sort((a, b) => new Date(a.due) - new Date(b.due));
+    const quiet = cards.filter(c => c.lead && !(c.link && c.link.listing)).map(c => {
+      const last = (c.activity || []).map(a => a.ts).sort().pop();
+      return { c, days:last ? Math.round((now - new Date(last)) / DAY) : null };
+    }).filter(x => x.days !== null && x.days > 30).sort((a, b) => b.days - a.days);
+    const w = workOf(id, from, now), was = workOf(id, prev, from);
+    return { id, name:P[id].name, w, was, total:workTotal(w), wasTotal:workTotal(was), overdue, quiet };
+  }).sort((a, b) => b.total - a.total);
+
+  const sum = key => rows.reduce((n, r) => n + r.w[key], 0);
+  const sumWas = key => rows.reduce((n, r) => n + r.was[key], 0);
+
+  /* Twelve weeks of the whole agency, so a quiet fortnight is visible
+     as a dip rather than as somebody's opinion in a meeting. */
+  const weeks = [];
+  for (let i = 11; i >= 0; i--){
+    const to = now - i * 7 * DAY, f = to - 7 * DAY;
+    const n = agents.reduce((acc, id) => acc + workTotal(workOf(id, f, to)), 0);
+    weeks.push({ n, label:new Date(f).toLocaleDateString("en-ZA", { day:"numeric", month:"short" }), now:i === 0 });
+  }
+
+  return { days, rows, sum, sumWas, weeks,
+    overdue:rows.flatMap(r => r.overdue.map(c => ({ c, who:r.id }))).sort((a, b) => new Date(a.c.due) - new Date(b.c.due)),
+    quiet:rows.flatMap(r => r.quiet.map(x => ({ ...x, who:r.id }))).sort((a, b) => b.days - a.days),
+    total:rows.reduce((n, r) => n + r.total, 0), wasTotal:rows.reduce((n, r) => n + r.wasTotal, 0) };
+}
+
+/* ══ View: the work ═════════════════════════════════════════════════ */
+function vWork(){
+  const A = workStats();
+  const peak = Math.max(1, ...A.weeks.map(w => w.n));
+  const span = (WORK_SPANS.find(x => x[0] === A.days) || WORK_SPANS[1])[2];
+  /* Said as a sentence rather than a percentage pinned to a phrase, because
+     "new on the month before" is not English and nobody reads past it. */
+  const col = (c, t) => `<span style="color:var(--${c})">${t}</span>`;
+  const cmp = (now, was) => !now && !was ? `nothing the ${span} before either`
+    : !was ? col("go", `none in the ${span} before`)
+    : !now ? col("stop", `${was} in the ${span} before`)
+    : now === was ? col("t3", `level with the ${span} before`)
+    : col(now > was ? "go" : "stop", `${now > was ? "+" : ""}${Math.round((now - was) / was * 100)}% on the ${span} before`);
+  const tile = (k, key, s) => `<div class="tile"><div class="k">${k}</div><div class="v">${A.sum(key)}</div>
+    <div class="s">${cmp(A.sum(key), A.sumWas(key))} · ${s}</div></div>`;
+
+  return `<div class="stack">
+    <div class="sec-h"><h2>The work</h2>
+      <p>What the team actually did in the last ${A.days} days — not what it earned</p></div>
+
+    <div class="card">
+      <div class="card-b" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="eyebrow" style="margin:0 6px 0 0">Show me</span>
+        ${WORK_SPANS.map(([n, lbl]) => `<button class="btn btn-s" data-act="workdays" data-n="${n}"
+          style="${n === A.days ? "border-color:var(--gold);background:var(--gold-soft)" : ""}">${lbl}</button>`).join("")}
+      </div>
+    </div>
+
+    <div class="tiles">
+      ${tile("Calls logged", "calls", "on prospecting cards")}
+      ${tile("Houses canvassed", "canvassed", "added to a board")}
+      ${tile("Viewings held", "viewings", "a buyer actually came")}
+      ${tile("Show day visitors", "visitors", "signed the register")}
+      ${tile("Mandates won", "mandates", "houses on the books")}
+      ${tile("Offers written", "offers", "on your own stock")}
+      ${tile("Clients messaged", "messages", "through the app")}
+      ${tile("Transfer steps", "steps", "tasks and documents")}
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.board}<h2>Twelve weeks of effort</h2>
+        <span class="chip ${A.total >= A.wasTotal ? "c-go" : "c-stop"}">${cmp(A.total, A.wasTotal).replace(/<[^>]*>/g, "")}</span></div>
+      <div class="card-b">
+        <div class="mchart">${A.weeks.map(w => `<button class="mcol ${w.now ? "now" : ""}"
+          data-tip="${esc(w.n + " things done in the week of " + w.label)}" data-tiptitle="${esc("Week of " + w.label)}">
+          <span class="val">${w.n || ""}</span>
+          <span class="bar" style="height:${Math.max(2, w.n / peak * 100)}%"></span>
+          <span class="mon">${w.label.split(" ")[0]}</span></button>`).join("")}</div>
+        <p style="margin:12px 0 0;font-size:12px;color:var(--t2)">Every logged call, canvassed house, viewing, show-day
+          visitor, mandate, offer, client message and transfer step, by week. A fortnight of quiet shows up here long
+          before it shows up in the registrations.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">${ICON.team}<h2>Each agent, last ${A.days} days</h2></div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Agent</th><th>Calls</th><th>Canvassed</th><th>Viewings</th><th>Show day</th><th>Mandates</th><th>Offers</th><th>Messages</th><th>Overdue</th><th>All</th></tr></thead>
+        <tbody>${A.rows.map(r => `<tr>
+          <td><span class="who-cell">${avatar(r.id, 26)}<b>${esc(P[r.id].name)}</b></span></td>
+          <td class="num">${r.w.calls || "—"}</td>
+          <td class="num">${r.w.canvassed || "—"}</td>
+          <td class="num">${r.w.viewings || "—"}</td>
+          <td class="num">${r.w.visitors || "—"}</td>
+          <td class="num">${r.w.mandates || "—"}</td>
+          <td class="num">${r.w.offers || "—"}</td>
+          <td class="num">${r.w.messages || "—"}</td>
+          <td>${r.overdue.length ? `<span class="chip c-stop">${r.overdue.length}</span>` : `<span class="chip c-go">clear</span>`}</td>
+          <td class="num"><b>${r.total || "—"}</b></td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+      <div class="card-b" style="padding-top:0"><p style="margin:10px 0 0;font-size:11.5px;color:var(--t3)">
+        <b>All</b> is everything in the row added together, against the same length of time before it. A column of
+        dashes means nothing was written down — which is worth asking about before it is worth worrying about.</p></div>
+    </div>
+
+    ${A.overdue.length ? `<div class="card">
+      <div class="card-h" style="color:var(--stop)">${ICON.warn}<h2 style="color:var(--t1)">Call-backs that have gone past</h2><span class="chip c-stop">${A.overdue.length}</span></div>
+      <div class="card-b">
+        <p style="margin:0 0 12px;font-size:12px;color:var(--t2)">A reminder set and not kept. These are the cheapest
+          sales in the agency — somebody already said yes to being phoned.</p>
+        ${A.overdue.slice(0, 10).map(({ c, who }) => { const n = Math.abs(dayDiff(c.due));
+          return `<div class="act">
+            <span class="stripe" style="background:var(--stop)"></span>
+            <div class="act-t"><b>${esc(c.title)}</b>
+              <span>${esc(P[who].name.split(" ")[0])} · ${n === 0 ? `due today, ${dstr(c.due)}` : `due ${dstr(c.due)} · ${n} day${n === 1 ? "" : "s"} ago`}</span></div>
+            <button class="btn btn-s" data-act="opencardfrom" data-id="${c.id}" data-b="${c.board}">Open</button>
+          </div>`; }).join("")}
+      </div>
+    </div>` : ""}
+
+    ${A.quiet.length ? `<div class="card">
+      <div class="card-h">${ICON.board}<h2>Prospects nobody has touched</h2><span class="chip c-wait">${A.quiet.length}</span></div>
+      <div class="card-b">
+        <p style="margin:0 0 12px;font-size:12px;color:var(--t2)">On a board, never won, and nothing logged against them
+          for over a month. Either they are worth a call or they are worth deleting.</p>
+        ${A.quiet.slice(0, 10).map(({ c, days, who }) => `<div class="act">
+          <span class="stripe" style="background:var(--wait)"></span>
+          <div class="act-t"><b>${esc(c.title)}</b>
+            <span>${esc(P[who].name.split(" ")[0])} · nothing for ${days} days</span></div>
+          <button class="btn btn-s" data-act="opencardfrom" data-id="${c.id}" data-b="${c.board}">Open</button>
+        </div>`).join("")}
+      </div>
+    </div>` : ""}
+
+    <div class="note">${ICON.shield}<div><b>This counts what was written down, and only that.</b> A call made from the
+      car and never logged does not appear here, and neither does a viewing arranged on WhatsApp. So a quiet column is
+      a question, not a verdict — it may mean an agent is not working, or it may mean an agent is not recording. The
+      first is a management problem and the second is a habit; they look identical on this screen and they are not the
+      same thing. The figures become trustworthy about a month after the team starts logging as it goes.</div></div>
   </div>`;
 }
 
@@ -3843,7 +4042,7 @@ function vMoney(){
 
 /* ══ Render ═════════════════════════════════════════════════════════ */
 let lastWhere = "";
-const RENDER = { agency:vAgency, staff:vStaff, guide:vGuide, cal:vCalendar, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
+const RENDER = { agency:vAgency, work:vWork, staff:vStaff, guide:vGuide, cal:vCalendar, today:vToday, money:vMoney, comm:vComm, docs:vDocs, road:vRoad, earn:vEarn, board:vBoard, portfolio:vPortfolio, team:vTeam, new:vNew, listings:vListings, house:vHouse, dash:vDash, track:vTrack, vault:vVault, chat:vChat, people:vPeople, log:vLog };
 function render(){
   if (sync.gate !== "in" && sync.gate !== "demo"){ renderAuth(); return; }
   document.body.classList.remove("auth");
@@ -3863,6 +4062,7 @@ function render(){
   if (S.deal && !dealViews().some(v => v.id === S.view)) S.view = "dash";
   if (!S.deal && S.view === "team" && !isPrincipal(S.me)) S.view = "portfolio";
   if (!S.deal && S.view === "agency" && !isPrincipal(S.me)) S.view = "portfolio";
+  if (!S.deal && S.view === "work" && !isPrincipal(S.me)) S.view = "portfolio";
   if (S.view === "staff" && !isAdmin(S.me)) S.view = homeView();
   if (S.view === "guide" && !(me().role === "agent" || isPrincipal(S.me))) S.view = homeView();
   if (S.view === "cal" && !navItems().some(v => v.id === "cal")) S.view = homeView();
@@ -4382,6 +4582,7 @@ document.addEventListener("click", e => {
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Address copied — paste it into Chrome"))
       .catch(() => { const el = document.querySelector(".authcard .link"); if (el){ const r = document.createRange(); r.selectNodeContents(el);
         const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); } toast("Press and hold the address to copy it"); }); }
+  else if (a === "workdays"){ S.workDays = +btn.dataset.n; save(); render(); window.scrollTo({ top:0 }); }
   else if (a === "syncretry"){ sync.err = ""; sync.gate = "checking"; render(); gateWatchdog(); startSync(); }
   else if (a === "syncin"){ syncSignIn(); }
   else if (a === "syncout"){ syncSignOut(); }

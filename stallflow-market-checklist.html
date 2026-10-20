@@ -1,0 +1,162 @@
+<title>Duxie's Market Checklist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: one narrow phone column, grouped by when the job happens; each tick is a big tap target. */
+:root{
+  --bg:#FBF6F6; --card:#FFFFFF; --fg:#2A1F22; --muted:#7A6A6E; --line:#EADFE1;
+  --brand:#7B2D43; --brand-soft:#F4E6EA; --ok:#2F6B4A; --warn:#8A5A12; --warn-bg:#FBF0DC;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171213; --card:#221B1D; --fg:#F1E8EA; --muted:#A8979B; --line:#3A2E31;
+  --brand:#D98AA0; --brand-soft:#3A2228; --ok:#7CC79D; --warn:#E8B86A; --warn-bg:#3A2D17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171213; --card:#221B1D; --fg:#F1E8EA; --muted:#A8979B; --line:#3A2E31;
+  --brand:#D98AA0; --brand-soft:#3A2228; --ok:#7CC79D; --warn:#E8B86A; --warn-bg:#3A2D17; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
+.wrap{max-width:560px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font:700 12px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--brand)}
+h1{font:800 34px/1.05 var(--display);margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:0;max-width:60ch}
+.progress{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
+.bar{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .25s}
+section{display:flex;flex-direction:column;gap:8px}
+h2{font:600 21px/1.2 var(--display);margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+h2 small{font:400 13px var(--body);color:var(--muted);font-variant-numeric:tabular-nums}
+.when{color:var(--muted);font-size:14px;margin:-4px 0 2px}
+ul{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+li+li{border-top:1px solid var(--line)}
+label{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:13px 14px;cursor:pointer;align-items:start}
+label:hover{background:var(--brand-soft)}
+input[type=checkbox]{appearance:none;width:24px;height:24px;margin:1px 0 0;border:2px solid var(--muted);border-radius:7px;display:grid;place-content:center;background:var(--card);cursor:pointer}
+input[type=checkbox]:checked{background:var(--brand);border-color:var(--brand)}
+input[type=checkbox]:checked::after{content:"";width:6px;height:11px;border:solid var(--card);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+input[type=checkbox]:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.t{min-width:0}
+.t b{display:block}
+.t span{color:var(--muted);font-size:14px}
+.path{font-weight:700;color:var(--brand);white-space:nowrap}
+li.done .t b{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+.why{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:12px 14px;font-size:14px}
+.why b{color:inherit}
+.reset{align-self:flex-start;font:700 15px var(--body);color:var(--brand);background:none;border:2px solid var(--brand);border-radius:10px;padding:10px 16px;cursor:pointer}
+.reset:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.confirm button{font:700 15px var(--body);border-radius:10px;padding:10px 16px;cursor:pointer;border:2px solid var(--brand)}
+.confirm .yes{background:var(--brand);color:var(--card)}
+.confirm .no{background:none;color:var(--brand)}
+footer{color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Duxie's Homemade · StallFlow</div>
+    <h1>Before every market</h1>
+    <p class="lede">Work down the list from a week out to the day after. Ticks stay on this phone until you press "Start the next market".</p>
+    <div class="progress"><div class="bar"><i id="bar"></i></div><span id="count">0 of 0</span></div>
+  </header>
+
+  <div class="why"><b>Why this matters:</b> the order page only knows about the market you set as live. If that market has already passed and pre-orders are still open, customers can reserve jam for a day that is over.</div>
+
+  <section data-s="week">
+    <h2>A week before <small></small></h2>
+    <p class="when">Sit down with the app and a cup of tea. About 15 minutes.</p>
+    <ul>
+      <li><label><input type="checkbox" id="w1"><span class="t"><b>Close off the last market</b><span>Open <span class="path">Numbers</span>, pick the last market and check its takings and costs are in. If you never did the cash-up, add the stall fee and petrol now so "Left in your pocket" is right.</span></span></label></li>
+      <li><label><input type="checkbox" id="w2"><span class="t"><b>Add the new market</b><span><span class="path">Numbers › Add a market</span>: name, date and address with times, e.g. "46 Tin Road, Bromhof · 09:00–15:00".</span></span></label></li>
+      <li><label><input type="checkbox" id="w3"><span class="t"><b>Make it the live market</b><span>Pick it in the Market list at the top of <span class="path">Numbers</span> and press <span class="path">Make live</span>. The order page now shows this date.</span></span></label></li>
+      <li><label><input type="checkbox" id="w4"><span class="t"><b>Count what you have and update Stock</b><span>In <span class="path">Stock</span>, record each batch you've made. A product left at 0 shows as sold out to customers.</span></span></label></li>
+      <li><label><input type="checkbox" id="w5"><span class="t"><b>Check prices and hide what you're not bringing</b><span>Update prices in <span class="path">Stock</span>, and hide anything you won't have on the day so nobody reserves it.</span></span></label></li>
+      <li><label><input type="checkbox" id="w6"><span class="t"><b>Open pre-orders</b><span>On <span class="path">Numbers</span>, press <span class="path">Open</span> next to "Pre-orders are closed".</span></span></label></li>
+      <li><label><input type="checkbox" id="w7"><span class="t"><b>Try the order page yourself</b><span>Open stallflow.github.io/duxies on your phone. Check the date, prices and what shows as available. You don't need to place an order.</span></span></label></li>
+      <li><label><input type="checkbox" id="w8"><span class="t"><b>Tell people</b><span>Share the order link on WhatsApp and Facebook with the market name, date and address.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section data-s="night">
+    <h2>The night before <small></small></h2>
+    <p class="when">While you're packing the car.</p>
+    <ul>
+      <li><label><input type="checkbox" id="n1"><span class="t"><b>Look at the reservations</b><span>Open <span class="path">Collect</span> and pack each pre-order in its own bag with the customer's name on it.</span></span></label></li>
+      <li><label><input type="checkbox" id="n2"><span class="t"><b>Close pre-orders if you're running low</b><span>Anything ordered tonight still has to fit in the car. Close them on <span class="path">Numbers</span> if you'd rather not get last-minute orders.</span></span></label></li>
+      <li><label><input type="checkbox" id="n3"><span class="t"><b>Print or refresh QR labels</b><span><span class="path">QR labels</span> makes the stickers the till scans. Do this for any new products or prices.</span></span></label></li>
+      <li><label><input type="checkbox" id="n4"><span class="t"><b>Sign in on every phone working the stall</b><span>Each helper signs in with their own role's PIN at home, on Wi-Fi. Open <span class="path">Till</span> once so the shop is saved on the phone in case signal is bad.</span></span></label></li>
+      <li><label><input type="checkbox" id="n5"><span class="t"><b>Run the Health check</b><span><span class="path">More › Health check</span>. If it says "No PINs are set", set them under <span class="path">Settings</span> before you go. Fix anything else it lists too.</span></span></label></li>
+      <li><label><input type="checkbox" id="n6"><span class="t"><b>Charge phones and a power bank</b><span>The till runs on a phone all day.</span></span></label></li>
+      <li><label><input type="checkbox" id="n7"><span class="t"><b>Float and card machine</b><span>Count the change float and write it down. Charge the card machine.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section data-s="day">
+    <h2>At the table <small></small></h2>
+    <p class="when">Before the first customer.</p>
+    <ul>
+      <li><label><input type="checkbox" id="d1"><span class="t"><b>Open the app and check the top bar</b><span>If it says you're offline, keep selling. Sales queue on the phone and send once you have signal.</span></span></label></li>
+      <li><label><input type="checkbox" id="d2"><span class="t"><b>Put the pre-order bags behind the table</b><span>When someone collects, mark it in <span class="path">Collect</span> so it isn't handed over twice.</span></span></label></li>
+      <li><label><input type="checkbox" id="d3"><span class="t"><b>Ring up every sale on the Till</b><span>Even small cash ones. The cash-up only matches if everything goes through the till.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section data-s="pack">
+    <h2>Packing up <small></small></h2>
+    <p class="when">Before anyone goes home.</p>
+    <ul>
+      <li><label><input type="checkbox" id="p1"><span class="t"><b>Do the cash-up</b><span><span class="path">Numbers › Do the cash-up</span>. Count the tin against what the till says. If it's short, write down why. The app won't save it otherwise.</span></span></label></li>
+      <li><label><input type="checkbox" id="p2"><span class="t"><b>Close pre-orders</b><span>On <span class="path">Numbers</span>, press <span class="path">Close</span>. The order page will politely turn people away until the next market.</span></span></label></li>
+      <li><label><input type="checkbox" id="p3"><span class="t"><b>Check nothing is stuck</b><span><span class="path">More › Did not go through</span> should be empty once the phone has signal. Don't sign out until it is, or those sales won't send.</span></span></label></li>
+      <li><label><input type="checkbox" id="p4"><span class="t"><b>Note anyone who didn't collect</b><span>Message them on WhatsApp, then cancel their order in <span class="path">Collect</span> so the stock goes back.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section data-s="after">
+    <h2>The day after <small></small></h2>
+    <ul>
+      <li><label><input type="checkbox" id="a1"><span class="t"><b>Add the costs</b><span>Stall fee, petrol, packaging: add them on <span class="path">Numbers</span> under the market so the profit is real.</span></span></label></li>
+      <li><label><input type="checkbox" id="a2"><span class="t"><b>Delete customer details</b><span>The order page promises names and numbers are deleted after the market. Clear them from the spreadsheet's orders.</span></span></label></li>
+      <li><label><input type="checkbox" id="a3"><span class="t"><b>Write down what sold out</b><span><span class="path">Numbers</span> shows your best sellers. Make more of those for next time.</span></span></label></li>
+    </ul>
+  </section>
+
+  <div id="resetArea"><button class="reset" id="reset" type="button">Start the next market</button></div>
+  <footer>For StallFlow at stallflow.github.io/duxies/app. Screen names in colour are where to tap in the app.</footer>
+</div>
+
+<script>
+(function(){
+  var KEY='duxies.checklist.v1', state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){}
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox]'));
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
+  function paint(){
+    var done=0;
+    boxes.forEach(function(b){ b.checked=!!state[b.id]; b.closest('li').classList.toggle('done',b.checked); if(b.checked) done++; });
+    document.getElementById('count').textContent=done+' of '+boxes.length;
+    document.getElementById('bar').style.width=(done/boxes.length*100)+'%';
+    document.querySelectorAll('section').forEach(function(s){
+      var bs=s.querySelectorAll('input'), d=s.querySelectorAll('input:checked').length;
+      s.querySelector('h2 small').textContent=d+'/'+bs.length;
+    });
+  }
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state[b.id]=b.checked; save(); paint(); }); });
+  var area=document.getElementById('resetArea');
+  function resetButton(){
+    area.innerHTML='<button class="reset" id="reset" type="button">Start the next market</button>';
+    document.getElementById('reset').onclick=ask;
+  }
+  function ask(){
+    area.innerHTML='<div class="confirm"><span>Clear every tick?</span><button class="yes" type="button" id="yes">Clear ticks</button><button class="no" type="button" id="no">Keep them</button></div>';
+    document.getElementById('yes').onclick=function(){ state={}; save(); paint(); resetButton(); };
+    document.getElementById('no').onclick=resetButton;
+  }
+  document.getElementById('reset').onclick=ask;
+  paint();
+})();
+</script>

@@ -71,3 +71,21 @@ Minimum trade sizes make small accounts impossible at 0.15% risk. These are appr
 RESEARCH_CACHE=<data dir> python crypto_validation.py <Historical-Data/crypto> --grid
 ```
 Data: Binance 1-minute klines from github.com/parshant65-lang/Historical-Data (crypto/), resampled to 5-minute and H4.
+
+## Version 2 portfolio (added 2026-10-25): max 4 open positions, 0.4% risk
+Crypto coins are highly correlated, so the bot now allows at most 4 positions open across all 11 coins. Trades that would be a 5th position are skipped. Reproduce with `position_cap.py`.
+
+| | v1: 0.15%, no cap | **v2: 0.4%, max 4 open** |
+|---|---|---|
+| Trades | 3,378 | 2,243 |
+| Profit factor (all / 2022+) | 1.40 / 1.30 | 1.53 / 1.32 |
+| Annual return, Sep 2017 – Oct 2026 (compounded) | 10.7% | **26.0%** |
+| Annual return, 2022 – 2026 | 6.8% | **15.9%** |
+| Max drawdown (marked to market) | 15.0% | **19.2%** |
+| Worst calendar year | +2.8% | +8.7% |
+| Sharpe (daily) | 1.08 | 1.42 |
+| Kill switch | 20% | 25% |
+
+Yearly returns, v2: 2017 (from Sep) +9.4% · 2018 +37.0% · 2019 +23.7% · 2020 +70.2% · 2021 +26.5% · 2022 +8.7% · 2023 +11.3% · 2024 +17.3% · 2025 +30.8% · 2026 (to Oct) +8.9%.
+
+**Caveat:** the cap was chosen after seeing the data. Caps of 3, 4 and 5 all improved return per unit of drawdown by a similar amount (Calmar 1.3–1.45, against 0.8 uncapped), so it isn't a single lucky value. But it is a post-hoc rule, so it must be confirmed in cTrader and on demo. The capped simulation drops trades from the uncapped run; the live bot may take a different later entry on a coin it skipped.

@@ -71,7 +71,8 @@ def run(m1, bars, strat, inst, risk_pct=1.0, balance0=100_000.0, cost_mult=1.0):
         pnl -= pos["com"] * pos["units"] + pos["swp"] * swap_nights(pos["t"], t) * pos["units"]
         bal += pnl
         trades.append(dict(entry_time=pd.Timestamp(pos["t"]), exit_time=pd.Timestamp(t),
-                           side=pos["side"], pnl=pnl, r=pnl / pos["risk"], bal=bal))
+                           side=pos["side"], pnl=pnl, r=pnl / pos["risk"], bal=bal,
+                           entry=pos["entry"], exit=px, units=pos["units"], risk=pos["risk"]))
         pos = None
 
     for k in range(strat.warmup, len(bars) - 1):

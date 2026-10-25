@@ -55,3 +55,9 @@ Holdout pass: PF ≥ 1.1 after costs, zero-cost t-stat ≥ 2, and the mean sessi
 **R2b Crypto trend portfolio:** C1 (H4) and C3 (D1) rules **unchanged**, applied to 8 Binance coins (BTC, ETH, BNB, XRP, ADA, LINK, SOL, DOGE) from 2017 to 2026. The rules were fixed on other markets, so all crypto data is out of sample for them.
 CFD costs: 0.08% spread, and financing of 0.06% of notional per night (about 22% a year) on longs and shorts.
 Pass: portfolio PF ≥ 1.3 after costs, profitable in both 2017–2021 and 2022–2026, and ≥ 5 of 8 coins profitable.
+
+## Round 2 results
+- **R2a: FAIL on the holdout.** 2004–2014: zero-cost PF 0.98 (t = -0.4); after costs PF 0.53. The Asian-session gold drift is a post-2015 regime, not a lasting edge.
+- **R2b: PASS (C1 rules on crypto).** 8 coins: PF 1.50, profitable in both halves (1.81 / 1.30), 8/8 coins profitable.
+  - Extra checks run after the pass: survivorship test on AVAX/DOT/NEAR, cost stress, a 54-config neighbourhood test and a mark-to-market portfolio. See RESULTS.md.
+  - C3 Turtle on crypto: PF 3.63 overall, but 2021 alone made 489R and 2023 lost -35R. Too lumpy and too dependent on one year, so it was not adopted.

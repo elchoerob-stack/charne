@@ -127,7 +127,8 @@ namespace cAlgo.Robots
             bool isBuy = p.TradeType == TradeType.Buy;
 
             double ext = isBuy ? double.MinValue : double.MaxValue;
-            for (int k = i; k >= 0 && Bars.OpenTimes[k] >= p.EntryTime.AddHours(-4); k--)
+            // bars from the one the entry filled in (opened < 4h before EntryTime) up to the last closed bar
+            for (int k = i; k >= 0 && Bars.OpenTimes[k] > p.EntryTime.AddHours(-4); k--)
                 ext = isBuy ? Math.Max(ext, Bars.HighPrices[k]) : Math.Min(ext, Bars.LowPrices[k]);
             if (ext == double.MinValue || ext == double.MaxValue) return;
 

@@ -24,7 +24,7 @@ for (_, t), npr in zip(trades.iterrows(), notional_per_risk):
     open_notional[m] += npr
 
 rows = []
-for risk in (0.15, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0):
+for risk in (0.15, 0.2, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0):
     eq = peak = 1000.0
     mdd, stopped = 0.0, None
     for t, x in (daily * risk).items():

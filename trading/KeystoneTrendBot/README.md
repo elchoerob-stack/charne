@@ -30,3 +30,24 @@ Multi-timeframe trend-pullback cBot for cTrader. **Attach to an EURUSD M1 chart.
 5. **Live** small, on a verified (Myfxbook/FXBlue) track record.
 
 A FAIL at any step is a result. Do not tweak and re-run the same OOS window.
+
+## Backtest results: 2020-10-25 run, **FAIL**
+Run with `backtest/ktb_backtest.py`, a bar-by-bar Python replica of the cBot, on EURUSD M1 for all of 2020 (MT5 export, 371k bars, median spread 0.2 pip). Commission is $7/lot round turn. The fill model is conservative: if SL and TP are both inside one bar, the SL counts as hit first.
+
+| Test | Trades | Win % | PF | Avg R | Result |
+|---|---|---|---|---|---|
+| Defaults, all rules on | 55 | 40 | 0.51 | -0.41 | kill switch hit on 30 Jan 2020 |
+| Kill switch off, Jan–Jun | 657 | 47 | 0.64 | -0.24 | loses |
+| Kill switch off, Jul–Dec | 752 | 46 | 0.58 | -0.27 | loses |
+| **Zero spread and zero commission** | 1682 | 48 | **0.96** | -0.02 | no edge even with no costs |
+| Original H1-only version, with costs | 161 | 48 | 0.79 | -0.12 | loses |
+
+Every SL/TP and EMA variant in the grid also hit the 20% kill switch.
+
+**Diagnosis:**
+1. The entry signal has no edge: PF 0.96 even with costs removed.
+2. On M1 the median stop is about 3.3 pips. Commission of about 0.7 pip plus spread costs roughly a quarter of 1R on every trade, which turns a break-even signal into a steady loser.
+
+The risk layer did its job: it capped the damage at 20%.
+
+Data caveats: only one year (2020, including COVID volatility), from a different broker's feed than your cTrader broker. Times were shifted from server time (UTC+2) to UTC, so session hours may be up to 1 hour out during DST.

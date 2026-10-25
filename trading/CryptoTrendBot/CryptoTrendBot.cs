@@ -7,15 +7,20 @@
 // 3xATR chandelier trail, no take profit. Identical to H4TrendBot, which was designed on
 // FX/gold BEFORE crypto was tested, so the crypto result is out of sample for these rules.
 // STATUS: PASSED pre-registered tests on Binance 2017-2026 (see trading/research/RESULTS.md):
-// 11-coin PF 1.40 after costs, every calendar year positive, max drawdown 16% at 0.15% risk.
+// 11-coin PF 1.40 after costs, every calendar year positive.
 //
-// Risk is per trade per coin. Up to 11 positions can be open at once and crypto is highly
-// correlated, so per-trade risk is deliberately small: 0.15% x 11 = 1.65% worst-case open risk.
+// v2 risk profile (growth): 0.4% risk per trade, at most 4 positions open across ALL coins.
+// Crypto coins move together, so capping open positions removes stacked, duplicate risk;
+// in the backtest it roughly halved drawdown per unit of return. Backtest 2017-2026:
+// ~26%/yr, max drawdown 19.2%, every year positive; 2022-2026 only: ~16%/yr.
+// The cap was chosen after seeing the data (3, 4 and 5 all gave similar gains), so it
+// must be confirmed in cTrader and on demo before going live.
 //
 // RISK RULES ARE HARDCODED CONSTANTS. They are deliberately NOT [Parameter]s so
 // they can never be optimised or fat-fingered (PivotTargetBot lesson).
 
 using System;
+using System.Linq;
 using cAlgo.API;
 using cAlgo.API.Indicators;
 using cAlgo.API.Internals;
@@ -26,9 +31,10 @@ namespace cAlgo.Robots
     public class CryptoTrendBot : Robot
     {
         // ---------------- Hardcoded risk (do not expose) ----------------
-        private const double RiskPerTradePct     = 0.15;  // target risk per trade per coin, % of balance
-        private const double MaxRiskPerTradePct  = 0.30;  // skip trade if min lot would exceed this
-        private const double MaxDrawdownPct      = 20.0;  // kill switch from equity peak (whole account) — bot stops
+        private const double RiskPerTradePct     = 0.40;  // target risk per trade, % of balance
+        private const double MaxRiskPerTradePct  = 0.80;  // skip trade if min lot would exceed this
+        private const int    MaxOpenPositions    = 4;     // across all coins sharing this Label
+        private const double MaxDrawdownPct      = 25.0;  // kill switch from equity peak (whole account) — bot stops
         private const double MaxSpreadSlFrac     = 0.10;  // skip if spread > 10% of stop distance
 
         // ---------------- Strategy parameters (optimisable) ----------------
@@ -102,6 +108,8 @@ namespace cAlgo.Robots
                 dcLow  = Math.Min(dcLow,  Bars.LowPrices[k]);
             }
 
+            if (Positions.Count(p => p.Label == Label) >= MaxOpenPositions) return;
+
             if (_fast.Result[i] > _slow.Result[i] && close > dcHigh) Enter(TradeType.Buy, atr);
             else if (_fast.Result[i] < _slow.Result[i] && close < dcLow) Enter(TradeType.Sell, atr);
         }
@@ -120,7 +128,23 @@ namespace cAlgo.Robots
             }
 
             var r = ExecuteMarketOrder(side, SymbolName, volume, Label, slPips, null);
-            if (!r.IsSuccessful) Print($"Order failed: {r.Error}");
+            if (!r.IsSuccessful) { Print($"Order failed: {r.Error}"); return; }
+            EnforcePositionCap(r.Position);
+        }
+
+        // All H4 bars close at the same moment, so several coins can pass the cap check at once.
+        // Every instance ranks the open positions the same way (oldest first, then by Id) and the
+        // ones beyond the cap close themselves, so at most MaxOpenPositions stay open.
+        private void EnforcePositionCap(Position mine)
+        {
+            var ranked = Positions.Where(p => p.Label == Label)
+                                  .OrderBy(p => p.EntryTime).ThenBy(p => p.Id).ToList();
+            int rank = ranked.FindIndex(p => p.Id == mine.Id);
+            if (rank >= MaxOpenPositions)
+            {
+                Print($"CAP: {ranked.Count} open > {MaxOpenPositions}; closing this newest entry.");
+                ClosePosition(mine);
+            }
         }
 
         // Chandelier trail: extreme since entry -/+ TrailAtrMult x ATR. Never loosens the stop.

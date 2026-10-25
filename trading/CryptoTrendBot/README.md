@@ -10,10 +10,13 @@ The H4TrendBot rules, unchanged, run as an 11-coin crypto CFD portfolio: BTC, ET
 3. Start all 11 instances at the same time, so they share the same equity peak for the 20% kill switch.
 4. Check the log for `SKIP: min volume would risk...`. If it appears, the account is too small for that coin at 0.15% risk.
 
-## Hardcoded risk
-- 0.15% per trade per coin (worst-case open risk is 1.65% with all 11 open); trades are skipped if the minimum lot would risk >0.30%
+## Hardcoded risk (v2 growth profile)
+- 0.4% per trade; trades are skipped if the minimum lot would risk >0.8%
+- **at most 4 positions open across all 11 coins** (worst-case open risk 1.6%)
 - spread must be ≤ 10% of the stop
-- 20% account drawdown kill switch
+- 25% account drawdown kill switch
+
+Backtest 2017–2026 (`research/position_cap.py`): about 26% a year, max drawdown 19.2%, every year positive. 2022–2026 alone: about 16% a year. The original v1 profile (0.15%, no cap, 20% kill switch: about 11% a year, 15% max drawdown) is in git history.
 
 ## Before going live
 1. Run cTrader's backtest on your broker's data (2018–2026, tick data), with the real crypto **swap** and spread. Compare it with RESULTS.md.

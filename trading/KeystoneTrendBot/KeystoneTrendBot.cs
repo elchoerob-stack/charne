@@ -1,8 +1,12 @@
-// KeystoneTrendBot — H1 trend-pullback cBot for cTrader
+// KeystoneTrendBot — multi-timeframe trend-pullback cBot for cTrader
 //
-// Edge hypothesis: in an established trend (EMA200 slope + price side), pullbacks
-// into the EMA50 zone that resolve with a close back in trend direction continue
-// often enough that a 1.5 ATR stop / 2.5 ATR target is positive-expectancy.
+// Attach to an M1 chart. Trend is read from a higher timeframe (default H1);
+// pullback entries and ATR stops are taken on the chart (M1) bars.
+//
+// Edge hypothesis: in an established higher-timeframe trend (EMA200 slope + price
+// side), M1 pullbacks into the EMA50 zone that resolve with a close back in trend
+// direction continue often enough that a 1.5 ATR stop / 2.5 ATR target is
+// positive-expectancy AFTER spread and commission.
 // This is a HYPOTHESIS until walk-forward OOS testing says otherwise.
 //
 // RISK RULES ARE HARDCODED CONSTANTS. They are deliberately NOT [Parameter]s so
@@ -25,10 +29,14 @@ namespace cAlgo.Robots
         private const double MaxDailyLossPct     = 3.0;   // stop trading for the day
         private const double MaxDrawdownPct      = 20.0;  // kill switch from equity peak — bot stops
         private const int    MaxOpenPositions    = 1;
-        private const double MaxSpreadAtrFrac    = 0.15;  // skip if spread > 15% of ATR
+        private const double MaxSpreadSlFrac     = 0.10;  // skip if spread > 10% of stop distance (M1 cost guard)
+        private const int    MaxTradesPerDay     = 8;     // M1 overtrading guard
         private const double BreakEvenAtR        = 1.0;   // move SL to entry (+1 pip) at 1R
 
         // ---------------- Strategy parameters (optimisable) ----------------
+        [Parameter("Trend TimeFrame", DefaultValue = "Hour", Group = "Strategy")]
+        public TimeFrame TrendTimeFrame { get; set; }
+
         [Parameter("Trend EMA", DefaultValue = 200, MinValue = 100, MaxValue = 300, Step = 25, Group = "Strategy")]
         public int TrendEmaPeriod { get; set; }
 
@@ -53,7 +61,9 @@ namespace cAlgo.Robots
         [Parameter("Label", DefaultValue = "KTB", Group = "Misc")]
         public string Label { get; set; }
 
+        private Bars _htf;
         private ExponentialMovingAverage _trendEma;
+        private ExponentialMovingAverage _htfPullEma;
         private ExponentialMovingAverage _pullEma;
         private RelativeStrengthIndex _rsi;
         private AverageTrueRange _atr;
@@ -62,11 +72,14 @@ namespace cAlgo.Robots
         private double _dayStartBalance;
         private double _equityPeak;
         private bool _killed;
+        private int _tradesToday;
 
         protected override void OnStart()
         {
-            _trendEma = Indicators.ExponentialMovingAverage(Bars.ClosePrices, TrendEmaPeriod);
-            _pullEma  = Indicators.ExponentialMovingAverage(Bars.ClosePrices, PullbackEmaPeriod);
+            _htf        = MarketData.GetBars(TrendTimeFrame);
+            _trendEma   = Indicators.ExponentialMovingAverage(_htf.ClosePrices, TrendEmaPeriod);
+            _htfPullEma = Indicators.ExponentialMovingAverage(_htf.ClosePrices, PullbackEmaPeriod);
+            _pullEma    = Indicators.ExponentialMovingAverage(Bars.ClosePrices, PullbackEmaPeriod);
             _rsi      = Indicators.RelativeStrengthIndex(Bars.ClosePrices, 14);
             _atr      = Indicators.AverageTrueRange(AtrPeriod, MovingAverageType.Simple);
 
@@ -74,7 +87,7 @@ namespace cAlgo.Robots
             _dayStartBalance = Account.Balance;
             _equityPeak      = Account.Equity;
 
-            Positions.Opened += p => { if (p.Position.Label == Label) Print($"OPEN {p.Position.TradeType} {p.Position.VolumeInUnits}u @ {p.Position.EntryPrice}"); };
+            Positions.Opened += p => { if (p.Position.Label == Label) { _tradesToday++; Print($"OPEN {p.Position.TradeType} {p.Position.VolumeInUnits}u @ {p.Position.EntryPrice}"); } };
             Positions.Closed += p => { if (p.Position.Label == Label) Print($"CLOSE {p.Reason} net {p.Position.NetProfit:F2}"); };
         }
 
@@ -90,22 +103,26 @@ namespace cAlgo.Robots
             if (_killed || !RiskGatesOpen()) return;
 
             int i = Bars.Count - 2; // last CLOSED bar — never act on the forming bar
-            if (i < TrendEmaPeriod + 2) return;
+            if (i < PullbackEmaPeriod + 2 || _htf.Count < TrendEmaPeriod + 7) return;
 
             int hour = Bars.OpenTimes[i + 1].Hour;
             if (hour < SessionStart || hour >= SessionEnd) return;
 
             double atr = _atr.Result[i];
-            if (atr <= 0 || Symbol.Spread > atr * MaxSpreadAtrFrac) return;
+            if (atr <= 0 || Symbol.Spread > SlAtrMult * atr * MaxSpreadSlFrac) return;
 
             double close = Bars.ClosePrices[i], open = Bars.OpenPrices[i];
             double low = Bars.LowPrices[i], high = Bars.HighPrices[i];
-            double tEma = _trendEma.Result[i], tEmaPrev = _trendEma.Result[i - 5];
             double pEma = _pullEma.Result[i];
             double rsi = _rsi.Result[i];
 
-            bool upTrend   = close > tEma && pEma > tEma && tEma > tEmaPrev;
-            bool downTrend = close < tEma && pEma < tEma && tEma < tEmaPrev;
+            // Higher-timeframe trend from its last CLOSED bar (Last(1)), slope over 5 bars
+            double htfClose = _htf.ClosePrices.Last(1);
+            double tEma = _trendEma.Result.Last(1), tEmaPrev = _trendEma.Result.Last(6);
+            double htfPull = _htfPullEma.Result.Last(1);
+
+            bool upTrend   = htfClose > tEma && htfPull > tEma && tEma > tEmaPrev;
+            bool downTrend = htfClose < tEma && htfPull < tEma && tEma < tEmaPrev;
 
             bool longSetup  = upTrend   && low  <= pEma + 0.25 * atr && close > pEma && close > open && rsi > 40 && rsi < 70;
             bool shortSetup = downTrend && high >= pEma - 0.25 * atr && close < pEma && close < open && rsi < 60 && rsi > 30;
@@ -145,6 +162,7 @@ namespace cAlgo.Robots
         private bool RiskGatesOpen()
         {
             if (Positions.FindAll(Label, SymbolName).Length >= MaxOpenPositions) return false;
+            if (_tradesToday >= MaxTradesPerDay) return false;
             double dayPnlPct = (Account.Equity - _dayStartBalance) / _dayStartBalance * 100.0;
             return dayPnlPct > -MaxDailyLossPct;
         }
@@ -154,6 +172,7 @@ namespace cAlgo.Robots
             if (Server.Time.Date == _currentDay) return;
             _currentDay = Server.Time.Date;
             _dayStartBalance = Account.Balance;
+            _tradesToday = 0;
         }
 
         private void CheckKillSwitch()

@@ -10,11 +10,15 @@ Rules (pre-registered before the first run):
   (mirror for shorts). Stops are never loosened.
 - One position at a time; 1% risk per trade.
 
-Input: HistData M1 CSV(s) ("YYYYMMDD HHMMSS;O;H;L;C;V", bid, EST without DST).
-Costs: fixed spread (default 0.3 pip; HistData has no spread column), $7/lot round
-turn commission, and 0.5 pip per night held (conservative swap; ignores sign).
+Inputs (bid M1 bars, converted to broker "server" time = New York + 7h, so H4 bars
+start at 00/04/08/12/16/20 server time like a NY-close cTrader broker):
+- eurusd: HistData CSV(s) ("YYYYMMDD HHMMSS;O;H;L;C;V", EST without DST)
+- xauusd: per-day CSVs (timestamp,datetime_utc,open,high,low,close,volume), UTC
+Costs per instrument (see INSTRUMENTS): fixed spread (the data has no spread column),
+commission per round turn, and a conservative swap charged per night held, both sides.
 
-Usage: python h4_backtest.py <m1_2020.csv> <m1_2021.csv> ... [--sweep]
+Usage: python h4_backtest.py --symbol eurusd <m1_2020.csv> <m1_2021.csv> ... [--sweep]
+       python h4_backtest.py --symbol xauusd "<dir>/XAUUSD/1m/*/*/*.csv" --end 2024-12-31 [--sweep]
 """
 import argparse
 import itertools
@@ -22,26 +26,39 @@ import numpy as np
 import pandas as pd
 
 RISK_PCT, MAX_RISK_PCT, MAX_DD_PCT = 1.0, 2.0, 20.0
-PIP = 0.0001
-PIP_VALUE_PER_UNIT = 0.0001
-MIN_UNITS, UNIT_STEP = 1000, 1000
+
+# pip = cTrader PipSize; pip value per unit is in USD; commission is USD per unit round turn.
+INSTRUMENTS = {
+    "eurusd": dict(pip=0.0001, pip_value=0.0001, min_units=1000, unit_step=1000,
+                   spread_pips=0.3, swap_pips=0.5, commission_per_unit=7.0 / 100_000),
+    # gold: 1 unit = 1 oz, 0.01 lot = 1 oz. Spread $0.30, swap $0.20/oz/night,
+    # commission $7 per 100 oz round turn.
+    "xauusd": dict(pip=0.01, pip_value=0.01, min_units=1, unit_step=1,
+                   spread_pips=30, swap_pips=20, commission_per_unit=7.0 / 100),
+}
 
 DEFAULTS = dict(fast=50, slow=200, donchian=20, atr_n=14, sl_atr=2.0, trail_atr=3.0)
 
 
-def load(paths):
+def load(paths, symbol):
     parts = []
     for p in paths:
-        d = pd.read_csv(p, sep=";", header=None, names=["ts", "open", "high", "low", "close", "v"])
-        d.index = pd.to_datetime(d.ts, format="%Y%m%d %H%M%S")
+        if symbol == "eurusd":
+            d = pd.read_csv(p, sep=";", header=None, names=["ts", "open", "high", "low", "close", "v"])
+            d.index = pd.to_datetime(d.ts, format="%Y%m%d %H%M%S") + pd.Timedelta(hours=7)
+        else:
+            d = pd.read_csv(p, usecols=["datetime_utc", "open", "high", "low", "close"])
+            utc = pd.to_datetime(d.datetime_utc).dt.tz_localize("UTC")
+            d.index = (utc.dt.tz_convert("America/New_York").dt.tz_localize(None)
+                       + pd.Timedelta(hours=7)).to_numpy()
         parts.append(d[["open", "high", "low", "close"]])
     df = pd.concat(parts).sort_index()
     return df[~df.index.duplicated()]
 
 
 def to_h4(m1):
-    # EST 17:00 = broker server midnight (NY close), so H4 bars start 17,21,01,05,09,13 EST
-    return m1.resample("4h", offset="1h", label="left", closed="left").agg(
+    # index is broker server time (NY close = midnight), so plain 4h bins match cTrader H4
+    return m1.resample("4h", label="left", closed="left").agg(
         dict(open="first", high="max", low="min", close="last")).dropna()
 
 
@@ -58,9 +75,14 @@ def indicators(h4, p):
     return out
 
 
-def run(m1, spread_pips=0.3, commission_per_lot=7.0, swap_pips_per_night=0.5,
-        balance0=10_000.0, kill_switch=True, **p):
+def run(m1, symbol="eurusd", cost_mult=1.0, balance0=10_000.0, kill_switch=True, **p):
     p = {**DEFAULTS, **p}
+    ins = INSTRUMENTS[symbol]
+    PIP, PIP_VALUE_PER_UNIT = ins["pip"], ins["pip_value"]
+    MIN_UNITS, UNIT_STEP = ins["min_units"], ins["unit_step"]
+    spread_pips = ins["spread_pips"] * cost_mult
+    swap_pips_per_night = ins["swap_pips"] * cost_mult
+    commission_per_unit = ins["commission_per_unit"] * cost_mult
     h4 = to_h4(m1)
     ind = indicators(h4, p)
     sp = spread_pips * PIP
@@ -92,7 +114,7 @@ def run(m1, spread_pips=0.3, commission_per_lot=7.0, swap_pips_per_night=0.5,
                     px = min(pos["sl"], mo[m]) if buy else max(pos["sl"], mo[m] + sp)
                     nights = (mt[m] - pos["t"]) / np.timedelta64(1, "D")
                     pnl = (px - pos["entry"]) * pos["side"] * pos["units"]
-                    pnl -= commission_per_lot * pos["units"] / 100_000
+                    pnl -= commission_per_unit * pos["units"]
                     pnl -= swap_pips_per_night * np.floor(nights) * PIP_VALUE_PER_UNIT * pos["units"]
                     bal += pnl
                     trades.append(dict(entry_time=pd.Timestamp(pos["t"]), side=pos["side"], pnl=pnl,
@@ -158,22 +180,35 @@ def stats(tr, curve=None):
 
 
 if __name__ == "__main__":
+    import glob
     ap = argparse.ArgumentParser()
-    ap.add_argument("csv", nargs="+")
+    ap.add_argument("csv", nargs="+", help="files or glob patterns")
+    ap.add_argument("--symbol", default="eurusd", choices=sorted(INSTRUMENTS))
+    ap.add_argument("--end", help="drop data after this date (e.g. incomplete months)")
+    ap.add_argument("--split-year", type=int, help="first out-of-sample year (default: middle)")
     ap.add_argument("--sweep", action="store_true")
     a = ap.parse_args()
 
-    m1 = load(a.csv)
-    tr, cv, killed, h4 = run(m1)
-    print(f"Data: {m1.index[0]} -> {m1.index[-1]} EST, {len(m1):,} M1 bars, {len(h4):,} H4 bars")
+    files = sorted(f for pat in a.csv for f in glob.glob(pat))
+    m1 = load(files, a.symbol)
+    if a.end:
+        m1 = m1[m1.index < pd.Timestamp(a.end) + pd.Timedelta(days=1)]
+    sym = dict(symbol=a.symbol)
+    tr, cv, killed, h4 = run(m1, **sym)
+    years = sorted(tr.entry_time.dt.year.unique())
+    split = a.split_year or years[len(years) // 2]
+    print(f"{a.symbol}: {m1.index[0]} -> {m1.index[-1]} server time, {len(m1):,} M1 bars, "
+          f"{len(h4):,} H4 bars. In-sample < {split} <= out-of-sample")
     print("\nPRE-REGISTERED DEFAULTS:", stats(tr, cv), "KILLED" if killed else "")
-    for y in sorted(tr.entry_time.dt.year.unique()):
+    print("  in-sample    :", stats(tr[tr.entry_time.dt.year < split]))
+    print("  out-of-sample:", stats(tr[tr.entry_time.dt.year >= split]))
+    for y in years:
         print(f"  {y}:", stats(tr[tr.entry_time.dt.year == y]))
 
-    t0, _, _, _ = run(m1, spread_pips=0, commission_per_lot=0, swap_pips_per_night=0, kill_switch=False)
-    tw, cw, _, _ = run(m1, spread_pips=1.0, swap_pips_per_night=1.0, kill_switch=False)
-    print("\nZero costs (raw edge):              ", stats(t0))
-    print("Spread 1.0 pip, swap 1 pip/night:   ", stats(tw, cw))
+    t0, _, _, _ = run(m1, cost_mult=0, kill_switch=False, **sym)
+    tw, cw, _, _ = run(m1, cost_mult=2, kill_switch=False, **sym)
+    print("\nZero costs (raw edge):", stats(t0))
+    print("Double all costs:     ", stats(tw, cw))
 
     if a.sweep:
         grid = dict(donchian=(10, 20, 40, 55), sl_atr=(1.5, 2.0, 3.0), trail_atr=(2.0, 3.0, 4.0),
@@ -181,16 +216,16 @@ if __name__ == "__main__":
         rows = []
         for combo in itertools.product(*grid.values()):
             kw = dict(zip(grid, combo))
-            t_, _, _, _ = run(m1, kill_switch=False, **kw)
-            y0 = t_[t_.entry_time.dt.year == 2020] if not t_.empty else t_
-            y1 = t_[t_.entry_time.dt.year == 2021] if not t_.empty else t_
-            s0, s1 = stats(y0), stats(y1)
+            t_, _, _, _ = run(m1, kill_switch=False, **sym, **kw)
+            s0 = stats(t_[t_.entry_time.dt.year < split]) if not t_.empty else {}
+            s1 = stats(t_[t_.entry_time.dt.year >= split]) if not t_.empty else {}
             rows.append({**kw, "is_trades": s0.get("trades", 0), "is_pf": s0.get("pf", np.nan),
                          "oos_trades": s1.get("trades", 0), "oos_pf": s1.get("pf", np.nan),
                          "oos_sum_r": s1.get("sum_r", np.nan)})
         res = pd.DataFrame(rows).sort_values("is_pf", ascending=False)
         pd.set_option("display.width", 200)
-        print("\nGrid ranked by 2020 (in-sample) PF; 2021 = out-of-sample, never used for selection:")
+        print("\nGrid ranked by IN-SAMPLE PF; out-of-sample never used for selection:")
         print(res.head(12).to_string(index=False))
-        print(f"\n{len(res)} configs. 2021 PF > 1.0: {(res.oos_pf > 1).mean():.0%}; "
-              f"> 1.3: {(res.oos_pf > 1.3).mean():.0%}; median 2021 PF {res.oos_pf.median():.2f}")
+        print(f"\n{len(res)} configs. OOS PF > 1.0: {(res.oos_pf > 1).mean():.0%}; "
+              f"> 1.3: {(res.oos_pf > 1.3).mean():.0%}; median OOS PF {res.oos_pf.median():.2f}; "
+              f"median in-sample PF {res.is_pf.median():.2f}")

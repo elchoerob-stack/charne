@@ -40,3 +40,31 @@ Run the defaults, unchanged, on H4 for 2015–2025 on EURUSD, GBPUSD, USDJPY, AU
 - at least 4 of the 7 markets profitable
 
 If it fails that, the idea is finished.
+
+## Gold (XAUUSD) H4, 2015–2024: 2026-10-25 run, **REAL BUT THIN EDGE, not investable yet**
+Data: XAUUSD M1 for 2015–2024 (3.5M bars; spot checks match known prices; 2025 is excluded because the source is missing about half the year). Times are converted to NY-close server time, so the H4 bars match a cTrader broker. Costs are on purpose not optimistic: $0.30 spread, $7 per 100 oz commission, and $0.20/oz/night swap charged on both longs and shorts. Defaults are unchanged from EURUSD; none were tuned for gold.
+
+| Defaults (kill switch off, to measure the edge) | Trades | Win % | PF | Sum R | Max DD |
+|---|---|---|---|---|---|
+| **Zero costs (raw edge)** | 300 | 36 | **1.25** | +39 | 18% |
+| 2015–19 / 2020–24 with zero costs | 141 / 159 | 38 / 34 | 1.37 / 1.17 | +24 / +15 | |
+| **Realistic costs** | 301 | 35 | **1.12** | +21 | 20% |
+| 2015–19 / 2020–24 with costs | 141 / 160 | 37 / 33 | 1.16 / 1.10 | +12 / +10 | |
+| Double costs | 301 | 31 | 0.99 | +1 | 23% |
+| With all risk rules on | 258 | 33 | 1.01 | +3 | **kill switch hit Aug 2023** |
+
+Sum R by year (realistic costs): 2015 -11.7 · 2016 +6.8 · 2017 -0.5 · 2018 -0.6 · 2019 +17.6 · 2020 +9.9 · 2021 +0.4 · 2022 -10.8 · 2023 +2.2 · 2024 +8.0
+
+**Robustness grid** (72 configs, selected on 2015–19 and checked on 2020–24): **92% of configs were profitable after costs in 2020–24** (median PF 1.10). That is the opposite of the EURUSD and London-fade grids, where almost everything failed out of sample. Only 3% reached PF 1.3, and the correlation between in-sample and out-of-sample PF is about 0. Optimising doesn't help, so keep the defaults. The best in-sample config (Donchian 55, slow EMA 100) also hit the kill switch, during the 2021–2023 chop.
+
+**Verdict:**
+- This is the first edge in the project that holds across a decade and both halves of the data. Trend following on gold works before costs (PF 1.25).
+- Costs take about half of it. Spread plus about 3 nights of swap per trade cost about 0.06R per trade, against a raw edge of about 0.13R.
+- At PF 1.12 with 20% drawdowns, it makes about +1.8% a year at 1% risk. That's not enough to raise money on, and the 20% kill switch would have stopped it in 2023.
+
+**To make it investable (next steps, in order):**
+1. Re-run this test with **your broker's real gold spread, commission and swap**; cost is the main lever. At half the assumed costs, PF is 1.20.
+2. **Diversify:** the same unchanged rules on 5–10 uncorrelated markets (indices, oil, JPY pairs), each at a smaller risk. Trend-following returns come from the portfolio, not from any one market. This needs more data (export from MT5 or cTrader).
+3. Do not tune parameters to the 2015–2024 gold result.
+
+**R100 on gold:** a 2×ATR(H4) stop is about $30–50 per oz. The smallest trade (0.01 lot = 1 oz) therefore risks $30–50 on a standard account. On a cent account it risks 30–50 USC, so 1% risk needs about 3,000–5,000 USC (≈ R550–R900).

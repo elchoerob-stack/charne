@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --bg: 246 244 239;
+  }
+  .dark {
+    color-scheme: dark;
+    --bg: 6 13 26;
+  }
+  html,
+  body {
+    @apply bg-[#F6F4EF] text-navy-900 antialiased dark:bg-navy-950 dark:text-slate-100;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  body {
+    font-feature-settings: 'tnum' 1;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-gold ring-offset-2 ring-offset-transparent;
+  }
+  button {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-white shadow-sm ring-1 ring-black/5 dark:bg-navy-900 dark:ring-white/10;
+  }
+  .input {
+    @apply min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-navy-900 placeholder:text-slate-400 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/40 dark:border-white/10 dark:bg-navy-800 dark:text-slate-100;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300;
+  }
+  .hint {
+    @apply mt-1 text-xs text-slate-500 dark:text-slate-400;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.animate-pop { animation: pop 260ms ease-out; }
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-sheet { animation: sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade { animation: fade-in 180ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop, .animate-sheet, .animate-fade { animation: none; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  html, body { background: white !important; color: black !important; }
+  .print-area { box-shadow: none !important; }
+}

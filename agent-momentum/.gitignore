@@ -5,3 +5,4 @@ test-results
 playwright-report
 *.local
 dist-single
+*.tsbuildinfo

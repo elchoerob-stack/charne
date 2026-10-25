@@ -29,3 +29,18 @@ Run with `backtest/lbo_backtest.py`, a bar-by-bar Python replica, on EURUSD M1 f
 **Diagnosis:** costs are now small (about 0.06R per trade, against about 0.25R for the M1 trend bot), but the raw breakout direction has no edge on 2020 EURUSD (PF 0.95 with no costs). Because the costs are so low, the strategy's own logic is what fails. This is a cleaner FAIL than KeystoneTrendBot, not a near miss to tweak.
 
 **What this test can't tell you:** it covers one year and one broker feed. The proper test is cTrader's own backtest on your broker's tick data for 2021–2025, with the defaults unchanged. If that also shows PF < 1.1, the idea is done.
+
+## Variant: failed-breakout FADE. 2026-10-25 run, **FAIL** (no cBot built)
+Run with `backtest/fade_backtest.py`. The rules were fixed before the first run: after the price breaks the Asian range by 1 pip, the first M1 close back inside the range is faded at the next bar. The SL goes beyond the excursion extreme + 1 pip, TP is 1.5R, the bot is flat by 16:00, and it takes one trade per day. Same data, costs and risk rules as above.
+
+| Test | Trades | Win % | PF | Avg R | Note |
+|---|---|---|---|---|---|
+| Defaults, all rules on | 161 | 48 | 0.85 | -0.09 | kill switch hit, -14% |
+| Jan–Jun | 88 | 55 | 1.07 | +0.04 | |
+| Jul–Dec | 73 | 41 | 0.65 | -0.24 | |
+| Zero spread and commission | 183 | 50 | 1.06 | +0.04 | weak raw edge |
+| Spread +0.3 pip | 121 | 48 | 0.82 | -0.10 | |
+
+**The grid shows overfitting:** the best Jan–Jun configs scored PF 1.3–1.5, and every one of them collapsed to PF 0.50–0.65 in Jul–Dec. 0 of 54 configs had Jul–Dec PF > 1.0.
+
+**Diagnosis:** the median stop is only about 5.6 pips (the failed excursions are small), so costs are back to about 15–20% of 1R. On top of that, the small raw edge (PF 1.06) didn't hold from the first half of the year to the second.

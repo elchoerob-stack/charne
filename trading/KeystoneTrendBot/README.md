@@ -31,7 +31,7 @@ Multi-timeframe trend-pullback cBot for cTrader. **Attach to an EURUSD M1 chart.
 
 A FAIL at any step is a result. Do not tweak and re-run the same OOS window.
 
-## Backtest results: 2020-10-25 run, **FAIL**
+## Backtest results: 2026-10-25 run, **FAIL**
 Run with `backtest/ktb_backtest.py`, a bar-by-bar Python replica of the cBot, on EURUSD M1 for all of 2020 (MT5 export, 371k bars, median spread 0.2 pip). Commission is $7/lot round turn. The fill model is conservative: if SL and TP are both inside one bar, the SL counts as hit first.
 
 | Test | Trades | Win % | PF | Avg R | Result |

@@ -1,0 +1,69 @@
+# Run the CMS Workshop end-to-end checks.
+#
+# test/checks.mjs drives a real Chromium through all three surfaces — the
+# staff console, the technician's app and the customer link — and fails on
+# any console or page error. The apps have no build step and no runtime
+# dependencies, so all this needs is a static server and a browser.
+name: CMS Workshop checks
+
+on:
+  pull_request:
+    paths: ["cms-workshop/**", ".github/workflows/cms-workshop-checks.yml"]
+  push:
+    branches: [main]
+    paths: ["cms-workshop/**", ".github/workflows/cms-workshop-checks.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push supersedes an in-flight run on the same branch.
+concurrency:
+  group: cms-workshop-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Bump together: the package and the browser it expects.
+      PLAYWRIGHT_VERSION: 1.56.1
+      BASE: http://127.0.0.1:8899
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # --no-save because cms-workshop deliberately has no package.json:
+      # the apps ship as plain files a dealership can open off a laptop.
+      - name: Install Playwright
+        run: |
+          npm install --no-save "playwright@${PLAYWRIGHT_VERSION}"
+          npx playwright install --with-deps chromium
+
+      # nohup so it outlives this step and is still serving for the next one.
+      - name: Serve cms-workshop
+        run: |
+          nohup python3 -m http.server 8899 --directory cms-workshop \
+            > "${RUNNER_TEMP}/server.log" 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf "${BASE}/index.html" > /dev/null; then
+              echo "Server up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::The static server never came up on ${BASE}"
+          cat "${RUNNER_TEMP}/server.log" || true
+          exit 1
+
+      - name: Run the checks
+        run: node cms-workshop/test/checks.mjs
+
+      - name: Server log
+        if: failure()
+        run: cat "${RUNNER_TEMP}/server.log" || true

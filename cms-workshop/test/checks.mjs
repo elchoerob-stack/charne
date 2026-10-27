@@ -1,17 +1,31 @@
 /* End-to-end checks for the three surfaces.
  *
- *   npx http-server . -p 8899 -s &
- *   node test/checks.mjs
+ *   npx http-server cms-workshop -p 8899 -s &
+ *   node cms-workshop/test/checks.mjs
  *
  * Needs Playwright. It drives a real browser through the flows that matter
  * and fails loudly on any console or page error, because a silent error in
  * one of these is a dealership ringing support.
+ *
+ * Also runs on every pull request that touches cms-workshop — see
+ * .github/workflows/cms-workshop-checks.yml.
  */
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 let chromium;
-try { ({ chromium } = require("playwright")); }
-catch { ({ chromium } = require("/opt/node22/lib/node_modules/playwright")); }
+try {
+  ({ chromium } = require("playwright"));
+} catch {
+  try {
+    ({ chromium } = require("/opt/node22/lib/node_modules/playwright"));
+  } catch {
+    console.error(
+      "Playwright is not installed.\n" +
+      "  npm install playwright && npx playwright install chromium"
+    );
+    process.exit(1);
+  }
+}
 
 const base = process.env.BASE || "http://127.0.0.1:8899";
 const errs = [];

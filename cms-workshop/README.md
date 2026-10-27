@@ -167,6 +167,11 @@ node cms-workshop/test/checks.mjs
 
 All fifteen checks pass on the current build, with no browser errors.
 
+They also run on GitHub for every pull request that touches `cms-workshop`
+— `.github/workflows/cms-workshop-checks.yml` serves the folder, installs
+Chromium and runs the same file, so a regression is caught before review
+rather than at a dealership.
+
 ## Files
 
 ```

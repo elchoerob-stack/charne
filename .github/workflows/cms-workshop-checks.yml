@@ -27,8 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      # Bump together: the package and the browser it expects.
-      PLAYWRIGHT_VERSION: 1.56.1
+      # Playwright refuses to install a browser on a Linux it does not know,
+      # so this has to stay new enough for whatever ubuntu-latest currently
+      # is. 1.64.1 covers Ubuntu 26.04. If a run fails with "Playwright does
+      # not support chromium on ubuntu<NN>-x64", bump this.
+      PLAYWRIGHT_VERSION: 1.64.1
       BASE: http://127.0.0.1:8899
 
     steps:

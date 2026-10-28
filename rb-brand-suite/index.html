@@ -300,7 +300,7 @@ render();
 // ---- Uplifting, homely score (generated live, no files) ----
 // D major, I–V–vi–IV (D · A · Bm · G), ~104 bpm
 let ctx, master, verb, playing = false, timer, step = 0, nextT = 0;
-const BPM = 104, S16 = 60 / BPM / 4;
+const BPM = 84, S16 = 60 / BPM / 4;
 const chords = [[62,66,69],[61,64,69],[62,66,71],[62,67,71]];
 const roots  = [38, 45, 47, 43];
 const melody = [ // [step-in-4-bars, midi, length in 16ths]
@@ -347,18 +347,15 @@ function schedule(i, t) {
   if (s % 2 === 0) piano(c[(s / 2) % 3] + (s >= 8 ? 12 : 0), t, .6, .05);               // broken-chord piano
   if ([0, 6, 8, 14].includes(s)) voice(hz(roots[bar]), t, S16 * 3, .14, 'sine', .01);    // bass
   if (!intro) {
-    if (s === 0 || s === 8 || s === 10) kick(t);
-    if (s === 4 || s === 12) noise(t, .18, .12, 1600, .8);                              // soft clap
-    if (s % 2 === 1) noise(t, .05, .025, 7000, 2);                                      // shaker
     melody.filter(n => n[0] === (i % 64)).forEach(n => { voice(hz(n[1]), t, S16 * n[2] + .3, .07, 'sine', .01); voice(hz(n[1] + 12), t, S16 * n[2] * .6, .015, 'triangle'); });
   }
 }
 function tick() { while (nextT < ctx.currentTime + .2) { schedule(step++, nextT); nextT += S16; } }
 // Real tracks first: Kevin MacLeod (incompetech.com), CC BY 4.0. Falls back to the generated score above.
-const TRACKS = ['Wholesome', 'Inspired', 'Carefree'];
+const TRACKS = ['Easy Lemon', 'Dreamer', 'Lobby Time'];
 const audio = new Audio(); audio.preload = 'auto'; audio.volume = 0;
 let ti = 0, useSynth = false, fade;
-function loadTrack() { audio.src = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree/' + TRACKS[ti] + '.mp3'; nowPlaying(); }
+function loadTrack() { audio.src = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree/' + encodeURIComponent(TRACKS[ti]) + '.mp3'; nowPlaying(); }
 function nowPlaying() { const el = document.getElementById('credit'); if (el) el.textContent = useSynth ? '' : '♪ "' + TRACKS[ti] + '" · Kevin MacLeod (incompetech.com) · CC BY 4.0'; }
 audio.addEventListener('ended', () => { ti = (ti + 1) % TRACKS.length; loadTrack(); audio.play(); });
 audio.addEventListener('error', () => { if (playing && !useSynth) { useSynth = true; nowPlaying(); startSynth(); } });
@@ -368,7 +365,7 @@ function startMusic() {
   musicBtn.textContent = '♪ Music off';
   if (useSynth) return startSynth();
   if (!audio.src) loadTrack();
-  audio.play().then(() => fadeTo(.7, 2000)).catch(() => { useSynth = true; nowPlaying(); startSynth(); });
+  audio.play().then(() => fadeTo(.45, 2500)).catch(() => { useSynth = true; nowPlaying(); startSynth(); });
 }
 function stopMusic() {
   playing = false; musicBtn.textContent = '♪ Music on';

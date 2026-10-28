@@ -127,7 +127,7 @@ body.book .toolbar{width:min(794px,100%)}
   #stage{width:auto!important;height:auto!important}
   #book{position:static;transform:none!important;height:auto}
   body,body.book{background:none;padding:0;display:block}
-  #intro,.nav{display:none}
+  #intro,.nav,#credit{display:none}
   #book{width:auto;aspect-ratio:auto;perspective:none}
   #book .page{position:relative;transform:none!important}
   .toolbar{display:none}
@@ -154,6 +154,7 @@ body.book .toolbar{width:min(794px,100%)}
 
 <div id="stage"><div id="book"></div></div>
 <div class="nav"><button id="prev">‹ Prev</button><span id="count"></span><button id="next">Next ›</button></div>
+<div id="credit" style="margin-top:12px;font-size:10px;letter-spacing:.08em;color:#8f9bb3;text-align:center"></div>
 
 <!-- 1 · COMPANY PROFILE COVER -->
 <section class="page cover">
@@ -353,21 +354,36 @@ function schedule(i, t) {
   }
 }
 function tick() { while (nextT < ctx.currentTime + .2) { schedule(step++, nextT); nextT += S16; } }
+// Real tracks first: Kevin MacLeod (incompetech.com), CC BY 4.0. Falls back to the generated score above.
+const TRACKS = ['Wholesome', 'Inspired', 'Carefree'];
+const audio = new Audio(); audio.preload = 'auto'; audio.volume = 0;
+let ti = 0, useSynth = false, fade;
+function loadTrack() { audio.src = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree/' + TRACKS[ti] + '.mp3'; nowPlaying(); }
+function nowPlaying() { const el = document.getElementById('credit'); if (el) el.textContent = useSynth ? '' : '♪ "' + TRACKS[ti] + '" · Kevin MacLeod (incompetech.com) · CC BY 4.0'; }
+audio.addEventListener('ended', () => { ti = (ti + 1) % TRACKS.length; loadTrack(); audio.play(); });
+audio.addEventListener('error', () => { if (playing && !useSynth) { useSynth = true; nowPlaying(); startSynth(); } });
+function fadeTo(v, ms) { clearInterval(fade); const st = audio.volume, t0 = Date.now(); fade = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); audio.volume = st + (v - st) * k; if (k === 1) { clearInterval(fade); if (v === 0) audio.pause(); } }, 50); }
 function startMusic() {
-  if (!ctx) setup();
-  ctx.resume(); playing = true; step = 0; nextT = ctx.currentTime + .1;
-  master.gain.cancelScheduledValues(ctx.currentTime);
-  master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
-  master.gain.linearRampToValueAtTime(.85, ctx.currentTime + 2);
-  timer = setInterval(tick, 50);
+  if (!ctx) setup(); ctx.resume(); playing = true;
   musicBtn.textContent = '♪ Music off';
+  if (useSynth) return startSynth();
+  if (!audio.src) loadTrack();
+  audio.play().then(() => fadeTo(.7, 2000)).catch(() => { useSynth = true; nowPlaying(); startSynth(); });
 }
 function stopMusic() {
-  playing = false; clearInterval(timer);
+  playing = false; musicBtn.textContent = '♪ Music on';
+  if (!useSynth) return fadeTo(0, 1000);
+  clearInterval(timer);
   master.gain.cancelScheduledValues(ctx.currentTime);
   master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
   master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
-  musicBtn.textContent = '♪ Music on';
+}
+function startSynth() {
+  step = 0; nextT = ctx.currentTime + .1;
+  master.gain.cancelScheduledValues(ctx.currentTime);
+  master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(.85, ctx.currentTime + 2);
+  clearInterval(timer); timer = setInterval(tick, 50);
 }
 function rustle() { // soft paper sound on page turn
   if (!ctx || !playing) return;

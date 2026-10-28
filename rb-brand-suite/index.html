@@ -288,7 +288,7 @@ function render() {
   count.textContent = (cur + 1) + ' / ' + pages.length;
   prev.disabled = cur === 0; next.disabled = cur === pages.length - 1;
 }
-function go(d) { const n = cur + d; if (n < 0 || n >= pages.length) return; cur = n; render(); rustle(); }
+function go(d) { const n = cur + d; if (n < 0 || n >= pages.length) return; cur = n; render(); }
 prev.onclick = () => go(-1); next.onclick = () => go(1);
 book.addEventListener('click', e => { const r = book.getBoundingClientRect(); go(e.clientX - r.left < r.width / 3 ? -1 : 1); });
 document.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });

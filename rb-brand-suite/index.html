@@ -97,8 +97,26 @@ p{font-size:clamp(11px,1.6vw,13.5px);line-height:1.75;color:#3d434d}
   .sale{grid-template-columns:1fr}
   .cover .photo{min-height:240px}
 }
+/* Book mode */
+body.book{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at center,#3a3530 0%,#1b1916 100%);overflow-x:hidden}
+body.book .toolbar h1{color:var(--paper)}
+body.book .toolbar button:not(.ghost){background:var(--gold);color:var(--ink)}
+#book{position:relative;width:min(794px,92vw,calc((100vh - 170px) * 210 / 297));aspect-ratio:210/297;perspective:2600px}
+#book .page{position:absolute;inset:0;margin:0;max-width:none;aspect-ratio:auto;transform-origin:left center;transition:transform 1.1s cubic-bezier(.645,.045,.355,1),box-shadow 1.1s;backface-visibility:hidden;box-shadow:6px 18px 40px rgba(0,0,0,.45);font-size:90%}
+#book .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:22px;background:linear-gradient(90deg,rgba(0,0,0,.14),transparent);pointer-events:none;z-index:2}
+#book .page.flipped{transform:rotateY(-180deg);box-shadow:none}
+.nav{display:flex;align-items:center;gap:18px;margin-top:22px;color:var(--gold-soft);font-size:11px;letter-spacing:.3em;text-transform:uppercase}
+.nav button,.toolbar .ghost{font:inherit;background:transparent;color:var(--paper);border:1px solid var(--gold);padding:10px 18px;cursor:pointer;letter-spacing:.2em}
+.nav button:disabled{opacity:.3;cursor:default}
+#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(20,18,16,.92);color:var(--paper);text-align:center;transition:opacity .8s}
+#intro.gone{opacity:0;pointer-events:none}
+#intro .tag{color:var(--gold-soft)}
+#intro button{margin-top:28px;font:inherit;font-size:12px;letter-spacing:.32em;text-transform:uppercase;background:var(--gold);color:var(--ink);border:0;padding:16px 30px;cursor:pointer}
 @media print{
-  body{background:none;padding:0}
+  body,body.book{background:none;padding:0;display:block}
+  #intro,.nav{display:none}
+  #book{width:auto;aspect-ratio:auto;perspective:none}
+  #book .page{position:relative;transform:none!important}
   .toolbar{display:none}
   .page{box-shadow:none;margin:0;max-width:none;width:210mm;height:297mm;page-break-after:always}
   @page{size:A4;margin:0}
@@ -109,8 +127,20 @@ p{font-size:clamp(11px,1.6vw,13.5px);line-height:1.75;color:#3d434d}
 
 <div class="toolbar">
   <h1>RB Brand · Client Document Suite</h1>
-  <button onclick="window.print()">Print / Save PDF</button>
+  <div style="display:flex;gap:10px"><button class="ghost" id="musicBtn">♪ Music on</button><button onclick="window.print()">Print / Save PDF</button></div>
 </div>
+
+<div id="intro">
+  <div>
+    <div class="mono" style="justify-content:center">RB <span></span> BRAND</div>
+    <div class="tag">Real Estate · Pretoria East</div>
+    <button id="openBook">Open the book</button>
+    <p style="color:#a9a196;margin-top:16px;font-size:11px">Soft music will play · tap the page edges or swipe to turn</p>
+  </div>
+</div>
+
+<div id="book"></div>
+<div class="nav"><button id="prev">‹ Prev</button><span id="count"></span><button id="next">Next ›</button></div>
 
 <!-- 1 · COMPANY PROFILE COVER -->
 <section class="page cover">
@@ -229,5 +259,78 @@ p{font-size:clamp(11px,1.6vw,13.5px);line-height:1.75;color:#3d434d}
   <div class="foot"><span>Thank-you card · A6 front &amp; back</span><span>Print on 350gsm linen</span></div>
 </section>
 
+<script>
+// ---- Flipbook ----
+document.body.classList.add('book');
+const book = document.getElementById('book');
+const pages = [...document.querySelectorAll('section.page')];
+pages.forEach((p, i) => { p.style.zIndex = pages.length - i; book.appendChild(p); });
+let cur = 0;
+const count = document.getElementById('count'), prev = document.getElementById('prev'), next = document.getElementById('next');
+function render() {
+  pages.forEach((p, i) => p.classList.toggle('flipped', i < cur));
+  count.textContent = (cur + 1) + ' / ' + pages.length;
+  prev.disabled = cur === 0; next.disabled = cur === pages.length - 1;
+}
+function go(d) { const n = cur + d; if (n < 0 || n >= pages.length) return; cur = n; render(); rustle(); }
+prev.onclick = () => go(-1); next.onclick = () => go(1);
+book.addEventListener('click', e => { const r = book.getBoundingClientRect(); go(e.clientX - r.left < r.width / 3 ? -1 : 1); });
+document.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });
+let sx = null;
+book.addEventListener('touchstart', e => sx = e.touches[0].clientX, { passive: true });
+book.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) { e.preventDefault(); go(dx < 0 ? 1 : -1); } sx = null; });
+render();
+
+// ---- Soft ambient music (generated live, no files) ----
+let ctx, master, playing = false, timer;
+const chords = [[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,66]]; // Am7 · Fmaj7 · Cmaj7 · G
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+function setup() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = ctx.createGain(); master.gain.value = 0;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
+  const delay = ctx.createDelay(); delay.delayTime.value = .42;
+  const fb = ctx.createGain(); fb.gain.value = .38;
+  delay.connect(fb).connect(delay);
+  master.connect(lp); lp.connect(ctx.destination); lp.connect(delay); delay.connect(ctx.destination);
+}
+function tone(f, t, dur, vol, type) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + dur * .35); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + .1);
+}
+let bar = 0;
+function playBar() {
+  const t = ctx.currentTime + .05, c = chords[bar++ % chords.length];
+  c.forEach(m => tone(hz(m), t, 7.5, .045, 'sine'));
+  tone(hz(c[0] - 12), t, 7.5, .06, 'triangle');
+  [0, 1.5, 3, 4.5, 5.25].forEach((d, i) => tone(hz(c[(i * 2 + bar) % 4] + 12), t + d, 2.4, .03, 'sine'));
+}
+function startMusic() {
+  if (!ctx) setup();
+  ctx.resume(); playing = true;
+  master.gain.cancelScheduledValues(ctx.currentTime);
+  master.gain.linearRampToValueAtTime(.9, ctx.currentTime + 3);
+  playBar(); timer = setInterval(playBar, 6000);
+  musicBtn.textContent = '♪ Music off';
+}
+function stopMusic() {
+  playing = false; clearInterval(timer);
+  master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
+  musicBtn.textContent = '♪ Music on';
+}
+function rustle() { // soft paper sound on page turn
+  if (!ctx || !playing) return;
+  const len = ctx.sampleRate * .5, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2) * .12;
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter();
+  f.type = 'bandpass'; f.frequency.value = 2500; s.buffer = buf;
+  s.connect(f).connect(ctx.destination); s.start();
+}
+const musicBtn = document.getElementById('musicBtn');
+musicBtn.onclick = () => playing ? stopMusic() : startMusic();
+document.getElementById('openBook').onclick = () => { document.getElementById('intro').classList.add('gone'); startMusic(); };
+</script>
 </body>
 </html>

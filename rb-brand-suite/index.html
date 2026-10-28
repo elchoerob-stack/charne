@@ -129,7 +129,8 @@ body.book .toolbar{width:min(794px,100%)}
   body,body.book{background:none;padding:0;display:block}
   #intro,.nav,#credit{display:none}
   #book{width:auto;aspect-ratio:auto;perspective:none}
-  #book .page{position:relative;transform:none!important}
+  #book .page{position:relative;transform:none!important;box-shadow:none!important}
+  #book .page::before{display:none}
   .toolbar{display:none}
   .page{box-shadow:none;margin:0;max-width:none;width:210mm;height:297mm;page-break-after:always}
   @page{size:A4;margin:0}

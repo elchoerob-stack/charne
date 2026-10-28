@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RB Brand Client Suite</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#1d2430; --muted:#6b6f76; --paper:#fbf8f3; --linen:#f1ebe1;
-  --gold:#b08d57; --gold-soft:#d9c4a0; --line:#e3d9c8; --bg:#e9e4dc;
+  --ink:#242E43; --muted:#6a7280; --paper:#FDFBF6; --linen:#f2efe8;
+  --gold:#314F8E; --gold-soft:#a9bde3; --line:#dfe2e8; --bg:#e8e9ec; --slate:#39424C;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:'Jost',sans-serif;font-weight:300;padding:32px 16px}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans',sans-serif;font-weight:300;padding:32px 16px}
 .toolbar{max-width:794px;margin:0 auto 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .toolbar h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:26px;letter-spacing:.04em}
 .toolbar button{font:inherit;font-size:13px;letter-spacing:.18em;text-transform:uppercase;background:var(--ink);color:var(--paper);border:0;padding:12px 22px;cursor:pointer}
@@ -20,6 +20,10 @@ body{background:var(--bg);color:var(--ink);font-family:'Jost',sans-serif;font-we
 .mono{display:flex;align-items:center;gap:14px;font-family:'Cormorant Garamond',serif;font-size:30px;letter-spacing:.12em}
 .mono span{width:1px;height:28px;background:var(--gold)}
 .brand{text-align:center}
+.logo{height:64px;width:auto;display:block}
+.cover .logo,.card.dark .logo{filter:brightness(0) invert(1)}
+.wm{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:34px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:14px}
+.wm i{width:1px;height:30px;background:currentColor;opacity:.6}
 .brand .mono{justify-content:center}
 .tag{font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--muted);margin-top:6px}
 h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(30px,6vw,52px);line-height:1.05;letter-spacing:.02em}
@@ -27,7 +31,7 @@ h2 em{color:var(--gold)}
 h3{font-size:11px;letter-spacing:.32em;text-transform:uppercase;font-weight:500}
 p{font-size:clamp(11px,1.6vw,13.5px);line-height:1.75;color:#3d434d}
 .rule{width:56px;height:1px;background:var(--gold);margin:18px 0}
-.photo{background:linear-gradient(135deg,#cfc4b3 0%,#a99c88 45%,#6f6a62 100%);position:relative}
+.photo{background:linear-gradient(135deg,#d5d9e0 0%,#9aa6b8 45%,#4b5871 100%);position:relative}
 .photo::after{content:attr(data-label);position:absolute;left:12px;bottom:10px;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.85)}
 .foot{margin-top:auto;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
 .frame{position:absolute;inset:3.2%;border:1px solid var(--line);pointer-events:none}
@@ -91,28 +95,37 @@ p{font-size:clamp(11px,1.6vw,13.5px);line-height:1.75;color:#3d434d}
 .card.dark .tag{color:var(--gold-soft)}
 .card .big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(28px,5vw,44px)}
 
-@media (max-width:600px){
-  .page{aspect-ratio:auto;min-height:0}
-  .team,.split,.tiles,.cards,.sign{grid-template-columns:1fr}
-  .sale{grid-template-columns:1fr}
-  .cover .photo{min-height:240px}
-}
 /* Book mode */
-body.book{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at center,#3a3530 0%,#1b1916 100%);overflow-x:hidden}
+body.book{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at top,#34415e 0%,#242E43 45%,#161c29 100%);overflow-x:hidden;padding:20px 16px}
 body.book .toolbar h1{color:var(--paper)}
-body.book .toolbar button:not(.ghost){background:var(--gold);color:var(--ink)}
-#book{position:relative;width:min(794px,92vw,calc((100vh - 170px) * 210 / 297));aspect-ratio:210/297;perspective:2600px}
-#book .page{position:absolute;inset:0;margin:0;max-width:none;aspect-ratio:auto;transform-origin:left center;transition:transform 1.1s cubic-bezier(.645,.045,.355,1),box-shadow 1.1s;backface-visibility:hidden;box-shadow:6px 18px 40px rgba(0,0,0,.45);font-size:90%}
-#book .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:22px;background:linear-gradient(90deg,rgba(0,0,0,.14),transparent);pointer-events:none;z-index:2}
+body.book .toolbar button:not(.ghost){background:var(--paper);color:var(--ink)}
+body.book .toolbar{width:min(794px,100%)}
+#stage{position:relative;width:calc(794px * var(--s,1));height:calc(1123px * var(--s,1))}
+#book{position:absolute;left:0;top:0;width:794px;height:1123px;transform:scale(var(--s,1));transform-origin:0 0;perspective:3200px}
+#book .page{position:absolute;inset:0;width:794px;height:1123px;margin:0;max-width:none;aspect-ratio:auto;transform-origin:left center;transition:transform 1.1s cubic-bezier(.645,.045,.355,1),box-shadow 1.1s;backface-visibility:hidden;box-shadow:6px 18px 40px rgba(0,0,0,.45)}
+#book .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;background:linear-gradient(90deg,rgba(0,0,0,.14),transparent);pointer-events:none;z-index:2}
 #book .page.flipped{transform:rotateY(-180deg);box-shadow:none}
+#book h2{font-size:72px} #book p{font-size:19px;line-height:1.7} #book h3{font-size:15px}
+#book .page{padding:64px 68px} #book .cover{padding:0}
+#book .tag{font-size:13px} #book .foot{font-size:12px}
+#book .checks{gap:44px;margin-top:40px} #book .check{grid-template-columns:52px 1fr} #book .check i{width:40px;height:40px;font-size:20px} #book .check h3{margin-bottom:8px}
+#book .team{margin-top:50px;gap:26px} #book .member b{font-size:26px} #book .member small{font-size:12px} #book .member p{font-size:16px}
+#book .sale{padding:26px 0;gap:28px} #book .sale h4{font-size:30px} #book .specs{font-size:13px} #book .nums div{font-size:12px} #book .nums strong{font-size:22px;white-space:nowrap}
+#book .steps li{padding:22px 0;grid-template-columns:52px 1fr} #book .steps li span{font-size:32px} #book .price strong{font-size:48px}
+#book .table{font-size:18px} #book .table td{padding:19px 0} #book .box{width:20px;height:20px} #book .sign{margin-top:60px} #book .sign div{font-size:12px}
+#book .tiles{gap:20px;margin-top:40px} #book .tile{padding:30px} #book .tile h3{margin-bottom:12px}
+#book .cards{grid-template-columns:1fr;gap:26px} #book .card .big{font-size:60px} #book .wm{font-size:44px}
+#book .rule{margin:28px 0}
 .nav{display:flex;align-items:center;gap:18px;margin-top:22px;color:var(--gold-soft);font-size:11px;letter-spacing:.3em;text-transform:uppercase}
-.nav button,.toolbar .ghost{font:inherit;background:transparent;color:var(--paper);border:1px solid var(--gold);padding:10px 18px;cursor:pointer;letter-spacing:.2em}
+.nav button,.toolbar .ghost{font:inherit;background:transparent;color:var(--paper);border:1px solid var(--gold-soft);padding:10px 18px;cursor:pointer;letter-spacing:.2em}
 .nav button:disabled{opacity:.3;cursor:default}
-#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(20,18,16,.92);color:var(--paper);text-align:center;transition:opacity .8s}
+#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(22,28,41,.96);color:var(--paper);text-align:center;transition:opacity .8s}
 #intro.gone{opacity:0;pointer-events:none}
 #intro .tag{color:var(--gold-soft)}
-#intro button{margin-top:28px;font:inherit;font-size:12px;letter-spacing:.32em;text-transform:uppercase;background:var(--gold);color:var(--ink);border:0;padding:16px 30px;cursor:pointer}
+#intro button{margin-top:28px;font:inherit;font-size:12px;letter-spacing:.32em;text-transform:uppercase;background:var(--paper);color:var(--ink);border:0;padding:16px 30px;cursor:pointer}
 @media print{
+  #stage{width:auto!important;height:auto!important}
+  #book{position:static;transform:none!important;height:auto}
   body,body.book{background:none;padding:0;display:block}
   #intro,.nav{display:none}
   #book{width:auto;aspect-ratio:auto;perspective:none}
@@ -126,28 +139,28 @@ body.book .toolbar button:not(.ghost){background:var(--gold);color:var(--ink)}
 <body>
 
 <div class="toolbar">
-  <h1>RB Brand · Client Document Suite</h1>
+  <h1>RB Brand Real Estate</h1>
   <div style="display:flex;gap:10px"><button class="ghost" id="musicBtn">♪ Music on</button><button onclick="window.print()">Print / Save PDF</button></div>
 </div>
 
 <div id="intro">
   <div>
-    <div class="mono" style="justify-content:center">RB <span></span> BRAND</div>
+    <div class="mono" style="justify-content:center"><b class="wm">RB <i></i> BRAND</b></div>
     <div class="tag">Real Estate · Pretoria East</div>
     <button id="openBook">Open the book</button>
     <p style="color:#a9a196;margin-top:16px;font-size:11px">Soft music will play · tap the page edges or swipe to turn</p>
   </div>
 </div>
 
-<div id="book"></div>
+<div id="stage"><div id="book"></div></div>
 <div class="nav"><button id="prev">‹ Prev</button><span id="count"></span><button id="next">Next ›</button></div>
 
 <!-- 1 · COMPANY PROFILE COVER -->
 <section class="page cover">
   <div class="photo" data-label="Hero listing photograph"></div>
   <div class="body">
-    <div class="mono">RB <span></span> BRAND</div>
-    <div class="tag">Real Estate · Pretoria East</div>
+    <div class="mono"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"></div>
+    <div class="tag">Where Dedication Meets Excellence</div>
     <div class="rule"></div>
     <h2>Company Profile</h2>
     <p style="margin-top:16px">Considered marketing, honest advice and a calm, structured process — from the first conversation to the day you hand over the keys.</p>
@@ -238,7 +251,7 @@ body.book .toolbar button:not(.ghost){background:var(--gold);color:var(--ink)}
 
 <!-- 7 · WELCOME GUIDE -->
 <section class="page welcome">
-  <div class="brand"><div class="mono">RB <span></span> BRAND</div><div class="rule" style="margin:18px auto"></div><h2>Welcome <em>Home</em></h2><p style="margin-top:12px">Everything you need for your first weeks in your new home.</p></div>
+  <div class="brand"><div class="mono"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"></div><div class="rule" style="margin:18px auto"></div><h2>Welcome <em>Home</em></h2><p style="margin-top:12px">Everything you need for your first weeks in your new home.</p></div>
   <div class="tiles">
     <div class="tile"><h3>Municipal</h3><p>City of Tshwane account transfer, refuse days and rates queries.</p></div>
     <div class="tile"><h3>Utilities</h3><p>Prepaid electricity vendor, fibre providers in your area, water meter.</p></div>
@@ -253,7 +266,7 @@ body.book .toolbar button:not(.ghost){background:var(--gold);color:var(--ink)}
 <!-- 8 · THANK YOU CARD (front / back) -->
 <section class="page">
   <div class="cards">
-    <div class="card dark"><div class="mono">RB <span></span> BRAND</div><div class="tag">Real Estate</div><div class="rule" style="margin:14px auto"></div><div class="big">Thank you</div></div>
+    <div class="card dark"><div class="mono"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"></div><div class="tag">Real Estate</div><div class="rule" style="margin:14px auto"></div><div class="big">Thank you</div></div>
     <div class="card"><div class="big" style="font-size:28px">With gratitude</div><p>It was a privilege helping you with this chapter. Wishing you many happy years ahead.</p><div class="rule" style="margin:10px auto"></div><p style="font-size:11px">Charné Robilliard<br>Property Practitioner · RB Brand Real Estate<br>082 000 0000 · charne@rbbrand.co.za</p></div>
   </div>
   <div class="foot"><span>Thank-you card · A6 front &amp; back</span><span>Print on 350gsm linen</span></div>
@@ -261,6 +274,8 @@ body.book .toolbar button:not(.ghost){background:var(--gold);color:var(--ink)}
 
 <script>
 // ---- Flipbook ----
+function fit(){ const s=Math.min((innerWidth-32)/794,(innerHeight-190)/1123,1); document.documentElement.style.setProperty('--s',Math.max(s,.2)); }
+fit(); addEventListener('resize',fit);
 document.body.classList.add('book');
 const book = document.getElementById('book');
 const pages = [...document.querySelectorAll('section.page')];
@@ -281,43 +296,77 @@ book.addEventListener('touchstart', e => sx = e.touches[0].clientX, { passive: t
 book.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) { e.preventDefault(); go(dx < 0 ? 1 : -1); } sx = null; });
 render();
 
-// ---- Soft ambient music (generated live, no files) ----
-let ctx, master, playing = false, timer;
-const chords = [[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,66]]; // Am7 · Fmaj7 · Cmaj7 · G
+// ---- Uplifting, homely score (generated live, no files) ----
+// D major, I–V–vi–IV (D · A · Bm · G), ~104 bpm
+let ctx, master, verb, playing = false, timer, step = 0, nextT = 0;
+const BPM = 104, S16 = 60 / BPM / 4;
+const chords = [[62,66,69],[61,64,69],[62,66,71],[62,67,71]];
+const roots  = [38, 45, 47, 43];
+const melody = [ // [step-in-4-bars, midi, length in 16ths]
+  [0,74,4],[4,76,2],[6,78,4],[10,76,2],[12,74,4],
+  [16,73,4],[20,74,2],[22,76,6],[28,69,4],
+  [32,71,4],[36,74,2],[38,78,4],[42,81,2],[44,78,4],
+  [48,79,4],[52,78,2],[54,76,4],[58,74,6]];
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 function setup() {
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   master = ctx.createGain(); master.gain.value = 0;
-  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
-  const delay = ctx.createDelay(); delay.delayTime.value = .42;
-  const fb = ctx.createGain(); fb.gain.value = .38;
-  delay.connect(fb).connect(delay);
-  master.connect(lp); lp.connect(ctx.destination); lp.connect(delay); delay.connect(ctx.destination);
+  const comp = ctx.createDynamicsCompressor();
+  verb = ctx.createConvolver();
+  const len = ctx.sampleRate * 2.2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  verb.buffer = ir;
+  const wet = ctx.createGain(); wet.gain.value = .28;
+  master.connect(comp); master.connect(verb); verb.connect(wet).connect(comp); comp.connect(ctx.destination);
 }
-function tone(f, t, dur, vol, type) {
+function voice(f, t, dur, vol, type, attack = .005) {
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = type; o.frequency.value = f;
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + dur * .35); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-  o.connect(g).connect(master); o.start(t); o.stop(t + dur + .1);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + .05);
 }
-let bar = 0;
-function playBar() {
-  const t = ctx.currentTime + .05, c = chords[bar++ % chords.length];
-  c.forEach(m => tone(hz(m), t, 7.5, .045, 'sine'));
-  tone(hz(c[0] - 12), t, 7.5, .06, 'triangle');
-  [0, 1.5, 3, 4.5, 5.25].forEach((d, i) => tone(hz(c[(i * 2 + bar) % 4] + 12), t + d, 2.4, .03, 'sine'));
+function piano(m, t, dur, vol) { voice(hz(m), t, dur, vol, 'triangle'); voice(hz(m) * 2, t, dur * .5, vol * .25, 'sine'); }
+function noise(t, dur, vol, freq, q = 1) {
+  const n = ctx.sampleRate * dur, buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; s.buffer = buf;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  s.connect(f).connect(g).connect(master); s.start(t);
 }
+function kick(t) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(45, t + .18);
+  g.gain.setValueAtTime(.35, t); g.gain.exponentialRampToValueAtTime(.0001, t + .3);
+  o.connect(g).connect(master); o.start(t); o.stop(t + .32);
+}
+function schedule(i, t) {
+  const bar = Math.floor(i / 16) % 4, s = i % 16, c = chords[bar], intro = i < 64;
+  if (s === 0) c.forEach(m => voice(hz(m - 12), t, S16 * 16, .03, 'sine', .4));       // warm pad
+  if (s % 2 === 0) piano(c[(s / 2) % 3] + (s >= 8 ? 12 : 0), t, .6, .05);               // broken-chord piano
+  if ([0, 6, 8, 14].includes(s)) voice(hz(roots[bar]), t, S16 * 3, .14, 'sine', .01);    // bass
+  if (!intro) {
+    if (s === 0 || s === 8 || s === 10) kick(t);
+    if (s === 4 || s === 12) noise(t, .18, .12, 1600, .8);                              // soft clap
+    if (s % 2 === 1) noise(t, .05, .025, 7000, 2);                                      // shaker
+    melody.filter(n => n[0] === (i % 64)).forEach(n => { voice(hz(n[1]), t, S16 * n[2] + .3, .07, 'sine', .01); voice(hz(n[1] + 12), t, S16 * n[2] * .6, .015, 'triangle'); });
+  }
+}
+function tick() { while (nextT < ctx.currentTime + .2) { schedule(step++, nextT); nextT += S16; } }
 function startMusic() {
   if (!ctx) setup();
-  ctx.resume(); playing = true;
+  ctx.resume(); playing = true; step = 0; nextT = ctx.currentTime + .1;
   master.gain.cancelScheduledValues(ctx.currentTime);
-  master.gain.linearRampToValueAtTime(.9, ctx.currentTime + 3);
-  playBar(); timer = setInterval(playBar, 6000);
+  master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(.85, ctx.currentTime + 2);
+  timer = setInterval(tick, 50);
   musicBtn.textContent = '♪ Music off';
 }
 function stopMusic() {
   playing = false; clearInterval(timer);
-  master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
+  master.gain.cancelScheduledValues(ctx.currentTime);
+  master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
   musicBtn.textContent = '♪ Music on';
 }
 function rustle() { // soft paper sound on page turn

@@ -1,6 +1,6 @@
 // Make the showcase PDFs, in English and Afrikaans, each page tagged "Concept demo":
-//   pdf/RB-Brand-Books-Concept-Demo(-AF).pdf  overview page + all three books
-//   pdf/<Book>(-AF).pdf                       each book on its own
+//   pdf/RB Brand Client Books - Preview.pdf (and the Afrikaans Voorskou)  overview page + all three books
+//   pdf/RB Brand <Book>.pdf                                                each book on its own
 // Run after build.py:  node src/make_pdf.js   (needs Playwright; merges with Python's pypdf)
 const { chromium } = require('playwright');
 const { execFileSync } = require('child_process');
@@ -12,18 +12,18 @@ const DEST = path.join(OUT, 'pdf');
 const tag = text => `.page::after{content:"${text}";position:absolute;top:20px;right:24px;z-index:9;font:600 9px 'Noto Sans',sans-serif;
   letter-spacing:.28em;text-transform:uppercase;color:#E0A458;background:rgba(36,46,67,.88);padding:5px 10px;border-radius:20px}`;
 const LANGS = [
-  { suffix: '', file: '', tag: 'Concept demo', title: 'RB Brand Books - Concept Demo',
-    books: [['listing-presentation', 'Listing-Presentation'], ['buyer-guide', 'Buyer-Guide'], ['moving-day-pack', 'Moving-Day-Pack']] },
-  { suffix: '.af', file: '-AF', tag: 'Konsepdemo', title: 'RB Brand Boeke - Konsepdemo',
-    books: [['listing-presentation', 'Verkopersaanbieding'], ['buyer-guide', 'Kopersgids'], ['moving-day-pack', 'Trekdagpakket']] },
+  { suffix: '', all: 'RB Brand Client Books - Preview', tag: 'Concept demo',
+    books: [['listing-presentation', 'RB Brand Listing Presentation'], ['buyer-guide', 'RB Brand Buyer Guide'], ['moving-day-pack', 'RB Brand Moving Day Pack']] },
+  { suffix: '.af', all: 'RB Brand Kliëntboeke - Voorskou', tag: 'Konsepdemo',
+    books: [['listing-presentation', 'RB Brand Verkopersaanbieding'], ['buyer-guide', 'RB Brand Kopersgids'], ['moving-day-pack', 'RB Brand Trekdagpakket']] },
 ];
 
-const merge = (target, title, parts) => execFileSync('python3', ['-c', `
+const merge = (target, title, parts, author = 'Charné Robilliard') => execFileSync('python3', ['-c', `
 import sys; from pypdf import PdfWriter
 w = PdfWriter()
-for p in sys.argv[3:]: w.append(p)
-w.add_metadata({'/Title': sys.argv[2]})
-w.write(sys.argv[1])`, target, title, ...parts]);
+for p in sys.argv[4:]: w.append(p)
+w.add_metadata({'/Title': sys.argv[2], '/Author': sys.argv[3], '/Creator': 'StallFlow', '/Producer': 'StallFlow'})
+w.write(sys.argv[1])`, target, title, author, ...parts]);
 
 (async () => {
   fs.mkdirSync(DEST, { recursive: true });
@@ -44,12 +44,17 @@ w.write(sys.argv[1])`, target, title, ...parts]);
       const one = await print(path.join(OUT, `${stem}${L.suffix}.html`), path.join(WORK, `${stem}${L.suffix}.pdf`), tag(L.tag));
       parts.push(one);
       const single = path.join(DEST, `${name}.pdf`);
-      merge(single, `${name.replace(/-/g, ' ')} - ${L.tag}`, [one]);
+      merge(single, name, [one]);
       console.log('built', path.relative(OUT, single));
     }
-    const all = path.join(DEST, `RB-Brand-Books-Concept-Demo${L.file}.pdf`);
-    merge(all, L.title, parts);
+    const all = path.join(DEST, `${L.all}.pdf`);
+    merge(all, L.all, parts);
     console.log('built', path.relative(OUT, all));
   }
+  // the one-page pricing proposal, from StallFlow
+  const prop = await print(path.join(__dirname, 'proposal.html'), path.join(WORK, 'proposal.pdf'));
+  const propOut = path.join(OUT, 'StallFlow Proposal - RB Brand Client Books.pdf');
+  merge(propOut, 'StallFlow Proposal - RB Brand Client Books', [prop], 'Jacques Robilliard');
+  console.log('built', path.relative(OUT, propOut));
   await browser.close();
 })();

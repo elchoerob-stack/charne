@@ -244,7 +244,7 @@ setLang(lang);
 def body_of(html):
     return html[html.index('<body>') + 6:html.index('</body>')]
 demo = hubs['en']
-demo = demo.replace('<title>RB Brand Books</title>', '<title>RB Brand Books · Concept Demo</title>')
+demo = demo.replace('<title>RB Brand Books</title>', '<title>RB Brand Client Books</title>')
 demo = demo.replace('</style>', REVIEW_CSS + '</style>', 1)
 parts = []
 for lang in LANGS:
@@ -254,8 +254,9 @@ for lang in LANGS:
 demo = demo[:demo.index('<body>') + 6] + '\n'.join(parts) + demo[demo.index('</body>'):]
 demo = demo.replace('</body>', OPEN_JS.replace('%BOOKS%', json.dumps(books, ensure_ascii=False).replace('</', '<\\/'))
                                       .replace('%PHOTOS%', json.dumps(PHOTO_MAP)) + '</body>')
-(OUT / 'RB-Brand-Books-Concept-Demo.html').write_text(demo)
-print('built RB-Brand-Books-Concept-Demo.html')
+DEMO_NAME = 'RB Brand Client Books - Interactive.html'
+(OUT / DEMO_NAME).write_text(demo)
+print('built', DEMO_NAME)
 
 # ---- Overview page for the PDF (src/make_pdf.js turns it and the books into one PDF) ----
 work = OUT / '.pdf-work'; work.mkdir(exist_ok=True)

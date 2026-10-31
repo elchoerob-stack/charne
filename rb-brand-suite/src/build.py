@@ -1,7 +1,7 @@
 """Build the RB Brand books: wraps each src/<book>.html page set in the shared shell
 (book.css + book.js inlined) so every book, and every client copy saved from it,
 is a single self-contained HTML file.  Run:  python3 src/build.py"""
-import pathlib, re
+import json, pathlib, re
 
 SRC = pathlib.Path(__file__).parent
 OUT = SRC.parent
@@ -83,3 +83,52 @@ for src, out, title, intro in BOOKS:
         html = html.replace(key, val, 1)
     (OUT / out).write_text(html)
     print('built', out)
+
+# ---- Concept demo: the home page and all three books in ONE file, so it can be
+# sent on WhatsApp or email and opened on any phone or computer ----
+import base64
+DEMO_FLAG = ('<div style="width:min(794px,100%);margin:0 0 12px;padding:8px 14px;border:1px dashed #E0A458;'
+             'color:#E0A458;font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-align:center">'
+             'Concept demo · names, figures, reviews and photos are placeholders</div>')
+books = {}
+for _, out, _, _ in BOOKS:
+    h = (OUT / out).read_text()
+    h = h.replace('<a class="edit-only" href="index.html">‹</a>', '<a class="edit-only" href="javascript:history.back()">‹</a>')
+    h = h.replace('<div id="hint"', DEMO_FLAG + '\n<div id="hint"', 1)
+    books[out.removesuffix('.html')] = base64.b64encode(h.encode()).decode()
+
+REVIEW = """
+  <div class="review">
+    <span class="rv-tag">Concept demo · for review</span>
+    <p>Prepared by Charné Robilliard for review by the principal. This is a working concept: the books open, turn and can be personalised, but all names, figures, reviews and photos are placeholders. Nothing has been sent to clients.</p>
+    <h3>What I’d love your input on</h3>
+    <ol>
+      <li>Are you happy for the books to carry the RB Brand name, logo and colours as shown?</li>
+      <li>The commission rate and wording to use on the seller’s walk-away page.</li>
+      <li>Our PPRA and Fidelity Fund details, and which recent sales and Google reviews we may feature.</li>
+      <li>Should the whole team use these books?</li>
+    </ol>
+  </div>"""
+REVIEW_CSS = """.review{margin:28px 0 0;background:rgba(224,164,88,.1);border:1px solid #E0A458;border-radius:6px;padding:22px 26px;color:#e4e8f0;line-height:1.6;font-size:15px}
+.rv-tag{display:inline-block;background:#E0A458;color:#242E43;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;padding:5px 12px;margin-bottom:12px}
+.review h3{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:#E0A458;margin:16px 0 8px}
+.review ol{padding-left:20px}
+"""
+OPEN_JS = """<script>
+// Each book is stored inside this file and opened as its own page when its card is tapped
+const BOOKS = %s;
+document.querySelectorAll('a[data-book]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  const bytes = Uint8Array.from(atob(BOOKS[a.dataset.book]), c => c.charCodeAt(0));
+  location.href = URL.createObjectURL(new Blob([bytes], { type: 'text/html' }));
+}));
+</script>
+"""
+hub = (OUT / 'index.html').read_text()
+hub = hub.replace('<title>RB Brand Books</title>', '<title>RB Brand Books · Concept Demo</title>')
+hub = hub.replace('</style>', REVIEW_CSS + '</style>', 1)
+hub = re.sub(r'(<p class="lede">.*?</p>)', lambda m: m.group(1) + REVIEW, hub, count=1, flags=re.S)
+hub = re.sub(r'href="([\w-]+)\.html"', r'href="#" data-book="\1"', hub)
+hub = hub.replace('</body>', OPEN_JS % json.dumps(books) + '</body>')
+(OUT / 'RB-Brand-Books-Concept-Demo.html').write_text(hub)
+print('built RB-Brand-Books-Concept-Demo.html')

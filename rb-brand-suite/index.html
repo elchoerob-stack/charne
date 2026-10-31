@@ -95,6 +95,130 @@ p{font-size:clamp(11px,1.6vw,13.5px);line-height:1.75;color:#3d434d}
 .card.dark .tag{color:var(--gold-soft)}
 .card .big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(28px,5vw,44px)}
 
+
+/* ===== Jacaranda Twilight theme ===== */
+:root{--jac:#8E6BBF;--jac-soft:#e7def3;--amber:#E0A458;--amber-soft:#f8ead5;--blue:#314F8E;--navy:#242E43}
+.ph{background:var(--img) center/cover no-repeat,linear-gradient(135deg,#9aa6b8,#4b5871);}
+.ph.fill{position:absolute;inset:0}
+.kick{display:inline-block;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--blue);font-weight:600}
+.kick.light{color:var(--amber)}
+.bar{width:90px;height:4px;background:linear-gradient(90deg,var(--amber),var(--jac));border-radius:2px}
+#book .page.bleed{padding:0}
+#book .j-cover h1,#book h2{font-family:'Cormorant Garamond',serif;font-weight:500}
+#book h2 em,#book h1 em{color:var(--jac);font-style:italic}
+/* cover */
+.j-cover{color:#fff}
+.j-cover .veil,.ty-front .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(36,46,67,.55) 0%,rgba(36,46,67,0) 28%,rgba(36,46,67,.2) 50%,rgba(36,46,67,.95) 82%)}
+.cv-top{position:absolute;top:56px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center}
+.j-cover .logo{filter:brightness(0) invert(1);height:70px}
+.j-cover .wm{color:#fff}
+.pill{border:1px solid rgba(255,255,255,.6);border-radius:30px;padding:10px 20px;font-size:12px;letter-spacing:.25em;text-transform:uppercase;backdrop-filter:blur(6px);background:rgba(255,255,255,.08)}
+.cv-body{position:absolute;left:64px;right:64px;bottom:70px}
+#book .j-cover h1{font-size:84px;line-height:1;margin:26px 0 22px}
+#book .j-cover h1 em{color:var(--amber)}
+#book .j-cover p{color:#e4e8f0;font-size:20px;max-width:560px}
+.areas{margin-top:34px;padding-top:22px;border-top:1px solid rgba(255,255,255,.25);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#c9d3e6;line-height:1.9}
+/* why */
+.j-why .top{height:430px}
+.float-card{position:relative;margin:-110px 64px 0;background:var(--navy);color:#fff;padding:36px 44px;box-shadow:0 20px 40px rgba(36,46,67,.3)}
+#book .float-card h2{color:#fff;margin-top:8px;font-size:66px}
+.float-card .kick{color:var(--amber)}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px 64px 0}
+.q{padding:26px 26px 22px;border-radius:4px;color:#fff}
+.q b{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:500;opacity:.55;display:block;line-height:1}
+#book .q h3{font-size:14px;letter-spacing:.2em;margin:10px 0 8px}
+#book .q p{color:rgba(255,255,255,.88);font-size:15.5px;line-height:1.6}
+.c1{background:var(--blue)}.c2{background:var(--jac)}.c3{background:var(--amber)}.c4{background:var(--navy)}
+/* team */
+.j-team{background:radial-gradient(circle at 85% 10%,#3b4a6d 0,var(--navy) 55%);color:#fff}
+.petals{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.petals i{position:absolute;width:140px;height:140px;border-radius:70% 0 70% 0;background:var(--jac);opacity:.22}
+.petals i:nth-child(1){top:-30px;right:60px;transform:rotate(20deg)}
+.petals i:nth-child(2){top:70px;right:-40px;width:90px;height:90px;transform:rotate(80deg);opacity:.3}
+.petals i:nth-child(3){top:20px;right:190px;width:60px;height:60px;transform:rotate(-30deg);background:var(--amber)}
+.petals i:nth-child(4){bottom:300px;left:-50px;transform:rotate(45deg)}
+.petals i:nth-child(5){bottom:390px;left:70px;width:50px;height:50px;opacity:.35}
+.petals i:nth-child(6){top:180px;right:110px;width:40px;height:40px;background:var(--amber);opacity:.3}
+.petals.sm i:nth-child(1){top:-20px;right:-20px}
+.tm-in{position:relative;padding:72px 64px 0}
+#book .j-team h2{color:#fff;margin-top:10px}
+.tm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:44px;text-align:center}
+.av{width:150px;height:150px;border-radius:50%;margin:0 auto 18px;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-size:50px;color:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.08),0 0 0 7px rgba(255,255,255,.25)}
+.a1{background:linear-gradient(135deg,var(--jac),var(--blue))}.a2{background:linear-gradient(135deg,var(--amber),var(--jac))}.a3{background:linear-gradient(135deg,var(--blue),#5fa3b8)}
+.tm b{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:500;display:block}
+.tm small{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--amber)}
+#book .tm p{color:#c9d3e6;font-size:15.5px;margin-top:10px}
+.quote{margin:40px 0 0;padding:22px 30px;background:var(--amber);color:var(--navy);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;text-align:center}
+.j-team .strip{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:44px -64px 0;height:330px}
+/* sales */
+.j-sales{background:linear-gradient(180deg,var(--paper) 0,var(--paper) 60%,var(--jac-soft) 100%)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0}
+.stats div{background:var(--navy);color:#c9d3e6;padding:18px 20px;font-size:12px;letter-spacing:.15em;text-transform:uppercase}
+.stats strong{display:block;font-family:'Cormorant Garamond',serif;font-size:42px;color:var(--amber);letter-spacing:0;font-weight:500;line-height:1.1}
+.sale-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:330px 300px;gap:16px}
+.sc{position:relative;overflow:hidden;border-radius:4px;box-shadow:0 12px 26px rgba(36,46,67,.18)}
+.sc.wide{grid-column:1/3}
+.sc .img{position:absolute;inset:0}
+.sold{position:absolute;top:18px;left:-34px;transform:rotate(-35deg);background:var(--amber);color:var(--navy);font-weight:600;font-size:12px;letter-spacing:.3em;text-transform:uppercase;padding:6px 44px}
+.sc-t{position:absolute;left:0;right:0;bottom:0;padding:50px 22px 18px;background:linear-gradient(0deg,rgba(36,46,67,.95),rgba(36,46,67,0));color:#fff}
+.sc-t h4{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500}
+.sc-t span{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#c9d3e6}
+.pr{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
+.pr b{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--amber)}
+.pr em{font-style:normal;font-size:12px;letter-spacing:.15em;text-transform:uppercase;background:var(--jac);padding:4px 10px;border-radius:20px}
+.note{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+/* proposal */
+.j-prop{display:grid;grid-template-columns:300px 1fr}
+.j-prop .side{height:100%}
+.pp{padding:64px 56px}
+#book .pp h2{margin:10px 0 26px;font-size:62px}
+.tl{list-style:none;position:relative}
+.tl::before{content:"";position:absolute;left:21px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.tl li{position:relative;padding:0 0 22px 66px;background:none!important}
+.tl li::before{content:counter(list-item);position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Cormorant Garamond',serif;font-size:22px}
+.tl li.c1::before{background:var(--blue)}.tl li.c2::before{background:var(--jac)}.tl li.c3::before{background:var(--amber)}.tl li.c4::before{background:var(--navy)}
+.tl b{font-size:15px;letter-spacing:.2em;text-transform:uppercase;display:block;padding-top:10px}
+#book .tl p{font-size:16px}
+.price{margin-top:14px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:30px;text-align:center;border-bottom:5px solid var(--amber)}
+.price span,.price small{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:#c9d3e6;display:block}
+.price strong{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:500;display:block;color:var(--amber);margin:6px 0}
+/* handover */
+.j-hand .band{height:280px}
+.hd-in{padding:44px 64px}
+.hd-head{display:flex;justify-content:space-between;align-items:center}
+#book .hd-head h2{margin-top:6px}
+.badge{width:90px;height:90px;border-radius:50%;background:var(--amber);display:grid;place-items:center;font-size:40px;margin-top:-130px;box-shadow:0 0 0 8px var(--paper)}
+#book .addr{margin:18px 0 10px;font-size:16px}
+.ck{list-style:none}
+.ck li{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;font-size:16.5px;border-radius:3px}
+.ck li:nth-child(odd){background:var(--jac-soft)}
+.ck li::after{content:"";width:22px;height:22px;border:2px solid var(--blue);border-radius:4px;background:#fff}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:46px}
+.sg div{border-top:2px solid var(--navy);padding-top:10px;font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+/* welcome */
+.j-wel{background:var(--amber-soft)}
+.j-wel .hero2{height:420px}
+.wl-title{position:absolute;left:0;right:0;top:0;height:420px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 64px 36px;background:linear-gradient(0deg,rgba(36,46,67,.85),rgba(36,46,67,0) 60%)}
+#book .wl-title h2{color:#fff;font-size:80px}
+.tiles6{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:34px 64px}
+.t{background:#fff;padding:22px 24px;border-left:6px solid;border-radius:3px;box-shadow:0 6px 14px rgba(36,46,67,.07)}
+.t i{font-style:normal;font-size:26px}
+#book .t h3{font-size:14px;letter-spacing:.2em;margin:6px 0}
+#book .t p{font-size:15px;line-height:1.55}
+.t1{border-color:var(--blue)}.t2{border-color:var(--amber)}.t3{border-color:var(--jac)}.t4{border-color:var(--amber)}.t5{border-color:#c0504d}.t6{border-color:var(--blue)}
+/* thank you */
+.j-ty{display:grid;grid-template-rows:1fr 1fr}
+.ty-front{position:relative;overflow:hidden}
+.ty-front .veil{background:linear-gradient(0deg,rgba(36,46,67,.85),rgba(36,46,67,.35))}
+.ty-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.ty-c .logo{filter:brightness(0) invert(1);height:70px} .ty-c .wm{color:#fff}
+.big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:86px;color:#fff}
+.ty-back{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--paper),var(--jac-soft));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 110px;border-top:6px solid var(--amber)}
+.big2{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:54px;color:var(--jac);margin-bottom:12px}
+#book .ty-back p{font-size:18px}
+#book .sig{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--navy);line-height:1.5}
+.sig span{font-family:'Noto Sans',sans-serif;font-size:13px;letter-spacing:.1em;color:var(--muted)}
+
 /* Book mode */
 body.book{min-height:100vh;display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at top,#34415e 0%,#242E43 45%,#161c29 100%);overflow-x:hidden;padding:20px 16px}
 body.book .toolbar h1{color:var(--paper)}
@@ -157,121 +281,114 @@ body.book .toolbar{width:min(794px,100%)}
 <div class="nav"><button id="prev">‹ Prev</button><span id="count"></span><button id="next">Next ›</button></div>
 <div id="credit" style="margin-top:12px;font-size:10px;letter-spacing:.08em;color:#8f9bb3;text-align:center"></div>
 
-<!-- 1 · COMPANY PROFILE COVER -->
-<section class="page cover">
-  <div class="photo" data-label="Hero listing photograph"></div>
-  <div class="body">
-    <div class="mono"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"></div>
-    <div class="tag">Where Dedication Meets Excellence</div>
-    <div class="rule"></div>
-    <h2>Company Profile</h2>
-    <p style="margin-top:16px">Considered marketing, honest advice and a calm, structured process — from the first conversation to the day you hand over the keys.</p>
+<!-- 1 · COVER -->
+<section class="page bleed j-cover">
+  <div class="ph fill" style="--img:url('https://images.unsplash.com/photo-1757356657991-c3fd6e2e812e?auto=format&fit=crop&w=1600&q=70')"></div>
+  <div class="veil"></div>
+  <div class="cv-top"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"><span class="pill">Company Profile · 2026</span></div>
+  <div class="cv-body">
+    <div class="bar"></div>
+    <h1>Where <em>Dedication</em><br>Meets Excellence</h1>
+    <p>Considered marketing, honest advice and a calm, structured process — from the first conversation to the day you hand over the keys.</p>
+    <div class="areas">Equestria · Moreleta Park · Faerie Glen · Waterkloof Ridge · Silver Lakes · Olympus · Menlo Park · Wapadrand · Meyerspark</div>
   </div>
 </section>
 
 <!-- 2 · WHY CHOOSE US -->
-<section class="page">
-  <div class="frame"></div>
-  <h3 style="color:var(--gold)">Our approach</h3>
-  <h2 style="margin-top:10px">Why <em>Choose</em> Us?</h2>
-  <div class="rule"></div>
-  <div class="checks">
-    <div class="check"><i>✓</i><div><h3>Proven track record</h3><p>Every campaign is built around your goals, your property and current Pretoria East market conditions — reviewed weekly so momentum never stalls.</p></div></div>
-    <div class="check"><i>✓</i><div><h3>Exclusive sales strategy</h3><p>A tailored mandate plan: professional photography, targeted digital campaigns, curated show days and a qualified buyer database ready from day one.</p></div></div>
-    <div class="check"><i>✓</i><div><h3>Negotiation that wins</h3><p>We pre-qualify buyers with bond originators, and handle every offer with clear communication and firm, fair negotiation on your behalf.</p></div></div>
-    <div class="check"><i>✓</i><div><h3>Hands-on service</h3><p>One point of contact, guiding you through compliance certificates, FICA, transfer and handover — with updates you never have to chase.</p></div></div>
+<section class="page bleed j-why">
+  <div class="ph top" style="--img:url('https://images.unsplash.com/photo-1628744876497-eb30460be9f6?auto=format&fit=crop&w=1400&q=70')"></div>
+  <div class="float-card"><span class="kick">Our approach</span><h2>Why <em>Choose</em> Us?</h2></div>
+  <div class="quad">
+    <div class="q c1"><b>01</b><h3>Proven track record</h3><p>Every campaign is built around your goals and current Pretoria East market conditions — reviewed weekly so momentum never stalls.</p></div>
+    <div class="q c2"><b>02</b><h3>Exclusive sales strategy</h3><p>Professional photography, targeted digital campaigns, curated show days and a qualified buyer database from day one.</p></div>
+    <div class="q c3"><b>03</b><h3>Negotiation that wins</h3><p>Buyers pre-qualified with bond originators, and every offer handled with clear, firm, fair negotiation.</p></div>
+    <div class="q c4"><b>04</b><h3>Hands-on service</h3><p>One point of contact through compliance certificates, FICA, transfer and handover — updates you never chase.</p></div>
   </div>
-  <div class="foot"><span>RB Brand Real Estate</span><span>PPRA registered</span></div>
 </section>
 
-<!-- 3 · MEET THE TEAM -->
-<section class="page">
-  <div class="frame"></div>
-  <div class="brand"><h3 style="color:var(--gold)">The people behind your sale</h3><h2 style="margin-top:10px">Meet the <em>Team</em></h2></div>
-  <div class="team">
-    <div class="member"><div class="photo"></div><b>Charné Robilliard</b><small>Property Practitioner</small><p>Specialising in family homes and estates across Pretoria East, with a calm, detail-first approach to every transaction.</p></div>
-    <div class="member"><div class="photo"></div><b>Team Member</b><small>Principal</small><p>Overseeing mandates, compliance and strategy to deliver consistent results for sellers and buyers alike.</p></div>
-    <div class="member"><div class="photo"></div><b>Team Member</b><small>Marketing &amp; Admin</small><p>Crafting listings, campaigns and paperwork so every property is presented — and processed — beautifully.</p></div>
+<!-- 3 · TEAM -->
+<section class="page bleed j-team">
+  <div class="petals"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="tm-in">
+    <span class="kick light">The people behind your sale</span>
+    <h2>Meet the <em>Team</em></h2>
+    <div class="tm-grid">
+      <div class="tm"><div class="av a1">CR</div><b>Charné Robilliard</b><small>Property Practitioner</small><p>Family homes and estates across Pretoria East, with a calm, detail-first approach.</p></div>
+      <div class="tm"><div class="av a2">TM</div><b>Team Member</b><small>Principal</small><p>Overseeing mandates, compliance and strategy for consistent results.</p></div>
+      <div class="tm"><div class="av a3">TM</div><b>Team Member</b><small>Marketing &amp; Admin</small><p>Listings, campaigns and paperwork — presented and processed beautifully.</p></div>
+    </div>
+    <div class="quote">“Great outcomes start with expertise, communication and care.”</div>
+    <div class="strip"><div class="ph " style="--img:url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=900&q=70')"></div><div class="ph " style="--img:url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=70')"></div><div class="ph " style="--img:url('https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?auto=format&fit=crop&w=900&q=70')"></div></div>
   </div>
-  <p style="margin-top:34px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;color:var(--ink)">“Great outcomes start with expertise, communication and care.”</p>
-  <div class="foot"><span>RB Brand Real Estate</span><span>Pretoria East</span></div>
 </section>
 
 <!-- 4 · RECENT SALES -->
-<section class="page">
-  <div class="frame"></div>
-  <h3 style="color:var(--gold)">Results</h3>
-  <h2 style="margin-top:10px">Recent <em>Sales</em></h2>
-  <div class="rule"></div>
-  <div class="sale"><div class="photo" data-label="Photo"></div><div><h4>Silver Lakes Golf Estate</h4><div class="specs">4 bed · 3 bath · 2 garage · 820 m²</div><div class="nums"><div>List price<strong>R 4 950 000</strong></div><div>Sold<strong>R 4 880 000</strong></div><div>On market<strong>24 days</strong></div></div></div></div>
-  <div class="sale"><div class="photo" data-label="Photo"></div><div><h4>Woodhill Estate</h4><div class="specs">3 bed · 2 bath · 2 garage · 650 m²</div><div class="nums"><div>List price<strong>R 3 650 000</strong></div><div>Sold<strong>R 3 600 000</strong></div><div>On market<strong>31 days</strong></div></div></div></div>
-  <div class="sale"><div class="photo" data-label="Photo"></div><div><h4>Faerie Glen</h4><div class="specs">4 bed · 2 bath · pool · 1 200 m²</div><div class="nums"><div>List price<strong>R 2 995 000</strong></div><div>Sold<strong>R 3 020 000</strong></div><div>On market<strong>18 days</strong></div></div></div></div>
-  <div class="foot"><span>Figures shown are sample values</span><span>Replace with your sales</span></div>
+<section class="page j-sales">
+  <span class="kick">Results</span>
+  <h2>Recent <em>Sales</em></h2>
+  <div class="stats"><div><strong>98%</strong>of asking price</div><div><strong>24</strong>avg. days on market</div><div><strong>5★</strong>client reviews</div></div>
+  <div class="sale-grid">
+    <div class="sc wide"><div class="ph img" style="--img:url('https://images.unsplash.com/photo-1757359056339-22968344cce6?auto=format&fit=crop&w=1400&q=70')"></div><span class="sold">Sold</span><div class="sc-t"><h4>Silver Lakes Golf Estate</h4><span>4 bed · 3 bath · 820 m²</span><div class="pr"><b>R 4 880 000</b><em>24 days</em></div></div></div>
+    <div class="sc"><div class="ph img" style="--img:url('https://images.unsplash.com/photo-1757361652977-218a1173e8d6?auto=format&fit=crop&w=1400&q=70')"></div><span class="sold">Sold</span><div class="sc-t"><h4>Woodhill Estate</h4><span>3 bed · 2 bath · 650 m²</span><div class="pr"><b>R 3 600 000</b><em>31 days</em></div></div></div>
+    <div class="sc"><div class="ph img" style="--img:url('https://images.unsplash.com/photo-1606410688276-103f1982f342?auto=format&fit=crop&w=1400&q=70')"></div><span class="sold">Sold</span><div class="sc-t"><h4>Faerie Glen</h4><span>4 bed · pool · 1 200 m²</span><div class="pr"><b>R 3 020 000</b><em>18 days</em></div></div></div>
+  </div>
+  <div class="note">Sample figures — replace with your recent sales</div>
 </section>
 
 <!-- 5 · LISTING PROPOSAL -->
-<section class="page">
-  <div class="frame"></div>
-  <div class="photo" style="height:26%;margin:-1% 0 0" data-label="Your property"></div>
-  <h3 style="color:var(--gold);margin-top:24px">Prepared for · Seller name</h3>
-  <h2 style="margin-top:8px">Listing <em>Proposal</em></h2>
-  <div class="split">
-    <ul class="steps">
-      <li><span>01</span><p><b>Prepare</b> — compliance certificates, staging advice and professional photography.</p></li>
-      <li><span>02</span><p><b>Launch</b> — Property24, Private Property, social campaigns and our buyer database.</p></li>
-      <li><span>03</span><p><b>Show</b> — curated viewings and weekly feedback reports.</p></li>
-      <li><span>04</span><p><b>Close</b> — offer negotiation, bond approval and transfer management.</p></li>
+<section class="page bleed j-prop">
+  <div class="ph side" style="--img:url('https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=900&q=70')"></div>
+  <div class="pp">
+    <span class="kick">Prepared for · Seller name</span>
+    <h2>Listing <em>Proposal</em></h2>
+    <ol class="tl">
+      <li class="c1"><b>Prepare</b><p>Compliance certificates, staging advice and professional photography.</p></li>
+      <li class="c2"><b>Launch</b><p>Property24, Private Property, social campaigns and our buyer database.</p></li>
+      <li class="c3"><b>Show</b><p>Curated viewings with weekly feedback reports.</p></li>
+      <li class="c4"><b>Close</b><p>Offer negotiation, bond approval and transfer management.</p></li>
+    </ol>
+    <div class="price"><span>Recommended asking price</span><strong>R 0 000 000</strong><small>Market range R 0.0m – R 0.0m</small></div>
+  </div>
+</section>
+
+<!-- 6 · HANDOVER -->
+<section class="page bleed j-hand">
+  <div class="ph band" style="--img:url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1400&q=70')"></div>
+  <div class="hd-in">
+    <div class="hd-head"><div><span class="kick">Settlement date · ___ / ___ / _____</span><h2>Property <em>Handover</em></h2></div><span class="badge">🔑</span></div>
+    <p class="addr">Property address: ________________________________________</p>
+    <ul class="ck">
+      <li>All keys, remotes and access tags handed over</li>
+      <li>Alarm codes and security company details</li>
+      <li>Electrical, gas, beetle &amp; plumbing compliance certificates</li>
+      <li>Prepaid electricity / water meter readings recorded</li>
+      <li>Appliance manuals and warranties</li>
+      <li>Pool, borehole and irrigation operation explained</li>
+      <li>Estate / HOA rules and contact details</li>
+      <li>Fixtures &amp; fittings as per Offer to Purchase</li>
     </ul>
-    <div>
-      <p>Based on comparable sales in your suburb over the last six months, we recommend positioning your home to attract strong, qualified interest from launch.</p>
-      <div class="price"><h3>Recommended asking price</h3><strong>R 0 000 000</strong><p style="font-size:11px">Market range R 0.0m – R 0.0m</p></div>
-    </div>
+    <div class="sg"><div>Seller signature</div><div>Purchaser signature</div></div>
   </div>
-  <div class="foot"><span>RB Brand Real Estate</span><span>Confidential</span></div>
 </section>
 
-<!-- 6 · PROPERTY HANDOVER -->
-<section class="page">
-  <div class="frame"></div>
-  <h3 style="color:var(--gold)">Settlement date · ____ / ____ / ______</h3>
-  <h2 style="margin-top:10px">Property <em>Handover</em></h2>
-  <div class="rule"></div>
-  <p>Property address: ______________________________________________</p>
-  <table class="table">
-    <tr><td>All keys, remotes and access tags handed over</td><td><span class="box"></span></td></tr>
-    <tr><td>Alarm codes and security company details</td><td><span class="box"></span></td></tr>
-    <tr><td>Electrical, gas, beetle &amp; plumbing compliance certificates</td><td><span class="box"></span></td></tr>
-    <tr><td>Prepaid electricity / water meter readings recorded</td><td><span class="box"></span></td></tr>
-    <tr><td>Appliance manuals and warranties</td><td><span class="box"></span></td></tr>
-    <tr><td>Pool, borehole and irrigation operation explained</td><td><span class="box"></span></td></tr>
-    <tr><td>Estate / HOA rules and contact details</td><td><span class="box"></span></td></tr>
-    <tr><td>Fixtures &amp; fittings as per Offer to Purchase</td><td><span class="box"></span></td></tr>
-  </table>
-  <div class="sign"><div>Seller signature</div><div>Purchaser signature</div></div>
-  <div class="foot"><span>RB Brand Real Estate</span><span>Handover record</span></div>
+<!-- 7 · WELCOME HOME -->
+<section class="page bleed j-wel">
+  <div class="ph hero2" style="--img:url('https://images.unsplash.com/photo-1585914641050-fa9883c4e21c?auto=format&fit=crop&w=900&q=70')"></div>
+  <div class="wl-title"><span class="kick light">Your new chapter</span><h2>Welcome <em>Home</em></h2></div>
+  <div class="tiles6">
+    <div class="t t1"><i>🏛</i><h3>Municipal</h3><p>City of Tshwane account transfer, refuse days and rates queries.</p></div>
+    <div class="t t2"><i>💡</i><h3>Utilities</h3><p>Prepaid electricity vendor, fibre providers and water meter.</p></div>
+    <div class="t t3"><i>🎒</i><h3>Schools</h3><p>Nearby primary and high schools with contact details.</p></div>
+    <div class="t t4"><i>☕</i><h3>Local favourites</h3><p>Coffee shops, restaurants, parks and shopping centres.</p></div>
+    <div class="t t5"><i>🚨</i><h3>Emergency</h3><p>Armed response, nearest hospital, police and fire.</p></div>
+    <div class="t t6"><i>🛠</i><h3>Trusted trades</h3><p>Electrician, plumber, pool and garden services we trust.</p></div>
+  </div>
 </section>
 
-<!-- 7 · WELCOME GUIDE -->
-<section class="page welcome">
-  <div class="brand"><div class="mono"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"></div><div class="rule" style="margin:18px auto"></div><h2>Welcome <em>Home</em></h2><p style="margin-top:12px">Everything you need for your first weeks in your new home.</p></div>
-  <div class="tiles">
-    <div class="tile"><h3>Municipal</h3><p>City of Tshwane account transfer, refuse days and rates queries.</p></div>
-    <div class="tile"><h3>Utilities</h3><p>Prepaid electricity vendor, fibre providers in your area, water meter.</p></div>
-    <div class="tile"><h3>Schools</h3><p>Nearby primary and high schools with contact details.</p></div>
-    <div class="tile"><h3>Local favourites</h3><p>Coffee shops, restaurants, parks and the closest shopping centres.</p></div>
-    <div class="tile"><h3>Emergency</h3><p>Armed response, nearest hospital, police and fire.</p></div>
-    <div class="tile"><h3>Trusted trades</h3><p>Electrician, plumber, pool and garden services we recommend.</p></div>
-  </div>
-  <div class="foot"><span>With love from RB Brand</span><span>Keep this guide handy</span></div>
-</section>
-
-<!-- 8 · THANK YOU CARD (front / back) -->
-<section class="page">
-  <div class="cards">
-    <div class="card dark"><div class="mono"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"></div><div class="tag">Real Estate</div><div class="rule" style="margin:14px auto"></div><div class="big">Thank you</div></div>
-    <div class="card"><div class="big" style="font-size:28px">With gratitude</div><p>It was a privilege helping you with this chapter. Wishing you many happy years ahead.</p><div class="rule" style="margin:10px auto"></div><p style="font-size:11px">Charné Robilliard<br>Property Practitioner · RB Brand Real Estate<br>082 000 0000 · charne@rbbrand.co.za</p></div>
-  </div>
-  <div class="foot"><span>Thank-you card · A6 front &amp; back</span><span>Print on 350gsm linen</span></div>
+<!-- 8 · THANK YOU -->
+<section class="page bleed j-ty">
+  <div class="ty-front"><div class="ph fill" style="--img:url('https://images.unsplash.com/photo-1757356657991-c3fd6e2e812e?auto=format&fit=crop&w=1600&q=70')"></div><div class="veil"></div><div class="ty-c"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"><div class="bar" style="margin:22px auto"></div><div class="big">Thank you</div></div></div>
+  <div class="ty-back"><div class="petals sm"><i></i><i></i><i></i></div><div class="big2">With gratitude</div><p>It was a privilege helping you with this chapter. Wishing you many happy years in your new home.</p><div class="bar" style="margin:22px auto"></div><p class="sig">Charné Robilliard<br><span>Property Practitioner · RB Brand Real Estate</span><br><span>082 000 0000 · charne@rbbrand.co.za</span></p></div>
 </section>
 
 <script>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RB Brand Books</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#242E43;--blue:#314F8E;--jac:#8E6BBF;--amber:#E0A458;--paper:#FDFBF6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:'Noto Sans',sans-serif;font-weight:300;color:var(--paper);background:radial-gradient(ellipse at top,#34415e 0%,#242E43 45%,#161c29 100%);padding:48px 16px}
+.wrap{max-width:1040px;margin:0 auto}
+.wm{font-family:'Cormorant Garamond',serif;font-size:30px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:14px}
+.wm i{width:1px;height:26px;background:currentColor;opacity:.6}
+h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(40px,7vw,64px);line-height:1.05;margin:26px 0 10px}
+h1 em{color:var(--amber)}
+.lede{color:#c9d3e6;max-width:620px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;margin-top:40px}
+a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--paper);color:var(--navy);border-radius:6px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.35);transition:transform .25s}
+a.card:hover{transform:translateY(-4px)}
+.img{height:200px;background:var(--img) center/cover,linear-gradient(135deg,#9aa6b8,#4b5871);position:relative}
+.tag{position:absolute;left:16px;top:16px;background:var(--amber);color:var(--navy);font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;padding:6px 12px}
+.body{padding:24px 24px 26px;display:flex;flex-direction:column;flex:1}
+.body h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:32px}
+.body p{font-size:15px;line-height:1.6;color:#39424C;margin:8px 0 18px}
+.go{margin-top:auto;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:var(--blue)}
+.c2 .tag{background:var(--jac);color:#fff}.c3 .tag{background:var(--blue);color:#fff}
+.how{margin-top:44px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:26px 28px}
+.how h3{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
+.how ol{padding-left:20px;color:#c9d3e6;line-height:1.9;font-size:15px}
+.how b{color:var(--paper);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <b class="wm">RB <i></i> BRAND</b>
+  <h1>Client books that <em>win the mandate.</em></h1>
+  <p class="lede">Three page-turning books for every stage of the client journey. Personalise one in minutes, then send the client their own copy.</p>
+  <div class="grid">
+    <a class="card c1" href="listing-presentation.html">
+      <div class="img" style="--img:url('{{thumb:hero}}')"><span class="tag">Sellers</span></div>
+      <div class="body"><h2>Listing Presentation</h2><p>For the valuation appointment. Their home on the cover, comparable sales, the marketing plan, what they’ll walk away with, and a clear “let’s launch” close.</p><span class="go">Open · 12 pages →</span></div>
+    </a>
+    <a class="card c2" href="buyer-guide.html">
+      <div class="img" style="--img:url('{{thumb:white}}')"><span class="tag">Buyers</span></div>
+      <div class="body"><h2>Buyer Guide</h2><p>For prospective buyers. The buying process, a transfer-cost and repayment calculator, suburb guides, and a wish list that goes straight to WhatsApp.</p><span class="go">Open · 9 pages →</span></div>
+    </a>
+    <a class="card c3" href="moving-day-pack.html">
+      <div class="img" style="--img:url('{{thumb:newhome}}')"><span class="tag">Handover</span></div>
+      <div class="body"><h2>Moving Day Pack</h2><p>For registration day. The handover checklist, a welcome-home guide to the neighbourhood, and a thank-you card that invites referrals.</p><span class="go">Open · 4 pages →</span></div>
+    </a>
+  </div>
+  <div class="how">
+    <h3>How to personalise a book</h3>
+    <ol>
+      <li>Open the book and tap <b>✎ Edit</b>.</li>
+      <li>Tap any text to change it. Highlighted <b>[brackets]</b> still need filling in.</li>
+      <li>Tap a photo to replace it, for example with a photo of the seller’s home taken at the valuation.</li>
+      <li>Tap a button, such as WhatsApp or Sign the mandate, to set where it links to.</li>
+      <li>Tap <b>⬇ Save client copy</b>. You get one file to WhatsApp or email to the client. Use <b>Print / PDF</b> for a printable version.</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

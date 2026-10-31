@@ -1,21 +1,26 @@
 """Build the RB Brand books: wraps each src/<book>.html page set in the shared shell
 (book.css + book.js inlined) so every book, and every client copy saved from it,
 is a single self-contained HTML file.  Run:  python3 src/build.py"""
-import json, pathlib, re
+import base64, json, pathlib, re
 
 SRC = pathlib.Path(__file__).parent
 OUT = SRC.parent
 
-U = lambda i, w=1400: f"https://images.unsplash.com/photo-{i}?auto=format&fit=crop&w={w}&q=70"
-IMG = dict(  # free Unsplash photos used as placeholders until real ones are added
-    hero=U('1757356657991-c3fd6e2e812e', 1600), dusk=U('1757359056339-22968344cce6'),
-    white=U('1757361652977-218a1173e8d6'), classic=U('1570129477492-45c003edd2be', 900),
-    garden=U('1606410688276-103f1982f342'), modern=U('1628744448840-55bdb2497bd4', 900),
-    int1=U('1628744876497-eb30460be9f6'), int2=U('1631679706909-1844bbd07221', 900),
-    int3=U('1616486338812-3dadae4b4ace', 900), keys=U('1560518883-ce09059eeffa'),
-    keys2=U('1585914641050-fa9883c4e21c', 900), first=U('1758227365187-016878604d94'),
-    newhome=U('1733897669171-e7cf3712cced', 900), bright=U('1633505899118-4ca6bd143043', 900),
-)
+PHOTOS = SRC / 'photos'  # free Unsplash photos, built into every file so nothing loads from the web
+def data_uri(key, width=None):
+    raw = (PHOTOS / f'{key}.jpg').read_bytes()
+    if width:  # smaller copy for thumbnails
+        from io import BytesIO
+        from PIL import Image
+        im = Image.open(BytesIO(raw)); im = im.resize((width, round(im.height * width / im.width)))
+        buf = BytesIO(); im.save(buf, 'JPEG', quality=72, optimize=True); raw = buf.getvalue()
+    return 'data:image/jpeg;base64,' + base64.b64encode(raw).decode()
+
+def photo_css(html):
+    """One shared rule per photo used, so each photo is stored once per file."""
+    keys = sorted(set(re.findall(r'data-img="(\w+)"', html)))
+    return '\n'.join(f'[data-img="{k}"]{{--img:url({data_uri(k)})}}' for k in keys)
+
 LOGO = ('<img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" '
         'alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement(\'b\'),'
         '{className:\'wm\',innerHTML:\'RB <i></i> BRAND\'}))">')
@@ -29,6 +34,9 @@ SHELL = """<!doctype html>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 {css}
+</style>
+<style id="photos">
+{photos}
 </style>
 </head>
 <body>
@@ -77,12 +85,18 @@ for src, out, title, intro in BOOKS:
     frag = (SRC / src).read_text()
     pages, _, extra = frag.partition('<!--SCRIPT-->')
     pages = pages.replace('{{logo}}', LOGO)
-    pages = re.sub(r'\{\{img:(\w+)\}\}', lambda m: IMG[m.group(1)], pages)
+    pages = re.sub(r""" style="--img:url\('\{\{img:(\w+)\}\}'\)\"""", r' data-img="\1"', pages)
     html = SHELL.replace('{title}', title).replace('{intro}', intro)  # CSS/JS contain braces, so no str.format
-    for key, val in (('{css}', css), ('{js}', js), ('{pages}', pages.strip()), ('{extra}', extra.strip())):
+    for key, val in (('{css}', css), ('{photos}', photo_css(pages)), ('{js}', js), ('{pages}', pages.strip()), ('{extra}', extra.strip())):
         html = html.replace(key, val, 1)
     (OUT / out).write_text(html)
     print('built', out)
+
+# ---- Home page ----
+hub = (SRC / 'index.html').read_text()
+hub = re.sub(r'\{\{thumb:(\w+)\}\}', lambda m: data_uri(m.group(1), 700), hub)
+(OUT / 'index.html').write_text(hub)
+print('built index.html')
 
 # ---- Concept demo: the home page and all three books in ONE file, so it can be
 # sent on WhatsApp or email and opened on any phone or computer ----
@@ -93,9 +107,10 @@ DEMO_FLAG = ('<div style="width:min(794px,100%);margin:0 0 12px;padding:8px 14px
 books = {}
 for _, out, _, _ in BOOKS:
     h = (OUT / out).read_text()
-    h = h.replace('<a class="edit-only" href="index.html">‹</a>', '<a class="edit-only" href="javascript:history.back()">‹</a>')
+    h = h.replace('<a class="edit-only" href="index.html">‹</a>',  # back to the demo's home page
+                  '<a class="edit-only" href="#" onclick="parent.postMessage(\'rb-close\', \'*\'); return false" style="font-size:15px;letter-spacing:.12em;opacity:.8;display:block;margin-bottom:4px">‹ All books</a>')
     h = h.replace('<div id="hint"', DEMO_FLAG + '\n<div id="hint"', 1)
-    books[out.removesuffix('.html')] = base64.b64encode(h.encode()).decode()
+    books[out.removesuffix('.html')] = h
 
 REVIEW = """
   <div class="review">
@@ -114,14 +129,23 @@ REVIEW_CSS = """.review{margin:28px 0 0;background:rgba(224,164,88,.1);border:1p
 .review h3{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:#E0A458;margin:16px 0 8px}
 .review ol{padding-left:20px}
 """
-OPEN_JS = """<script>
-// Each book is stored inside this file and opened as its own page when its card is tapped
+OPEN_JS = """
+<div id="viewer" hidden><iframe id="frame" title="Book"></iframe></div>
+<style>
+#viewer{position:fixed;inset:0;z-index:100;background:#161c29}
+#viewer iframe{width:100%;height:100%;border:0;display:block}
+</style>
+<script>
+// Each book is stored inside this one file and opened over the home page when its card is tapped
 const BOOKS = %s;
+const viewer = document.getElementById('viewer'), frame = document.getElementById('frame');
+function openBook(k) { frame.srcdoc = BOOKS[k]; viewer.hidden = false; document.body.style.overflow = 'hidden'; }
+function closeBook() { viewer.hidden = true; frame.srcdoc = ''; document.body.style.overflow = ''; }
 document.querySelectorAll('a[data-book]').forEach(a => a.addEventListener('click', e => {
-  e.preventDefault();
-  const bytes = Uint8Array.from(atob(BOOKS[a.dataset.book]), c => c.charCodeAt(0));
-  location.href = URL.createObjectURL(new Blob([bytes], { type: 'text/html' }));
+  e.preventDefault(); history.pushState({ book: a.dataset.book }, ''); openBook(a.dataset.book);
 }));
+addEventListener('message', e => { if (e.data === 'rb-close' && !viewer.hidden) history.back(); });
+addEventListener('popstate', closeBook); // the phone's Back button closes the book
 </script>
 """
 hub = (OUT / 'index.html').read_text()
@@ -129,6 +153,11 @@ hub = hub.replace('<title>RB Brand Books</title>', '<title>RB Brand Books · Con
 hub = hub.replace('</style>', REVIEW_CSS + '</style>', 1)
 hub = re.sub(r'(<p class="lede">.*?</p>)', lambda m: m.group(1) + REVIEW, hub, count=1, flags=re.S)
 hub = re.sub(r'href="([\w-]+)\.html"', r'href="#" data-book="\1"', hub)
-hub = hub.replace('</body>', OPEN_JS % json.dumps(books) + '</body>')
+hub = hub.replace('</body>', OPEN_JS.replace('%s', json.dumps(books).replace('</', '<\\/')) + '</body>')
 (OUT / 'RB-Brand-Books-Concept-Demo.html').write_text(hub)
 print('built RB-Brand-Books-Concept-Demo.html')
+
+# ---- Overview page for the PDF (src/make_pdf.js turns it and the books into one PDF) ----
+work = OUT / '.pdf-work'; work.mkdir(exist_ok=True)
+ov = re.sub(r'\{\{thumb:(\w+)\}\}', lambda m: data_uri(m.group(1), 700), (SRC / 'overview.html').read_text())
+(work / 'overview.html').write_text(ov)

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RB Brand Books · Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:210mm;height:297mm;overflow:hidden;font-family:'Noto Sans',sans-serif;font-weight:300;color:#FDFBF6;background:radial-gradient(ellipse at top,#34415e 0%,#242E43 50%,#161c29 100%);padding:16mm 16mm 12mm;display:flex;flex-direction:column;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.wm{font-family:'Cormorant Garamond',serif;font-size:26px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:12px}
+.wm i{width:1px;height:22px;background:currentColor;opacity:.6}
+.tag{display:inline-block;background:#E0A458;color:#242E43;font-size:9px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;padding:5px 10px;margin-left:14px;vertical-align:middle}
+h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;line-height:1.05;margin:16px 0 8px}
+h1 em{color:#E0A458}
+.lede{color:#c9d3e6;font-size:13px;line-height:1.6;max-width:150mm}
+.review{margin-top:14px;border:1px solid #E0A458;background:rgba(224,164,88,.08);border-radius:5px;padding:13px 16px;font-size:11.5px;line-height:1.55;color:#e4e8f0}
+.review h3{font-size:9.5px;letter-spacing:.25em;text-transform:uppercase;color:#E0A458;margin:8px 0 4px;font-weight:600}
+.review ol{padding-left:16px}
+.books{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.bk{display:grid;grid-template-columns:52mm 1fr;background:#FDFBF6;color:#242E43;border-radius:5px;overflow:hidden}
+.bk .img{background:var(--img) center/cover;min-height:36mm}
+.bk .tx{padding:11px 15px}
+.bk b{font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:#314F8E;font-weight:600}
+.bk h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:22px;margin:2px 0 3px}
+.bk p{font-size:10.5px;line-height:1.5;color:#39424C}
+.note{margin-top:auto;font-size:10px;line-height:1.55;color:#a9bde3;border-top:1px solid rgba(255,255,255,.18);padding-top:9px}
+.note b{color:#FDFBF6;font-weight:500}
+</style>
+</head>
+<body>
+  <div><b class="wm">RB <i></i> BRAND</b><span class="tag">Concept demo · for review</span></div>
+  <h1>Client books that <em>win the mandate.</em></h1>
+  <p class="lede">Three branded books for every stage of the client journey. Each one can be personalised in minutes and sent to the client as their own copy.</p>
+  <div class="review">
+    Prepared by Charné Robilliard for review by the principal. This is a working concept: all names, figures, reviews and photos are placeholders, and nothing has been sent to clients.
+    <h3>What I’d love your input on</h3>
+    <ol>
+      <li>Are you happy for the books to carry the RB Brand name, logo and colours as shown?</li>
+      <li>The commission rate and wording to use on the seller’s walk-away page.</li>
+      <li>Our PPRA and Fidelity Fund details, and which recent sales and Google reviews we may feature.</li>
+      <li>Should the whole team use these books?</li>
+    </ol>
+  </div>
+  <div class="books">
+    <div class="bk"><div class="img" style="--img:url('{{thumb:hero}}')"></div><div class="tx"><b>Sellers · 12 pages · pages 2–13</b><h2>Listing Presentation</h2><p>For the valuation appointment. The seller’s own home on the cover, comparable sales, the marketing plan, what they’ll walk away with, and a clear “let’s launch your home” close.</p></div></div>
+    <div class="bk"><div class="img" style="--img:url('{{thumb:white}}')"></div><div class="tx"><b>Buyers · 9 pages · pages 14–22</b><h2>Buyer Guide</h2><p>For prospective buyers. The buying process step by step, a transfer-duty and repayment calculator, suburb guides, and a wish list that goes straight to WhatsApp.</p></div></div>
+    <div class="bk"><div class="img" style="--img:url('{{thumb:newhome}}')"></div><div class="tx"><b>Handover · 4 pages · pages 23–26</b><h2>Moving Day Pack</h2><p>For registration day. The handover checklist, a welcome-home guide to the neighbourhood, and a thank-you card that invites referrals.</p></div></div>
+  </div>
+  <p class="note">This PDF is a still preview. The interactive version, <b>RB-Brand-Books-Concept-Demo.html</b>, turns its pages like a book, plays soft background music, runs the calculators live, and lets each book be personalised and saved as a client copy. Photos: Unsplash (free licence).</p>
+</body>
+</html>

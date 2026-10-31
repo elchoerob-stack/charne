@@ -1,6 +1,6 @@
 // RB Brand books · flipbook, tap-to-edit, photo upload, client copy, music
 const CLIENT = document.documentElement.hasAttribute('data-client');
-const STORE = 'rbbook:' + location.pathname.split('/').pop();
+const STORE = 'rbbook:' + document.title; // one saved draft per book
 const book = document.getElementById('book');
 
 // ---- Restore Charné's saved draft (never in a client copy) ----
@@ -12,17 +12,37 @@ if (!CLIENT) {
 function fit() { const s = Math.min((innerWidth - 32) / 794, (innerHeight - 200) / 1123, 1); document.documentElement.style.setProperty('--s', Math.max(s, .2)); }
 fit(); addEventListener('resize', fit);
 
-// ---- Flipbook ----
+// ---- Flipbook: only the current page is drawn, and only the turning page animates ----
 const pages = [...book.querySelectorAll('section.page')];
-pages.forEach((p, i) => { p.style.zIndex = pages.length - i; p.classList.remove('flipped'); });
-let cur = 0, editing = false;
+pages.forEach(p => { p.classList.remove('show', 'turn-out', 'turn-in', 'flipped'); p.style.zIndex = ''; });
+let cur = 0, editing = false, busy = false;
 const count = document.getElementById('count'), prev = document.getElementById('prev'), next = document.getElementById('next');
-function render() {
-  pages.forEach((p, i) => p.classList.toggle('flipped', i < cur));
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function status() {
   count.textContent = (cur + 1) + ' / ' + pages.length;
   prev.disabled = cur === 0; next.disabled = cur === pages.length - 1;
 }
-function go(d) { const n = cur + d; if (n < 0 || n >= pages.length) return; cur = n; render(); }
+function settle(el, fn) { // run fn once the turn finishes (with a timer in case the event never fires)
+  let done = false;
+  const end = () => { if (done) return; done = true; fn(); busy = false; };
+  el.addEventListener('animationend', end, { once: true }); setTimeout(end, 1000);
+}
+function go(d) {
+  const n = cur + d;
+  if (busy || n < 0 || n >= pages.length) return;
+  const from = pages[cur], to = pages[n];
+  cur = n; status();
+  if (calm) { from.classList.remove('show'); to.classList.add('show'); return; }
+  busy = true;
+  if (d > 0) { // current page turns away to reveal the next one underneath
+    to.classList.add('show'); to.style.zIndex = 1; from.style.zIndex = 2; from.classList.add('turn-out');
+    settle(from, () => { from.classList.remove('show', 'turn-out'); from.style.zIndex = to.style.zIndex = ''; });
+  } else { // previous page turns back over the current one
+    to.classList.add('show', 'turn-in'); to.style.zIndex = 2; from.style.zIndex = 1;
+    settle(to, () => { to.classList.remove('turn-in'); from.classList.remove('show'); from.style.zIndex = to.style.zIndex = ''; });
+  }
+}
+pages[0].classList.add('show'); status();
 prev.onclick = () => go(-1); next.onclick = () => go(1);
 const interactive = t => t.closest('input,select,textarea,button,a,label,[contenteditable="true"]');
 book.addEventListener('click', e => {
@@ -41,14 +61,15 @@ book.addEventListener('touchend', e => {
   if (Math.abs(dx) > 50 && !interactive(e.target)) { e.preventDefault(); go(dx < 0 ? 1 : -1); }
   sx = null;
 });
-render();
 
 // ---- Photos: mirrors copy the main home photo onto the marketing mock-ups ----
 function syncPhotos() {
-  book.querySelectorAll('.ph').forEach(p => p.classList.toggle('has-img', /url\(/.test(p.style.getPropertyValue('--img'))));
+  const uploaded = p => /url\(/.test(p.style.getPropertyValue('--img'));
+  book.querySelectorAll('.ph').forEach(p => p.classList.toggle('has-img', p.hasAttribute('data-img') || uploaded(p)));
   book.querySelectorAll('[data-mirror]').forEach(m => {
-    const src = book.querySelector('[data-key="' + m.dataset.mirror + '"]');
-    if (src) m.style.setProperty('--img', src.style.getPropertyValue('--img'));
+    const src = book.querySelector('[data-key="' + m.dataset.mirror + '"]'); if (!src) return;
+    if (uploaded(src)) { m.style.setProperty('--img', src.style.getPropertyValue('--img')); m.removeAttribute('data-img'); }
+    else { m.style.removeProperty('--img'); if (src.dataset.img) m.dataset.img = src.dataset.img; }
   });
 }
 syncPhotos();
@@ -69,6 +90,7 @@ photoInput.addEventListener('change', () => {
     const c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
     photoTarget.style.setProperty('--img', "url('" + c.toDataURL('image/jpeg', .82) + "')");
+    photoTarget.removeAttribute('data-img');
     URL.revokeObjectURL(url); syncPhotos(); save();
   };
   img.src = url;
@@ -121,7 +143,7 @@ function cleanHTML(root) {
   const c = root.cloneNode(true);
   c.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
   c.querySelectorAll('.todo').forEach(e => e.classList.remove('todo'));
-  c.querySelectorAll('.flipped').forEach(e => e.classList.remove('flipped'));
+  c.querySelectorAll('.page').forEach(e => { e.classList.remove('show', 'turn-out', 'turn-in', 'flipped'); e.style.zIndex = ''; });
   return c;
 }
 function save() {
@@ -229,4 +251,4 @@ function stopMusic() {
 }
 musicBtn.onclick = () => playing ? stopMusic() : startMusic();
 document.getElementById('openBook').onclick = () => { document.getElementById('intro').classList.add('gone'); startMusic(); };
-document.getElementById('quietOpen').onclick = () => document.getElementById('intro').classList.add('gone');
+document.getElementById('quietOpen').onclick = e => { e.preventDefault(); document.getElementById('intro').classList.add('gone'); };

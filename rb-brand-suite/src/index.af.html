@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="af">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RB Brand Boeke</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#242E43;--blue:#314F8E;--jac:#8E6BBF;--amber:#E0A458;--paper:#FDFBF6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:'Noto Sans',sans-serif;font-weight:300;color:var(--paper);background:radial-gradient(ellipse at top,#34415e 0%,#242E43 45%,#161c29 100%);padding:48px 16px}
+.wrap{max-width:1040px;margin:0 auto}
+.wm{font-family:'Cormorant Garamond',serif;font-size:30px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:14px}
+.wm i{width:1px;height:26px;background:currentColor;opacity:.6}
+h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(40px,7vw,64px);line-height:1.05;margin:26px 0 10px}
+h1 em{color:var(--amber)}
+.lede{color:#c9d3e6;max-width:620px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;margin-top:40px}
+a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--paper);color:var(--navy);border-radius:6px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.35);transition:transform .25s}
+a.card:hover{transform:translateY(-4px)}
+.img{height:200px;background:var(--img) center/cover,linear-gradient(135deg,#9aa6b8,#4b5871);position:relative}
+.tag{position:absolute;left:16px;top:16px;background:var(--amber);color:var(--navy);font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;padding:6px 12px}
+.body{padding:24px 24px 26px;display:flex;flex-direction:column;flex:1}
+.body h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:32px}
+.body p{font-size:15px;line-height:1.6;color:#39424C;margin:8px 0 18px}
+.go{margin-top:auto;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:var(--blue)}
+.c2 .tag{background:var(--jac);color:#fff}.c3 .tag{background:var(--blue);color:#fff}
+.how{margin-top:44px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:26px 28px}
+.how h3{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
+.how ol{padding-left:20px;color:#c9d3e6;line-height:1.9;font-size:15px}
+.how b{color:var(--paper);font-weight:500}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.langsw{display:inline-flex;border:1px solid rgba(255,255,255,.35);border-radius:30px;overflow:hidden;font-size:12px;font-weight:600;letter-spacing:.16em}
+.langsw b,.langsw a{padding:8px 14px;color:var(--paper);text-decoration:none}
+.langsw b{background:var(--amber);color:var(--navy)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toprow"><b class="wm">RB <i></i> BRAND</b><span class="langsw" role="group" aria-label="Language"><a href="index.html" data-lang="en">EN</a><b aria-current="true">AF</b></span></div>
+  <h1>Kliëntboeke wat die <em>mandaat wen.</em></h1>
+  <p class="lede">Drie blaaiboeke vir elke stap van die kliënt se reis. Verpersoonlik een binne minute en stuur dan vir die kliënt hul eie kopie.</p>
+  <div class="grid">
+    <a class="card c1" href="listing-presentation.af.html">
+      <div class="img" style="--img:url('{{thumb:hero}}')"><span class="tag">Verkopers</span></div>
+      <div class="body"><h2>Verkopersaanbieding</h2><p>Vir die waardasie-afspraak. Hul huis op die voorblad, vergelykbare verkopings, die bemarkingsplan, wat hulle in die hand sal hou, en ’n duidelike “kom ons loods”-afsluiting.</p><span class="go">Maak oop · 12 bladsye →</span></div>
+    </a>
+    <a class="card c2" href="buyer-guide.af.html">
+      <div class="img" style="--img:url('{{thumb:white}}')"><span class="tag">Kopers</span></div>
+      <div class="body"><h2>Kopersgids</h2><p>Vir voornemende kopers. Die kooproses, ’n sakrekenaar vir oordragkoste en paaiemente, voorstadgidse, en ’n wenslys wat reguit na WhatsApp gaan.</p><span class="go">Maak oop · 9 bladsye →</span></div>
+    </a>
+    <a class="card c3" href="moving-day-pack.af.html">
+      <div class="img" style="--img:url('{{thumb:newhome}}')"><span class="tag">Oorhandiging</span></div>
+      <div class="body"><h2>Trekdagpakket</h2><p>Vir registrasiedag. Die oorhandigingslys, ’n welkom-tuis-gids vir die buurt, en ’n dankiekaartjie wat verwysings uitnooi.</p><span class="go">Maak oop · 4 bladsye →</span></div>
+    </a>
+  </div>
+  <div class="how">
+    <h3>Hoe om ’n boek te verpersoonlik</h3>
+    <ol>
+      <li>Maak die boek oop en tik op <b>✎ Wysig</b>.</li>
+      <li>Tik op enige teks om dit te verander. Uitgeligte <b>[hakies]</b> moet nog ingevul word.</li>
+      <li>Tik op ’n foto om dit te vervang, byvoorbeeld met ’n foto van die verkoper se huis wat by die waardasie geneem is.</li>
+      <li>Tik op ’n knoppie, soos WhatsApp of Teken die mandaat, om te stel waarheen dit skakel.</li>
+      <li>Tik op <b>⬇ Stoor kliëntkopie</b>. U kry een lêer om aan die kliënt te WhatsApp of e-pos. Gebruik <b>Druk / PDF</b> vir ’n drukbare weergawe.</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

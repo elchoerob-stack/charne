@@ -14,6 +14,9 @@ body{font-family:'Noto Sans',sans-serif;font-weight:300;color:var(--ink);min-hei
 .tools{display:flex;gap:8px;flex-wrap:wrap}
 .tools button,.nav button{font:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;background:transparent;color:var(--paper);border:1px solid #a9bde3;padding:9px 14px;cursor:pointer}
 .tools button.solid{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.langsw{display:inline-flex;border:1px solid #a9bde3;overflow:hidden;font-size:11px;letter-spacing:.18em;font-weight:600}
+.langsw b,.langsw a{padding:9px 12px;color:var(--paper);text-decoration:none}
+.langsw b{background:var(--amber);color:var(--ink)}
 .tools button.on{background:var(--amber);color:var(--ink);border-color:var(--amber)}
 .nav{display:flex;align-items:center;gap:18px;margin-top:18px;color:#a9bde3;font-size:11px;letter-spacing:.3em;text-transform:uppercase}
 .nav button:disabled{opacity:.3;cursor:default}

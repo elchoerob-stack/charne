@@ -1,4 +1,5 @@
 // RB Brand books · flipbook, tap-to-edit, photo upload, client copy, music
+// UI holds this book's interface text in its language (set by build.py)
 const CLIENT = document.documentElement.hasAttribute('data-client');
 const STORE = 'rbbook:' + document.title; // one saved draft per book
 const book = document.getElementById('book');
@@ -103,16 +104,16 @@ book.addEventListener('click', e => {
   e.preventDefault();
   const kind = a.dataset.link;
   if (kind === 'wa') {
-    const n = prompt('WhatsApp number (e.g. 082 000 0000):', a.dataset.num || '');
+    const n = prompt(UI.waPrompt, a.dataset.num || '');
     if (n === null) return;
     a.dataset.num = n; a.href = 'https://wa.me/27' + n.replace(/\D/g, '').replace(/^0/, '');
   } else if (kind === 'tel') {
-    const n = prompt('Phone number:', a.dataset.num || '');
+    const n = prompt(UI.telPrompt, a.dataset.num || '');
     if (n === null) return;
     a.dataset.num = n; a.href = 'tel:+27' + n.replace(/\D/g, '').replace(/^0/, '');
     const lbl = a.querySelector('.num'); if (lbl) lbl.textContent = n;
   } else {
-    const u = prompt('Link for this button (leave empty to hide it):', a.getAttribute('href') === '#' ? '' : a.href);
+    const u = prompt(UI.linkPrompt, a.getAttribute('href') === '#' ? '' : a.href);
     if (u === null) return;
     a.setAttribute('href', u.trim() || '#');
   }
@@ -132,7 +133,7 @@ function setEditing(on) {
   document.body.classList.toggle('editing', on);
   book.querySelectorAll(EDITABLE).forEach(e => { if (!e.closest('.calc,.wish,.result')) e.contentEditable = on ? 'true' : 'false'; });
   if (!on) book.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
-  if (editBtn) { editBtn.classList.toggle('on', on); editBtn.textContent = on ? '✓ Done editing' : '✎ Edit'; }
+  if (editBtn) { editBtn.classList.toggle('on', on); editBtn.textContent = on ? UI.doneEditing : UI.edit; }
   markTodos();
 }
 if (editBtn) editBtn.onclick = () => setEditing(!editing);
@@ -162,7 +163,7 @@ book.addEventListener('input', e => {
 book.addEventListener('change', save);
 const resetBtn = document.getElementById('resetBtn');
 if (resetBtn) resetBtn.onclick = () => {
-  if (!confirm('Clear everything you typed and start again from the blank template?')) return;
+  if (!confirm(UI.resetConfirm)) return;
   try { localStorage.removeItem(STORE); } catch (e) {}
   location.reload();
 };
@@ -171,7 +172,7 @@ if (resetBtn) resetBtn.onclick = () => {
 const saveBtn = document.getElementById('saveBtn');
 if (saveBtn) saveBtn.onclick = () => {
   const left = [...book.querySelectorAll(EDITABLE)].filter(e => /\[[^\]]+\]/.test(e.textContent) && !e.querySelector(EDITABLE)).length;
-  if (left && !confirm(left + ' spot(s) still show [bracketed] placeholder text (highlighted in Edit mode).\n\nSave the client copy anyway?')) return;
+  if (left && !confirm(UI.saveConfirm.replace('{n}', left))) return;
   const wasEditing = editing; setEditing(false);
   const doc = document.documentElement.cloneNode(true);
   doc.setAttribute('data-client', '');
@@ -237,13 +238,13 @@ function startSynth() {
   clearInterval(timer); timer = setInterval(tick, 50);
 }
 function startMusic() {
-  if (!ctx) setup(); ctx.resume(); playing = true; musicBtn.textContent = '♪ Music off';
+  if (!ctx) setup(); ctx.resume(); playing = true; musicBtn.textContent = UI.musicOff;
   if (useSynth) return startSynth();
   if (!audio.src) loadTrack();
   audio.play().then(() => fadeTo(.45, 2500)).catch(() => { useSynth = true; credit(); startSynth(); });
 }
 function stopMusic() {
-  playing = false; musicBtn.textContent = '♪ Music on';
+  playing = false; musicBtn.textContent = UI.musicOn;
   if (!useSynth) return fadeTo(0, 1000);
   clearInterval(timer);
   master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime);

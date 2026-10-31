@@ -29,11 +29,15 @@ a.card:hover{transform:translateY(-4px)}
 .how h3{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
 .how ol{padding-left:20px;color:#c9d3e6;line-height:1.9;font-size:15px}
 .how b{color:var(--paper);font-weight:500}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.langsw{display:inline-flex;border:1px solid rgba(255,255,255,.35);border-radius:30px;overflow:hidden;font-size:12px;font-weight:600;letter-spacing:.16em}
+.langsw b,.langsw a{padding:8px 14px;color:var(--paper);text-decoration:none}
+.langsw b{background:var(--amber);color:var(--navy)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <b class="wm">RB <i></i> BRAND</b>
+  <div class="toprow"><b class="wm">RB <i></i> BRAND</b><span class="langsw" role="group" aria-label="Language"><b aria-current="true">EN</b><a href="index.af.html" data-lang="af">AF</a></span></div>
   <h1>Client books that <em>win the mandate.</em></h1>
   <p class="lede">Three page-turning books for every stage of the client journey. Personalise one in minutes, then send the client their own copy.</p>
   <div class="grid">

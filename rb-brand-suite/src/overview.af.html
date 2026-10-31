@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="af">
+<head>
+<meta charset="utf-8">
+<title>RB Brand Boeke · Oorsig</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:210mm;height:297mm;overflow:hidden;font-family:'Noto Sans',sans-serif;font-weight:300;color:#FDFBF6;background:radial-gradient(ellipse at top,#34415e 0%,#242E43 50%,#161c29 100%);padding:16mm 16mm 12mm;display:flex;flex-direction:column;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.wm{font-family:'Cormorant Garamond',serif;font-size:26px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:12px}
+.wm i{width:1px;height:22px;background:currentColor;opacity:.6}
+.tag{display:inline-block;background:#E0A458;color:#242E43;font-size:9px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;padding:5px 10px;margin-left:14px;vertical-align:middle}
+h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;line-height:1.05;margin:16px 0 8px}
+h1 em{color:#E0A458}
+.lede{color:#c9d3e6;font-size:13px;line-height:1.6;max-width:150mm}
+.review{margin-top:14px;border:1px solid #E0A458;background:rgba(224,164,88,.08);border-radius:5px;padding:13px 16px;font-size:11.5px;line-height:1.55;color:#e4e8f0}
+.review h3{font-size:9.5px;letter-spacing:.25em;text-transform:uppercase;color:#E0A458;margin:8px 0 4px;font-weight:600}
+.review ol{padding-left:16px}
+.books{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.bk{display:grid;grid-template-columns:52mm 1fr;background:#FDFBF6;color:#242E43;border-radius:5px;overflow:hidden}
+.bk .img{background:var(--img) center/cover;min-height:36mm}
+.bk .tx{padding:11px 15px}
+.bk b{font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:#314F8E;font-weight:600}
+.bk h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:22px;margin:2px 0 3px}
+.bk p{font-size:10.5px;line-height:1.5;color:#39424C}
+.note{margin-top:auto;font-size:10px;line-height:1.55;color:#a9bde3;border-top:1px solid rgba(255,255,255,.18);padding-top:9px}
+.note b{color:#FDFBF6;font-weight:500}
+</style>
+</head>
+<body>
+  <div><b class="wm">RB <i></i> BRAND</b><span class="tag">Konsepdemo · vir hersiening</span></div>
+  <h1>Kliëntboeke wat die <em>mandaat wen.</em></h1>
+  <p class="lede">Drie handelsmerkboeke vir elke stap van die kliënt se reis. Elkeen kan binne minute verpersoonlik word en as die kliënt se eie kopie gestuur word.</p>
+  <div class="review">
+    Voorberei deur Charné Robilliard vir hersiening deur die prinsipaal. Dit is ’n werkende konsep: alle name, syfers, resensies en foto’s is plekhouers, en niks is aan kliënte gestuur nie.
+    <h3>Waaroor ek graag u insette wil hê</h3>
+    <ol>
+      <li>Is u gelukkig dat die boeke RB Brand se naam, logo en kleure dra soos gewys?</li>
+      <li>Die kommissiekoers en bewoording vir die verkoper se “in die hand”-bladsy.</li>
+      <li>Ons PPRA- en Getrouheidsfondsbesonderhede, en watter onlangse verkopings en Google-resensies ons mag uitlig.</li>
+      <li>Moet die hele span hierdie boeke gebruik?</li>
+    </ol>
+  </div>
+  <div class="books">
+    <div class="bk"><div class="img" style="--img:url('{{thumb:hero}}')"></div><div class="tx"><b>Verkopers · 12 bladsye · bladsye 2–13</b><h2>Verkopersaanbieding</h2><p>Vir die waardasie-afspraak. Die verkoper se eie huis op die voorblad, vergelykbare verkopings, die bemarkingsplan, wat hulle in die hand sal hou, en ’n duidelike “kom ons loods u huis”-afsluiting.</p></div></div>
+    <div class="bk"><div class="img" style="--img:url('{{thumb:white}}')"></div><div class="tx"><b>Kopers · 9 bladsye · bladsye 14–22</b><h2>Kopersgids</h2><p>Vir voornemende kopers. Die kooproses stap vir stap, ’n sakrekenaar vir hereregte en paaiemente, voorstadgidse, en ’n wenslys wat reguit na WhatsApp gaan.</p></div></div>
+    <div class="bk"><div class="img" style="--img:url('{{thumb:newhome}}')"></div><div class="tx"><b>Oorhandiging · 4 bladsye · bladsye 23–26</b><h2>Trekdagpakket</h2><p>Vir registrasiedag. Die oorhandigingslys, ’n welkom-tuis-gids vir die buurt, en ’n dankiekaartjie wat verwysings uitnooi.</p></div></div>
+  </div>
+  <p class="note">Hierdie PDF is ’n stilstaande voorskou. Die interaktiewe weergawe, <b>RB-Brand-Books-Concept-Demo.html</b>, blaai soos ’n boek, speel sagte agtergrondmusiek, bereken die syfers lewendig, en laat elke boek verpersoonlik en as ’n kliëntkopie stoor. Foto’s: Unsplash (gratis lisensie).</p>
+</body>
+</html>

@@ -259,5 +259,6 @@ print('built RB-Brand-Books-Concept-Demo.html')
 
 # ---- Overview page for the PDF (src/make_pdf.js turns it and the books into one PDF) ----
 work = OUT / '.pdf-work'; work.mkdir(exist_ok=True)
-ov = re.sub(r'\{\{thumb:(\w+)\}\}', lambda m: data_uri(m.group(1), 700), (SRC / 'overview.html').read_text())
-(work / 'overview.html').write_text(ov)
+for suffix in ('', '.af'):
+    ov = re.sub(r'\{\{thumb:(\w+)\}\}', lambda m: data_uri(m.group(1), 700), (SRC / f'overview{suffix}.html').read_text())
+    (work / f'overview{suffix}.html').write_text(ov)

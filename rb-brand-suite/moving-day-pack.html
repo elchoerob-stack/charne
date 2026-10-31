@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moving Day Pack</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* RB Brand books · "Jacaranda Twilight" theme */
+:root{
+  --navy:#242E43; --ink:#242E43; --slate:#39424C; --blue:#314F8E; --paper:#FDFBF6;
+  --jac:#8E6BBF; --jac-soft:#ece5f5; --amber:#E0A458; --amber-soft:#f8ead5;
+  --line:#e3e1dc; --muted:#6a7280;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans',sans-serif;font-weight:300;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at top,#34415e 0%,#242E43 45%,#161c29 100%);padding:16px;overflow-x:hidden}
+
+/* ---------- Toolbar, nav, intro ---------- */
+.toolbar{width:min(794px,100%);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:24px;color:var(--paper);letter-spacing:.03em}
+.toolbar h1 a{color:inherit;text-decoration:none;opacity:.6;margin-right:6px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools button,.nav button{font:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;background:transparent;color:var(--paper);border:1px solid #a9bde3;padding:9px 14px;cursor:pointer}
+.tools button.solid{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.tools button.on{background:var(--amber);color:var(--ink);border-color:var(--amber)}
+.nav{display:flex;align-items:center;gap:18px;margin-top:18px;color:#a9bde3;font-size:11px;letter-spacing:.3em;text-transform:uppercase}
+.nav button:disabled{opacity:.3;cursor:default}
+#credit{margin-top:10px;font-size:10px;letter-spacing:.08em;color:#8f9bb3;text-align:center}
+#hint{display:none;width:min(794px,100%);margin-bottom:12px;background:var(--amber-soft);color:var(--ink);font-size:13px;line-height:1.5;padding:10px 14px;border-left:4px solid var(--amber)}
+body.editing #hint{display:block}
+html[data-client] .edit-only{display:none!important}
+#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(22,28,41,.96);color:var(--paper);text-align:center;padding:24px;transition:opacity .8s}
+#intro.gone{opacity:0;pointer-events:none}
+#intro .wm{font-size:40px}
+#intro .t{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:34px;margin-top:14px}
+#intro .s{color:var(--amber);font-size:12px;letter-spacing:.32em;text-transform:uppercase;margin-top:8px}
+#intro button{margin-top:28px;font:inherit;font-size:12px;letter-spacing:.32em;text-transform:uppercase;background:var(--paper);color:var(--ink);border:0;padding:16px 30px;cursor:pointer}
+#intro p{color:#a9a196;margin-top:16px;font-size:11px}
+
+/* ---------- Book & pages ---------- */
+#stage{position:relative;width:calc(794px * var(--s,1));height:calc(1123px * var(--s,1))}
+#book{position:absolute;left:0;top:0;width:794px;height:1123px;transform:scale(var(--s,1));transform-origin:0 0;perspective:3200px}
+.page{position:absolute;inset:0;width:794px;height:1123px;background:var(--paper);overflow:hidden;padding:64px;display:flex;flex-direction:column;transform-origin:left center;transition:transform 1.1s cubic-bezier(.645,.045,.355,1),box-shadow 1.1s;backface-visibility:hidden;box-shadow:6px 18px 40px rgba(0,0,0,.45)}
+.page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;background:linear-gradient(90deg,rgba(0,0,0,.14),transparent);pointer-events:none;z-index:5}
+.page.flipped{transform:rotateY(-180deg);box-shadow:none}
+.page.bleed{padding:0}
+
+/* ---------- Type ---------- */
+.page h1,.page h2{font-family:'Cormorant Garamond',serif;font-weight:500;line-height:1.04}
+.page h1{font-size:84px}
+.page h2{font-size:64px;margin:8px 0 18px}
+.page h1 em,.page h2 em{color:var(--jac);font-style:italic}
+.page h3{font-size:14px;letter-spacing:.2em;text-transform:uppercase;font-weight:600}
+.page h4{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500}
+.page p{font-size:17px;line-height:1.65;color:var(--slate)}
+.kick{display:inline-block;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--blue);font-weight:600}
+.kick.light{color:var(--amber)}
+.lede{max-width:560px}
+.sub{margin:30px 0 14px;color:var(--blue)}
+.bar{width:90px;height:4px;background:linear-gradient(90deg,var(--amber),var(--jac));border-radius:2px}
+.foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+.c1{background:var(--blue)}.c2{background:var(--jac)}.c3{background:var(--amber)}.c4{background:var(--navy)}
+.wm{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:34px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:14px}
+.wm i{width:1px;height:30px;background:currentColor;opacity:.6}
+.logo{height:64px;width:auto;display:block}
+.light-logo .logo{filter:brightness(0) invert(1)}
+
+/* ---------- Photos ---------- */
+.ph{--img:none;position:relative;background:var(--img) center/cover no-repeat,var(--ph-bg,linear-gradient(135deg,#9aa6b8,#4b5871))}
+.ph.fill{position:absolute;inset:0}
+.ph>span{position:absolute;inset:0;display:grid;place-items:center}
+.ph.has-img>span{display:none}
+
+/* ---------- Cover ---------- */
+.j-cover{color:#fff}
+.veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(36,46,67,.6) 0%,rgba(36,46,67,0) 26%,rgba(36,46,67,.15) 48%,rgba(36,46,67,.96) 80%)}
+.cv-top{position:absolute;top:56px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center;z-index:2}
+.cv-top .wm{color:#fff}
+.pill{border:1px solid rgba(255,255,255,.6);border-radius:30px;padding:10px 20px;font-size:12px;letter-spacing:.25em;text-transform:uppercase;background:rgba(255,255,255,.1);color:#fff}
+.cv-body{position:absolute;left:64px;right:64px;bottom:64px;z-index:2}
+.j-cover h1{margin:24px 0 20px}
+.j-cover h1 em{color:var(--amber)}
+.j-cover p{color:#e4e8f0;font-size:20px;max-width:580px}
+.who{font-family:'Cormorant Garamond',serif;font-size:44px;margin-top:8px}
+.addr2{font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:#c9d3e6;margin:6px 0 26px}
+.cv-meta{display:flex;justify-content:space-between;margin-top:30px;padding-top:20px;border-top:1px solid rgba(255,255,255,.25);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#c9d3e6}
+.areas{margin-top:30px;padding-top:20px;border-top:1px solid rgba(255,255,255,.25);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#c9d3e6;line-height:1.9}
+
+/* ---------- Colour quad ---------- */
+.j-why .top{height:420px}
+.float-card{position:relative;margin:-110px 64px 0;background:var(--navy);color:#fff;padding:34px 44px;box-shadow:0 20px 40px rgba(36,46,67,.3);z-index:2}
+.float-card h2{color:#fff;margin:8px 0 0}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:28px 64px 0}
+.q{padding:24px 26px 22px;border-radius:4px;color:#fff}
+.q b{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:500;opacity:.55;display:block;line-height:1}
+.q h3{margin:10px 0 8px}
+.page .q p{color:rgba(255,255,255,.9);font-size:15.5px;line-height:1.6}
+
+/* ---------- Team ---------- */
+.j-team{background:radial-gradient(circle at 85% 10%,#3b4a6d 0,var(--navy) 55%);color:#fff}
+.petals{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.petals i{position:absolute;width:140px;height:140px;border-radius:70% 0 70% 0;background:var(--jac);opacity:.22}
+.petals i:nth-child(1){top:-30px;right:60px;transform:rotate(20deg)}
+.petals i:nth-child(2){top:70px;right:-40px;width:90px;height:90px;transform:rotate(80deg);opacity:.3}
+.petals i:nth-child(3){top:20px;right:190px;width:60px;height:60px;transform:rotate(-30deg);background:var(--amber)}
+.petals i:nth-child(4){bottom:300px;left:-50px;transform:rotate(45deg)}
+.petals i:nth-child(5){bottom:390px;left:70px;width:50px;height:50px;opacity:.35}
+.petals i:nth-child(6){top:180px;right:110px;width:40px;height:40px;background:var(--amber);opacity:.3}
+.tm-in{position:relative;padding:72px 64px 0}
+.j-team h2{color:#fff}
+.tm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:30px;text-align:center}
+.av{width:150px;height:150px;border-radius:50%;margin:0 auto 18px;font-family:'Cormorant Garamond',serif;font-size:50px;color:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.08),0 0 0 7px rgba(255,255,255,.25)}
+.a1{--ph-bg:linear-gradient(135deg,var(--jac),var(--blue))}.a2{--ph-bg:linear-gradient(135deg,var(--amber),var(--jac))}.a3{--ph-bg:linear-gradient(135deg,var(--blue),#5fa3b8)}
+.tm b{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:500;display:block}
+.tm small{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--amber)}
+.page .tm p{color:#c9d3e6;font-size:15.5px;margin-top:10px}
+.quote{margin-top:40px;padding:22px 30px;background:var(--amber);color:var(--navy);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;text-align:center}
+.strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:44px -64px 0;height:330px}
+
+/* ---------- Stats / KPIs ---------- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.kpi{color:#fff;padding:26px 28px;border-radius:4px}
+.kpi strong{display:block;font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:500;line-height:1.05}
+.kpi span{font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.9}
+.buyers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.by .ph{height:170px;border-radius:4px;margin-bottom:12px}
+.page .by p{font-size:15px;line-height:1.55}
+
+/* ---------- Pricing ---------- */
+.comps{width:100%;border-collapse:collapse;margin-top:6px;font-size:15px}
+.comps th{text-align:left;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:var(--navy);padding:12px 12px;font-weight:500}
+.comps td{padding:12px;border-bottom:1px solid var(--line)}
+.comps tr:nth-child(even) td{background:var(--jac-soft)}
+.comps td:last-child,.comps th:last-child{text-align:right;font-weight:500}
+.val-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+.price{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:28px;text-align:center;border-bottom:5px solid var(--amber)}
+.price span,.price small{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#c9d3e6;display:block}
+.price strong{font-family:'Cormorant Garamond',serif;font-size:46px;white-space:nowrap;font-weight:500;display:block;color:var(--amber);margin:8px 0}
+.why-price{background:var(--amber-soft);padding:24px 26px}
+.why-price h3{color:var(--blue);margin-bottom:8px}
+.page .why-price p{font-size:15.5px}
+.curve{margin-top:22px;display:grid;grid-template-columns:330px 1fr;gap:24px;align-items:center}
+.curve svg{width:100%;height:auto}
+.page .curve p{font-size:15.5px}
+
+/* ---------- Marketing mock-ups ---------- */
+.mocks{display:grid;grid-template-columns:200px 1fr 1fr;gap:22px;align-items:end;margin:6px 0 26px}
+.phone{background:#111;border-radius:30px;padding:10px;box-shadow:0 18px 30px rgba(36,46,67,.3)}
+.scr{background:#fff;border-radius:22px;overflow:hidden;height:390px;display:flex;flex-direction:column}
+.scr .ph{height:170px}
+.lst{padding:14px}
+.lst b{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;display:block}
+.lst span{font-size:12px;display:block;color:var(--slate);margin:4px 0}
+.lst small{font-size:10px;color:var(--muted)}
+.lst-btn{margin:auto 14px 14px;background:var(--blue);color:#fff;text-align:center;font-size:12px;padding:10px;border-radius:6px;font-weight:500}
+.social{background:#fff;border-radius:8px;box-shadow:0 14px 26px rgba(36,46,67,.18);overflow:hidden}
+.so-head{display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:12px}
+.so-head i{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--jac))}
+.social .sq{aspect-ratio:1}
+.so-tag{position:absolute;left:12px;bottom:12px;background:var(--amber);color:var(--navy);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;padding:6px 10px}
+.so-cap{padding:10px 12px 14px;font-size:12px;line-height:1.5;color:var(--slate)}
+.flyer{position:relative;border-radius:4px;overflow:hidden;height:330px;box-shadow:0 14px 26px rgba(36,46,67,.18)}
+.flyer .ph{position:absolute;inset:0}
+.fl-in{position:absolute;left:0;right:0;bottom:0;padding:60px 18px 18px;background:linear-gradient(0deg,rgba(36,46,67,.95),rgba(36,46,67,0));color:#fff}
+.fl-in b{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;display:block}
+.fl-in small{font-size:12px;color:#c9d3e6}
+.channels{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px}
+.ch{display:flex;gap:14px;align-items:center;padding:14px 16px;background:#fff;border-radius:4px;box-shadow:0 6px 14px rgba(36,46,67,.07);font-size:15px;color:var(--slate)}
+.ch i{font-style:normal;font-size:24px;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--jac-soft);flex:none}
+
+/* ---------- Sold cards & reviews ---------- */
+.sale-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:330px 300px;gap:16px}
+.sold3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;height:300px;margin-top:4px}
+.sc{position:relative;overflow:hidden;border-radius:4px;box-shadow:0 12px 26px rgba(36,46,67,.18)}
+.sc.wide{grid-column:1/3}
+.sc .img{position:absolute;inset:0}
+.sold{position:absolute;top:18px;left:-34px;transform:rotate(-35deg);background:var(--amber);color:var(--navy);font-weight:600;font-size:12px;letter-spacing:.3em;text-transform:uppercase;padding:6px 44px;z-index:2}
+.sc-t{position:absolute;left:0;right:0;bottom:0;padding:50px 18px 16px;background:linear-gradient(0deg,rgba(36,46,67,.95),rgba(36,46,67,0));color:#fff}
+.sc-t span{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#c9d3e6}
+.pr{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:6px}
+.pr b{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--amber);white-space:nowrap}
+.pr em{font-style:normal;font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:var(--jac);padding:4px 10px;border-radius:20px;white-space:nowrap}
+.sold3 .pr{flex-wrap:wrap}.sold3 .pr b{font-size:22px}
+.reviews{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.rv{background:#fff;border-top:5px solid var(--jac);padding:22px;box-shadow:0 8px 18px rgba(36,46,67,.08)}
+.rv:nth-child(2){border-color:var(--amber)}.rv:nth-child(3){border-color:var(--blue)}
+.stars{color:var(--amber);font-size:20px;letter-spacing:3px}
+.page .rv p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;line-height:1.45;color:var(--ink);margin:10px 0 14px}
+.rv b{display:block;font-weight:600;font-size:14px}
+.rv small{font-size:12px;color:var(--muted)}
+.rv-link{margin-top:20px;align-self:center;color:var(--blue);font-weight:500;text-decoration:none;font-size:15px;letter-spacing:.06em}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:6px 0 22px}
+.stats div{background:var(--navy);color:#c9d3e6;padding:18px 20px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.stats strong{display:block;font-family:'Cormorant Garamond',serif;font-size:42px;color:var(--amber);letter-spacing:0;font-weight:500;line-height:1.1}
+.note{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- Calculators ---------- */
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:10px}
+.fields{display:flex;flex-direction:column;gap:12px}
+.fields label{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.fields input,.fields select,.wish input,.wish select{font:inherit;font-size:19px;letter-spacing:0;text-transform:none;color:var(--ink);padding:11px 14px;border:1.5px solid var(--line);border-radius:4px;background:#fff;width:100%}
+.fields input:focus,.wish input:focus{outline:none;border-color:var(--jac)}
+.fields .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.result{background:linear-gradient(160deg,var(--navy),var(--blue));color:#fff;padding:30px;border-radius:4px;display:flex;flex-direction:column}
+.result .lbl{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#c9d3e6}
+.result .big-n{font-family:'Cormorant Garamond',serif;font-size:58px;font-weight:500;color:var(--amber);line-height:1.1;margin:6px 0 20px}
+.result dl{display:grid;grid-template-columns:1fr auto;gap:10px 14px;font-size:15px;border-top:1px solid rgba(255,255,255,.2);padding-top:18px}
+.result dt{color:#c9d3e6}
+.result dd{text-align:right;font-weight:500;white-space:nowrap}
+.result dd.tot{color:var(--amber)}
+.fine{margin-top:18px;font-size:13px;line-height:1.55;color:var(--muted);background:var(--amber-soft);padding:14px 16px;border-left:4px solid var(--amber)}
+
+/* ---------- FAQ, promises, timeline, CTA ---------- */
+.faq{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.fq{background:#fff;padding:22px 24px;border-radius:4px;box-shadow:0 6px 14px rgba(36,46,67,.07);border-left:5px solid var(--jac)}
+.fq:nth-child(4n+2),.fq:nth-child(4n+3){border-color:var(--amber)}
+.fq h4{font-size:24px;margin-bottom:8px;color:var(--navy)}
+.page .fq p{font-size:15px;line-height:1.6}
+.promises{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+.pm{display:flex;gap:16px;align-items:flex-start;padding:22px;border-radius:4px;color:#fff}
+.pm i{font-style:normal;font-size:28px;line-height:1}
+.pm b{display:block;font-size:17px;font-weight:600;margin-bottom:4px}
+.page .pm p{color:rgba(255,255,255,.88);font-size:14.5px;line-height:1.55}
+.signoff{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:30px}
+.signoff div{flex:1;border-top:2px solid var(--navy);padding-top:10px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.sigline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:40px;color:var(--navy);margin-top:6px;text-transform:none;letter-spacing:0}
+.tl{list-style:none;position:relative;counter-reset:st}
+.tl::before{content:"";position:absolute;left:21px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.tl li{position:relative;padding:0 0 22px 66px;counter-increment:st}
+.tl li::before{content:counter(st);position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Cormorant Garamond',serif;font-size:22px;background:var(--blue)}
+.tl li:nth-child(4n+2)::before{background:var(--jac)}.tl li:nth-child(4n+3)::before{background:var(--amber)}.tl li:nth-child(4n+4)::before{background:var(--navy);box-shadow:0 0 0 1px rgba(255,255,255,.4)}
+.tl b{font-size:15px;letter-spacing:.16em;text-transform:uppercase;display:block;padding-top:10px;font-weight:600}
+.page .tl p{font-size:15.5px}
+.tl .when{float:right;font-size:13px;letter-spacing:.1em;color:var(--amber);font-weight:600;padding-top:12px}
+.tl.light::before{background:rgba(255,255,255,.25)}
+.tl.light b{color:#fff}
+.page .tl.light p{color:#c9d3e6}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:16px 24px;border-radius:40px;font-size:15px;font-weight:500;letter-spacing:.04em;text-decoration:none;color:#fff;background:var(--blue)}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.wa{background:#2f9e62}
+.btn.ghost{background:transparent;border:1.5px solid rgba(255,255,255,.6)}
+a[data-link][href="#"]{display:none}
+body.editing a[data-link][href="#"]{display:inline-flex;opacity:.55;outline:2px dashed var(--amber)}
+.urgent{display:inline-block;margin-top:22px;background:rgba(224,164,88,.18);border:1px solid var(--amber);color:var(--amber);padding:10px 18px;border-radius:30px;font-size:14px;letter-spacing:.06em}
+.creds{margin-top:auto;padding-top:18px;border-top:1px solid rgba(255,255,255,.25);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#c9d3e6}
+
+/* ---------- Handover, welcome, thank you ---------- */
+.band{height:280px}
+.hd-in{padding:44px 64px;display:flex;flex-direction:column;flex:1}
+.hd-head{display:flex;justify-content:space-between;align-items:center}
+.badge{width:90px;height:90px;border-radius:50%;background:var(--amber);display:grid;place-items:center;font-size:40px;margin-top:-130px;box-shadow:0 0 0 8px var(--paper);flex:none}
+.ck{list-style:none;margin-top:8px}
+.ck li{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;font-size:16.5px;border-radius:3px}
+.ck li:nth-child(odd){background:var(--jac-soft)}
+.ck li::after{content:"";width:22px;height:22px;border:2px solid var(--blue);border-radius:4px;background:#fff;flex:none}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:auto}
+.sg div{border-top:2px solid var(--navy);padding-top:10px;font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+.j-wel{background:var(--amber-soft)}
+.hero2{height:420px}
+.wl-title{position:absolute;left:0;right:0;top:0;height:420px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 64px 30px;background:linear-gradient(0deg,rgba(36,46,67,.85),rgba(36,46,67,0) 60%)}
+.wl-title h2{color:#fff;font-size:80px;margin:6px 0 0}
+.tiles6{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:34px 64px}
+.t{background:#fff;padding:22px 24px;border-left:6px solid var(--blue);border-radius:3px;box-shadow:0 6px 14px rgba(36,46,67,.07)}
+.t i{font-style:normal;font-size:26px}
+.t h3{margin:6px 0}
+.page .t p{font-size:15px;line-height:1.55}
+.t:nth-child(2),.t:nth-child(4){border-color:var(--amber)}.t:nth-child(3){border-color:var(--jac)}.t:nth-child(5){border-color:#c0504d}
+.j-ty{display:grid;grid-template-rows:1fr 1fr}
+.ty-front{position:relative;overflow:hidden}
+.ty-front .veil{background:linear-gradient(0deg,rgba(36,46,67,.85),rgba(36,46,67,.35))}
+.ty-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:2}
+.ty-c .wm{color:#fff}
+.big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:86px;color:#fff}
+.ty-back{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--paper),var(--jac-soft));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 110px;border-top:6px solid var(--amber)}
+.big2{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:54px;color:var(--jac);margin-bottom:12px}
+.page .sig{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--navy);line-height:1.5}
+.sig span{font-family:'Noto Sans',sans-serif;font-size:13px;letter-spacing:.1em;color:var(--muted)}
+
+/* ---------- Letter ---------- */
+.lt-head{display:flex;gap:30px;align-items:center}
+.av-lg{width:170px;height:170px;border-radius:50%;flex:none;font-family:'Cormorant Garamond',serif;font-size:56px;color:#fff;--ph-bg:linear-gradient(135deg,var(--jac),var(--blue));box-shadow:0 0 0 8px var(--jac-soft)}
+.letter{margin-top:36px;padding:36px 40px;background:#fff;border-left:6px solid var(--amber);box-shadow:0 10px 24px rgba(36,46,67,.08)}
+.page .letter p{font-size:18px;margin-bottom:16px}
+.role{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.vid{margin-top:26px;align-self:flex-start;display:inline-flex;align-items:center;gap:14px;text-decoration:none;color:var(--navy);font-weight:500;font-size:16px}
+.vid span{width:54px;height:54px;border-radius:50%;background:var(--jac);color:#fff;display:grid;place-items:center;font-size:20px}
+
+/* ---------- Buyer-specific ---------- */
+.suburbs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sb{display:grid;grid-template-columns:130px 1fr;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 6px 14px rgba(36,46,67,.07)}
+.sb .ph{height:100%;min-height:150px}
+.sb div.tx{padding:16px 18px}
+.sb h4{font-size:24px;color:var(--navy)}
+.page .sb p{font-size:13.5px;line-height:1.5;margin-top:4px}
+.wish{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+.wish label{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.wish .full{grid-column:1/3}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chips label{flex-direction:row;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:30px;padding:9px 14px;font-size:13px;letter-spacing:.04em;text-transform:none;color:var(--ink);cursor:pointer}
+.chips input{width:auto;accent-color:var(--jac)}
+.listings{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:330px 300px;gap:16px;margin-top:6px}
+
+/* ---------- Edit mode ---------- */
+body.editing #book [contenteditable="true"]{outline:1px dashed rgba(142,107,191,.55);outline-offset:3px;cursor:text}
+body.editing #book [contenteditable="true"]:focus{outline:2px solid var(--amber)}
+body.editing #book .todo{background:rgba(224,164,88,.35);box-shadow:0 0 0 2px rgba(224,164,88,.35)}
+body.editing .ph[data-photo]{cursor:pointer}
+body.editing .ph[data-photo]::after{content:"📷 Tap to change photo";position:absolute;top:12px;left:12px;background:rgba(0,0,0,.65);color:#fff;font:500 12px 'Noto Sans',sans-serif;letter-spacing:0;text-transform:none;padding:6px 10px;border-radius:20px;z-index:6;white-space:nowrap}
+body.editing .av.ph[data-photo]::after,body.editing .av-lg.ph[data-photo]::after{content:"📷";top:auto;bottom:4px;left:50%;transform:translateX(-50%)}
+
+/* ---------- Print / PDF ---------- */
+@media print{
+  @page{size:A4;margin:0}
+  body{background:none;padding:0;display:block}
+  .toolbar,#intro,.nav,#credit,#hint{display:none!important}
+  #stage{width:auto!important;height:auto!important}
+  #book{position:static;transform:none!important;width:auto;height:auto;perspective:none}
+  .page{position:relative;transform:none!important;box-shadow:none!important;width:210mm;height:297mm;page-break-after:always;break-after:page}
+  .page::before{display:none}
+  .todo{background:none!important;box-shadow:none!important}
+}
+
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <h1><a class="edit-only" href="index.html">‹</a>Moving Day Pack</h1>
+  <div class="tools">
+    <button class="edit-only" id="editBtn">✎ Edit</button>
+    <button class="edit-only" id="saveBtn">⬇ Save client copy</button>
+    <button id="musicBtn">♪ Music on</button>
+    <button class="solid" onclick="window.print()">Print / PDF</button>
+    <button class="edit-only" id="resetBtn" title="Start again from the blank template">↺</button>
+  </div>
+</div>
+<div id="hint" class="edit-only"><b>Edit mode:</b> tap any text to change it · tap a photo to replace it · tap a button to set its link. Anything still <span style="background:rgba(224,164,88,.45)">[in brackets]</span> needs filling in. Your work saves on this device automatically. When done, tap <b>Save client copy</b>.</div>
+<div id="intro">
+  <div>
+    <b class="wm">RB <i></i> BRAND</b>
+    <div class="t">Congratulations on your new home</div>
+    <div class="s">Where Dedication Meets Excellence</div>
+    <button id="openBook">Open the book</button>
+    <p>Soft music will play · swipe or tap the page edges to turn · <a href="#" id="quietOpen" style="color:#a9bde3">open without music</a></p>
+  </div>
+</div>
+<div id="stage"><div id="book">
+<!-- 1 · COVER -->
+<section class="page bleed j-cover">
+  <div class="ph fill" data-photo data-key="home" style="--img:url('https://images.unsplash.com/photo-1733897669171-e7cf3712cced?auto=format&fit=crop&w=900&q=70')"></div>
+  <div class="veil"></div>
+  <div class="cv-top light-logo"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"><span class="pill">Moving Day</span></div>
+  <div class="cv-body">
+    <span class="kick light">Congratulations</span>
+    <div class="who" data-filename>[Client name]</div>
+    <div class="addr2">[Street address, Suburb]</div>
+    <div class="bar"></div>
+    <h1>Welcome to your <em>new chapter.</em></h1>
+    <div class="cv-meta"><span>Registered · [Date]</span><span>Charné Robilliard · RB Brand Real Estate</span></div>
+  </div>
+</section>
+
+<!-- 2 · HANDOVER -->
+<section class="page bleed j-hand">
+  <div class="ph band" data-photo style="--img:url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1400&q=70')"></div>
+  <div class="hd-in">
+    <div class="hd-head"><div><span class="kick">Settlement date · [00 / 00 / 0000]</span><h2>Property <em>Handover</em></h2></div><span class="badge">🔑</span></div>
+    <p>Property address: [Street address, Suburb]</p>
+    <ul class="ck">
+      <li>All keys, remotes and access tags handed over</li>
+      <li>Alarm codes and security company details</li>
+      <li>Electrical, gas and electric fence compliance certificates</li>
+      <li>Prepaid electricity / water meter readings recorded</li>
+      <li>Appliance manuals and warranties</li>
+      <li>Pool, borehole, irrigation and solar operation explained</li>
+      <li>Estate / HOA rules and contact details</li>
+      <li>Fixtures &amp; fittings as per the Offer to Purchase</li>
+    </ul>
+    <div class="sg" style="margin-top:40px"><div>Seller signature</div><div>Purchaser signature</div></div>
+  </div>
+</section>
+
+<!-- 3 · WELCOME HOME GUIDE -->
+<section class="page bleed j-wel">
+  <div class="ph hero2" data-photo style="--img:url('https://images.unsplash.com/photo-1585914641050-fa9883c4e21c?auto=format&fit=crop&w=900&q=70')"></div>
+  <div class="wl-title"><span class="kick light">Your new neighbourhood</span><h2>Welcome <em>Home</em></h2></div>
+  <div class="tiles6">
+    <div class="t"><i>🏛</i><h3>Municipal</h3><p>City of Tshwane account transfer, refuse collection day and rates queries: [details].</p></div>
+    <div class="t"><i>💡</i><h3>Utilities</h3><p>Prepaid electricity vendor, fibre providers in your street and water meter: [details].</p></div>
+    <div class="t"><i>🎒</i><h3>Schools</h3><p>[Nearby primary and high schools with contact numbers.]</p></div>
+    <div class="t"><i>☕</i><h3>Local favourites</h3><p>[Coffee shops, restaurants, parks and the closest shopping centre.]</p></div>
+    <div class="t"><i>🚨</i><h3>Emergency</h3><p>Armed response: [number] · Hospital: [name] · SAPS: 10111 · Ambulance: 10177</p></div>
+    <div class="t"><i>🛠</i><h3>Trusted trades</h3><p>[Electrician, plumber, pool and garden services we recommend.]</p></div>
+  </div>
+</section>
+
+<!-- 4 · THANK YOU CARD -->
+<section class="page bleed j-ty">
+  <div class="ty-front"><div class="ph fill" data-mirror="home"></div><div class="veil"></div><div class="ty-c light-logo"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"><div class="bar" style="margin:22px auto"></div><div class="big">Thank you</div></div></div>
+  <div class="ty-back"><div class="petals"><i></i><i></i><i></i></div><div class="big2">With gratitude</div><p>It was a privilege helping you with this chapter. Wishing you many happy years in your new home — and if friends or family ever need help buying or selling, I’d love to help them too.</p><div class="bar" style="margin:22px auto"></div><p class="sig">Charné Robilliard<br><span>Property Practitioner · RB Brand Real Estate</span><br><span>[082 000 0000] · [charne@rbbrand.co.za]</span></p></div>
+</section>
+</div></div>
+<div class="nav"><button id="prev">‹ Prev</button><span id="count"></span><button id="next">Next ›</button></div>
+<div id="credit"></div>
+<input type="file" id="photoInput" accept="image/*" hidden>
+<script>
+// RB Brand books · flipbook, tap-to-edit, photo upload, client copy, music
+const CLIENT = document.documentElement.hasAttribute('data-client');
+const STORE = 'rbbook:' + location.pathname.split('/').pop();
+const book = document.getElementById('book');
+
+// ---- Restore Charné's saved draft (never in a client copy) ----
+if (!CLIENT) {
+  try { const saved = localStorage.getItem(STORE); if (saved) book.innerHTML = saved; } catch (e) {}
+}
+
+// ---- Fit the A4 page to the screen ----
+function fit() { const s = Math.min((innerWidth - 32) / 794, (innerHeight - 200) / 1123, 1); document.documentElement.style.setProperty('--s', Math.max(s, .2)); }
+fit(); addEventListener('resize', fit);
+
+// ---- Flipbook ----
+const pages = [...book.querySelectorAll('section.page')];
+pages.forEach((p, i) => { p.style.zIndex = pages.length - i; p.classList.remove('flipped'); });
+let cur = 0, editing = false;
+const count = document.getElementById('count'), prev = document.getElementById('prev'), next = document.getElementById('next');
+function render() {
+  pages.forEach((p, i) => p.classList.toggle('flipped', i < cur));
+  count.textContent = (cur + 1) + ' / ' + pages.length;
+  prev.disabled = cur === 0; next.disabled = cur === pages.length - 1;
+}
+function go(d) { const n = cur + d; if (n < 0 || n >= pages.length) return; cur = n; render(); }
+prev.onclick = () => go(-1); next.onclick = () => go(1);
+const interactive = t => t.closest('input,select,textarea,button,a,label,[contenteditable="true"]');
+book.addEventListener('click', e => {
+  if (editing || interactive(e.target)) return;
+  const r = book.getBoundingClientRect(); go(e.clientX - r.left < r.width / 3 ? -1 : 1);
+});
+document.addEventListener('keydown', e => {
+  if (editing || e.target.closest('input,select,textarea')) return;
+  if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1);
+});
+let sx = null;
+book.addEventListener('touchstart', e => sx = e.touches[0].clientX, { passive: true });
+book.addEventListener('touchend', e => {
+  if (sx === null || editing) return;
+  const dx = e.changedTouches[0].clientX - sx;
+  if (Math.abs(dx) > 50 && !interactive(e.target)) { e.preventDefault(); go(dx < 0 ? 1 : -1); }
+  sx = null;
+});
+render();
+
+// ---- Photos: mirrors copy the main home photo onto the marketing mock-ups ----
+function syncPhotos() {
+  book.querySelectorAll('.ph').forEach(p => p.classList.toggle('has-img', /url\(/.test(p.style.getPropertyValue('--img'))));
+  book.querySelectorAll('[data-mirror]').forEach(m => {
+    const src = book.querySelector('[data-key="' + m.dataset.mirror + '"]');
+    if (src) m.style.setProperty('--img', src.style.getPropertyValue('--img'));
+  });
+}
+syncPhotos();
+const photoInput = document.getElementById('photoInput');
+let photoTarget = null;
+book.addEventListener('click', e => {
+  if (!editing) return;
+  if (e.target.closest('[contenteditable="true"],a,input,select,label')) return;
+  // the photo may sit under a text overlay or shading, so look beneath the tap too
+  const ph = e.target.closest('.ph[data-photo]') || document.elementsFromPoint(e.clientX, e.clientY).find(el => el.matches('.ph[data-photo]'));
+  if (ph) { photoTarget = ph; photoInput.value = ''; photoInput.click(); }
+});
+photoInput.addEventListener('change', () => {
+  const f = photoInput.files[0]; if (!f || !photoTarget) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = () => { // shrink to keep the saved file small
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    photoTarget.style.setProperty('--img', "url('" + c.toDataURL('image/jpeg', .82) + "')");
+    URL.revokeObjectURL(url); syncPhotos(); save();
+  };
+  img.src = url;
+});
+
+// ---- Links (WhatsApp, e-sign, video, reviews) ----
+book.addEventListener('click', e => {
+  const a = e.target.closest('a[data-link]');
+  if (!a || !editing) return;
+  e.preventDefault();
+  const kind = a.dataset.link;
+  if (kind === 'wa') {
+    const n = prompt('WhatsApp number (e.g. 082 000 0000):', a.dataset.num || '');
+    if (n === null) return;
+    a.dataset.num = n; a.href = 'https://wa.me/27' + n.replace(/\D/g, '').replace(/^0/, '');
+  } else if (kind === 'tel') {
+    const n = prompt('Phone number:', a.dataset.num || '');
+    if (n === null) return;
+    a.dataset.num = n; a.href = 'tel:+27' + n.replace(/\D/g, '').replace(/^0/, '');
+    const lbl = a.querySelector('.num'); if (lbl) lbl.textContent = n;
+  } else {
+    const u = prompt('Link for this button (leave empty to hide it):', a.getAttribute('href') === '#' ? '' : a.href);
+    if (u === null) return;
+    a.setAttribute('href', u.trim() || '#');
+  }
+  save();
+});
+
+// ---- Edit mode ----
+const EDITABLE = 'h1,h2,h3,h4,p,li,td,th,dt,small,.who,.addr2,.cv-meta span,.areas,.quote,.big,.big2,.sigline,.urgent,.creds,.kpi strong,.kpi span,.stats strong,.sold,.pr b,.pr em,.sc-t span,.lst b,.lst span,.so-cap,.fl-in b,.fl-in small,.ch span,.tl .when,.pill,.foot span,.note,.ph>span,.tm b,.stars,.rv b,.tx span,.kick,.lbl-edit';
+const editBtn = document.getElementById('editBtn');
+function markTodos() { // highlight anything still in [brackets]
+  book.querySelectorAll('.todo').forEach(e => e.classList.remove('todo'));
+  if (!editing) return;
+  book.querySelectorAll(EDITABLE).forEach(e => { if (/\[[^\]]+\]/.test(e.textContent)) e.classList.add('todo'); });
+}
+function setEditing(on) {
+  editing = on;
+  document.body.classList.toggle('editing', on);
+  book.querySelectorAll(EDITABLE).forEach(e => { if (!e.closest('.calc,.wish,.result')) e.contentEditable = on ? 'true' : 'false'; });
+  if (!on) book.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+  if (editBtn) { editBtn.classList.toggle('on', on); editBtn.textContent = on ? '✓ Done editing' : '✎ Edit'; }
+  markTodos();
+}
+if (editBtn) editBtn.onclick = () => setEditing(!editing);
+
+// ---- Autosave the draft on this device ----
+let saveT;
+function cleanHTML(root) {
+  const c = root.cloneNode(true);
+  c.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+  c.querySelectorAll('.todo').forEach(e => e.classList.remove('todo'));
+  c.querySelectorAll('.flipped').forEach(e => e.classList.remove('flipped'));
+  return c;
+}
+function save() {
+  if (CLIENT) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(() => { try { localStorage.setItem(STORE, cleanHTML(book).innerHTML); } catch (e) {} }, 400);
+}
+book.addEventListener('input', e => {
+  const t = e.target;
+  if (t.matches('input,select')) { // keep typed values in the saved copy
+    if (t.type === 'checkbox') t.toggleAttribute('checked', t.checked); else t.setAttribute('value', t.value);
+  }
+  if (editing) markTodos();
+  save();
+});
+book.addEventListener('change', save);
+const resetBtn = document.getElementById('resetBtn');
+if (resetBtn) resetBtn.onclick = () => {
+  if (!confirm('Clear everything you typed and start again from the blank template?')) return;
+  try { localStorage.removeItem(STORE); } catch (e) {}
+  location.reload();
+};
+
+// ---- Save a personalised copy to send to the client ----
+const saveBtn = document.getElementById('saveBtn');
+if (saveBtn) saveBtn.onclick = () => {
+  const left = [...book.querySelectorAll(EDITABLE)].filter(e => /\[[^\]]+\]/.test(e.textContent) && !e.querySelector(EDITABLE)).length;
+  if (left && !confirm(left + ' spot(s) still show [bracketed] placeholder text (highlighted in Edit mode).\n\nSave the client copy anyway?')) return;
+  const wasEditing = editing; setEditing(false);
+  const doc = document.documentElement.cloneNode(true);
+  doc.setAttribute('data-client', '');
+  doc.removeAttribute('style');
+  doc.querySelector('#book').replaceWith(cleanHTML(book));
+  doc.querySelector('#intro').classList.remove('gone');
+  doc.querySelector('body').className = '';
+  const name = (book.querySelector('[data-filename]') || {}).textContent || 'client';
+  const file = (document.title + ' - ' + name).replace(/[\[\]]/g, '').replace(/[^\w\- ]+/g, '').trim().replace(/[\s-]+/g, '-') + '.html';
+  const blob = new Blob(['<!doctype html>\n' + doc.outerHTML], { type: 'text/html' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  if (wasEditing) setEditing(true);
+};
+
+// ---- Number helpers for the calculators ----
+const num = v => parseFloat(String(v).replace(/[^\d.]/g, '')) || 0;
+const rand = n => 'R ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+// ---- Music: soft royalty-free tracks, with a gentle generated tune as backup ----
+let ctx, master, playing = false, timer, step = 0, nextT = 0;
+const S16 = 60 / 84 / 4;
+const chords = [[62,66,69],[61,64,69],[62,66,71],[62,67,71]], roots = [38, 45, 47, 43];
+const melody = [[0,74,4],[4,76,2],[6,78,4],[10,76,2],[12,74,4],[16,73,4],[20,74,2],[22,76,6],[28,69,4],[32,71,4],[36,74,2],[38,78,4],[42,81,2],[44,78,4],[48,79,4],[52,78,2],[54,76,4],[58,74,6]];
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+function setup() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = ctx.createGain(); master.gain.value = 0;
+  const comp = ctx.createDynamicsCompressor(), verb = ctx.createConvolver();
+  const len = ctx.sampleRate * 2.2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  verb.buffer = ir;
+  const wet = ctx.createGain(); wet.gain.value = .28;
+  master.connect(comp); master.connect(verb); verb.connect(wet).connect(comp); comp.connect(ctx.destination);
+}
+function voice(f, t, dur, vol, type, attack = .005) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + .05);
+}
+function schedule(i, t) {
+  const bar = Math.floor(i / 16) % 4, s = i % 16, c = chords[bar];
+  if (s === 0) c.forEach(m => voice(hz(m - 12), t, S16 * 16, .03, 'sine', .4));
+  if (s % 2 === 0) { const m = c[(s / 2) % 3] + (s >= 8 ? 12 : 0); voice(hz(m), t, .6, .05, 'triangle'); voice(hz(m) * 2, t, .3, .012, 'sine'); }
+  if ([0, 6, 8, 14].includes(s)) voice(hz(roots[bar]), t, S16 * 3, .14, 'sine', .01);
+  if (i >= 64) melody.filter(n => n[0] === i % 64).forEach(n => voice(hz(n[1]), t, S16 * n[2] + .3, .07, 'sine', .01));
+}
+function tick() { while (nextT < ctx.currentTime + .2) { schedule(step++, nextT); nextT += S16; } }
+const TRACKS = ['Easy Lemon', 'Dreamer', 'Lobby Time']; // Kevin MacLeod (incompetech.com), CC BY 4.0
+const audio = new Audio(); audio.preload = 'auto'; audio.volume = 0;
+let ti = 0, useSynth = false, fade;
+const musicBtn = document.getElementById('musicBtn');
+function loadTrack() { audio.src = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree/' + encodeURIComponent(TRACKS[ti]) + '.mp3'; credit(); }
+function credit() { document.getElementById('credit').textContent = useSynth ? '' : '♪ "' + TRACKS[ti] + '" · Kevin MacLeod (incompetech.com) · CC BY 4.0'; }
+audio.addEventListener('ended', () => { ti = (ti + 1) % TRACKS.length; loadTrack(); audio.play(); });
+audio.addEventListener('error', () => { if (playing && !useSynth) { useSynth = true; credit(); startSynth(); } });
+function fadeTo(v, ms) { clearInterval(fade); const st = audio.volume, t0 = Date.now(); fade = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); audio.volume = st + (v - st) * k; if (k === 1) { clearInterval(fade); if (v === 0) audio.pause(); } }, 50); }
+function startSynth() {
+  step = 0; nextT = ctx.currentTime + .1;
+  master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(.85, ctx.currentTime + 2);
+  clearInterval(timer); timer = setInterval(tick, 50);
+}
+function startMusic() {
+  if (!ctx) setup(); ctx.resume(); playing = true; musicBtn.textContent = '♪ Music off';
+  if (useSynth) return startSynth();
+  if (!audio.src) loadTrack();
+  audio.play().then(() => fadeTo(.45, 2500)).catch(() => { useSynth = true; credit(); startSynth(); });
+}
+function stopMusic() {
+  playing = false; musicBtn.textContent = '♪ Music on';
+  if (!useSynth) return fadeTo(0, 1000);
+  clearInterval(timer);
+  master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+}
+musicBtn.onclick = () => playing ? stopMusic() : startMusic();
+document.getElementById('openBook').onclick = () => { document.getElementById('intro').classList.add('gone'); startMusic(); };
+document.getElementById('quietOpen').onclick = () => document.getElementById('intro').classList.add('gone');
+
+</script>
+
+</body>
+</html>

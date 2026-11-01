@@ -116,11 +116,40 @@ def _line_of(src: str, idx: int) -> int:
 
 
 def strip_comments(src: str) -> str:
-    """Blank out comments but keep line numbers stable."""
-    def blank(m):
-        return re.sub(r"[^\n]", " ", m.group(0))
-    src = re.sub(r"/\*.*?\*/", blank, src, flags=re.S)
-    return re.sub(r"//[^\n]*", blank, src)
+    """Blank out comments but keep line numbers stable.
+
+    Scans rather than uses regex, so a // or /* inside a string ("http://...",
+    @"C:\\path", '/') is left alone; a URL default is not a comment.
+    """
+    out, i, n = [], 0, len(src)
+    while i < n:
+        c, nxt = src[i], src[i + 1] if i + 1 < n else ""
+        if c == "/" and nxt == "/":
+            j = src.find("\n", i)
+            j = n if j == -1 else j
+            out.append(" " * (j - i))
+            i = j
+        elif c == "/" and nxt == "*":
+            j = src.find("*/", i + 2)
+            j = n if j == -1 else j + 2
+            out.append(re.sub(r"[^\n]", " ", src[i:j]))
+            i = j
+        elif c == "@" and nxt == '"':          # verbatim string: "" is an escaped quote
+            j = i + 2
+            while j < n and not (src[j] == '"' and (j + 1 >= n or src[j + 1] != '"')):
+                j += 2 if src[j] == '"' else 1
+            out.append(src[i:j + 1])
+            i = j + 1
+        elif c in "\"'":                       # regular string or char literal
+            j = i + 1
+            while j < n and src[j] != c and src[j] != "\n":
+                j += 2 if src[j] == "\\" else 1
+            out.append(src[i:j + 1])
+            i = j + 1
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
 
 
 def audit_source(path: Path) -> dict:
@@ -150,7 +179,22 @@ def audit_source(path: Path) -> dict:
         kind = classify(name, label, group)
         if ptype in ("bool", "string") and kind != "CRITICAL":
             continue
-        if kind == "CRITICAL" and ptype == "bool":
+        w = words(name) | words(label)
+        if kind == "CRITICAL" and ptype == "string" and "reset" in w and w & {
+                "code", "confirm", "confirmation", "token"}:
+            findings.append({
+                "severity": "REVIEW",
+                "line": info["line"],
+                "item": name,
+                "detail": (
+                    f'Breaker reset by code ("{label or name}"). This is the one-shot design: '
+                    "fine as long as the code is issued per halt, saved with it, and thrown away "
+                    "after one reset, so a code left in the settings can't clear a later halt. "
+                    "Check those three in the governor."
+                ),
+                "fix": None,
+            })
+        elif kind == "CRITICAL" and ptype == "bool":
             findings.append({
                 "severity": "CRITICAL",
                 "line": info["line"],

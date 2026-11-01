@@ -199,5 +199,21 @@ code, out = run(AUDIT, FIX / "split" / "Hands.cs")
 expect("hands file alone still asks where the risk constants are",
        "No const/readonly" in out, out)
 
+# 14. Strings that contain // are not comments; a reset code is the one-shot design
+code, out = run(AUDIT, FIX / "UrlBot.cs", "--json", TMP / "url.json")
+ju = json.loads((TMP / "url.json").read_text())[0]
+params = {p["name"]: p for p in ju["parameters"]}
+expect("URL default parsed whole, not cut at //",
+       params.get("BrainUrl", {}).get("default") == "http://127.0.0.1:7788", ju["parameters"])
+expect("parameter after a URL default still found on its own",
+       "EquityFloorResetCode" in params and "MaxLots" in params, list(params))
+expect("commented-out parameters ignored (line and block)",
+       "Lot Size" not in out and "Risk %" not in out, out)
+expect("reset-by-code is REVIEW with one-shot advice, not 'move to const'",
+       any(f["item"] == "EquityFloorResetCode" and f["severity"] == "REVIEW" and "one-shot" in f["detail"]
+           for f in ju["findings"]), ju["findings"])
+expect("real sizing parameter after the strings still CRITICAL",
+       any(f["item"] == "MaxLots" and f["severity"] == "CRITICAL" for f in ju["findings"]), ju["findings"])
+
 print(f"\n{'all passed' if not FAILS else str(len(FAILS)) + ' failed'}  (files in {TMP})")
 sys.exit(1 if FAILS else 0)

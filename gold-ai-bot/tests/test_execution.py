@@ -2,7 +2,8 @@ import pytest
 
 from app.broker import PaperBroker
 from app.execution import ExecutionService
-from app.journal import ABSENT, FILLED, REJECTED
+from app.journal import ABSENT, FILLED, REJECTED, UNKNOWN
+from app.models import BrokerError
 from tests.conftest import NOW, buy, quote, snapshot, spec
 
 
@@ -66,25 +67,56 @@ async def test_lost_ack_but_filled_is_found_not_resent(journal):
 
 
 @pytest.mark.asyncio
-async def test_lost_ack_and_absent_retries_once_after_confirmation(journal):
+async def test_lost_ack_confirmed_absent_is_never_resent(journal):
     b, svc = setup(journal)
     await b.connect()
     b.fail_next = ["timeout_absent"]
     out = await svc.execute(buy(), snapshot())
-    assert out.status == "FILLED" and len(b.orders_received) == 2
-    assert journal.get_order(out.client_order_id)["attempts"] == 2
+    assert out.status == "ABSENT" and len(b.orders_received) == 1
+    assert journal.get_order(out.client_order_id)["state"] == ABSENT
+    assert (await svc.execute(buy(), snapshot())).status == "DUPLICATE"
+    assert len(b.orders_received) == 1
+    assert journal.active_locks(NOW) == []
+
+
+class FlakyQueries(PaperBroker):
+    """Order acks are lost and the follow-up queries fail too."""
+    async def open_positions(self):
+        if self.orders_received:
+            raise BrokerError("connection reset")
+        return await super().open_positions()
 
 
 @pytest.mark.asyncio
-async def test_never_more_than_two_attempts(journal):
+async def test_inconclusive_check_locks_instead_of_assuming_failure(journal):
+    b = FlakyQueries(spec(), balance=100_000)
+    b.set_market([], [], quote())
+    await b.connect()
+    svc = ExecutionService(b, journal, clock=lambda: NOW, sleep=nosleep)
+    b.fail_next = ["timeout_absent"]
+    out = await svc.execute(buy(), snapshot())
+    assert out.status == "UNKNOWN" and len(b.orders_received) == 1
+    assert journal.get_order(out.client_order_id)["state"] == UNKNOWN
+    assert [lk.kind for lk in journal.active_locks(NOW)] == ["reconciliation"]
+
+
+@pytest.mark.asyncio
+async def test_late_fill_is_adopted_by_reconciliation(journal):
+    from app.models import OrderRequest
+    from app.reconciliation import audit_positions
     b, svc = setup(journal)
     await b.connect()
-    b.fail_next = ["timeout_absent", "timeout_absent", "timeout_absent"]
+    b.fail_next = ["timeout_absent"]
     out = await svc.execute(buy(), snapshot())
-    assert out.status == "ABSENT" and len(b.orders_received) == 2
-    assert journal.get_order(out.client_order_id)["state"] == ABSENT
-    assert (await svc.execute(buy(), snapshot())).status == "ABSENT"
-    assert len(b.orders_received) == 2
+    assert out.status == "ABSENT"
+    # ...then the order turns up at the broker after all
+    await b.place_market_order(OrderRequest(
+        client_order_id=out.client_order_id, symbol="XAUUSD", side="BUY", units=1,
+        entry_reference=2650.3, stop_loss=2645, take_profit=2662))
+    alerts = []
+    issues = await audit_positions(b, journal, lambda m, **k: alerts.append(m))
+    assert issues == [] and alerts
+    assert journal.get_order(out.client_order_id)["state"] == FILLED
 
 
 @pytest.mark.asyncio

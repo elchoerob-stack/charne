@@ -46,6 +46,11 @@ class Settings(BaseModel):
 
     data_dir: Path = Path("data")
 
+    # Pay for AI opinions on candidates the account can't afford to trade, so
+    # the AI filter still gets measured in shadow mode (e.g. on a small demo).
+    # Off by default: it costs money and produces no trades.
+    shadow_ai_when_untradeable: bool = False
+
     # Phone alerts, same variables as Foreman (cms-agent/server/src/notify.ts)
     ntfy_topic: str = ""
     ntfy_server: str = "https://ntfy.sh"
@@ -55,6 +60,14 @@ class Settings(BaseModel):
     @property
     def db_path(self) -> Path:
         return self.data_dir / "journal.sqlite3"
+
+    @property
+    def blackouts_path(self) -> Path:
+        return self.data_dir / "blackouts.csv"
+
+    @property
+    def health_path(self) -> Path:
+        return self.data_dir / "health.json"
 
     @property
     def kill_switch_path(self) -> Path:
@@ -100,6 +113,8 @@ def load_settings(env_file: str | os.PathLike | None = ".env") -> Settings:
         anthropic_usd_per_mtok_in=f("ANTHROPIC_USD_PER_MTOK_IN"),
         anthropic_usd_per_mtok_out=f("ANTHROPIC_USD_PER_MTOK_OUT"),
         data_dir=Path(e("DATA_DIR", "data") or "data"),
+        shadow_ai_when_untradeable=(e("SHADOW_AI_WHEN_UNTRADEABLE", "") or "").strip().lower()
+        in ("1", "true", "yes"),
         ntfy_topic=e("NTFY_TOPIC", ""),
         ntfy_server=e("NTFY_SERVER", "https://ntfy.sh") or "https://ntfy.sh",
         ntfy_token=e("NTFY_TOKEN", ""),

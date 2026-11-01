@@ -1,0 +1,4 @@
+start_utc,end_utc,label
+2026-11-06 13:15,2026-11-06 14:30,US NFP (EXAMPLE - verify every date on an economic calendar)
+2026-11-12 13:15,2026-11-12 14:30,US CPI (EXAMPLE date)
+2026-12-09 18:45,2026-12-09 20:30,FOMC (EXAMPLE date)

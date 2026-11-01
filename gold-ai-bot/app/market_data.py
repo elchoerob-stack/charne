@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from .broker import Broker
 from .models import TIMEFRAME_MINUTES, Candle, MarketSnapshot, Quote
+from .structure import fair_value_gaps, swings
 
 M15_BARS = 96   # one day
 H1_BARS = 120   # five days
@@ -80,7 +81,7 @@ def validate_quote(q: Quote, now: datetime, last_close: float, atr_m15: float,
     return problems
 
 
-def features(m15: list[Candle], h1: list[Candle], q: Quote) -> dict[str, float | str]:
+def features(m15: list[Candle], h1: list[Candle], q: Quote) -> dict:
     closes_h1 = [c.close for c in h1]
     e50 = ema(closes_h1, 50)
     recent = m15[-21:-1]
@@ -94,6 +95,11 @@ def features(m15: list[Candle], h1: list[Candle], q: Quote) -> dict[str, float |
         "m15_prior20_high": max(c.high for c in recent),
         "m15_prior20_low": min(c.low for c in recent),
         "spread": round(q.spread, 3),
+        # Confirmed swings [time, kind, price]: the only valid stop anchors.
+        "swings_m15": [x.as_list() for x in swings(m15)[-10:]],
+        "swings_h1": [x.as_list() for x in swings(h1)[-8:]],
+        "open_fvgs_m15": [[g.time, g.direction, g.bottom, g.top]
+                          for g in fair_value_gaps(m15)[-4:]],
         "bid": q.bid,
         "ask": q.ask,
     }

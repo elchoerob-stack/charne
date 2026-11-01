@@ -4,10 +4,12 @@ Sequence for one proposal:
   1. Deterministic client order id from the snapshot: one bar, one order.
   2. Re-run every risk check with a fresh quote and fresh account state.
   3. Write the order to the ledger (PENDING) BEFORE sending it.
-  4. Send. On a lost acknowledgement, ask the broker whether the order exists
-     before doing anything else. Retry at most once, and only after the
-     broker has confirmed the first attempt never landed and the risk checks
-     still pass.
+  4. Send. On a lost acknowledgement, ask the broker whether the order exists.
+     There is NO automatic retry: an order that arrives late would become a
+     duplicate. If every broker query succeeds and none finds the order, it is
+     marked ABSENT and the bar is skipped. If any query fails or the order is
+     still pending, its state is UNKNOWN and the bot locks for review. An
+     inconclusive answer is never treated as "the order failed".
   5. After a fill, confirm the position really has its stop. If not, close it
      and lock the bot.
 """
@@ -27,7 +29,6 @@ from .models import BrokerError, MarketSnapshot, OrderRequest, OrderTimeout, Pro
 from .reconciliation import client_order_id, lock_if_issues
 from .risk_engine import POLICY, Approval, RiskPolicy, apply_trips, build_context, evaluate
 
-MAX_ATTEMPTS = 2
 CONFIRM_CHECKS = 3
 CONFIRM_DELAY_S = 2.0
 
@@ -44,18 +45,17 @@ class ExecutionOutcome:
 class ExecutionService:
     def __init__(self, broker: Broker, journal: Journal, *, kill_switch_path: Path | None = None,
                  policy: RiskPolicy = POLICY, clock: Callable[[], datetime] = utcnow,
-                 sleep=asyncio.sleep, notify=None):
+                 sleep=asyncio.sleep, notify=None, config_fp: str = ""):
         self.broker, self.journal, self.policy = broker, journal, policy
+        self.config_fp = config_fp
         self.kill_switch_path, self.clock, self.sleep = kill_switch_path, clock, sleep
         self.notify = notify or (lambda *a, **k: None)
 
     async def execute(self, proposal: Proposal, snapshot: MarketSnapshot) -> ExecutionOutcome:
         coid = client_order_id(snapshot.snapshot_id)
         existing = self.journal.get_order(coid)
-        if existing is not None and existing["state"] != ABSENT:
+        if existing is not None:
             return ExecutionOutcome("DUPLICATE", f"order already {existing['state']}", coid)
-        if existing is not None and existing["attempts"] >= MAX_ATTEMPTS:
-            return ExecutionOutcome("ABSENT", "retry limit reached", coid)
 
         now = self.clock()
         ctx = await build_context(self.broker, self.journal, now=now,
@@ -71,15 +71,12 @@ class ExecutionService:
                            units=approval.units, entry_reference=approval.entry,
                            stop_loss=approval.stop_loss, take_profit=approval.take_profit)
         try:
-            if existing is None:
-                self.journal.record_order(client_order_id=coid, snapshot_id=snapshot.snapshot_id,
-                                          side=req.side, units=req.units,
-                                          entry_reference=req.entry_reference,
-                                          stop_loss=req.stop_loss, take_profit=req.take_profit,
-                                          risk_amount=approval.risk_amount, now=now)
-            else:
-                self.journal.retry_order(coid, req.units, req.entry_reference, req.stop_loss,
-                                         req.take_profit, approval.risk_amount, now)
+            self.journal.record_order(client_order_id=coid, snapshot_id=snapshot.snapshot_id,
+                                      side=req.side, units=req.units,
+                                      entry_reference=req.entry_reference,
+                                      stop_loss=req.stop_loss, take_profit=req.take_profit,
+                                      risk_amount=approval.risk_amount,
+                                      config_fp=self.config_fp, now=now)
         except sqlite3.IntegrityError:
             return ExecutionOutcome("DUPLICATE", "order id already in ledger", coid)
 
@@ -87,7 +84,7 @@ class ExecutionService:
             result = await self.broker.place_market_order(req)
         except (OrderTimeout, BrokerError) as e:
             self.journal.set_order_state(coid, UNKNOWN, detail=str(e)[:300], now=self.clock())
-            return await self._resolve_lost_ack(coid, proposal, snapshot, approval)
+            return await self._resolve_lost_ack(coid, approval)
 
         if result.status == "REJECTED":
             self.journal.set_order_state(coid, REJECTED, detail=result.reason, now=self.clock())
@@ -101,8 +98,8 @@ class ExecutionService:
                     f"SL {req.stop_loss} TP {req.take_profit} (risk {approval.risk_amount})")
         return ExecutionOutcome("FILLED", "filled", coid, approval, result.position_id)
 
-    async def _resolve_lost_ack(self, coid: str, proposal: Proposal, snapshot: MarketSnapshot,
-                                approval: Approval) -> ExecutionOutcome:
+    async def _resolve_lost_ack(self, coid: str, approval: Approval) -> ExecutionOutcome:
+        clean_misses = 0
         for i in range(CONFIRM_CHECKS):
             if i:
                 await self.sleep(CONFIRM_DELAY_S)
@@ -110,7 +107,7 @@ class ExecutionService:
                 positions = {p.label: p for p in await self.broker.open_positions()}
                 pending = set(await self.broker.pending_order_labels())
             except BrokerError:
-                continue
+                continue  # inconclusive: does not count as "not found"
             if coid in positions:
                 p = positions[coid]
                 self.journal.set_order_state(coid, FILLED, position_id=p.position_id,
@@ -119,17 +116,18 @@ class ExecutionService:
                 await self._confirm_stop(coid, p.position_id)
                 return ExecutionOutcome("FILLED", "ack lost; position found", coid, approval,
                                         p.position_id)
-            if coid in pending:
-                continue
-            if i == CONFIRM_CHECKS - 1:
-                self.journal.set_order_state(coid, ABSENT, detail="confirmed absent",
-                                             now=self.clock())
-                row = self.journal.get_order(coid)
-                if row["attempts"] < MAX_ATTEMPTS:
-                    return await self.execute(proposal, snapshot)  # re-checks everything
-                return ExecutionOutcome("ABSENT", "confirmed absent; no more retries", coid,
-                                        approval)
+            if coid not in pending:
+                clean_misses += 1
         now = self.clock()
+        if clean_misses == CONFIRM_CHECKS:
+            # Every query answered and none found it. Skip this bar; never resend.
+            # If it lands late anyway, reconciliation adopts it as FILLED and
+            # the one-position limit blocks anything else meanwhile.
+            self.journal.set_order_state(coid, ABSENT, detail="ack lost; confirmed absent",
+                                         now=now)
+            self.journal.event("order_absent", now, client_order_id=coid)
+            return ExecutionOutcome("ABSENT", "ack lost; broker confirms no order; not resent",
+                                    coid, approval)
         lock_if_issues(self.journal, [f"order {coid} state unknown after lost ack"], now)
         self.notify(f"Order {coid} state unknown; bot locked for review", priority="high")
         return ExecutionOutcome("UNKNOWN", "could not confirm with broker; locked", coid, approval)

@@ -89,6 +89,14 @@ class Journal:
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.executescript(SCHEMA)
+        self._ensure_column("orders", "config_fp", "TEXT")
+        self._ensure_column("ai_calls", "config_fp", "TEXT")
+
+    def _ensure_column(self, table: str, column: str, decl: str) -> None:
+        """Forward-only migration for journals created by an older version."""
+        cols = {r[1] for r in self.db.execute(f"PRAGMA table_info({table})")}
+        if column not in cols:
+            self.db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
 
     # ---- audit ---------------------------------------------------------------
     def event(self, event_kind: str, now: datetime | None = None, /, **data) -> None:
@@ -103,13 +111,14 @@ class Journal:
     def ai_call(self, *, snapshot_id: str, provider: str, model: str, action: str, ok: bool,
                 error: str = "", decision: dict | None = None, input_tokens: int = 0,
                 output_tokens: int = 0, cost_usd: float = 0.0, latency_ms: int = 0,
-                now: datetime | None = None) -> None:
+                config_fp: str = "", now: datetime | None = None) -> None:
         self.db.execute(
             "INSERT INTO ai_calls(ts, snapshot_id, provider, model, action, ok, error, decision,"
-            " input_tokens, output_tokens, cost_usd, latency_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            " input_tokens, output_tokens, cost_usd, latency_ms, config_fp)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (iso(now or utcnow()), snapshot_id, provider, model, action, int(ok), error,
              json.dumps(decision) if decision else None, input_tokens, output_tokens,
-             cost_usd, latency_ms))
+             cost_usd, latency_ms, config_fp))
 
     def ai_evaluations_since(self, since: datetime) -> int:
         row = self.db.execute("SELECT COUNT(DISTINCT snapshot_id) FROM ai_calls WHERE ts >= ?",
@@ -123,26 +132,18 @@ class Journal:
 
     def record_order(self, *, client_order_id: str, snapshot_id: str, side: str, units: float,
                      entry_reference: float, stop_loss: float, take_profit: float,
-                     risk_amount: float, now: datetime | None = None) -> None:
+                     risk_amount: float, config_fp: str = "",
+                     now: datetime | None = None) -> None:
         """Write-ahead: the row exists before the order is sent. A second insert
-        with the same id raises, which is what stops duplicate orders."""
+        with the same id raises, which is what stops duplicate orders. There is
+        no retry path: one bar, one attempt."""
         ts = iso(now or utcnow())
         self.db.execute(
             "INSERT INTO orders(client_order_id, ts, snapshot_id, side, units, entry_reference,"
-            " stop_loss, take_profit, risk_amount, state, updated_at)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            " stop_loss, take_profit, risk_amount, state, updated_at, config_fp)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (client_order_id, ts, snapshot_id, side, units, entry_reference, stop_loss,
-             take_profit, risk_amount, PENDING, ts))
-
-    def retry_order(self, client_order_id: str, units: float, entry_reference: float,
-                    stop_loss: float, take_profit: float, risk_amount: float,
-                    now: datetime | None = None) -> None:
-        self.db.execute(
-            "UPDATE orders SET state=?, attempts=attempts+1, units=?, entry_reference=?,"
-            " stop_loss=?, take_profit=?, risk_amount=?, updated_at=?"
-            " WHERE client_order_id=? AND state=?",
-            (PENDING, units, entry_reference, stop_loss, take_profit, risk_amount,
-             iso(now or utcnow()), client_order_id, ABSENT))
+             take_profit, risk_amount, PENDING, ts, config_fp))
 
     def set_order_state(self, client_order_id: str, state: str, *, position_id: str = "",
                         fill_price: float | None = None, detail: str = "",
@@ -177,6 +178,11 @@ class Journal:
              t.symbol, t.side, t.units, t.entry_price, t.exit_price, iso(t.open_time),
              iso(t.close_time), t.gross, t.commission, t.swap, t.net))
         return cur.rowcount == 1
+
+    def trades_for_config(self, config_fp: str) -> list[sqlite3.Row]:
+        return self.db.execute(
+            "SELECT t.* FROM trades t JOIN orders o ON o.client_order_id = t.client_order_id"
+            " WHERE o.config_fp = ? ORDER BY t.close_time", (config_fp,)).fetchall()
 
     def trades(self, since: datetime | None = None) -> list[sqlite3.Row]:
         if since is None:

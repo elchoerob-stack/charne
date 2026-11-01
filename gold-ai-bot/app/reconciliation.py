@@ -53,14 +53,24 @@ async def resolve_open_orders(broker: Broker, journal: Journal, now: datetime) -
     return issues
 
 
-async def audit_positions(broker: Broker, journal: Journal) -> list[str]:
+async def audit_positions(broker: Broker, journal: Journal, notify=None) -> list[str]:
     issues = []
     for p in await broker.open_positions():
+        row = journal.get_order(p.label) if p.label.startswith(LABEL_PREFIX) else None
         if not p.label.startswith(LABEL_PREFIX):
             issues.append(f"position {p.position_id} was not opened by this bot "
                           f"(label '{p.label}')")
-        elif journal.get_order(p.label) is None:
+        elif row is None:
             issues.append(f"position {p.position_id} ({p.label}) is not in the ledger")
+        elif row["state"] != FILLED:
+            # An order recorded ABSENT/UNKNOWN that landed after all: adopt it.
+            journal.set_order_state(p.label, FILLED, position_id=p.position_id,
+                                    fill_price=p.entry_price,
+                                    detail=f"late fill (was {row['state']})")
+            journal.event("late_fill", None, client_order_id=p.label,
+                          was=row["state"], position_id=p.position_id)
+            if notify:
+                notify(f"Late fill adopted: {p.label} (was {row['state']})", priority="high")
         if p.stop_loss is None:
             issues.append(f"position {p.position_id} has no stop loss")
     return issues

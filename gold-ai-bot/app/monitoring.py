@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import logging
 import urllib.request
 from collections import Counter
@@ -18,8 +19,10 @@ log = logging.getLogger("gold-ai-bot")
 EVIDENCE_MIN_TRADES = 100  # minimum before any conclusion about the edge
 
 
-def metrics(journal: Journal, start_balance: float | None = None) -> dict:
-    trades = journal.trades()
+def metrics(journal: Journal, start_balance: float | None = None,
+            config_fp: str | None = None) -> dict:
+    """config_fp limits trades, AI calls and shadow results to one test period."""
+    trades = journal.trades_for_config(config_fp) if config_fp else journal.trades()
     nets = [t["net"] for t in trades]
     wins = [n for n in nets if n > 0]
     losses = [n for n in nets if n < 0]
@@ -30,12 +33,18 @@ def metrics(journal: Journal, start_balance: float | None = None) -> dict:
         run += n
         peak = max(peak, run)
         max_dd = max(max_dd, peak - run)
-    rej = Counter(r["stage"] + ": " + r["reason"].split(":")[0]
+    rej = Counter(r["stage"] + ": " + re.sub(r"(?<![A-Za-z])-?\d+(\.\d+)?", "#", r["reason"])[:90]
                   for r in journal.db.execute("SELECT stage, reason FROM rejections"))
+    where, args = ("WHERE config_fp=?", (config_fp,)) if config_fp else ("", ())
     ai = journal.db.execute(
         "SELECT provider, COUNT(*) n, SUM(ok) ok, SUM(input_tokens) tin, SUM(output_tokens) tout,"
-        " SUM(cost_usd) usd, AVG(latency_ms) ms FROM ai_calls GROUP BY provider").fetchall()
-    evals = journal.db.execute("SELECT COUNT(DISTINCT snapshot_id) FROM ai_calls").fetchone()[0]
+        f" SUM(cost_usd) usd, AVG(latency_ms) ms FROM ai_calls {where} GROUP BY provider",
+        args).fetchall()
+    evals = journal.db.execute(f"SELECT COUNT(DISTINCT snapshot_id) FROM ai_calls {where}",
+                               args).fetchone()[0]
+    ai_usd = sum((r["usd"] or 0) for r in ai)
+    from .shadow import ShadowBook
+    shadow = ShadowBook(journal).summary(config_fp)
     costs = sum(t["commission"] + t["swap"] for t in trades)
     out = {
         "trades": len(nets),
@@ -48,6 +57,9 @@ def metrics(journal: Journal, start_balance: float | None = None) -> dict:
         "max_drawdown": round(max_dd, 2),
         "max_drawdown_pct": round(100 * max_dd / peak, 2) if start_balance and peak else None,
         "ai_evaluations": evals,
+        "ai_cost_usd": round(ai_usd, 2),
+        "ai_cost_usd_per_trade": round(ai_usd / len(nets), 2) if nets else None,
+        "shadow": shadow,
         "ai_by_provider": [dict(r) for r in ai],
         "rejections": dict(rej.most_common(15)),
         "active_locks": [f"#{lk.id} {lk.kind}: {lk.reason}" for lk in journal.locks()
@@ -72,6 +84,18 @@ def report_text(m: dict, currency: str = "") -> str:
     for p in m["ai_by_provider"]:
         lines.append(f"  {p['provider']:<10} calls {p['n']}, ok {p['ok']}, tokens "
                      f"{p['tin']}/{p['tout']}, ${(p['usd'] or 0):.2f}, avg {int(p['ms'] or 0)} ms")
+    lines.append(f"AI spend         ${m['ai_cost_usd']} total, ${m['ai_cost_usd_per_trade']} per "
+                 "real trade (compare with expectancy after converting to USD)")
+    lines.append("Shadow trades (R; entry includes spread, excludes commission)")
+    if m["shadow"]:
+        lines.append(f"  {'setup':<16}{'variant':<10}{'AI verdict':<11}{'n':>5}"
+                     f"{'exp R':>8}{'PF':>7}{'total R':>9}")
+        for r in m["shadow"]:
+            lines.append(f"  {r['strategy']:<16}{r['variant']:<10}{r['ai_verdict']:<11}"
+                         f"{r['n']:>5}{r['expectancy_r']:>8}{str(r['profit_factor']):>7}"
+                         f"{r['total_r']:>9}")
+    else:
+        lines.append("  none closed yet")
     lines.append("Top rejections")
     lines += [f"  {n:>5}  {k}" for k, n in m["rejections"].items()] or ["  none"]
     lines.append("Locks            " + ("; ".join(m["active_locks"]) or "none"))
@@ -79,9 +103,9 @@ def report_text(m: dict, currency: str = "") -> str:
     return "\n".join(lines)
 
 
-def export_trades(journal: Journal, path: Path) -> int:
+def export_trades(journal: Journal, path: Path, config_fp: str | None = None) -> int:
     """CSV that skills/cbot-gate/scripts/gate.py reads directly."""
-    rows = journal.trades()
+    rows = journal.trades_for_config(config_fp) if config_fp else journal.trades()
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["Closing Time", "Net Profit", "Direction", "Units", "Entry", "Exit",
@@ -91,6 +115,20 @@ def export_trades(journal: Journal, path: Path) -> int:
             w.writerow([ct.strftime("%Y-%m-%d %H:%M"), f"{t['net']:.2f}", t["side"],
                         t["units"], t["entry_price"], t["exit_price"], t["commission"],
                         t["swap"], t["position_id"]])
+    return len(rows)
+
+
+def export_shadow(book, path: Path, strategy: str | None, variant: str,
+                  config_fp: str | None) -> int:
+    """Shadow trades in R as 'Net Profit', for cbot-gate. With --balance 100,
+    1R reads as 1% in its drawdown figures."""
+    rows = book.rows(strategy, variant, config_fp)
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Closing Time", "Net Profit", "Direction", "Setup", "AI verdict", "Exit"])
+        for r in rows:
+            w.writerow([parse(r["closed_at"]).strftime("%Y-%m-%d %H:%M"), f"{r['result_r']:.4f}",
+                        r["side"], r["strategy"], r["ai_verdict"], r["exit_reason"]])
     return len(rows)
 
 

@@ -1,11 +1,14 @@
-"""Entry point and the autonomous cycle.
+"""Command line.
 
     python -m app.main accounts              # setup: list the accounts your token can see
     python -m app.main check                 # week 1: connect to the demo, print what the broker says
+    python -m app.main check-ai              # week 3: one real call to each model; both must pass
     python -m app.main run                   # autonomous demo trading, one evaluation per closed M15 bar
+    python -m app.main health                # watchdog: exit 1 and alert if the bot has stalled
     python -m app.main replay bars.csv       # offline: M15 CSV through the paper broker and offline agents
-    python -m app.main report                # performance, rejections, API spend, locks
+    python -m app.main report [--all]        # performance, shadow evidence, rejections, API spend, locks
     python -m app.main export-trades out.csv # for skills/cbot-gate/scripts/gate.py
+    python -m app.main export-shadow out.csv # shadow trades in R, same format
     python -m app.main locks | unlock ID "review note"
 """
 
@@ -14,166 +17,25 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import json
 import logging
 import sys
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable
 
-from .ai_common import DecisionResult, RuleFollowerAgent
-from .broker import Broker, PaperBroker
+from .ai_common import RuleFollowerAgent, preflight
+from .bot import CYCLE_DELAY_AFTER_CLOSE_S, TradingBot
+from .broker import PaperBroker
 from .config import Settings, load_settings
-from .consensus import build_proposal, consensus
-from .execution import ExecutionService
-from .journal import Journal, utcnow
-from .market_data import build_snapshot
-from .models import Candle, LiveAccountRefused, MarketSnapshot, Quote, SymbolSpec
-from .monitoring import Notifier, export_trades, metrics, report_text
-from .reconciliation import (audit_positions, lock_if_issues, startup_reconcile,
-                             sync_closed_trades)
-from .risk_engine import (POLICY, apply_trips, build_context, day_start, evaluate,
-                          max_stop_at_min_volume)
-from .strategy import find_candidate
+from .fingerprint import components, fingerprint
+from .journal import Journal, parse, utcnow
+from .models import Candle, Quote, SymbolSpec
+from .monitoring import Notifier, export_shadow, export_trades, metrics, report_text
+from .risk_engine import POLICY, max_stop_at_min_volume
+from .shadow import ShadowBook
 
 log = logging.getLogger("gold-ai-bot")
-
-MAX_AI_EVALUATIONS_PER_DAY = 30   # API spend ceiling; at most 96 M15 bars a day exist
-MIN_PLAUSIBLE_STOP_ATR = 0.5      # no structural M15 stop is tighter than half an ATR
-CYCLE_DELAY_AFTER_CLOSE_S = 5     # let the broker finish the bar
-
-
-@dataclass
-class CycleResult:
-    stage: str
-    detail: str = ""
-
-
-class TradingBot:
-    def __init__(self, broker: Broker, journal: Journal, gpt, claude, *,
-                 kill_switch_path: Path | None = None, notify=None,
-                 clock: Callable[[], datetime] = utcnow, sleep=asyncio.sleep):
-        self.broker, self.journal, self.gpt, self.claude = broker, journal, gpt, claude
-        self.kill_switch_path, self.clock = kill_switch_path, clock
-        self.notify = notify or Notifier(None)
-        self.execution = ExecutionService(broker, journal, kill_switch_path=kill_switch_path,
-                                          clock=clock, sleep=sleep, notify=self.notify)
-
-    async def startup(self) -> list[str]:
-        await self.broker.connect()
-        acct = await self.broker.account()
-        if acct.is_live or not self.broker.demo_verified:
-            raise LiveAccountRefused("account is not a verified demo account")
-        issues = await startup_reconcile(self.broker, self.journal, self.clock())
-        self.journal.event("startup", self.clock(), account=acct.account_id,
-                           currency=acct.currency, balance=acct.balance, issues=issues)
-        if issues:
-            self.notify("Start-up reconciliation locked the bot: " + "; ".join(issues),
-                        priority="high")
-        return issues
-
-    def _reject(self, stage: str, reason: str, sid: str | None = None) -> CycleResult:
-        self.journal.reject(stage, reason, sid, self.clock())
-        return CycleResult(stage, reason)
-
-    async def cycle(self) -> CycleResult:
-        now = self.clock()
-        if not self.broker.demo_verified:
-            return CycleResult("not_verified", "demo account not verified")
-
-        # Bookkeeping first, so the breakers see every closed trade.
-        await sync_closed_trades(self.broker, self.journal, now)
-        issues = await audit_positions(self.broker, self.journal)
-        if lock_if_issues(self.journal, issues, now):
-            self.notify("Bot locked: " + "; ".join(issues), priority="high")
-
-        snapshot, problems = await build_snapshot(self.broker, POLICY.symbol, now)
-        if snapshot is None:
-            return self._reject("data", "; ".join(problems))
-        sid = snapshot.snapshot_id
-        if self.journal.get("last_snapshot") == sid:
-            return CycleResult("already_processed", sid)
-        self.journal.put("last_snapshot", sid)
-
-        ctx = await build_context(self.broker, self.journal, now=now,
-                                  snapshot_created_at=snapshot.created_at,
-                                  kill_switch_path=self.kill_switch_path)
-        for t in apply_trips(self.journal, ctx):
-            self.notify(f"Circuit breaker: {t.kind} ({t.reason})", priority="high")
-        if ctx.active_locks:  # no point paying for AI opinions we cannot act on
-            return CycleResult("locked", "; ".join(lk.kind for lk in ctx.active_locks))
-        if ctx.kill_switch:
-            return self._reject("kill_switch", "KILL file present", sid)
-        if ctx.open_positions or ctx.pending_orders:
-            return CycleResult("position_open", f"{len(ctx.open_positions)} open")
-
-        candidate = find_candidate(snapshot)
-        if candidate is None:
-            return CycleResult("no_candidate", sid)
-        # Don't pay for two AI opinions when even the tightest sensible stop
-        # can't be traded at the broker's minimum volume.
-        widest = max_stop_at_min_volume(ctx.spec, min(ctx.account.balance, ctx.account.equity),
-                                        ctx.quote_to_account, snapshot.quote.mid)
-        tightest = max(MIN_PLAUSIBLE_STOP_ATR * float(snapshot.features["atr14_m15"]),
-                       POLICY.min_stop_spreads * snapshot.quote.spread,
-                       ctx.spec.min_stop_distance)
-        if widest < tightest:
-            return self._reject("min_volume_precheck",
-                                f"minimum volume allows a {widest:.2f} stop; the tightest "
-                                f"sensible stop is {tightest:.2f}", sid)
-        if self.journal.ai_evaluations_since(day_start(now)) >= MAX_AI_EVALUATIONS_PER_DAY:
-            return self._reject("ai_budget", f"{MAX_AI_EVALUATIONS_PER_DAY} evaluations today", sid)
-
-        gpt, claude = await asyncio.gather(self.gpt.decide(snapshot, candidate),
-                                           self.claude.decide(snapshot, candidate))
-        for r in (gpt, claude):
-            self._log_ai(snapshot, r)
-
-        result = consensus(gpt.decision, claude.decision, sid, snapshot.quote.mid)
-        if not result.agreed:
-            return self._reject("consensus", result.reason, sid)
-
-        proposal = build_proposal(gpt.decision, claude.decision, sid)
-        approval = evaluate(proposal, ctx)
-        if not approval.allowed:
-            return self._reject("risk", approval.reason, sid)
-
-        # execution re-checks risk with a fresh quote before it sends anything
-        out = await self.execution.execute(proposal, snapshot)
-        self.journal.event("execution", self.clock(), snapshot_id=sid, status=out.status,
-                           detail=out.detail, units=out.approval.units if out.approval else 0)
-        return CycleResult(f"execution_{out.status.lower()}", out.detail)
-
-    def _log_ai(self, s: MarketSnapshot, r: DecisionResult) -> None:
-        d = r.decision
-        self.journal.ai_call(snapshot_id=s.snapshot_id, provider=r.provider, model=r.model,
-                             action=d.action, ok=r.ok, error=r.error,
-                             decision=d.model_dump(), input_tokens=r.input_tokens,
-                             output_tokens=r.output_tokens, cost_usd=r.cost_usd,
-                             latency_ms=r.latency_ms, now=self.clock())
-
-    async def run_forever(self) -> None:
-        backoff = 5
-        while True:
-            try:
-                if not self.broker.demo_verified:
-                    await self.startup()
-                    backoff = 5
-                now = self.clock()
-                next_close = now.replace(second=0, microsecond=0) + timedelta(
-                    minutes=15 - now.minute % 15)
-                await asyncio.sleep((next_close - now).total_seconds() + CYCLE_DELAY_AFTER_CLOSE_S)
-                r = await self.cycle()
-                log.info("%s %s", r.stage, r.detail)
-            except LiveAccountRefused as e:
-                self.notify(f"REFUSED: {e}", priority="urgent")
-                raise
-            except Exception as e:  # noqa: BLE001  keep running, but loudly
-                log.exception("cycle failed")
-                self.journal.event("cycle_error", self.clock(), error=repr(e))
-                self.notify(f"Cycle error: {e!r}", priority="high")
-                await asyncio.sleep(backoff)
-                backoff = min(backoff * 2, 300)
+HEALTH_MAX_AGE_MIN = 25  # a cycle runs every 15 minutes
 
 
 # ---- commands ----------------------------------------------------------------------
@@ -234,6 +96,19 @@ async def cmd_check(s: Settings) -> int:
     return 0
 
 
+async def cmd_check_ai(s: Settings) -> int:
+    missing = [p for p in s.problems_for_live_run() if p.startswith(("OPENAI", "ANTHROPIC"))]
+    if missing:
+        print("\n".join(missing))
+        return 2
+    failed = 0
+    for agent in make_agents(s):
+        err = await preflight(agent)
+        print(f"{agent.provider:<10} {agent.model:<22} {'OK' if not err else 'FAILED: ' + err}")
+        failed += bool(err)
+    return 1 if failed else 0
+
+
 async def cmd_run(s: Settings) -> int:
     from .ctrader_broker import CTraderBroker
     problems = s.problems_for_live_run()
@@ -241,9 +116,42 @@ async def cmd_run(s: Settings) -> int:
         print("Cannot start:\n  " + "\n  ".join(problems))
         return 2
     gpt, claude = make_agents(s)
-    bot = TradingBot(CTraderBroker(s), Journal(s.db_path), gpt, claude,
-                     kill_switch_path=s.kill_switch_path, notify=Notifier(s))
+    errors = [e for e in await asyncio.gather(preflight(gpt), preflight(claude)) if e]
+    if errors:  # a wrong or retired model ID fails here, not silently as HOLD forever
+        print("Cannot start, model preflight failed:\n  " + "\n  ".join(errors))
+        return 2
+    notify = Notifier(s)
+    fp = fingerprint(s.openai_model, s.anthropic_model)
+    log.info("test-period fingerprint %s", fp)
+    bot = TradingBot(CTraderBroker(s), Journal(s.db_path), gpt, claude, config_fp=fp,
+                     kill_switch_path=s.kill_switch_path, blackouts_path=s.blackouts_path,
+                     health_path=s.health_path,
+                     shadow_ai_when_untradeable=s.shadow_ai_when_untradeable, notify=notify)
     await bot.run_forever()
+    return 0
+
+
+def cmd_health(s: Settings, max_age_min: float = HEALTH_MAX_AGE_MIN) -> int:
+    """For Windows Task Scheduler / cron every 15 minutes. The bot can't report
+    its own death, so something outside it has to notice."""
+    notify = Notifier(s)
+    try:
+        h = json.loads(s.health_path.read_text())
+    except (OSError, ValueError) as e:
+        msg = f"Gold bot health file missing or unreadable ({e}); is the bot running?"
+        print(msg)
+        notify(msg, priority="high")
+        return 1
+    age = (utcnow() - parse(h["time"])).total_seconds() / 60
+    print(json.dumps(h, indent=1))
+    if age > max_age_min:
+        msg = f"Gold bot stalled: last cycle {age:.0f} min ago (stage {h['stage']})"
+        print(msg)
+        notify(msg, priority="high")
+        return 1
+    if h.get("error"):
+        print(f"Last cycle errored: {h['error']}")
+        return 1
     return 0
 
 
@@ -277,7 +185,7 @@ async def replay(bars: list[Candle], spec: SymbolSpec, *, balance: float, spread
     broker = PaperBroker(spec, balance=balance, quote_to_account=quote_to_account)
     clock = {"now": bars[0].time}
     bot = TradingBot(broker, journal, gpt or RuleFollowerAgent("gpt-offline"),
-                     claude or RuleFollowerAgent("claude-offline"),
+                     claude or RuleFollowerAgent("claude-offline"), config_fp="replay",
                      clock=lambda: clock["now"], sleep=lambda _s: asyncio.sleep(0))
     await broker.connect()
     stages: dict[str, int] = {}
@@ -297,13 +205,21 @@ async def replay(bars: list[Candle], spec: SymbolSpec, *, balance: float, spread
             "metrics": metrics(journal, balance)}
 
 
+def current_fp(s: Settings, j: Journal) -> str:
+    return j.get("config_fp") or fingerprint(s.openai_model, s.anthropic_model)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="gold-ai-bot", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("accounts")
     sub.add_parser("check")
+    sub.add_parser("check-ai")
     sub.add_parser("run")
+    hp = sub.add_parser("health")
+    hp.add_argument("--max-age-min", type=float, default=HEALTH_MAX_AGE_MIN)
+    sub.add_parser("fingerprint")
     rp = sub.add_parser("replay")
     rp.add_argument("csv", type=Path)
     rp.add_argument("--balance", type=float, default=4000.0)
@@ -311,9 +227,16 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--rate", type=float, default=17.5, help="quote->account rate, e.g. USDZAR")
     rp.add_argument("--min-units", type=float, default=1.0)
     rp.add_argument("--units-per-lot", type=float, default=100.0)
-    sub.add_parser("report")
+    rep = sub.add_parser("report")
+    rep.add_argument("--all", action="store_true", help="include earlier test periods")
     ex = sub.add_parser("export-trades")
     ex.add_argument("path", type=Path)
+    ex.add_argument("--all", action="store_true")
+    es = sub.add_parser("export-shadow")
+    es.add_argument("path", type=Path)
+    es.add_argument("--strategy", default=None)
+    es.add_argument("--variant", default="baseline", choices=["baseline", "ai"])
+    es.add_argument("--all", action="store_true")
     sub.add_parser("locks")
     un = sub.add_parser("unlock")
     un.add_argument("lock_id", type=int)
@@ -326,8 +249,16 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(cmd_accounts(s))
     if a.cmd == "check":
         return asyncio.run(cmd_check(s))
+    if a.cmd == "check-ai":
+        return asyncio.run(cmd_check_ai(s))
     if a.cmd == "run":
         return asyncio.run(cmd_run(s))
+    if a.cmd == "health":
+        return cmd_health(s, a.max_age_min)
+    if a.cmd == "fingerprint":
+        print(fingerprint(s.openai_model, s.anthropic_model))
+        print(json.dumps(components(s.openai_model, s.anthropic_model), indent=1, default=str))
+        return 0
     if a.cmd == "replay":
         spec = SymbolSpec(symbol="XAUUSD", digits=2, quote_currency="USD",
                           units_per_lot=a.units_per_lot, min_units=a.min_units,
@@ -338,10 +269,17 @@ def main(argv: list[str] | None = None) -> int:
         print(report_text(out["metrics"]))
         return 0
     j = Journal(s.db_path)
+    fp = None if getattr(a, "all", False) else current_fp(s, j)
     if a.cmd == "report":
-        print(report_text(metrics(j)))
+        print(f"Test period {fp or 'ALL'}" + (f" since {j.get('config_fp_since')}"
+                                              if fp and j.get("config_fp_since") else ""))
+        print(report_text(metrics(j, config_fp=fp)))
+    elif a.cmd == "export-shadow":
+        n = export_shadow(ShadowBook(j), a.path, a.strategy, a.variant, fp)
+        print(f"{n} shadow trades (R units) written to {a.path}. Check with: python "
+              f"../skills/cbot-gate/scripts/gate.py --oos {a.path} --balance 100")
     elif a.cmd == "export-trades":
-        n = export_trades(j, a.path)
+        n = export_trades(j, a.path, fp)
         print(f"{n} trades written to {a.path}. Next: python ../skills/cbot-gate/scripts/gate.py "
               f"--oos {a.path} --balance <start balance>")
     elif a.cmd == "locks":

@@ -6,7 +6,7 @@ because brokers disagree on how many ounces a lot is."""
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -112,7 +112,7 @@ class MarketSnapshot(Frozen):
     quote: Quote
     m15: list[Candle]
     h1: list[Candle]
-    features: dict[str, float | str]
+    features: dict[str, Any]
 
 
 class TradeDecision(BaseModel):
@@ -123,6 +123,11 @@ class TradeDecision(BaseModel):
     symbol: Literal["XAUUSD"]
     stop_loss: float = Field(ge=0, description="Absolute price. 0 when action is HOLD.")
     take_profit: float = Field(ge=0, description="Absolute price. 0 when action is HOLD.")
+    stop_anchor_time: str = Field(description=(
+        "UTC time 'YYYY-MM-DD HH:MM' of the bar whose low (BUY) or high (SELL) the stop "
+        "sits beyond, copied from the bars given. Empty string when action is HOLD."))
+    stop_anchor_price: float = Field(ge=0, description=(
+        "That bar's low (BUY) or high (SELL), exactly as given. 0 when action is HOLD."))
     setup_valid: bool
     rationale: str = Field(description="At most three sentences.")
 

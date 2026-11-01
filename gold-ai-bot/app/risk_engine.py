@@ -299,7 +299,8 @@ def evaluate(p: Proposal, ctx: RiskContext, policy: RiskPolicy = POLICY) -> Appr
     per_unit = (stop_dist + policy.stop_slippage_allowance
                 + round_turn_commission_per_unit(spec, entry)) * ctx.quote_to_account
     raw_units = allowed_risk / per_unit
-    units = math.floor(raw_units / spec.step_units + 1e-9) * spec.step_units
+    # Round DOWN to the broker step, never up: float error can only cost volume.
+    units = math.floor(raw_units / spec.step_units) * spec.step_units
     units = min(units, spec.max_units)
     min_risk = spec.min_units * per_unit
     if not check("min_volume", units >= spec.min_units,

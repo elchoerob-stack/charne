@@ -48,11 +48,13 @@ def buy(sl=2645.00, tp=2662.00, sid="XAUUSD-20261104T1000Z") -> Proposal:
 
 
 def decision(action="BUY", sl=2645.0, tp=2662.0, sid="XAUUSD-20261104T1000Z",
-             valid=True) -> TradeDecision:
+             valid=True, anchor_time="2026-11-04 08:30", anchor_price=2646.0) -> TradeDecision:
     if action == "HOLD":
-        sl = tp = 0
+        sl = tp = anchor_price = 0
+        anchor_time = ""
     return TradeDecision(snapshot_id=sid, action=action, symbol="XAUUSD", stop_loss=sl,
-                         take_profit=tp, setup_valid=valid, rationale="r")
+                         take_profit=tp, stop_anchor_time=anchor_time,
+                         stop_anchor_price=anchor_price, setup_valid=valid, rationale="r")
 
 
 def position(pid="1", label="gab-x", sl=2645.0, unreal=0.0, side="BUY") -> Position:

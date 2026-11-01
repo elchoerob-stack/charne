@@ -818,63 +818,80 @@ if (saveBtn) saveBtn.onclick = () => {
 const num = v => parseFloat(String(v).replace(/[^\d.]/g, '')) || 0;
 const rand = n => 'R ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-// ---- Music: soft royalty-free tracks, with a gentle generated tune as backup ----
+// ---- Music: an original slow, dreamy beat, played live by the browser (nothing to download) ----
+// A minor at 80 bpm: four bars of piano and pads, then a soft beat and bass, then the melody.
 let ctx, master, playing = false, timer, step = 0, nextT = 0;
-const S16 = 60 / 84 / 4;
-const chords = [[62,66,69],[61,64,69],[62,66,71],[62,67,71]], roots = [38, 45, 47, 43];
-const melody = [[0,74,4],[4,76,2],[6,78,4],[10,76,2],[12,74,4],[16,73,4],[20,74,2],[22,76,6],[28,69,4],[32,71,4],[36,74,2],[38,78,4],[42,81,2],[44,78,4],[48,79,4],[52,78,2],[54,76,4],[58,74,6]];
+const S16 = 60 / 80 / 4;                                          // one sixteenth note, in seconds
+const CHORDS = [[57, 60, 64], [57, 60, 65], [55, 60, 64], [55, 59, 62]];  // Am · F · C · G
+const BASS = [45, 41, 48, 43];
+const ARP = [0, 1, 2, 1, 0, 1, 2, 3];                              // piano eighths; 3 = root an octave up
+const TUNE = [[0, 76, 6], [6, 74, 2], [8, 72, 4], [12, 69, 4], [16, 72, 6], [22, 71, 2], [24, 69, 8],
+              [32, 76, 4], [36, 77, 4], [40, 76, 2], [42, 74, 2], [44, 72, 4], [48, 74, 6], [54, 72, 2], [56, 71, 8]];
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
-function setup() {
-  ctx = new (window.AudioContext || window.webkitAudioContext)();
+function setup(c) {
+  ctx = c || new (window.AudioContext || window.webkitAudioContext)();
   master = ctx.createGain(); master.gain.value = 0;
-  const comp = ctx.createDynamicsCompressor(), verb = ctx.createConvolver();
-  const len = ctx.sampleRate * 2.2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
-  verb.buffer = ir;
-  const wet = ctx.createGain(); wet.gain.value = .28;
-  master.connect(comp); master.connect(verb); verb.connect(wet).connect(comp); comp.connect(ctx.destination);
+  const comp = ctx.createDynamicsCompressor(), verb = ctx.createConvolver(), warm = ctx.createBiquadFilter();
+  const len = ctx.sampleRate * 2.6, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  verb.buffer = ir; warm.type = 'lowpass'; warm.frequency.value = 5200;
+  const wet = ctx.createGain(); wet.gain.value = .32;
+  master.connect(warm); warm.connect(comp); master.connect(verb); verb.connect(wet).connect(comp); comp.connect(ctx.destination);
 }
-function voice(f, t, dur, vol, type, attack = .005) {
+function voice(f, t, dur, vol, type, attack = .005, detune = 0) {
   const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = type; o.frequency.value = f;
+  o.type = type; o.frequency.value = f; o.detune.value = detune;
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g).connect(master); o.start(t); o.stop(t + dur + .05);
 }
+function noise(t, dur, vol, type, freq) {
+  const n = Math.ceil(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = buf; f.type = type; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  src.connect(f).connect(g).connect(master); src.start(t);
+}
+function kick(t, vol) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + .2);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .35);
+  o.connect(g).connect(master); o.start(t); o.stop(t + .4);
+}
 function schedule(i, t) {
-  const bar = Math.floor(i / 16) % 4, s = i % 16, c = chords[bar];
-  if (s === 0) c.forEach(m => voice(hz(m - 12), t, S16 * 16, .03, 'sine', .4));
-  if (s % 2 === 0) { const m = c[(s / 2) % 3] + (s >= 8 ? 12 : 0); voice(hz(m), t, .6, .05, 'triangle'); voice(hz(m) * 2, t, .3, .012, 'sine'); }
-  if ([0, 6, 8, 14].includes(s)) voice(hz(roots[bar]), t, S16 * 3, .14, 'sine', .01);
-  if (i >= 64) melody.filter(n => n[0] === i % 64).forEach(n => voice(hz(n[1]), t, S16 * n[2] + .3, .07, 'sine', .01));
+  const n = Math.floor(i / 16), s = i % 16;
+  const bar = n < 4 ? n : 4 + (n - 4) % 16;                       // 4-bar intro, then a 16-bar loop
+  const c = CHORDS[bar % 4];
+  if (s === 0) c.forEach(m => [-7, 7].forEach(dt => voice(hz(m - 12), t, S16 * 16 + .5, .02, 'triangle', .9, dt)));  // warm pad
+  if (s % 2 === 0) {                                               // piano
+    const k = ARP[s / 2], m = (k === 3 ? c[0] + 12 : c[k]) + 12, v = s % 8 === 0 ? .06 : .04;
+    voice(hz(m), t, 1.1, v, 'triangle'); voice(hz(m + 12), t, .5, v * .18, 'sine');
+  }
+  if (bar >= 4) {                                                  // the beat and bass come in
+    if (s === 0 || s === 10) voice(hz(BASS[bar % 4]), t, S16 * (s === 0 ? 9 : 6), .16, 'sine', .015);
+    if (s === 0 || s === 8) kick(t, .3); if (s === 11) kick(t, .15);
+    if (s === 4 || s === 12) noise(t, .16, .1, 'bandpass', 1900);  // soft snap on 2 and 4
+  }
+  if (bar >= 8 && s % 4 === 2) noise(t, .05, .028, 'highpass', 7000);  // light hi-hat
+  if ((bar >= 8 && bar < 12) || bar >= 16) {                       // the melody, every other phrase
+    const pos = (bar % 4) * 16 + s;
+    TUNE.filter(x => x[0] === pos).forEach(x => { voice(hz(x[1]), t, S16 * x[2] + .5, .055, 'sine', .02); voice(hz(x[1] + 12), t, S16 * x[2] * .5, .012, 'triangle', .02); });
+  }
 }
 function tick() { while (nextT < ctx.currentTime + .2) { schedule(step++, nextT); nextT += S16; } }
-const TRACKS = ['Easy Lemon', 'Dreamer', 'Lobby Time']; // Kevin MacLeod (incompetech.com), CC BY 4.0
-const audio = new Audio(); audio.preload = 'auto'; audio.volume = 0;
-let ti = 0, useSynth = false, fade;
 const musicBtn = document.getElementById('musicBtn');
-function loadTrack() { audio.src = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree/' + encodeURIComponent(TRACKS[ti]) + '.mp3'; credit(); }
-function credit() { document.getElementById('credit').textContent = useSynth ? '' : '♪ "' + TRACKS[ti] + '" · Kevin MacLeod (incompetech.com) · CC BY 4.0'; }
-audio.addEventListener('ended', () => { ti = (ti + 1) % TRACKS.length; loadTrack(); audio.play(); });
-audio.addEventListener('error', () => { if (playing && !useSynth) { useSynth = true; credit(); startSynth(); } });
-function fadeTo(v, ms) { clearInterval(fade); const st = audio.volume, t0 = Date.now(); fade = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); audio.volume = st + (v - st) * k; if (k === 1) { clearInterval(fade); if (v === 0) audio.pause(); } }, 50); }
-function startSynth() {
+function startMusic() {
+  if (!ctx) setup(); ctx.resume(); playing = true; musicBtn.textContent = UI.musicOff;
   step = 0; nextT = ctx.currentTime + .1;
   master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
   master.gain.linearRampToValueAtTime(.85, ctx.currentTime + 2);
   clearInterval(timer); timer = setInterval(tick, 50);
 }
-function startMusic() {
-  if (!ctx) setup(); ctx.resume(); playing = true; musicBtn.textContent = UI.musicOff;
-  if (useSynth) return startSynth();
-  if (!audio.src) loadTrack();
-  audio.play().then(() => fadeTo(.45, 2500)).catch(() => { useSynth = true; credit(); startSynth(); });
-}
 function stopMusic() {
   playing = false; musicBtn.textContent = UI.musicOn;
-  if (!useSynth) return fadeTo(0, 1000);
-  clearInterval(timer);
   master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
   master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+  setTimeout(() => { if (!playing) clearInterval(timer); }, 1100);
 }
 musicBtn.onclick = () => playing ? stopMusic() : startMusic();
 document.getElementById('openBook').onclick = () => { document.getElementById('intro').classList.add('gone'); startMusic(); };

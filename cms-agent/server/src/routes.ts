@@ -6,11 +6,19 @@ import { config, isAgentMode } from "./config.js";
 import { runTurn } from "./agent/agent.js";
 import { PLAYBOOKS } from "./problem-solving/engine.js";
 import { learnedPlaybooks } from "./agent/tools.js";
+import { channels as notifyChannels, notify } from "./notify.js";
 
 export const apiRoutes = Router();
 
 apiRoutes.get("/health", (_req, res) => {
-  res.json({ ok: true, name: "Foreman", model: config.model, webSearch: config.webSearch, hasApiKey: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN), ticketChannel: (process.env.TICKET_CHANNEL ?? "draft").toLowerCase() });
+  res.json({ ok: true, name: "Foreman", model: config.model, webSearch: config.webSearch, hasApiKey: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN), ticketChannel: (process.env.TICKET_CHANNEL ?? "draft").toLowerCase(), notify: notifyChannels() });
+});
+
+/** Send a test notification through every configured channel and say which worked. */
+apiRoutes.post("/notify/test", async (_req, res) => {
+  const base = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
+  const r = await notify({ title: "Foreman test", message: "If this reached your phone, agent reports will too.", status: "info", link: base ? `${base}/board.html` : undefined });
+  res.status(r.sent || r.skipped ? 200 : 502).json(r);
 });
 
 /** Streaming chat turn (Server-Sent Events over a POST). */

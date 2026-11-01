@@ -64,6 +64,27 @@ brief "Loads and confirms the day's service bookings before the workshop
 opens", owning your booking task, scheduled weekdays at 07:00. You read the
 report over coffee instead of doing the work.
 
+## Getting the report on your phone
+
+Set `NOTIFY_CHANNELS` in `.env` and every agent report also goes out as a
+notification. The title says whether it worked ("Morning bookings: partly done"),
+the body is the report, and tapping it opens the board.
+
+| Channel | Set | Good for |
+|---|---|---|
+| `ntfy` | `NTFY_TOPIC` (and `NTFY_TOKEN` for a protected topic) | A push on the S25+ in about a second. Free, no account. Install the ntfy app and subscribe to the same long random topic. |
+| `webhook` | `NOTIFY_WEBHOOK_URL` | Anything Zapier reaches. Make a Zap with **Webhooks by Zapier → Catch Hook**, paste its URL here, then add a WhatsApp, SMS or Slack step. It gets `title`, `message`, `status`, `agentName`, `runId` and `link`. |
+| `email` | `SMTP_URL` (shared with tickets), `NOTIFY_EMAIL_TO` | A written record. |
+
+- `NOTIFY_ON=problems` only sends runs that were partial or failed.
+- `NOTIFY_QUIET=21:30-06:00` keeps successful runs silent overnight. A
+  failure still makes a sound, at any hour.
+- Check it works with `POST /api/notify/test`. The reply lists which channels
+  delivered.
+
+A broken channel never stops the others, and a notification problem never
+fails the agent run itself. It is logged to the console and the run carries on.
+
 ## Honest limits
 
 - Runs are sequential by design. Two browsers on one CMS session is how you

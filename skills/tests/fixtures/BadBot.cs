@@ -22,6 +22,12 @@ namespace cAlgo.Robots
         [Parameter("ATR Multiplier", DefaultValue = 1.5)]
         public double AtrMultiplier { get; set; }
 
+        [Parameter("Reset equity-floor halt", Group = "Security", DefaultValue = false)]
+        public bool ResetEquityFloorHalt { get; set; }
+
+        [Parameter("Use news filter", DefaultValue = true)]
+        public bool UseNewsFilter { get; set; }
+
         // [Parameter("Lot Size", DefaultValue = 1)]  commented out, must be ignored
         private double volume = 1000;
 

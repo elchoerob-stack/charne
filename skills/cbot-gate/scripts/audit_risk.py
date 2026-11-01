@@ -41,6 +41,11 @@ def classify(name: str, label: str = "", group: str = "") -> str:
     """CRITICAL = sizes a trade or caps a loss; REVIEW = shapes the stop; '' = other."""
     w = words(name) | words(label)
     is_stop = bool(w & STOP_WORDS) or ("atr" in w and w & {"mult", "multiplier"})
+    if w & {"reward", "rr"}:
+        return "REVIEW"  # reward:risk filters shape trade selection, not size
+    if w & {"halt", "floor", "streak", "consecutive", "breaker"} and w & {
+            "loss", "losses", "equity", "drawdown", "balance", "reset", "override", "disable"}:
+        return "CRITICAL"  # circuit breakers: loss-streak halts, equity floors
     if w & SIZING and not ("risk" in w and is_stop and not w & {"percent", "pct", "amount"}):
         return "CRITICAL"
     if "size" in w and w & SIZE_CONTEXT:
@@ -145,7 +150,22 @@ def audit_source(path: Path) -> dict:
         kind = classify(name, label, group)
         if ptype in ("bool", "string") and kind != "CRITICAL":
             continue
-        if kind == "CRITICAL":
+        if kind == "CRITICAL" and ptype == "bool":
+            findings.append({
+                "severity": "CRITICAL",
+                "line": info["line"],
+                "item": name,
+                "detail": (
+                    f'A [Parameter] switch overrides a risk breaker ("{label or name}"). '
+                    "Instance settings persist, so if it is left on, every restart (reconnect, "
+                    "VPS reboot, cTrader update) applies it again and quietly defeats the "
+                    "breaker. Make it one-shot: record in the persisted state which halt it "
+                    "cleared and ignore it after that, or remove it and reset by editing the "
+                    "state file on purpose."
+                ),
+                "fix": None,
+            })
+        elif kind == "CRITICAL":
             ctype = ptype.rstrip("?")
             findings.append({
                 "severity": "CRITICAL",
@@ -181,6 +201,13 @@ def audit_source(path: Path) -> dict:
                 "line": _line_of(src, m.start()),
             })
 
+    # Stop attached in the fill handler, with the position closed if that fails,
+    # is a deliberate design (absolute stop prices). Report it, don't flag it.
+    protects_after_fill = bool(
+        re.search(r"\bModifyPosition(?:Async)?\s*\(", src)
+        and re.search(r"Positions\.Opened|PositionOpened", src)
+        and re.search(r"\bClosePosition(?:Async)?\s*\(", src))
+
     # Orders sent without a stop. Market: SL is argument 5; pending: argument 6.
     for pattern, sl_index, label in ((MARKET_ORDER, 4, "ExecuteMarketOrder"),
                                      (PENDING_ORDER, 5, "Place*Order")):
@@ -188,18 +215,21 @@ def audit_source(path: Path) -> dict:
             args, _ = _split_call_args(src, m.end() - 1)
             sl = args[sl_index] if len(args) > sl_index else None
             if sl is None or sl.strip() in ("null", "0", "0.0", "default"):
-                findings.append({
-                    "severity": "REVIEW",
-                    "line": _line_of(src, m.start()),
-                    "item": label,
-                    "detail": (
-                        f"Order sent without a stop loss attached ({len(args)} arguments"
-                        f"{', SL = ' + sl if sl else ''}). If the stop is added afterwards, "
-                        "a disconnect between the two calls leaves the position naked. "
-                        "Pass the stop in the order itself."
-                    ),
-                    "fix": None,
-                })
+                if protects_after_fill:
+                    detail = ("Order sent without a stop; the stop is attached in the fill "
+                              "handler and the position is closed if that fails. Sound design. "
+                              "The remaining exposure is the moment between fill and "
+                              "ModifyPosition, and a cBot restart in that moment: on start-up, "
+                              "check for open positions with this bot's label and no stop.")
+                    sev = "INFO"
+                else:
+                    detail = (f"Order sent without a stop loss attached ({len(args)} arguments"
+                              f"{', SL = ' + sl if sl else ''}). If the stop is added afterwards, "
+                              "a disconnect between the two calls leaves the position naked. "
+                              "Pass the stop in the order itself.")
+                    sev = "REVIEW"
+                findings.append({"severity": sev, "line": _line_of(src, m.start()),
+                                 "item": label, "detail": detail, "fix": None})
 
     # Size scaled by its own previous value: martingale / grid recovery.
     for m in SELF_MULTIPLY.finditer(src):
@@ -216,27 +246,42 @@ def audit_source(path: Path) -> dict:
                 "fix": None,
             })
 
-    if not any(c["kind"] == "CRITICAL" for c in consts):
-        findings.append({
-            "severity": "REVIEW",
-            "line": None,
-            "item": "risk constants",
-            "detail": "No const/readonly sizing or loss-cap value found (risk %, max lots, "
-                      "daily loss cap). If sizing lives in another file, audit that file too; "
-                      "otherwise add them.",
-            "fix": "private const double RiskPercentPerTrade = 0.5;  "
-                   "private const double MaxDailyLossPercent = 2.0;",
-        })
-
-    sev = [f["severity"] for f in findings]
-    status = "CRITICAL" if "CRITICAL" in sev else ("REVIEW" if sev else "CLEAN")
-    return {
+    places_orders = bool(MARKET_ORDER.search(src) or PENDING_ORDER.search(src))
+    return finalise({
         "file": str(path),
-        "status": status,
-        "findings": sorted(findings, key=lambda f: (f["severity"] != "CRITICAL", f["line"] or 10**9)),
+        "findings": findings,
         "parameters": params,
         "risk_constants": consts,
-    }
+        "places_orders": places_orders,
+    })
+
+
+SEVERITY_ORDER = {"CRITICAL": 0, "REVIEW": 1, "INFO": 2}
+
+
+def finalise(r: dict) -> dict:
+    sev = {f["severity"] for f in r["findings"]}
+    r["status"] = "CRITICAL" if "CRITICAL" in sev else ("REVIEW" if "REVIEW" in sev else "CLEAN")
+    r["findings"].sort(key=lambda f: (SEVERITY_ORDER[f["severity"]], f["line"] or 10**9))
+    return r
+
+
+def audit_paths(paths) -> list:
+    """Audit a set of files as one project: risk constants may live in any of them."""
+    results = [audit_source(f) for f in collect(paths)]
+    if results and not any(c["kind"] == "CRITICAL" for r in results for c in r["risk_constants"]):
+        targets = [r for r in results if r["places_orders"]] or results[:1]
+        for r in targets:
+            r["findings"].append({
+                "severity": "REVIEW", "line": None, "item": "risk constants",
+                "detail": "No const/readonly sizing or loss-cap value found in any file given "
+                          "(risk %, max lots, daily loss cap). If sizing lives in another file, "
+                          "include it in the audit; otherwise add them.",
+                "fix": "private const double RiskPercentPerTrade = 0.5;  "
+                       "private const double MaxDailyLossPercent = 2.0;",
+            })
+            finalise(r)
+    return results
 
 
 def collect(paths):
@@ -253,7 +298,11 @@ def collect(paths):
 
 def to_markdown(results) -> str:
     lines = ["## Risk-constant audit", ""]
+    quiet = [r for r in results if not r["findings"] and not r["parameters"]
+             and not r["risk_constants"]]
     for r in results:
+        if r in quiet:
+            continue
         lines.append(f"**{Path(r['file']).name}**: {r['status']}  ")
         lines.append(
             f"{len(r['parameters'])} parameters, {len(r['risk_constants'])} risk constants "
@@ -271,6 +320,10 @@ def to_markdown(results) -> str:
             lines.append("Hardcoded risk values: " + ", ".join(
                 f"`{c['name']} = {c['value']}`" for c in r["risk_constants"]))
             lines.append("")
+    if quiet:
+        lines.append("No parameters, orders or risk values in: "
+                     + ", ".join(Path(r["file"]).name for r in quiet))
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -279,10 +332,9 @@ def main():
     ap.add_argument("paths", nargs="+", help=".cs files or folders")
     ap.add_argument("--json", help="also write results as JSON to this path")
     a = ap.parse_args()
-    files = collect(a.paths)
-    if not files:
+    results = audit_paths(a.paths)
+    if not results:
         sys.exit("no .cs files found")
-    results = [audit_source(f) for f in files]
     print(to_markdown(results))
     if a.json:
         Path(a.json).write_text(json.dumps(results, indent=2))

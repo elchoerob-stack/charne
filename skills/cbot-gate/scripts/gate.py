@@ -631,8 +631,7 @@ def main():
     if a.source:
         sys.path.insert(0, str(Path(__file__).parent))
         import audit_risk
-        files = audit_risk.collect(a.source)
-        results = [audit_risk.audit_source(f) for f in files]
+        results = audit_risk.audit_paths(a.source)
         audit_md = audit_risk.to_markdown(results)
         worst = max(results, key=lambda r: {"CLEAN": 0, "REVIEW": 1, "CRITICAL": 2}[r["status"]])
         audit = {"status": worst["status"], "results": results}

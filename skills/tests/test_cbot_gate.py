@@ -184,5 +184,20 @@ expect("C# log loads: Net Profit chosen over Gross, balance 5000",
        j12["out_of_sample"]["trades"] == 150 and abs(j12["balance"] - 5000) < 0.01
        and "profit from 'Net Profit'" in out, out)
 
+# 13. Real-world patterns found auditing the Trade Desk repo
+code, out = run(AUDIT, FIX / "BadBot.cs")
+expect("breaker-reset switch is critical, with one-shot advice",
+       "ResetEquityFloorHalt" in out and "one-shot" in out and "UseNewsFilter" not in out, out)
+code, out = run(AUDIT, FIX / "split")
+expect("risk constants in another file count for the project",
+       code == 0 and "No const/readonly" not in out, out)
+expect("stop attached after fill with close-on-failure is INFO, not REVIEW",
+       "| INFO |" in out and "| REVIEW |" not in out, out)
+expect("equity floor, loss-streak halt found; reward:risk not called sizing",
+       "EQUITY_FLOOR" in out and "CONSECUTIVE_LOSS_HALT" in out, out)
+code, out = run(AUDIT, FIX / "split" / "Hands.cs")
+expect("hands file alone still asks where the risk constants are",
+       "No const/readonly" in out, out)
+
 print(f"\n{'all passed' if not FAILS else str(len(FAILS)) + ' failed'}  (files in {TMP})")
 sys.exit(1 if FAILS else 0)

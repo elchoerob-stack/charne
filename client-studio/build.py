@@ -50,6 +50,8 @@ def main() -> None:
     html = html.replace("/*@FONTS@*/", fonts)
     html = html.replace("/*@CSS@*/", css)
     html = html.replace('"@ASSETS@"', json.dumps(assets))
+    prompt = (HERE / "AI-INSTRUCTIONS.md").read_text(encoding="utf-8")
+    js = js.replace('"@AI_PROMPT@"', json.dumps(prompt).replace("</", "<\\/"))
     html = html.replace("/*@APP@*/", js)
     OUT.write_text(html, encoding="utf-8")
     print(f"wrote {OUT.relative_to(HERE.parent)} ({OUT.stat().st_size / 1024:.0f} KB)")

@@ -33,6 +33,28 @@ Each one can be:
 - **Sent to the client**: a copy with only that client's details, which opens on
   any phone or computer. The calculators and wish list work in it.
 
+## Building one from a prompt (Claude or ChatGPT)
+
+Instead of filling in the form, describe the client to Claude or ChatGPT in
+plain words and paste its reply into the studio.
+
+1. **Build with Claude or ChatGPT** (top right) → **Copy the instructions**, and
+   paste them as the first message of a new chat. Better: save them once as the
+   instructions of a **Claude Project** or a **ChatGPT custom GPT**, and every
+   chat in it already knows the format. The same text is in
+   `AI-INSTRUCTIONS.md`.
+2. Tell it about the client: *"Valuation for Johan and Elmarie van der Merwe,
+   12 Jacaranda Street, Faerie Glen, 4 bed, 210 m², pool and solar. Sold nearby:
+   2.65m for 220 m² in August… Asking 2.6m. They owe about 1.1m."*
+3. Copy its reply and paste it in the studio (in the box, or just Ctrl+V on the
+   home screen). The client is created and opens on **Present & send**, with a
+   checklist of anything still missing.
+
+The AI writes the personal note and "what buyers will love" in Charné's style,
+but it is told never to invent sales, prices or bond amounts. Photos are added
+in the studio afterwards. Nothing is sent anywhere by the studio itself; the
+connection is copy and paste, so it works with any AI and needs no API key.
+
 ## The 10-minute demo
 
 The same run-sheet is inside the app under **How to demo**.

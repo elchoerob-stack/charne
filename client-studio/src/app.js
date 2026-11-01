@@ -863,7 +863,7 @@ function renderHome() {
       '<button class="btn btn-d btn-sm" data-copy="' + c.id + '" title="Make a copy for another client">Copy</button><button class="btn btn-d btn-sm" data-del="' + c.id + '" title="Delete">Delete</button></div></div>';
   }).join('');
   app.innerHTML = '<div class="home"><div class="topbar"><img class="lock" src="' + ASSETS.lockupWhite + '" alt="RB Brand Real Estate"><span class="app-name">Client Studio</span><span class="sp"></span>' +
-    '<button class="btn btn-d btn-sm" data-act="demo">How to demo</button><button class="btn btn-d btn-sm" data-act="me">My details</button></div>' +
+    '<button class="btn btn-p btn-sm" data-act="ai">✦ Build with Claude or ChatGPT</button><button class="btn btn-d btn-sm" data-act="demo">How to demo</button><button class="btn btn-d btn-sm" data-act="me">My details</button></div>' +
     '<div class="hello"><div class="eyebrow">' + esc(ME.name) + ' · ' + esc(ME.agency) + '</div><h1>' + greeting() + ', ' + esc(ME.first || 'Charné') + '</h1>' +
     '<p>Pick what you need, fill in the client\'s details, and it builds itself. Present it on your laptop, save it as a PDF, or send it to the client on WhatsApp.</p></div>' +
     (Store.broken ? '<div class="banner"><b>This browser can\'t save.</b><span>Work will be lost when the tab closes. Open this file in Chrome or Edge.</span></div>' : '') +
@@ -911,6 +911,7 @@ app.addEventListener('click', async e => {
   }
   else if (d.act === 'me') openMe(false);
   else if (d.act === 'demo') openDemo();
+  else if (d.act === 'ai') openAI();
   else if (d.act === 'backup') backup();
   else if (d.act === 'home') { flushSaves(); go({ name: 'home' }); }
   else if (d.act === 'present') { const c = CLIENTS.find(x => x.id === VIEW.id); if (c) present(c, ME, 0); }
@@ -1215,6 +1216,11 @@ async function takePhoto(c, k, file) {
   } catch (e) { toast('That file isn\'t a photo this browser can read. Try a JPG or PNG.', 4000); }
 }
 document.addEventListener('paste', e => {
+  if (VIEW.name === 'home' && !SHIPPED && !$('#overlay').children.length) {
+    const t = (e.clipboardData && e.clipboardData.getData('text')) || '';
+    if (t.includes(AI_TAG)) { e.preventDefault(); try { afterImport(importAI(t)); } catch (err) { toast('Couldn\'t read that reply. Use "Build with Claude or ChatGPT" and paste it there.', 4500); } }
+    return;
+  }
   if (VIEW.name !== 'edit' || $('#overlay').children.length) return;
   const items = Array.from((e.clipboardData || {}).items || []);
   const it = items.find(x => x.type && x.type.startsWith('image/'));
@@ -1298,6 +1304,99 @@ function openMe(welcome) {
   obs.observe($('#overlay'), { childList: true });
 }
 
+// ───────────────────────── Claude / ChatGPT ─────────────────────────
+// The AI replies with one JSON block (spec in AI-INSTRUCTIONS.md, embedded at
+// build time). Pasting it here creates the client; photos are added after.
+const AI_PROMPT = "@AI_PROMPT@";
+const AI_TAG = 'charne-client-studio';
+function extractJSON(text) {
+  let t = String(text || '');
+  const fences = Array.from(t.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)).map(m => m[1]);
+  const tries = fences.length ? fences : [t];
+  for (const chunk of tries) {
+    const a = chunk.search(/[\[{]/), b = Math.max(chunk.lastIndexOf('}'), chunk.lastIndexOf(']'));
+    if (a < 0 || b <= a) continue;
+    try { return JSON.parse(chunk.slice(a, b + 1).replace(/[“”]/g, '"')); } catch (e) { /* next */ }
+  }
+  throw new Error('no json');
+}
+function pick(list, v) { if (typeof v !== 'string') return null; const k = list.find(x => String(x).toLowerCase() === v.trim().toLowerCase()); return k == null ? null : k; }
+function normalizeAI(x) {
+  if (!x || typeof x !== 'object') throw new Error('not an object');
+  const type = /buy/i.test(String(x.type || '')) || x.priceMax != null || x.wants ? 'buyer' : 'listing';
+  const c = type === 'buyer' ? newBuyer(ME) : newListing(ME);
+  ['names', 'first', 'phone', 'email', 'note', 'address', 'suburb', 'city', 'love', 'compSource'].forEach(k => { if (typeof x[k] === 'string' && x[k].trim()) c[k] = x[k].trim(); });
+  ['date', 'launch'].forEach(k => { if (/^\d{4}-\d{2}-\d{2}$/.test(String(x[k] || ''))) c[k] = x[k]; });
+  ['beds', 'baths', 'garages', 'floor', 'erf', 'months', 'years', 'commission', 'rate'].forEach(k => { const v = parseFloat(x[k]); if (!isNaN(v) && v >= 0) c[k] = v; });
+  ['low', 'high', 'ask', 'bond', 'cancel', 'certs', 'priceMax', 'deposit', 'income'].forEach(k => { if (x[k] == null || x[k] === '') return; const v = typeof x[k] === 'number' ? Math.round(x[k]) : parseMoney(x[k]); if (v != null && v >= 0) c[k] = v; });
+  ['vatIncl', 'firstTime', 'preapproved'].forEach(k => { if (typeof x[k] === 'boolean') c[k] = x[k]; });
+  const sb = pick(SUBURBS.map(r => r[0]), c.suburb); if (sb) c.suburb = sb;
+  const pt = pick(PROP_TYPES, x.propType); if (pt) c.propType = pt;
+  const tl = pick(TIMELINES, x.timeline); if (tl) c.timeline = tl;
+  const md = pick(['Sole mandate', 'Open mandate', 'Dual mandate'], x.mandate); if (md) c.mandate = md;
+  if (type === 'buyer' && c.years && ![20, 25, 30].includes(c.years)) c.years = 20;
+  if (c.months) c.months = Math.min(6, Math.max(1, Math.round(c.months)));
+  const strs = v => Array.isArray(v) ? v.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim()) : null;
+  const feats = strs(x.features); if (feats) c.features = feats.map(f => pick(FEATURES, f) || f);
+  const wants = strs(x.wants); if (wants) c.wants = wants.map(w => pick(WANTS, w) || w);
+  const mk = strs(x.marketing);
+  if (mk) { const ids = mk.map(m => (MARKETING.find(r => r[0] === m.toLowerCase() || r[2].toLowerCase() === m.toLowerCase()) || [])[0]).filter(Boolean); if (ids.length) c.marketing = Array.from(new Set(ids.concat(['feedback']))); }
+  const areas = strs(x.areas); if (areas) c.areas = Array.from(new Set(areas.map(a => pick(SUBURBS.map(s => s[0]), a) || a))).slice(0, 6);
+  if (x.areaText && typeof x.areaText === 'object') { c.areaText = {}; Object.keys(x.areaText).forEach(k => { if (typeof x.areaText[k] === 'string') c.areaText[pick(SUBURBS.map(s => s[0]), k) || k] = x.areaText[k].trim(); }); }
+  if (type === 'buyer') (c.areas || []).forEach(a => { if (!(a in SUBURB_TEXT) && !(c.areaText && a in c.areaText)) { c.areaText = c.areaText || {}; c.areaText[a] = ''; } });
+  if (type === 'listing' && Array.isArray(x.comps) && x.comps.length) {
+    c.comps = x.comps.slice(0, 6).filter(r => r && typeof r === 'object').map(r => ({
+      addr: String(r.addr || r.address || r.description || '').trim(),
+      price: typeof r.price === 'number' ? Math.round(r.price) : parseMoney(r.price),
+      size: parseFloat(r.size || r.floor) || '', beds: parseFloat(r.beds) || '',
+      date: /^\d{4}-\d{2}/.test(String(r.date || '')) ? String(r.date).slice(0, 7) : '',
+      status: /market|listed|active|for sale/i.test(String(r.status || '')) ? 'On the market' : 'Sold'
+    }));
+  }
+  if (!c.first && c.names) c.first = '';
+  return c;
+}
+function importAI(text) {
+  const raw = extractJSON(text);
+  const list = Array.isArray(raw) ? raw : (Array.isArray(raw.clients) ? raw.clients : [raw.client || raw]);
+  const made = list.map(normalizeAI);
+  made.forEach(c => saveClient(c, true));
+  return made;
+}
+function afterImport(made) {
+  $('#overlay').innerHTML = '';
+  const c = made[made.length - 1];
+  go({ name: 'edit', id: c.id, step: STEPS[c.type].length - 1 });
+  toast((made.length > 1 ? made.length + ' clients built' : 'Built') + '. Add the photo' + (c.type === 'buyer' ? ' if you like' : '') + ', then present or send.', 4500);
+}
+function copyText(t, ok) {
+  const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast(ok); } catch (e) { toast('Could not copy. Use the download instead.'); } ta.remove(); };
+  if (navigator.clipboard && window.isSecureContext !== false) navigator.clipboard.writeText(t).then(() => toast(ok), fallback); else fallback();
+}
+function openAI() {
+  const m = modal('<div class="eyebrow" style="color:var(--blue)">Claude or ChatGPT</div><h2>Build it from a prompt</h2>' +
+    '<p class="lead">Describe the client in your own words. The AI writes it up, you paste its reply here, and the presentation builds itself.</p>' +
+    '<div class="sendstep"><span class="n">1</span><div class="t"><b>Give the AI its instructions</b><span class="hint">Copy them and paste as your first message in a new chat. To skip this step next time, save them once in a Claude Project or a ChatGPT custom GPT (as its instructions).</span>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-p" data-ai-copy>Copy the instructions</button><a class="btn btn-l" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude</a><a class="btn btn-l" href="https://chatgpt.com/" target="_blank" rel="noopener">Open ChatGPT</a><button class="btn btn-l" data-ai-dl>Download as a file</button></div></div></div>' +
+    '<div class="sendstep"><span class="n">2</span><div class="t"><b>Tell it about the client</b><span class="hint">Talk to it like an assistant. For example:</span>' +
+    '<div class="tips" style="font-style:italic">"Valuation for Johan and Elmarie van der Merwe, 12 Jacaranda Street, Faerie Glen. 4 bed, 2 bath, double garage, 210 m² on 850 m². Pool, solar, covered patio. Sold nearby: 2.65m for 220 m² in August, 2.55m for 205 m² in July. Asking 2.6m. They owe about 1.1m."</div>' +
+    '<span class="hint">Or: "Buyer guide for Lerato Mokoena, first-time buyer, up to 1.8m, R180 000 deposit, wants Equestria or Moreleta Park, 3 bed with a garden for two dogs."</span></div></div>' +
+    '<div class="sendstep"><span class="n">3</span><div class="t"><b>Paste its reply here</b><textarea class="in" id="ai-reply" style="min-height:130px;font-family:ui-monospace,Consolas,monospace;font-size:13px" placeholder="Paste the whole reply. The code block is enough."></textarea>' +
+    '<div id="ai-err" class="hint" style="color:var(--bad)"></div><div><button class="btn btn-g btn-big" data-ai-build>Build it →</button></div>' +
+    '<span class="hint">Tip: on the home screen you can also just press Ctrl+V with the reply copied. Photos are added afterwards; the AI can\'t send them.</span></div></div>' +
+    '<div class="modal-acts"><button class="btn btn-l" data-close>Close</button></div>', true);
+  m.el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-ai-copy')) copyText(AI_PROMPT, 'Instructions copied. Paste them into Claude or ChatGPT.');
+    else if (b.hasAttribute('data-ai-dl')) { download('Client Studio - AI instructions.txt', AI_PROMPT, 'text/plain'); toast('Saved to Downloads.'); }
+    else if (b.hasAttribute('data-ai-build')) {
+      try { afterImport(importAI($('#ai-reply').value)); }
+      catch (err) { $('#ai-err').textContent = 'That doesn\'t look like a reply from the instructions. Copy the AI\'s whole answer, including the part in the grey code box, and paste it again.'; }
+    }
+  });
+  setTimeout(() => { const t = $('#ai-reply'); if (t) t.addEventListener('paste', () => setTimeout(() => { try { extractJSON(t.value); $('#ai-err').textContent = ''; } catch (e) { /* wait for Build */ } }, 0)); }, 0);
+}
+
 function openDemo() {
   modal('<div class="demo"><div class="eyebrow" style="color:var(--blue)">Tomorrow morning</div><h2>How to demo it in 10 minutes</h2>' +
     '<p class="lead">Set one up for a real client, live, from a blank page. Say the line in italics as you go.</p><ol>' +
@@ -1363,6 +1462,6 @@ async function start() {
   if (!hadSettings) openMe(true);
 }
 // Exposed for checks in tests only.
-window.__studio = { preparePrint, transferDuty, repayment, commission, parseMoney, money, waNumber, firstNameOf, exportHTML, pagesFor, get ME() { return ME; }, get CLIENTS() { return CLIENTS; } };
+window.__studio = { importAI, extractJSON, AI_PROMPT, preparePrint, transferDuty, repayment, commission, parseMoney, money, waNumber, firstNameOf, exportHTML, pagesFor, get ME() { return ME; }, get CLIENTS() { return CLIENTS; } };
 start();
 })();

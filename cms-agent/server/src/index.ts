@@ -10,6 +10,8 @@ import { boardRoutes, tickAgents } from "./tasks/board-routes.js";
 import { startScheduler } from "./tasks/scheduler.js";
 import { listTasks } from "./tasks/store.js";
 import { resource } from "./paths.js";
+import { startNotifier } from "./notify.js";
+import { agentEvents } from "./tasks/agents.js";
 
 const app = express();
 
@@ -48,6 +50,8 @@ app.use(express.static(resource("web")));
 // Time-based triggers for tasks and agents. Runs every 30 s; a due task or
 // agent is queued exactly once and its schedule rolled forward.
 startScheduler(listTasks);
+// Agent reports go to the phone too (ntfy / webhook / e-mail), if configured.
+startNotifier(agentEvents);
 setInterval(() => { try { tickAgents(); } catch (err) { console.error("agent tick failed:", (err as Error).message); } }, 30_000).unref();
 
 app.listen(config.port, config.bindHost, () => {

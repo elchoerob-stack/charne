@@ -32,11 +32,11 @@ the loop; "capability" items are about doing things no competitor does.
    decode. Every one of these turns a question to the user into an automatic
    check, which is the single biggest jump in diagnostic accuracy.
 2. ✅ **Scheduled routines** (done: `tasks/scheduler.ts`, agents, the board).
-   **Still open — the notifier.** Schedules fire and agents report into the
-   console, but nothing reaches you when the app is closed. A WhatsApp or
-   e-mail step on the end of an agent run is the missing half: it is what turns
-   "Foreman did the bookings" into something you find out about over coffee
-   rather than by opening a laptop.
+   ✅ **The notifier** (done: `src/notify.ts`; ntfy push, Zapier webhook, e-mail,
+   quiet hours; see `AGENTS_AND_SCHEDULING.md`). Before it, agents reported
+   only into the console, so nothing reached you while the app was closed. Now
+   "Foreman did the bookings" is something you hear about over coffee instead
+   of by opening a laptop.
 3. ✅ **Case-to-ticket bridge** (done: `escalate_case`, webhook/Jira/e-mail/draft). Push escalation packets straight into the CMS
    support desk system (Jira/Zendesk/e-mail) with recording links, so an
    escalation is one click and arrives complete.
@@ -53,8 +53,8 @@ the loop; "capability" items are about doing things no competitor does.
 1. **Prove one task against live CMS.** Everything is proven against a test
    page. Record one real job, run it as a practice run, then for real while
    watching. Until that has happened once, nothing else on this list matters.
-2. **The notifier** (Tier 1 item 2 above). An agent that finishes at 07:00 and
-   tells nobody is half a feature.
+2. ✅ **The notifier** (done, 1 Nov 2026). Set `NOTIFY_CHANNELS=ntfy` and a topic,
+   then `POST /api/notify/test`.
 3. **Live integration adapters** (Tier 1 item 1). The single biggest jump in
    diagnostic accuracy, and it needs URLs from CMS rather than code from here.
 4. **Replace the synthetic eval cases with real ones.** The 52 cases were

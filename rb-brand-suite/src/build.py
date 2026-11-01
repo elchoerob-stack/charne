@@ -19,7 +19,7 @@ def data_uri(key, width=None):
 def photo_css(html):
     """One shared rule per photo used, so each photo is stored once per file."""
     keys = sorted(set(re.findall(r'data-img="(\w+)"', html)))
-    return '\n'.join(f'[data-img="{k}"]{{--img:url({data_uri(k)})}}' for k in keys)
+    return '\n'.join(f'.ph[data-img="{k}"]{{--img:url({data_uri(k)})}}' for k in keys)
 
 LOGO = ('<img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" '
         'alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement(\'b\'),'
@@ -125,7 +125,7 @@ def fill(template, values):
     return template
 
 css, js = (SRC / 'book.css').read_text(), (SRC / 'book.js').read_text()
-built = {}  # (lang, key) -> html
+built, reader_pages = {}, {}  # (lang, key) -> html / finished pages
 for lang, L in LANGS.items():
     O = LANGS[L['other']]
     for key, src, out in BOOKS:
@@ -145,6 +145,7 @@ for lang, L in LANGS.items():
             'css': css, 'photos': photo_css(pages), 'js': js, 'pages': pages.strip(), 'extra': extra.strip()})
         (OUT / f'{out}{L["suffix"]}.html').write_text(html)
         built[lang, key] = html
+        reader_pages[lang, key] = pages.strip()
         print('built', f'{out}{L["suffix"]}.html')
 
 # ---- Home pages ----
@@ -170,10 +171,10 @@ for (lang, key), h in built.items():
     h = h.replace('<div id="hint"', FLAG.replace('{t}', L['demoFlag']) + '\n<div id="hint"', 1)
     # each photo is stored once for the whole demo and put back when a book opens
     m = re.search(r'<style id="photos">\n(.*?)\n</style>', h, re.S)
-    keys = re.findall(r'\[data-img="(\w+)"\]', m.group(1)); used.update(keys)
+    keys = re.findall(r'\.ph\[data-img="(\w+)"\]', m.group(1)); used.update(keys)
     h = h.replace(m.group(0), '<style id="photos">/*PHOTOS:' + ','.join(keys) + '*/</style>')
     books.setdefault(lang, {})[out] = h
-PHOTO_MAP = {k: data_uri(k) for k in sorted(used)}
+PHOTO_CSS = '\n'.join(f'.ph[data-img="{k}"]{{--img:url({data_uri(k)})}}' for k in sorted(used))
 
 REVIEW = {
  'en': """
@@ -214,7 +215,8 @@ OPEN_JS = """
 <script>
 // Each book (in English and Afrikaans) is stored inside this one file and opened over the
 // home page when its card is tapped. Photos are stored once and put back into a book as it opens.
-const BOOKS = %BOOKS%, PHOTOS = %PHOTOS%;
+const BOOKS = %BOOKS%, PHOTOS = {};
+document.getElementById('photos').textContent.replace(/\\.ph\\[data-img="(\\w+)"\\]\\{--img:url\\(([^)]*)\\)\\}/g, (_, k, u) => (PHOTOS[k] = u));
 const viewer = document.getElementById('viewer'), frame = document.getElementById('frame');
 let lang = 'en', current = null;
 try { if (localStorage.getItem('rb-lang') === 'af') lang = 'af'; } catch (e) {}
@@ -225,7 +227,7 @@ function setLang(l) {
 }
 function bookHTML(k) {
   return BOOKS[lang][k].replace(/\\/\\*PHOTOS:([\\w,]*)\\*\\//, (_, keys) =>
-    keys.split(',').filter(Boolean).map(x => '[data-img="' + x + '"]{--img:url(' + PHOTOS[x] + ')}').join('\\n'));
+    keys.split(',').filter(Boolean).map(x => '.ph[data-img="' + x + '"]{--img:url(' + PHOTOS[x] + ')}').join('\\n'));
 }
 function openBook(k) { current = k; frame.srcdoc = bookHTML(k); viewer.hidden = false; document.body.style.overflow = 'hidden'; }
 function closeBook() { current = null; viewer.hidden = true; frame.srcdoc = ''; document.body.style.overflow = ''; }
@@ -241,6 +243,69 @@ addEventListener('popstate', closeBook); // the phone's Back button closes the b
 setLang(lang);
 </script>
 """
+# ---- Reading view: iPhone's Quick Look (what WhatsApp and Files use to open an HTML file)
+# runs no scripts, so the interactive books can't open there. Inside <noscript>, every page of
+# every book is laid out to scroll through instead, with photos and calculator results filled in.
+def rand(n): return 'R ' + f'{round(n):,}'.replace(',', ' ')
+def num(v): return float(re.sub(r'[^\d.]', '', v) or 0)
+def static_pages(html):
+    html = html.replace(LOGO, '<b class="wm">RB <i></i> BRAND</b>')  # the logo's text fallback needs a script
+    m = re.search(r'data-key="home" data-img="(\w+)"', html)  # mock-ups show the cover photo
+    if m: html = html.replace('data-mirror="home"', f'data-mirror="home" data-img="{m.group(1)}"')
+    inp = dict(re.findall(r'data-k="(\w+)" value="([^"]*)"', html))
+    out = {}
+    if 'cancel' in inp:  # seller's walk-away calculator (VAT defaults to 15%)
+        price, bond = num(inp['price']), num(inp['bond'])
+        comm = price * num(inp['comm']) / 100 * 1.15
+        fees, other = num(inp['cancel']) + num(inp['certs']), num(inp['other'])
+        out = dict(price=rand(price), comm='– ' + rand(comm), fees='– ' + rand(fees), other='– ' + rand(other),
+                   bond='– ' + rand(bond), costs=rand(comm + fees + other), net=rand(price - comm - fees - other - bond))
+    elif 'tfees' in inp:  # buyer's cost calculator, SARS transfer duty from 1 April 2025
+        price, dep = num(inp['price']), num(inp['dep']); loan = price - dep
+        r, n = num(inp['rate']) / 1200, num(inp['yrs']) * 12
+        pmt = loan * r / (1 - (1 + r) ** -n)
+        duty = next((b + (price - f) * t for f, b, t in [(13310000, 1241456, .13), (2994800, 106784, .11),
+                     (2329300, 53544, .08), (1663800, 13614, .06), (1210000, 0, .03)] if price > f), 0)
+        tf, bf = num(inp['tfees']), num(inp['bfees'])
+        out = dict(pmt=rand(pmt), loan=rand(loan), duty=rand(duty), tfees=rand(tf), bfees=rand(bf), dep=rand(dep), cash=rand(dep + duty + tf + bf))
+    for k, v in out.items():
+        html = re.sub(rf'(data-out="{k}"[^>]*>)[^<]*', lambda m: m.group(1) + v, html)
+    return html
+
+READER_CSS = """body{color:#FDFBF6}
+.wrap .wm,.wrap h1{color:#FDFBF6}
+.reader{color:var(--ink)}
+.reader{width:100%;max-width:820px;margin:44px auto 0}
+.reader h2.rd{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:30px;color:#FDFBF6;margin:36px 0 8px}
+.reader h3.rd{font-size:12px;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:#E0A458;margin:26px 0 12px}
+.reader .rd-note{background:rgba(224,164,88,.12);border:1px solid #E0A458;border-radius:6px;padding:14px 16px;color:#e4e8f0;font-size:14px;line-height:1.55}
+.reader .page{position:relative;inset:auto;visibility:visible;margin:0 auto 16px;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.reader .page::before{display:none}
+.reader input,.reader select,.reader a{pointer-events:none}
+.grid,.how,.langsw{display:none!important}
+.wrap{width:100%}
+@media (max-width:840px){.reader .page{zoom:.84}}
+@media (max-width:700px){.reader .page{zoom:.71}}
+@media (max-width:600px){.reader .page{zoom:.59}}
+@media (max-width:500px){.reader .page{zoom:.51}}
+@media (max-width:440px){.reader .page{zoom:.48}}
+@media (max-width:414px){.reader .page{zoom:.45}}
+@media (max-width:390px){.reader .page{zoom:.41}}
+@media (max-width:360px){.reader .page{zoom:.36}}
+"""
+READ_TEXT = {
+  'en': ('Reading view', 'This preview can’t run the interactive book, so here are all the pages to scroll through. For page turning, music and live calculators, open the file in Chrome or Safari on a computer.'),
+  'af': ('Leesaansig', 'Hierdie voorskou kan nie die interaktiewe boek laat loop nie, so hier is al die bladsye om deur te blaai. Maak die lêer in Chrome of Safari op ’n rekenaar oop vir blaai-effekte, musiek en lewendige sakrekenaars.'),
+}
+sections = []
+for lang, L in LANGS.items():
+    sections.append(f'<h2 class="rd">{"English" if lang == "en" else "Afrikaans"}</h2>'
+                    f'<p class="rd-note"><b>{READ_TEXT[lang][0]}.</b> {READ_TEXT[lang][1]}</p>')
+    for key, _, _ in BOOKS:
+        sections.append(f'<h3 class="rd">{L["books"][key][0]}</h3>' + static_pages(reader_pages[lang, key]))
+READER = ('<noscript><style>\n' + css + '\n' + READER_CSS + '</style>\n<div class="reader">\n'
+          + '\n'.join(sections) + '\n</div></noscript>\n')
+
 def body_of(html):
     return html[html.index('<body>') + 6:html.index('</body>')]
 demo = hubs['en']
@@ -252,8 +317,8 @@ for lang in LANGS:
     b = re.sub(r'(<a class="card[^"]*") href="([\w-]+?)(?:\.af)?\.html"', r'\1 href="#" data-book="\2"', b)  # book cards
     parts.append(f'<div data-hub="{lang}"{" hidden" if lang != "en" else ""}>{b}</div>')
 demo = demo[:demo.index('<body>') + 6] + '\n'.join(parts) + demo[demo.index('</body>'):]
-demo = demo.replace('</body>', OPEN_JS.replace('%BOOKS%', json.dumps(books, ensure_ascii=False).replace('</', '<\\/'))
-                                      .replace('%PHOTOS%', json.dumps(PHOTO_MAP)) + '</body>')
+demo = demo.replace('</head>', '<style id="photos">\n' + PHOTO_CSS + '\n</style>\n</head>', 1)
+demo = demo.replace('</body>', READER + OPEN_JS.replace('%BOOKS%', json.dumps(books, ensure_ascii=False).replace('</', '<\\/')) + '</body>')
 DEMO_NAME = 'RB Brand Client Books - Interactive.html'
 (OUT / DEMO_NAME).write_text(demo)
 print('built', DEMO_NAME)

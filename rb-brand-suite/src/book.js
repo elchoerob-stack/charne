@@ -176,6 +176,7 @@ if (saveBtn) saveBtn.onclick = () => {
   const wasEditing = editing; setEditing(false);
   const doc = document.documentElement.cloneNode(true);
   doc.setAttribute('data-client', '');
+  doc.classList.remove('js'); // the saved file starts readable; its own script turns book mode back on
   doc.removeAttribute('style');
   doc.querySelector('#book').replaceWith(cleanHTML(book));
   doc.querySelector('#intro').classList.remove('gone');

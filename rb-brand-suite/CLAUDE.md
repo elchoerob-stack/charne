@@ -36,5 +36,17 @@ on the computer it was built on is not done.
 4. **Say what was and wasn't checked** when handing files over: name the devices tested, and
    say plainly if a real-device check is still outstanding.
 
-A new feature that needs JavaScript must also have a sensible result in the reading view (no
-JavaScript), or the iPhone preview breaks again.
+## Sending to clients: PDF first
+
+iPhones open HTML files from WhatsApp and Files in Quick Look, which runs no JavaScript, so the
+interactive book can't work there. So:
+
+- **The client gets a PDF.** Agents personalise a book, tap **📄 Save as PDF** and send that file.
+  It opens on every phone, and its WhatsApp, call and "Sign the mandate" buttons stay links.
+  `check_devices.js` confirms the links survive.
+- **Every HTML file must stay readable without JavaScript.** Book mode only switches on once a
+  script adds `html.js`; without it, pages stack up to scroll through, sized to the screen. A
+  saved client copy drops the `js` class so it opens readable everywhere. Any new feature that
+  needs JavaScript must still look right without it.
+- **Nothing may depend on a web link to load** (logo, photos, fonts aside): previews and offline
+  phones can't fetch them. The RB Brand logo goes in as `src/logo.png`, built into every file.

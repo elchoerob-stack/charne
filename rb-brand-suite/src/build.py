@@ -21,9 +21,11 @@ def photo_css(html):
     keys = sorted(set(re.findall(r'data-img="(\w+)"', html)))
     return '\n'.join(f'.ph[data-img="{k}"]{{--img:url({data_uri(k)})}}' for k in keys)
 
-LOGO = ('<img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" '
-        'alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement(\'b\'),'
-        '{className:\'wm\',innerHTML:\'RB <i></i> BRAND\'}))">')
+# RB Brand's logo: the text mark until the real logo file is supplied. Put it in src/ as
+# logo.png and it is built into every file (a web link would break in iPhone previews and offline).
+_logo = SRC / 'logo.png'
+LOGO = ('<img class="logo" alt="RB Brand Real Estate" src="data:image/png;base64,' + base64.b64encode(_logo.read_bytes()).decode() + '">'
+        if _logo.exists() else '<b class="wm">RB <i></i> BRAND</b>')
 
 # Interface text per language. Book pages are translated in src/<book>.html (English)
 # and src/<book>.af.html (Afrikaans); everything else that the reader sees is here.
@@ -33,8 +35,8 @@ LANGS = {
     books={'listing': ('Listing Presentation', 'Let’s sell your home, beautifully'),
            'buyer': ('Buyer Guide', 'Let’s find your next home'),
            'moving': ('Moving Day Pack', 'Congratulations on your new home')},
-    edit='✎ Edit', save='⬇ Save client copy', musicOn='♪ Music on', print='Print / PDF', reset='Start again from the blank template',
-    hint='<b>Edit mode:</b> tap any text to change it · tap a photo to replace it · tap a button to set its link. Anything still <span style="background:rgba(224,164,88,.45)">[in brackets]</span> needs filling in. Your work saves on this device automatically. When done, tap <b>Save client copy</b>.',
+    edit='✎ Edit', save='⬇ Interactive copy', musicOn='♪ Music on', print='📄 Save as PDF', reset='Start again from the blank template',
+    hint='<b>Edit mode:</b> tap any text to change it · tap a photo to replace it · tap a button to set its link. Anything still <span style="background:rgba(224,164,88,.45)">[in brackets]</span> needs filling in. Your work saves on this device automatically. When done, tap <b>📄 Save as PDF</b> and send the client that PDF: it opens on every phone, iPhones included.',
     open='Open the book', openNote='Soft music will play · swipe or tap the page edges to turn · <a href="#" id="quietOpen" style="color:#a9bde3">open without music</a>',
     prev='‹ Prev', next='Next ›', allBooks='‹ All books',
     demoFlag='Concept demo · names, figures, reviews and photos are placeholders',
@@ -48,8 +50,8 @@ LANGS = {
     books={'listing': ('Verkopersaanbieding', 'Kom ons verkoop u huis, met styl'),
            'buyer': ('Kopersgids', 'Kom ons vind u volgende huis'),
            'moving': ('Trekdagpakket', 'Baie geluk met u nuwe huis')},
-    edit='✎ Wysig', save='⬇ Stoor kliëntkopie', musicOn='♪ Musiek aan', print='Druk / PDF', reset='Begin weer van die leë sjabloon af',
-    hint='<b>Wysigmodus:</b> tik op enige teks om dit te verander · tik op ’n foto om dit te vervang · tik op ’n knoppie om sy skakel te stel. Alles wat nog <span style="background:rgba(224,164,88,.45)">[tussen hakies]</span> staan, moet ingevul word. U werk word outomaties op hierdie toestel gestoor. Tik op <b>Stoor kliëntkopie</b> wanneer u klaar is.',
+    edit='✎ Wysig', save='⬇ Interaktiewe kopie', musicOn='♪ Musiek aan', print='📄 Stoor as PDF', reset='Begin weer van die leë sjabloon af',
+    hint='<b>Wysigmodus:</b> tik op enige teks om dit te verander · tik op ’n foto om dit te vervang · tik op ’n knoppie om sy skakel te stel. Alles wat nog <span style="background:rgba(224,164,88,.45)">[tussen hakies]</span> staan, moet ingevul word. U werk word outomaties op hierdie toestel gestoor. Tik op <b>📄 Stoor as PDF</b> wanneer u klaar is en stuur daardie PDF aan die kliënt: dit maak op elke foon oop, ook iPhones.',
     open='Maak die boek oop', openNote='Sagte musiek sal speel · swiep of tik op die bladsyrande om te blaai · <a href="#" id="quietOpen" style="color:#a9bde3">maak oop sonder musiek</a>',
     prev='‹ Vorige', next='Volgende ›', allBooks='‹ Alle boeke',
     demoFlag='Konsepdemo · name, syfers, resensies en foto’s is plekhouers',
@@ -72,6 +74,7 @@ SHELL = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.documentElement.classList.add('js')</script>
 <title>{title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -249,7 +252,6 @@ setLang(lang);
 def rand(n): return 'R ' + f'{round(n):,}'.replace(',', ' ')
 def num(v): return float(re.sub(r'[^\d.]', '', v) or 0)
 def static_pages(html):
-    html = html.replace(LOGO, '<b class="wm">RB <i></i> BRAND</b>')  # the logo's text fallback needs a script
     m = re.search(r'data-key="home" data-img="(\w+)"', html)  # mock-ups show the cover photo
     if m: html = html.replace('data-mirror="home"', f'data-mirror="home" data-img="{m.group(1)}"')
     inp = dict(re.findall(r'data-k="(\w+)" value="([^"]*)"', html))

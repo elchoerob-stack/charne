@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.documentElement.classList.add('js')</script>
 <title>Verkopersaanbieding</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -41,12 +42,25 @@ html[data-client] .edit-only{display:none!important}
 #intro p{color:#a9a196;margin-top:16px;font-size:11px}
 
 /* ---------- Book & pages ---------- */
-#stage{position:relative;width:calc(794px * var(--s,1));height:calc(1123px * var(--s,1))}
+/* Book mode needs JavaScript (html.js). Without it (iPhone's WhatsApp / Files preview, some email apps)
+   the same pages simply stack up to scroll through, sized to the screen. */
+.js #stage{position:relative;width:calc(794px * var(--s,1));height:calc(1123px * var(--s,1))}
 /* zoom (not a transform) keeps phones from building huge graphics layers */
-#book{position:absolute;left:0;top:0;width:794px;height:1123px;zoom:var(--s,1)}
-@supports not (zoom:1){#book{transform:scale(var(--s,1));transform-origin:0 0}}
-.page{position:absolute;inset:0;width:794px;height:1123px;background:var(--paper);overflow:hidden;padding:64px;display:flex;flex-direction:column;transform-origin:left center;backface-visibility:hidden;box-shadow:6px 18px 40px rgba(0,0,0,.45);visibility:hidden}
-.page.show{visibility:visible}
+.js #book{position:absolute;left:0;top:0;width:794px;height:1123px;zoom:var(--s,1)}
+@supports not (zoom:1){.js #book{transform:scale(var(--s,1));transform-origin:0 0}}
+.page{position:relative;width:794px;height:1123px;margin:0 auto 16px;background:var(--paper);overflow:hidden;padding:64px;display:flex;flex-direction:column;transform-origin:left center;backface-visibility:hidden;box-shadow:6px 18px 40px rgba(0,0,0,.45)}
+.js .page{position:absolute;inset:0;margin:0;visibility:hidden}
+.js .page.show{visibility:visible}
+html:not(.js) .tools,html:not(.js) .nav,html:not(.js) #intro,html:not(.js) #credit,html:not(.js) #hint{display:none!important}
+html:not(.js) .page::before{display:none}
+@media (max-width:840px){html:not(.js) .page{zoom:.84}}
+@media (max-width:700px){html:not(.js) .page{zoom:.71}}
+@media (max-width:600px){html:not(.js) .page{zoom:.59}}
+@media (max-width:500px){html:not(.js) .page{zoom:.51}}
+@media (max-width:440px){html:not(.js) .page{zoom:.48}}
+@media (max-width:414px){html:not(.js) .page{zoom:.45}}
+@media (max-width:390px){html:not(.js) .page{zoom:.41}}
+@media (max-width:360px){html:not(.js) .page{zoom:.36}}
 .page.turn-out{animation:turnOut .85s cubic-bezier(.645,.045,.355,1) forwards}
 .page.turn-in{animation:turnIn .85s cubic-bezier(.645,.045,.355,1) forwards}
 @keyframes turnOut{from{transform:perspective(2600px) rotateY(0)}to{transform:perspective(2600px) rotateY(-180deg)}}
@@ -324,8 +338,8 @@ body.editing .av.ph[data-photo]::after,body.editing .av-lg.ph[data-photo]::after
   body{background:none;padding:0;display:block}
   .toolbar,#intro,.nav,#credit,#hint{display:none!important}
   #stage{width:auto!important;height:auto!important}
-  #book{position:static;transform:none!important;zoom:1!important;width:auto;height:auto}
-  .page{position:relative;visibility:visible!important;animation:none!important;transform:none!important;box-shadow:none!important;width:210mm;height:297mm;page-break-after:always;break-after:page}
+  #book,.js #book{position:static!important;transform:none!important;zoom:1!important;width:auto!important;height:auto!important}
+  .page,.js .page{position:relative!important;inset:auto!important;margin:0!important;zoom:1!important;visibility:visible!important;animation:none!important;transform:none!important;box-shadow:none!important;width:210mm;height:297mm;page-break-after:always;break-after:page}
   .page::before{display:none}
   .todo{background:none!important;box-shadow:none!important}
 }
@@ -350,13 +364,13 @@ body.editing .av.ph[data-photo]::after,body.editing .av-lg.ph[data-photo]::after
   <div class="tools">
     <span class="langsw edit-only" role="group" aria-label="Language"><b aria-current="true">AF</b><a href="listing-presentation.html" data-lang="en">EN</a></span>
     <button class="edit-only" id="editBtn">✎ Wysig</button>
-    <button class="edit-only" id="saveBtn">⬇ Stoor kliëntkopie</button>
+    <button class="edit-only" id="saveBtn">⬇ Interaktiewe kopie</button>
     <button id="musicBtn">♪ Musiek aan</button>
-    <button class="solid" onclick="window.print()">Druk / PDF</button>
+    <button class="solid" onclick="window.print()">📄 Stoor as PDF</button>
     <button class="edit-only" id="resetBtn" title="Begin weer van die leë sjabloon af">↺</button>
   </div>
 </div>
-<div id="hint" class="edit-only"><b>Wysigmodus:</b> tik op enige teks om dit te verander · tik op ’n foto om dit te vervang · tik op ’n knoppie om sy skakel te stel. Alles wat nog <span style="background:rgba(224,164,88,.45)">[tussen hakies]</span> staan, moet ingevul word. U werk word outomaties op hierdie toestel gestoor. Tik op <b>Stoor kliëntkopie</b> wanneer u klaar is.</div>
+<div id="hint" class="edit-only"><b>Wysigmodus:</b> tik op enige teks om dit te verander · tik op ’n foto om dit te vervang · tik op ’n knoppie om sy skakel te stel. Alles wat nog <span style="background:rgba(224,164,88,.45)">[tussen hakies]</span> staan, moet ingevul word. U werk word outomaties op hierdie toestel gestoor. Tik op <b>📄 Stoor as PDF</b> wanneer u klaar is en stuur daardie PDF aan die kliënt: dit maak op elke foon oop, ook iPhones.</div>
 <div id="intro">
   <div>
     <b class="wm">RB <i></i> BRAND</b>
@@ -371,7 +385,7 @@ body.editing .av.ph[data-photo]::after,body.editing .av-lg.ph[data-photo]::after
 <section class="page bleed j-cover">
   <div class="ph fill" data-photo data-key="home" data-img="hero"></div>
   <div class="veil"></div>
-  <div class="cv-top light-logo"><img class="logo" src="https://www.rbbrandrealestate.co.za/assets/media/logo-home.ee14f19952f8320d747c2b8e4797f9e6.png" alt="RB Brand Real Estate" onerror="this.replaceWith(Object.assign(document.createElement('b'),{className:'wm',innerHTML:'RB <i></i> BRAND'}))"><span class="pill">Verkopersaanbieding</span></div>
+  <div class="cv-top light-logo"><b class="wm">RB <i></i> BRAND</b><span class="pill">Verkopersaanbieding</span></div>
   <div class="cv-body">
     <span class="kick light">Spesiaal voorberei vir</span>
     <div class="who" data-filename>[Verkoper se naam]</div>
@@ -787,6 +801,7 @@ if (saveBtn) saveBtn.onclick = () => {
   const wasEditing = editing; setEditing(false);
   const doc = document.documentElement.cloneNode(true);
   doc.setAttribute('data-client', '');
+  doc.classList.remove('js'); // the saved file starts readable; its own script turns book mode back on
   doc.removeAttribute('style');
   doc.querySelector('#book').replaceWith(cleanHTML(book));
   doc.querySelector('#intro').classList.remove('gone');

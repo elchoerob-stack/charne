@@ -11,9 +11,9 @@ no internet needed (except to open WhatsApp).
 
 1. Save `Charne-Client-Studio.html` to the Desktop (or Documents).
 2. Double-click it. It opens in Chrome or Edge.
-3. The first time, it asks for her details: WhatsApp number, photo, FFC number,
+3. The first time, it asks for Charné's details: WhatsApp number, photo, FFC number,
    bio. Fill them in once. The WhatsApp number is what makes the clients'
-   "Let's launch" and wish-list buttons reach her.
+   "Let's launch" and wish-list buttons reach Charné.
 
 Clients are saved in that browser on that computer. Always open the studio in
 the same browser. **My details → Download a backup** saves everything to one
@@ -24,11 +24,11 @@ file, which **Restore from a backup** brings back, on any computer.
 | | Pages | For |
 |---|---|---|
 | **Listing Presentation** | 12 | The valuation appointment. Their home on the cover, thank-you note, the home, comparable sales, pricing with a chart, why the first weeks count, marketing plan, dated launch plan, what they'll walk away with, offer-to-transfer steps, the documents needed, and a "Let's launch" close. |
-| **Buyer Guide** | 9 | New buyers. Welcome, buying step by step, a live repayment calculator, a transfer-cost calculator (SARS transfer duty), suburb guides, a wish list that goes to her WhatsApp, a viewing checklist, and next steps. |
+| **Buyer Guide** | 9 | New buyers. Welcome, buying step by step, a live repayment calculator, a transfer-cost calculator (SARS transfer duty), suburb guides, a wish list that goes to Charné's WhatsApp, a viewing checklist, and next steps. |
 
 Each one can be:
 
-- **Presented** full screen on her laptop (arrow keys, Esc to finish).
+- **Presented** full screen on the laptop (arrow keys, Esc to finish).
 - **Saved as a PDF** (A4 landscape, one page per sheet).
 - **Sent to the client**: a copy with only that client's details, which opens on
   any phone or computer. The calculators and wish list work in it.
@@ -50,7 +50,7 @@ The same run-sheet is inside the app under **How to demo**.
 7. **Present.** Arrow keys through the 12 pages.
 8. **Send to client.** Download their copy, open WhatsApp, drop the file in.
 9. **Buyer Guide** (2 minutes). Budget and three areas. On page 4, change the
-   price live. On page 7, the wish list goes to her WhatsApp.
+   price live. On page 7, the wish list goes to Charné's WhatsApp.
 
 Before the demo: fill in My details, have one house photo on the desktop
 (iPhone photos must be JPG), do a dry run, and use **See an example** as a

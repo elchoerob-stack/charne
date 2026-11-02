@@ -7,3 +7,4 @@ pydantic>=2.7
 python-dotenv>=1.0
 pytest>=8
 pytest-asyncio>=0.23
+tzdata>=2024.1          # New York time zone data for killzones (needed on Windows)

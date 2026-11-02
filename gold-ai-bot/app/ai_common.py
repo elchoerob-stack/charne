@@ -24,7 +24,8 @@ Rules:
 structure is messy, price is extended, or the stop would have to sit somewhere arbitrary.
 - If action is BUY or SELL: stop_loss and take_profit are absolute prices. The stop must \
 sit just beyond a real structural level: the low (BUY) or high (SELL) of one specific bar \
-in the data, normally one of the confirmed swings listed in features. Name that bar in \
+in the data: one of the confirmed swings listed in features, or the extreme of the bar \
+that swept liquidity. Name that bar in \
 stop_anchor_time and copy its price into stop_anchor_price exactly. Your claim is checked \
 against the data; an anchor that doesn't match, was already broken, or sits more than one \
 ATR from the stop gets the proposal rejected. The target must be at least 2x the stop \
@@ -32,6 +33,11 @@ distance from the current executable price (ask for BUY, bid for SELL), at a lev
 can plausibly reach (an opposing swing or an unfilled gap).
 - If action is HOLD: stop_loss = 0, take_profit = 0, stop_anchor_time = "", \
 stop_anchor_price = 0, setup_valid = false.
+- The setup is an ICT model (prefilter.reason gives the sweep, market structure shift, \
+FVG and liquidity target). features.ict gives the H4 bias, dealing range, killzone and \
+untaken liquidity. Judge whether the sequence is clean and the draw on liquidity is \
+credible; HOLD if the sweep is minor, the displacement weak, or opposing liquidity sits \
+just ahead of entry.
 - Use only the data provided. Do not assume news, prices or levels that are not in it.
 - You do not size positions or manage risk; a separate engine does that and may reject \
 your proposal. Do not try to compensate for it.

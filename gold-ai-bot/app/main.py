@@ -227,6 +227,9 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--rate", type=float, default=17.5, help="quote->account rate, e.g. USDZAR")
     rp.add_argument("--min-units", type=float, default=1.0)
     rp.add_argument("--units-per-lot", type=float, default=100.0)
+    rp.add_argument("--export-shadow", type=Path, default=None,
+                    help="write the ICT setup's mechanical results (R) for cbot-gate")
+    rp.add_argument("--strategy", default="ict_2022")
     rep = sub.add_parser("report")
     rep.add_argument("--all", action="store_true", help="include earlier test periods")
     ex = sub.add_parser("export-trades")
@@ -263,10 +266,16 @@ def main(argv: list[str] | None = None) -> int:
         spec = SymbolSpec(symbol="XAUUSD", digits=2, quote_currency="USD",
                           units_per_lot=a.units_per_lot, min_units=a.min_units,
                           max_units=a.units_per_lot * 50, step_units=a.min_units)
+        rj = Journal(":memory:")
         out = asyncio.run(replay(load_bars(a.csv), spec, balance=a.balance, spread=a.spread,
-                                 quote_to_account=a.rate, journal=Journal(":memory:")))
+                                 quote_to_account=a.rate, journal=rj))
         print("Stages:", out["stages"])
         print(report_text(out["metrics"]))
+        if a.export_shadow:
+            n = export_shadow(ShadowBook(rj), a.export_shadow, a.strategy, "baseline", None)
+            print(f"\n{n} {a.strategy} trades (R) written to {a.export_shadow}. Gate them with:\n"
+                  f"  python ../skills/cbot-gate/scripts/gate.py --oos {a.export_shadow} "
+                  f"--balance 100")
         return 0
     j = Journal(s.db_path)
     fp = None if getattr(a, "all", False) else current_fp(s, j)

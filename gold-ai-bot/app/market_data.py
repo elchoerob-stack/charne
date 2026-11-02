@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 
 from .broker import Broker
 from .models import TIMEFRAME_MINUTES, Candle, MarketSnapshot, Quote
+from . import ict
+from .strategy import ICT
 from .structure import fair_value_gaps, swings
 
 M15_BARS = 96   # one day
@@ -100,6 +102,8 @@ def features(m15: list[Candle], h1: list[Candle], q: Quote) -> dict:
         "swings_h1": [x.as_list() for x in swings(h1)[-8:]],
         "open_fvgs_m15": [[g.time, g.direction, g.bottom, g.top]
                           for g in fair_value_gaps(m15)[-4:]],
+        # H4 bias, dealing range, killzone, untaken PDH/PDL/Asia/H1 swing levels
+        "ict": ict.summary(m15, h1, ICT.killzones_ny),
         "bid": q.bid,
         "ask": q.ask,
     }

@@ -31,6 +31,16 @@ class DisagreeingAgent(RuleFollowerAgent):
 SERIES = bars(3000, drift=0.12, vol=1.6, seed=11)
 
 
+@pytest.fixture(autouse=True)
+def plumbing_setup(monkeypatch):
+    """These tests exercise the pipeline, not the strategy. A random walk has
+    almost no ICT structure (see test_ict.py), so the simple breakout setup is
+    made live here to generate enough candidates."""
+    from app import strategy
+    monkeypatch.setitem(strategy.STRATEGY_MODES, "trend_breakout", "live")
+    monkeypatch.setitem(strategy.STRATEGY_MODES, "ict_2022", "shadow")
+
+
 @pytest.mark.asyncio
 async def test_replay_trades_and_never_breaks_a_rule():
     j = Journal(":memory:")

@@ -25,6 +25,7 @@ def components(openai_model: str, anthropic_model: str,
     return {
         "policy": dataclasses.asdict(policy),
         "strategy_modes": strategy.STRATEGY_MODES,
+        "ict_rules": dataclasses.asdict(strategy.ICT),
         "strategy_constants": {k: getattr(strategy, k) for k in (
             "SESSION_UTC", "FRIDAY_CUTOFF_UTC", "MAX_SPREAD_TO_ATR", "BASELINE_RR",
             "STOP_BUFFER_ATR", "MAX_STOP_ATR")},

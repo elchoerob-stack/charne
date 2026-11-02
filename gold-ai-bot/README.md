@@ -196,6 +196,55 @@ Every cycle writes `data/health.json`. Schedule `python -m app.main health`
 every 15 minutes in Windows Task Scheduler. It exits 1 and sends a phone alert
 if the bot has stalled, which the bot can't report about itself.
 
+## The strategy: ICT model (`ict_2022`, live on demo)
+
+`strategy.py` holds the rules as one frozen `IctRules` block. Every field is
+part of the test-period fingerprint. The mechanics (New York time, H4 bias,
+liquidity pools) are in `ict.py`. For a BUY (SELL mirrors it):
+
+| # | Rule | Default |
+|---|---|---|
+| 1 | **H4 bias** from structure: the last H4 close beyond a confirmed swing was above a swing high. H4 bars are built from H1 on New York 17:00 blocks | required |
+| 2 | **Discount**: entry below 50% of the H4 dealing range (premium for SELL) | required |
+| 3 | **Killzone**: decision bar closes in London (02:00–05:00 NY) or NY AM (07:00–10:00 NY), DST-aware | both |
+| 4 | **Liquidity sweep**: a bar trades below an untaken PDL, Asian low (20:00–24:00 NY), H1 swing low or confirmed M15 swing low, and that sweep low is still the lowest point since | within 24 bars |
+| 5 | **Market structure shift**: a close above the last confirmed M15 swing high formed before the sweep | within 8 bars of the sweep |
+| 6 | **Displacement**: the MSS bar's body is at least 1.0 × M15 ATR | 1.0 ATR |
+| 7 | **FVG**: the MSS leaves a three-bar gap of at least 0.15 × ATR | 0.15 ATR |
+| 8 | **Entry**: the bar that just closed is the *first* to return into the FVG, and didn't close through it | within 12 bars of the MSS |
+| 9 | **Stop**: 0.1 ATR beyond the sweep low; rejected if wider than 3 ATR | |
+| 10 | **Target**: the nearest *untaken* buy-side liquidity (PDH, Asian high, H1/M15 swing high) at least 2R away. No such level, no trade | ≥ 2R, ≤ 8 H1 ATR |
+
+The models also get the H4 bias, dealing range, killzone and untaken
+liquidity with every snapshot. The evidence check accepts the sweep bar as a
+stop anchor.
+
+The tests use a hand-built textbook setup and check that:
+- it fires on exactly one bar, the first return into the FVG
+- the mirror-image SELL works
+- each rule can veto the trade on its own
+- killzones follow New York daylight saving
+- the bias and premium/discount filters work, and the candidate passes the
+  evidence check
+
+`trend_breakout` and `liquidity_sweep` (sweep only, no MSS or FVG) now run in
+shadow mode as comparisons. The report shows whether the full ICT sequence
+beats a bare sweep.
+
+**Backtest it on your own data before trusting it.** Export XAUUSD M15
+history from cTrader as `time,open,high,low,close`, at least several months:
+
+```bash
+python -m app.main replay xauusd_m15.csv --balance 200000 --export-shadow ict.csv
+python ../skills/cbot-gate/scripts/gate.py --oos ict.csv --balance 100
+```
+
+This scores the mechanical ICT trades in R through cbot-gate. On random-walk
+data the full rule set fired 0 times in 7,500 bars, so expect few trades on
+real data too. That's how strict it is, not a bug. If it's too rare, change
+one rule at a time on in-sample data, then gate the result on a period it
+hasn't seen.
+
 ## Is the AI worth it? Shadow evidence
 
 `report` breaks shadow results down by setup, measured in R so the account

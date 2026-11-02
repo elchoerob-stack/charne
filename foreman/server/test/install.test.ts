@@ -73,11 +73,11 @@ test("a second run of the same version does not reinstall", () => {
 test("an update replaces the program but never the data", () => {
   const l = layout(tmp());
   ensureInstalled(l, payload("1.0.0", "old"), "1.0.0");
-  fs.writeFileSync(path.join(l.data, "cms-agent.db"), "Jacques's tasks");
+  fs.writeFileSync(path.join(l.data, "foreman.db"), "Jacques's tasks");
   ensureInstalled(l, payload("1.1.0", "new"), "1.1.0");
   assert.equal(installedVersion(l), "1.1.0");
   assert.match(fs.readFileSync(path.join(versionDir(l, "1.1.0"), "server.cjs"), "utf8"), /new/);
-  assert.equal(fs.readFileSync(path.join(l.data, "cms-agent.db"), "utf8"), "Jacques's tasks");
+  assert.equal(fs.readFileSync(path.join(l.data, "foreman.db"), "utf8"), "Jacques's tasks");
 });
 
 test("a payload that is not Foreman is refused, leaving the old version in place", () => {

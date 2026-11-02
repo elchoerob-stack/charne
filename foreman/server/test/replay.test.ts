@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-process.env.CMS_AGENT_DB = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "foreman-replay-")), "t.db");
+process.env.FOREMAN_DB = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "foreman-replay-")), "t.db");
 
 const { compileTask } = await import("../src/tasks/compile.js");
 const { executeTask, browserLaunchOptions, loadChromium } = await import("../src/tasks/runner.js");

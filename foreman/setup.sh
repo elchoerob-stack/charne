@@ -19,7 +19,7 @@ ok "node $(node --version), git $(git --version | cut -d' ' -f3)"
 
 step "2/6 Code"
 if [[ -d "$DIR/.git" ]]; then git -C "$DIR" fetch -q origin "$BRANCH"; git -C "$DIR" checkout -q "$BRANCH"; git -C "$DIR" pull -q origin "$BRANCH"; ok "Updated $DIR"; else git clone -q --branch "$BRANCH" https://github.com/elchoerob-stack/charne.git "$DIR"; ok "Cloned to $DIR"; fi
-SERVER="$DIR/cms-agent/server"
+SERVER="$DIR/foreman/server"
 
 step "3/6 Dependencies and build"
 ( cd "$SERVER" && npm install --no-audit --no-fund --loglevel=error && npm run build --silent )
@@ -65,4 +65,4 @@ else warn "Skipped autostart"; fi
 step "6/6 Check"
 for i in $(seq 1 20); do curl -sf "http://localhost:$PORT/api/health" >/dev/null 2>&1 && break || sleep 0.5; done
 if curl -sf "http://localhost:$PORT/api/health" >/dev/null 2>&1; then ok "Foreman is up: http://localhost:$PORT"; else warn "Not reachable yet; start it with: cd $SERVER && node dist/index.js"; fi
-printf '\nDone.\n  Computer: open http://localhost:%s and click Install app\n  Phone   : http://%s:%s (same Wi-Fi), Add to Home screen, token %s\n  Recorder: load %s/cms-agent/recorder-extension unpacked in Chrome\n' "$PORT" "$LAN_IP" "$PORT" "$TOKEN" "$DIR"
+printf '\nDone.\n  Computer: open http://localhost:%s and click Install app\n  Phone   : http://%s:%s (same Wi-Fi), Add to Home screen, token %s\n  Recorder: load %s/foreman/recorder-extension unpacked in Chrome\n' "$PORT" "$LAN_IP" "$PORT" "$TOKEN" "$DIR"

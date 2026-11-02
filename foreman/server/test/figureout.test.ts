@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "foreman-figure-"));
-process.env.CMS_AGENT_DB = path.join(tmp, "t.db");
+process.env.FOREMAN_DB = path.join(tmp, "t.db");
 process.env.WORKSPACE_DIR = path.join(tmp, "workspace");
 
 const { compileTask } = await import("../src/tasks/compile.js");

@@ -1,4 +1,4 @@
-# docker compose up -d   (from the cms-agent directory; put secrets in server/.env)
+# docker compose up -d   (from the foreman directory; put secrets in server/.env)
 services:
   foreman:
     build:
@@ -7,7 +7,7 @@ services:
     ports: ["8787:8787"]
     env_file: server/.env
     environment:
-      - CMS_AGENT_DB=/data/cms-agent.db
+      - FOREMAN_DB=/data/foreman.db
     volumes:
       - foreman-data:/data
     restart: unless-stopped

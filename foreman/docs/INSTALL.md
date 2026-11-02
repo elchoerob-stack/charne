@@ -158,7 +158,7 @@ previous version is kept in `versions\` in case you want to go back to it.
 You do not need this. It is here for when you want to change the code.
 
 ```powershell
-cd $HOME\Documents\charne; git pull; cd cms-agent\server; npm install; npm run dev
+cd $HOME\Documents\charne; git pull; cd foreman\server; npm install; npm run dev
 ```
 
 Needs Node 22.13 or newer. `npm test` runs the test suite; `npm run payload`,

@@ -10,7 +10,7 @@
 
   Or straight from GitHub without cloning first:
 
-    irm https://raw.githubusercontent.com/elchoerob-stack/charne/claude/grokbot-cms-agent-5vkq13/cms-agent/setup.ps1 | iex
+    irm https://raw.githubusercontent.com/elchoerob-stack/charne/claude/grokbot-cms-agent-5vkq13/foreman/setup.ps1 | iex
 
   What it does (all idempotent, safe to re-run):
     1. Installs Node.js LTS and Git with winget if they are missing
@@ -69,7 +69,7 @@ if (Test-Path (Join-Path $InstallDir ".git")) {
   git clone --quiet --branch $Branch https://github.com/elchoerob-stack/charne.git $InstallDir
   Ok "Cloned to $InstallDir"
 }
-$serverDir = Join-Path $InstallDir "cms-agent\server"
+$serverDir = Join-Path $InstallDir "foreman\server"
 
 Step "3/7 Dependencies and build"
 Push-Location $serverDir
@@ -139,6 +139,6 @@ Write-Host "Done." -ForegroundColor White
 Write-Host "  Computer app : open http://localhost:$Port in Chrome/Edge and click 'Install app'"
 Write-Host "  Phone        : same Wi-Fi, open http://$lanIp`:$Port in Chrome, Add to Home screen"
 Write-Host "                 token when asked: $token"
-Write-Host "  Recorder     : chrome://extensions -> Developer mode -> Load unpacked -> $InstallDir\cms-agent\recorder-extension"
+Write-Host "  Recorder     : chrome://extensions -> Developer mode -> Load unpacked -> $InstallDir\foreman\recorder-extension"
 Write-Host "  Settings     : $envPath"
-Write-Host "  Guide        : $InstallDir\cms-agent\docs\USER_GUIDE.md"
+Write-Host "  Guide        : $InstallDir\foreman\docs\USER_GUIDE.md"

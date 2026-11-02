@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-process.env.CMS_AGENT_DB = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "foreman-")), "t.db");
+process.env.FOREMAN_DB = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "foreman-")), "t.db");
 const { db, newId, now } = await import("../src/db.js");
 const { buildPacket, sendTicket } = await import("../src/agent/ticketing.js");
 const { learnedPlaybooks } = await import("../src/agent/tools.js");

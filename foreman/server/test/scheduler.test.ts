@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-process.env.CMS_AGENT_DB = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "foreman-sched-")), "t.db");
+process.env.FOREMAN_DB = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "foreman-sched-")), "t.db");
 const { cronMatches, nextRun, partsIn, instantFor, tick, validateCron, describeSchedule } = await import("../src/tasks/scheduler.js");
 import type { Task } from "../src/tasks/types.js";
 

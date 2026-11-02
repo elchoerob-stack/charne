@@ -6,7 +6,7 @@ import path from "node:path";
  *
  * Foreman runs in three shapes and each puts its files somewhere different:
  *
- *   from source   `npm run dev` in server/, assets two levels up in cms-agent/
+ *   from source   `npm run dev` in server/, assets two levels up in foreman/
  *   built         `node dist/index.js`, same tree, one level deeper
  *   packaged      Foreman.exe unpacked a payload into %LOCALAPPDATA%\Foreman
  *

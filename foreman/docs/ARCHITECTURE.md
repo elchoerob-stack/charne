@@ -1,7 +1,7 @@
 # Architecture
 
 ```
-cms-agent/
+foreman/
   web/index.html            Console: chat (SSE), thoughts panel, activity feed, modes, voice, screenshots,
                             sidebar for health / recordings / cases / memory / playbooks
   recorder-extension/       Chrome MV3 extension: capture, mask, screenshot, upload
@@ -53,7 +53,7 @@ cms-agent/
 
 ## Storage
 
-SQLite (`better-sqlite3`, WAL) at `CMS_AGENT_DB`. Tables: sessions, messages,
+SQLite (`better-sqlite3`, WAL) at `FOREMAN_DB`. Tables: sessions, messages,
 memory, recordings, cases, learned_playbooks, followups, files, reports,
 tasks, task_runs, agents, agent_runs.
 Uploaded workbooks and generated report files live next to the database under

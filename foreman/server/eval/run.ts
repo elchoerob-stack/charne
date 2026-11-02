@@ -62,7 +62,7 @@ interface AgentResult { id: string; calledDiagnose: boolean; mentionedPlaybook: 
 const agentResults: AgentResult[] = [];
 
 if (agentMode) {
-  process.env.CMS_AGENT_DB = process.env.CMS_AGENT_DB ?? path.join(here, "results", "eval.db");
+  process.env.FOREMAN_DB = process.env.FOREMAN_DB ?? path.join(here, "results", "eval.db");
   const { runTurn } = await import("../src/agent/agent.js");
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic();

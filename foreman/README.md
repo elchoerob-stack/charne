@@ -79,12 +79,12 @@ it, generates an access code, fetches the browser it drives and opens the
 console. Every run after that takes seconds. See `docs/INSTALL.md`, and
 `docs/PACKAGING.md` for how it is built.
 
-Mac/Linux: `bash cms-agent/setup.sh`. Docker: `docker compose up -d` in `cms-agent/`.
+Mac/Linux: `bash foreman/setup.sh`. Docker: `docker compose up -d` in `foreman/`.
 
 From the source, for working on it:
 
 ```bash
-cd cms-agent/server
+cd foreman/server
 cp .env.example .env            # add ANTHROPIC_API_KEY (or use `ant auth login`)
 npm install
 npm run dev                     # http://localhost:8787

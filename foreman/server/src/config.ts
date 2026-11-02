@@ -1,4 +1,5 @@
 import "dotenv/config";
+import fs from "node:fs";
 import path from "node:path";
 import { dataDir } from "./paths.js";
 
@@ -7,12 +8,20 @@ function flag(value: string | undefined, fallback: boolean): boolean {
   return !["0", "off", "false", "no"].includes(value.toLowerCase());
 }
 
+/** Existing installs keep their data: fall back to the pre-rename file and variables. */
+function defaultDbPath(): string {
+  const next = path.join(dataDir(), "foreman.db");
+  const legacy = path.join(dataDir(), "cms-agent.db");
+  return !fs.existsSync(next) && fs.existsSync(legacy) ? legacy : next;
+}
+const token = process.env.FOREMAN_TOKEN || process.env.CMS_AGENT_TOKEN || undefined;
+
 export const config = {
   port: Number(process.env.PORT ?? 8787),
   model: process.env.ANTHROPIC_MODEL ?? "claude-opus-5",
-  dbPath: process.env.CMS_AGENT_DB ?? path.join(dataDir(), "cms-agent.db"),
+  dbPath: process.env.FOREMAN_DB ?? process.env.CMS_AGENT_DB ?? defaultDbPath(),
   webSearch: flag(process.env.WEB_SEARCH, true),
-  token: process.env.CMS_AGENT_TOKEN || undefined,
+  token,
   /**
    * Which interfaces to listen on.
    *
@@ -21,7 +30,7 @@ export const config = {
    * no code set it stays on loopback, because an open Foreman on dealer Wi-Fi
    * would let anyone on that network drive a signed-in browser.
    */
-  bindHost: process.env.FOREMAN_BIND || (process.env.CMS_AGENT_TOKEN ? "0.0.0.0" : "127.0.0.1"),
+  bindHost: process.env.FOREMAN_BIND || (token ? "0.0.0.0" : "127.0.0.1"),
   evolveHealthUrl: process.env.EVOLVE_HEALTH_URL || undefined,
   infomediaHealthUrl: process.env.INFOMEDIA_HEALTH_URL || undefined,
   /** Hard ceiling on tool-use iterations per turn, per mode. */

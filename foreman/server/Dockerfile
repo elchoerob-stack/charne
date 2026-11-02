@@ -1,5 +1,5 @@
 # Foreman (CMS Agent) — container image for hosting on a NAS, a VPS, Railway, Render or Fly.
-# Build from the cms-agent directory:  docker build -f server/Dockerfile -t foreman .
+# Build from the foreman directory:  docker build -f server/Dockerfile -t foreman .
 FROM node:22-slim AS build
 WORKDIR /app/server
 COPY server/package*.json ./

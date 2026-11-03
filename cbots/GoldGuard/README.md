@@ -31,7 +31,7 @@ M15 gold cBot for cTrader. It has four setups, each tagged and scored separately
 | No trade log | Writes `Documents\cBotLogs\GoldGuardV3_*.csv` in the cbot-gate format, with Setup and R columns | Goes straight into `gate.py` |
 | — | Report on stop: PF, win %, avg R per setup, signals found vs traded, and the top reasons trades were skipped | Shows which setup carries the edge and why the bot doesn't trade |
 | — | Chart panel: day P/L vs halt, drawdown from peak, trades, loss streak, last skip | |
-| Fixed take-profit at the target | **Runner exit** (default): no TP at the target. At the target the stop locks 80% of it, then trails 0.6 ATR behind price | A move that keeps running is followed instead of cut off |
+| Fixed take-profit at the target | **Runner exit** (default): no TP at the target. At the target the stop locks 80% of it, then trails 0.6 ATR behind price. A broker-side backstop TP sits at 3× the target | A move that keeps running is followed instead of cut off |
 
 ### Exits: the runner
 
@@ -60,12 +60,14 @@ backtest question, so it is switchable:
 | Trail Past Target (runner) | on | Off = the v2 fixed take-profit at the target, for an A/B test |
 | Runner Lock at Target (share) | 0.8 | How much of the target is locked the moment it is reached |
 | Runner Trail (x ATR) | 0.6 | How close the trail follows. Smaller = tighter |
-| Runner Hard TP (x target, 0 = none) | 0 | Optional far take-profit on the broker side, e.g. 3 = three times the target |
+| Runner Hard TP (x target, 0 = none) | 3 | Far take-profit held by the broker at 3× the target distance (a 2R target gives a 6R ceiling). 0 = no ceiling |
 
-With no broker-side take-profit, the trailing is done by the bot. If cTrader closes
-or the laptop sleeps, the stop stays where it was last moved (break-even or the
-locked level) until the bot is back. It does not follow price in the meantime. Keep
-cTrader running, or set *Runner Hard TP* to a far ceiling as a backstop.
+The trailing is done by the bot. If cTrader closes or the laptop sleeps, the stop
+stays where it was last moved (break-even or the locked level) until the bot is
+back. It does not follow price in the meantime. The backstop take-profit at 3× the
+target is held by the broker, so a big spike while the bot is offline still gets
+banked. With the bot running, it only closes a trade that has gone 3× past its
+expected profit.
 
 The end-of-run report adds a line comparing exits with the targets:
 `Runners: N reached target | exit avg xR vs target avg yR | best zR | k exited below target`.

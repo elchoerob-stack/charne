@@ -188,7 +188,7 @@ namespace cAlgo.Robots
         [Parameter("Runner Trail (x ATR)", DefaultValue = 0.6, MinValue = 0.2, MaxValue = 3, Step = 0.1, Group = "Trade management")]
         public double RunnerTrailAtr { get; set; }
 
-        [Parameter("Runner Hard TP (x target, 0 = none)", DefaultValue = 0, MinValue = 0, MaxValue = 10, Step = 0.5, Group = "Trade management")]
+        [Parameter("Runner Hard TP (x target, 0 = none)", DefaultValue = 3, MinValue = 0, MaxValue = 10, Step = 0.5, Group = "Trade management")]
         public double RunnerHardTp { get; set; }
 
         [Parameter("Use Session Filter", DefaultValue = true, Group = "Sessions (UTC)")]
@@ -537,7 +537,8 @@ namespace cAlgo.Robots
                 + riskMoney.ToString("F2", Inv) + "|" + tpDist.ToString("G10", Inv);
             double stopPips = stopDist / Symbol.PipSize;
             // Runner mode: no take-profit at the target (the bot locks and trails from there),
-            // only an optional far ceiling. Otherwise the fixed take-profit at the target.
+            // only a far broker-side ceiling (default 3x the target; 0 = none).
+            // Otherwise the fixed take-profit at the target.
             double? tpPips = !RunnerEnabled ? tpDist / Symbol.PipSize
                 : RunnerHardTp > 0 ? tpDist * RunnerHardTp / Symbol.PipSize : (double?)null;
 

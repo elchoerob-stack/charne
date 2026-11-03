@@ -176,6 +176,21 @@ namespace cAlgo.Robots
         [Parameter("Trail ATR Multiple", DefaultValue = 1.5, MinValue = 0.5, MaxValue = 5, Step = 0.1, Group = "Trade management")]
         public double TrailAtrMult { get; set; }
 
+        // Runner exit: no take-profit at the target. When price reaches it, the stop jumps
+        // to lock most of the target and then trails close behind price, so a move that keeps
+        // going is followed instead of cut off. Off = the v2 fixed take-profit at the target.
+        [Parameter("Trail Past Target (runner)", DefaultValue = true, Group = "Trade management")]
+        public bool RunnerEnabled { get; set; }
+
+        [Parameter("Runner Lock at Target (share)", DefaultValue = 0.8, MinValue = 0, MaxValue = 1, Step = 0.05, Group = "Trade management")]
+        public double RunnerLock { get; set; }
+
+        [Parameter("Runner Trail (x ATR)", DefaultValue = 0.6, MinValue = 0.2, MaxValue = 3, Step = 0.1, Group = "Trade management")]
+        public double RunnerTrailAtr { get; set; }
+
+        [Parameter("Runner Hard TP (x target, 0 = none)", DefaultValue = 0, MinValue = 0, MaxValue = 10, Step = 0.5, Group = "Trade management")]
+        public double RunnerHardTp { get; set; }
+
         [Parameter("Use Session Filter", DefaultValue = true, Group = "Sessions (UTC)")]
         public bool UseSessionFilter { get; set; }
 
@@ -202,6 +217,7 @@ namespace cAlgo.Robots
             public string Setup;
             public double StopDist;   // initial stop distance in price = 1R
             public double RiskMoney;  // account currency at risk when opened
+            public double TargetDist = double.NaN;  // expected-profit distance in price
         }
 
         private sealed class Candidate
@@ -245,6 +261,9 @@ namespace cAlgo.Robots
         private readonly Dictionary<string, int> _signals = new Dictionary<string, int>();
         private readonly Dictionary<string, int> _taken = new Dictionary<string, int>();
         private readonly Dictionary<string, int> _skips = new Dictionary<string, int>();
+        private ExitRules _exitRules;
+        private readonly HashSet<int> _runners = new HashSet<int>();
+        private readonly List<(double ExitR, double TargetR)> _runnerResults = new List<(double ExitR, double TargetR)>();
 
         // -----------------------------------------------------------------------------
         //  Lifecycle
@@ -287,6 +306,12 @@ namespace cAlgo.Robots
             _rsi = Indicators.RelativeStrengthIndex(Bars.ClosePrices, RsiPeriod);
             _atr = Indicators.AverageTrueRange(AtrPeriod, MovingAverageType.Exponential);
             _atrBase = Indicators.SimpleMovingAverage(_atr.Result, AtrBaseline);
+            _exitRules = new ExitRules
+            {
+                BreakEvenAtR = BreakEvenAtR, BreakEvenLockR = BreakEvenLockR,
+                Trail = TrailEnabled, TrailStartR = TrailStartR, TrailAtrMult = TrailAtrMult,
+                Runner = RunnerEnabled, RunnerLock = RunnerLock, RunnerTrailAtr = RunnerTrailAtr,
+            };
 
             LoadState();
             AdoptOpenPositions();
@@ -508,9 +533,13 @@ namespace cAlgo.Robots
             }
 
             var type = c.Buy ? TradeType.Buy : TradeType.Sell;
-            string comment = CommentTag + "|" + c.Setup + "|" + stopDist.ToString("G10", Inv) + "|" + riskMoney.ToString("F2", Inv);
+            string comment = CommentTag + "|" + c.Setup + "|" + stopDist.ToString("G10", Inv) + "|"
+                + riskMoney.ToString("F2", Inv) + "|" + tpDist.ToString("G10", Inv);
             double stopPips = stopDist / Symbol.PipSize;
-            double tpPips = tpDist / Symbol.PipSize;
+            // Runner mode: no take-profit at the target (the bot locks and trails from there),
+            // only an optional far ceiling. Otherwise the fixed take-profit at the target.
+            double? tpPips = !RunnerEnabled ? tpDist / Symbol.PipSize
+                : RunnerHardTp > 0 ? tpDist * RunnerHardTp / Symbol.PipSize : (double?)null;
 
             TradeResult result = ExecuteMarketOrder(type, SymbolName, volume, Label, stopPips, tpPips, comment);
             if (!result.IsSuccessful)
@@ -529,12 +558,12 @@ namespace cAlgo.Robots
 
             _tradesToday++;
             _lastEntryBarTime = Bars.OpenTimes.LastValue;
-            if (p != null) _meta[p.Id] = new Meta { Setup = c.Setup, StopDist = stopDist, RiskMoney = riskMoney };
+            if (p != null) _meta[p.Id] = new Meta { Setup = c.Setup, StopDist = stopDist, RiskMoney = riskMoney, TargetDist = tpDist };
             Count(_taken, c.Setup);
             SaveState();
-            Print("OPEN {0} {1} {2} units | stop {3} ({4:F2} ATR) | target {5} ({6:F2}R) | risk {7} {8}",
+            Print("OPEN {0} {1} {2} units | stop {3} ({4:F2} ATR) | target {5} ({6:F2}R){7} | risk {8} {9}",
                 c.Setup, type, volume, stopDist.ToString("F2", Inv), stopDist / atr, tpDist.ToString("F2", Inv),
-                tpDist / stopDist, riskMoney.ToString("F2", Inv), Account.Asset.Name);
+                tpDist / stopDist, RunnerEnabled ? ", then trail" : " fixed TP", riskMoney.ToString("F2", Inv), Account.Asset.Name);
         }
 
         // Returns null when the trade may go, otherwise the reason it is skipped.
@@ -685,19 +714,11 @@ namespace cAlgo.Robots
 
                 bool buy = p.TradeType == TradeType.Buy;
                 double px = buy ? Symbol.Bid : Symbol.Ask;
-                double gainR = (buy ? px - p.EntryPrice : p.EntryPrice - px) / m.StopDist;
-                double sl = p.StopLoss.Value, want = sl;
-
-                if (gainR >= BreakEvenAtR)
-                {
-                    double be = p.EntryPrice + (buy ? 1 : -1) * BreakEvenLockR * m.StopDist;
-                    want = buy ? Math.Max(want, be) : Math.Min(want, be);
-                }
-                if (TrailEnabled && gainR >= TrailStartR)
-                {
-                    double trail = buy ? px - TrailAtrMult * atr : px + TrailAtrMult * atr;
-                    want = buy ? Math.Max(want, trail) : Math.Min(want, trail);
-                }
+                double sl = p.StopLoss.Value;
+                double want = ExitMath.DesiredStop(buy, p.EntryPrice, px, sl, m.StopDist, m.TargetDist, atr, _exitRules, out bool atTarget);
+                if (atTarget && _runners.Add(p.Id))
+                    Print("RUNNER {0} {1}: target reached at {2}. Locking {3}% of it, then trailing {4} ATR behind price.",
+                        m.Setup, p.Id, px.ToString("F2", Inv), (RunnerLock * 100).ToString("F0", Inv), RunnerTrailAtr.ToString(Inv));
 
                 // Move only in steps of 0.05 ATR, so a trend doesn't send a modify request on every tick.
                 double step = Math.Max(Symbol.TickSize, 0.05 * atr);
@@ -724,6 +745,8 @@ namespace cAlgo.Robots
             bool win = double.IsNaN(r) ? p.NetProfit > 0 : r >= ScratchBandR;
             if (loss) _lossStreak++;
             else if (win) _lossStreak = 0;
+            if (_runners.Remove(p.Id) && m != null && !double.IsNaN(r) && m.TargetDist > 0)
+                _runnerResults.Add((r, m.TargetDist / m.StopDist));
             SaveState();
 
             Print("CLOSED {0} {1} ({2}): net {3} = {4}R | loss streak {5}/{6}",
@@ -766,7 +789,10 @@ namespace cAlgo.Robots
         {
             if (_meta.TryGetValue(p.Id, out Meta m)) return m;
             m = ParseComment(p.Comment);
-            if (m != null) _meta[p.Id] = m;
+            if (m == null) return null;
+            // Older comment without a target: the fixed take-profit was the target.
+            if (double.IsNaN(m.TargetDist) && p.TakeProfit.HasValue) m.TargetDist = Math.Abs(p.TakeProfit.Value - p.EntryPrice);
+            _meta[p.Id] = m;
             return m;
         }
 
@@ -777,7 +803,9 @@ namespace cAlgo.Robots
             if (parts.Length < 4 || parts[0] != CommentTag) return null;
             if (!double.TryParse(parts[2], NumberStyles.Float, Inv, out double stop) || stop <= 0) return null;
             double.TryParse(parts[3], NumberStyles.Float, Inv, out double risk);
-            return new Meta { Setup = parts[1], StopDist = stop, RiskMoney = risk };
+            double target = double.NaN;
+            if (parts.Length >= 5 && double.TryParse(parts[4], NumberStyles.Float, Inv, out double t) && t > 0) target = t;
+            return new Meta { Setup = parts[1], StopDist = stop, RiskMoney = risk, TargetDist = target };
         }
 
         private Position[] BotPositions()
@@ -835,6 +863,8 @@ namespace cAlgo.Robots
             if (MaxStopAtr < AtrStopMult) return "Max Stop (x ATR) is below ATR Stop Multiple, so every trade would be rejected.";
             if (MinAtrRatio >= MaxAtrRatio) return "Min ATR / Baseline must be below Max ATR / Baseline.";
             if (!EnablePullbacks && !EnableBreakouts && !EnableGartley && !EnableAbcd) return "Every setup is switched off.";
+            if (RunnerEnabled && RunnerHardTp > 0 && RunnerHardTp < 1.5)
+                return "Runner Hard TP must be 0 (none) or at least 1.5x the target, or it would cut runners short.";
 
             _blackouts.Clear();
             if (string.IsNullOrWhiteSpace(BlackoutWindows)) return null;
@@ -1016,6 +1046,13 @@ namespace cAlgo.Robots
             }
             Print("Longest losing run: {0} trades", worst);
 
+            // Did trailing past the target beat closing at it? (this run's positions)
+            if (_runnerResults.Count > 0)
+                Print("Runners: {0} trades reached target and trailed on | exit avg {1}R vs target avg {2}R | best {3}R | {4} exited below target",
+                    _runnerResults.Count, _runnerResults.Average(x => x.ExitR).ToString("F2", Inv),
+                    _runnerResults.Average(x => x.TargetR).ToString("F2", Inv), _runnerResults.Max(x => x.ExitR).ToString("F2", Inv),
+                    _runnerResults.Count(x => x.ExitR < x.TargetR));
+
             foreach (string setup in _signals.Keys.OrderBy(k => k))
             {
                 _taken.TryGetValue(setup, out int taken);
@@ -1039,10 +1076,12 @@ namespace cAlgo.Robots
             {
                 List<HistoricalTrade> trades = BotHistory();
                 if (trades.Count == 0) return;
-                var sb = new StringBuilder("Closing Time,Entry Time,Symbol,Direction,Volume,Pips,Gross,Commissions,Swap,Net Profit,Balance,Setup,R\n");
+                var sb = new StringBuilder("Closing Time,Entry Time,Symbol,Direction,Volume,Pips,Gross,Commissions,Swap,Net Profit,Balance,Setup,R,Target R\n");
                 foreach (var t in trades)
                 {
                     double r = RMultiple(t, ParseComment);
+                    Meta tm = ParseComment(t.Comment);
+                    double targetR = tm != null && tm.TargetDist > 0 ? tm.TargetDist / tm.StopDist : double.NaN;
                     sb.AppendLine(string.Join(",",
                         t.ClosingTime.ToString("yyyy-MM-dd HH:mm:ss", Inv),
                         t.EntryTime.ToString("yyyy-MM-dd HH:mm:ss", Inv),
@@ -1050,7 +1089,8 @@ namespace cAlgo.Robots
                         t.Pips.ToString(Inv), t.GrossProfit.ToString(Inv),
                         t.Commissions.ToString(Inv), t.Swap.ToString(Inv),
                         t.NetProfit.ToString(Inv), t.Balance.ToString(Inv),
-                        SetupOf(t.Comment), double.IsNaN(r) ? "" : r.ToString("F3", Inv)));
+                        SetupOf(t.Comment), double.IsNaN(r) ? "" : r.ToString("F3", Inv),
+                        double.IsNaN(targetR) ? "" : targetR.ToString("F3", Inv)));
                 }
                 string mode = RunningMode == RunningMode.RealTime ? "demo" : "backtest";
                 string name = string.Format(Inv, "GoldGuardV3_{0}_m15_{1}_{2:yyyyMMdd_HHmmss}.csv",
@@ -1065,6 +1105,58 @@ namespace cAlgo.Robots
             {
                 Print("Trade log not written: {0}", ex.Message);
             }
+        }
+    }
+
+    // =====================================================================================
+    //  Exit maths. Plain C#, unit-tested outside cTrader (see tests/ExitTests.cs).
+    // =====================================================================================
+    public sealed class ExitRules
+    {
+        public double BreakEvenAtR, BreakEvenLockR;   // move to break-even (+lock) at this R
+        public bool Trail;
+        public double TrailStartR, TrailAtrMult;      // ATR trail before the target
+        public bool Runner;
+        public double RunnerLock, RunnerTrailAtr;     // at the target: lock a share, trail close
+    }
+
+    public static class ExitMath
+    {
+        // The stop a position should have right now. It is never looser than currentStop:
+        // a stop only ever moves in the trade's favour.
+        //   1. at BreakEvenAtR:        entry + BreakEvenLockR x R
+        //   2. from TrailStartR:       TrailAtrMult x ATR behind price
+        //   3. runner, once price has covered the target distance:
+        //        at least RunnerLock x target locked in, and
+        //        RunnerTrailAtr x ATR behind price from then on (the close trail)
+        // atTarget is true while price is at or beyond the target in runner mode.
+        public static double DesiredStop(bool buy, double entry, double price, double currentStop,
+            double stopDist, double targetDist, double atr, ExitRules r, out bool atTarget)
+        {
+            atTarget = false;
+            if (!(stopDist > 0)) return currentStop;
+            double s = buy ? 1 : -1;
+            double gain = s * (price - entry);
+            double gainR = gain / stopDist;
+            double want = currentStop;
+
+            if (gainR >= r.BreakEvenAtR)
+                want = Tighter(s, want, entry + s * r.BreakEvenLockR * stopDist);
+            if (r.Trail && gainR >= r.TrailStartR)
+                want = Tighter(s, want, price - s * r.TrailAtrMult * atr);
+            if (r.Runner && targetDist > 0 && gain >= targetDist)
+            {
+                atTarget = true;
+                want = Tighter(s, want, entry + s * r.RunnerLock * targetDist);
+                want = Tighter(s, want, price - s * r.RunnerTrailAtr * atr);
+            }
+            return want;
+        }
+
+        // The tighter of two stops: higher for a buy, lower for a sell.
+        private static double Tighter(double s, double current, double candidate)
+        {
+            return s * (candidate - current) > 0 ? candidate : current;
         }
     }
 

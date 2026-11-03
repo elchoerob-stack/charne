@@ -31,6 +31,44 @@ M15 gold cBot for cTrader. It has four setups, each tagged and scored separately
 | No trade log | Writes `Documents\cBotLogs\GoldGuardV3_*.csv` in the cbot-gate format, with Setup and R columns | Goes straight into `gate.py` |
 | — | Report on stop: PF, win %, avg R per setup, signals found vs traded, and the top reasons trades were skipped | Shows which setup carries the edge and why the bot doesn't trade |
 | — | Chart panel: day P/L vs halt, drawdown from peak, trades, loss streak, last skip | |
+| Fixed take-profit at the target | **Runner exit** (default): no TP at the target. At the target the stop locks 80% of it, then trails 0.6 ATR behind price | A move that keeps running is followed instead of cut off |
+
+### Exits: the runner
+
+The target (2R for PB/BO, the 0.618 retrace for GT/AB) is no longer a price the
+trade closes at. It is the point where the bot changes how it protects the profit:
+
+| Profit | What the stop does |
+|---|---|
+| Below 1R | Original stop |
+| 1R | Break-even + 0.1R |
+| 1.5R | Trails 1.5 ATR behind price |
+| **Target reached** | Jumps to lock **80% of the target**, then trails **0.6 ATR** behind price. Every tick it uses whichever of the two is tighter |
+| Beyond | Keeps following, only ever in your favour. It never loosens |
+
+Example (buy at 100, stop 90, target 120, ATR 4):
+- Price touches 120: the stop goes to 117.6.
+- Price runs to 130: the stop is at 127.6.
+- Price dips back to 128.5: the stop stays at 127.6.
+
+The cost: if price touches the target and turns straight back, you exit just below it,
+at about 1.7–1.8R instead of exactly 2R. Whether the runners pay for that is a
+backtest question, so it is switchable:
+
+| Setting | Default | |
+|---|---|---|
+| Trail Past Target (runner) | on | Off = the v2 fixed take-profit at the target, for an A/B test |
+| Runner Lock at Target (share) | 0.8 | How much of the target is locked the moment it is reached |
+| Runner Trail (x ATR) | 0.6 | How close the trail follows. Smaller = tighter |
+| Runner Hard TP (x target, 0 = none) | 0 | Optional far take-profit on the broker side, e.g. 3 = three times the target |
+
+With no broker-side take-profit, the trailing is done by the bot. If cTrader closes
+or the laptop sleeps, the stop stays where it was last moved (break-even or the
+locked level) until the bot is back. It does not follow price in the meantime. Keep
+cTrader running, or set *Runner Hard TP* to a far ceiling as a backstop.
+
+The end-of-run report adds a line comparing exits with the targets:
+`Runners: N reached target | exit avg xR vs target avg yR | best zR | k exited below target`.
 
 ### Risk constants (top of the file)
 
@@ -73,7 +111,8 @@ Times are UTC. SAST = UTC+2, so the session 07:00–20:00 UTC is 09:00–22:00 S
    - Harmonics: `Ratio Tolerance`, `D Zone (x ATR)`, `Harmonic Target`, `Min Swing Leg (x ATR)`
 
    Leave the filters at their defaults while you do this.
-5. **Back-test the chosen settings** on the in-sample window and on the unseen window after it. Then gate the results:
+5. **Runner vs fixed take-profit.** Run the same in-sample period twice: *Trail Past Target* on, then off. Keep the exit that wins on Profit Factor and avg R. Count it as one more variant.
+6. **Back-test the chosen settings** on the in-sample window and on the unseen window after it. Then gate the results:
 
    ```bash
    python3 skills/cbot-gate/scripts/gate.py --trades GoldGuardV3_XAUUSD_m15_backtest_....csv \
@@ -82,8 +121,8 @@ Times are UTC. SAST = UTC+2, so the session 07:00–20:00 UTC is 09:00–22:00 S
    ```
 
    For walk-forward folds, pass `--is f1_is.csv --oos f1_oos.csv --is f2_is.csv --oos f2_oos.csv ...` instead.
-6. **Read the report line "peak-drawdown halts".** Anything above 0 is a red flag, even if PF looks fine.
-7. **Only a gate PASS** earns a demo forward test with the same settings. Run it on a demo balance close to what you'd run live.
+7. **Read the report line "peak-drawdown halts".** Anything above 0 is a red flag, even if PF looks fine.
+8. **Only a gate PASS** earns a demo forward test with the same settings. Run it on a demo balance close to what you'd run live.
 
 ## Account size
 
@@ -111,4 +150,4 @@ Peak equity then restarts from current equity. There is deliberately no paramete
 |---|---|
 | `GoldGuard_XAUUSD_v3.cs` | The cBot. Paste this into cTrader |
 | `GoldGuard_XAUUSD_v2_Aggressive.cs` | The original, kept for comparison |
-| `tests/` | Compiles the bot against `cTrader.Automate` and runs 21 checks on the Gartley/ABCD logic: bull and bear, wrong ratios, failed patterns, no entry before a rejection candle. Run with `cd tests && dotnet run` |
+| `tests/` | Compiles the bot against `cTrader.Automate` (warnings as errors) and runs 36 checks. 21 cover the Gartley/ABCD logic: bull and bear, wrong ratios, failed patterns, no entry before a rejection candle. 15 cover the exits: break-even, trail, runner lock and trail, never loosening, sells, gaps. Run with `cd tests && dotnet run` |

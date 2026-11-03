@@ -2,9 +2,7 @@
 // Builds synthetic M15 paths and replays them bar by bar the way the robot's OnBar does:
 // scan swings -> match pattern -> check trigger.
 //
-//   cd cbots/GoldGuard/tests && dotnet run
-//
-// Exit code 0 when every test passes.
+// Run from Program.cs:  cd cbots/GoldGuard/tests && dotnet run
 
 using System;
 using System.Collections.Generic;
@@ -102,8 +100,9 @@ internal static class HarmonicTests
         return new Path(104).Leg(100, 6).Leg(110, 10).Leg(103.82, 7).Leg(108, 6).Leg(102.30, 8).Leg(103.5, 4);
     }
 
-    private static int Main()
+    internal static int Run()
     {
+        Console.WriteLine("-- Harmonic patterns --");
         // Swing prices are candle extremes, so each designed turning point carries the
         // 0.05 wick: X = 99.95, A = 110.05, B = 103.77, C = 108.05.
         const double W = 0.05;
@@ -176,7 +175,6 @@ internal static class HarmonicTests
             swings.Count == 2 && swings[1].Index == 25 && Close(swings[1].Price, 105),
             string.Join(" ", swings.ConvertAll(s => (s.High ? "H" : "L") + s.Price + "@" + s.Index)));
 
-        Console.WriteLine(_failures == 0 ? "\nAll harmonic tests passed." : "\n" + _failures + " test(s) FAILED.");
-        return _failures == 0 ? 0 : 1;
+        return _failures;
     }
 }

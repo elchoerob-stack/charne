@@ -9,7 +9,7 @@ M15 gold cBot for cTrader. It has four setups, each tagged and scored separately
 | `GT` | Gartley: B = 0.618 XA, D = 0.786 XA, entry on a rejection candle at D, stop beyond X | new: Autochartist-style pattern |
 | `AB` | AB=CD: CD = AB, entry on a rejection candle at D | new: Autochartist-style pattern |
 
-**Status: DEMO ONLY. Not validated.** v3 is a new variant: no v2 backtest result carries over.
+**Status: DEMO ONLY. cbot-gate FAIL (Nov 2026 backtest, see "Backtest" below).** Out-of-sample PF 1.18 across 221 trades: positive, but below the 1.30 bar and not yet distinguishable from luck.
 
 ## What changed from v2, and why
 
@@ -26,6 +26,7 @@ M15 gold cBot for cTrader. It has four setups, each tagged and scored separately
 | Commission-only break-even exits counted as losses | Exits within ±0.2R are scratches | The loss-streak halt no longer fires on break-evens |
 | Nothing stopped the weekend gap | No entries after 18:00 UTC Friday; flat at 20:30 UTC Friday | Gold gaps on the Sunday open |
 | Buy and sell could be open at once | Entries opposite an open bot position are blocked | |
+| Session 07:00–20:00 UTC, no daily filter | **Session 12:00–16:00 UTC** (London/NY overlap) and a **Daily Trend EMA 100** filter | The backtest refinement, below. v3's first defaults had PF 0.98 out-of-sample |
 | Manual news blackout in whole hours | Minute-precise windows, e.g. `13:25-13:45, 18:55-19:30` | |
 | Optimiser ranked by its own criteria | `GetFitness`: Profit Factor first; < 100 trades always ranks lower | Matches cbot-gate. Choose **Criteria → Custom** in the optimiser |
 | No trade log | Writes `Documents\cBotLogs\GoldGuardV3_*.csv` in the cbot-gate format, with Setup and R columns | Goes straight into `gate.py` |
@@ -85,6 +86,69 @@ The end-of-run report adds a line comparing exits with the targets:
 
 To change any of these, edit the code, rebuild, and treat the result as a new variant.
 
+## Backtest (November 2026)
+
+The backtest runs in my own simulator (`backtest/`), not in cTrader. It uses 1-minute
+gold data with real bid and ask prices, from January 2023 to 28 October 2026. The
+pattern and exit maths are the bot's own code.
+
+- **In-sample (IS):** Jan 2023 – Jun 2025. All tuning happened here.
+- **Out-of-sample (OOS):** Jul 2025 – Oct 2026. Untouched until the final settings were fixed, then run once.
+
+### What the first v3 defaults did
+
+They had no edge:
+
+| | Trades | Profit Factor | Kill-switch trips | Worst drawdown |
+|---|---|---|---|---|
+| In-sample | 875 | 1.01 | 10 | 16.4% |
+| Out-of-sample | 639 | 0.98 | (15 over the whole run) | 16.4% |
+
+Sells lost heavily in the 2023–25 bull market (PF 0.70). Changing stops and targets
+made no difference: 144 combinations of stop, R:R, lookback and trail start all landed
+between PF 0.99 and 1.06.
+
+### What the refinement changed (now the defaults)
+
+| Setting | Was | Now | In-sample evidence |
+|---|---|---|---|
+| Session (UTC) | 07–20 | **12–16** (London/NY overlap, 14:00–18:00 SAST) | PF 1.01 → 1.14. Kill-switch trips 10 → 1. All of the top 6 filter variants used this window |
+| Daily Trend EMA | — | **100**: buys only above it, sells only below | PF 1.14 → 1.20. No kill-switch trips |
+| Runner exit | on | on | PF 1.22 with the runner, 1.17 with a fixed take-profit |
+
+### Result
+
+| Refined defaults | Trades | Win % | Profit Factor | Avg R | Worst drawdown |
+|---|---|---|---|---|---|
+| In-sample | 290 | 50.3% | 1.22 | +0.09 | 3.8% |
+| **Out-of-sample** | **221** | 49.3% | **1.18** | +0.08 | 7.4% |
+| Whole period | 511 | 49.9% | 1.21 | +0.09 | 8.1% (1 kill-switch trip) |
+
+### cbot-gate verdict: **FAIL**
+
+Three checks failed:
+
+1. **OOS PF 1.18**, below the 1.30 target. It is above break-even.
+2. **Bootstrap P(PF < 1) = 13.5%**, above the 10% limit. 221 trades at +0.08R could still be luck.
+3. **PF without the best 5% of trades = 0.90.** The profit rests on a dozen big winners.
+
+Passed: OOS trade count, break-even, PF retention 0.97, walk-forward efficiency 1.28,
+drawdown 7.4%, Monte Carlo 95th-percentile drawdown 8.6%, PF 1.13 after extra costs.
+Full report: `backtest/results/gate_report_v3_refined.md`.
+
+```
+| 2026-11-03 | GoldGuard XAUUSD m15 | v3 refined (12-16 UTC, D1 EMA100, runner) | FAIL | OOS PF 1.18 | 221 trades | WFE 1.28 | variants tested: 203 |
+```
+
+### Read this before trusting any of it
+
+- **203 variants were tried.** The best in-sample one is flattered by that alone. The OOS result partly makes up for it, but not fully.
+- **The setups swapped places out-of-sample.** Breakouts went from PF 1.90 to 0.74; pullbacks from 1.04 to 1.34. The combination held, but the per-setup numbers are noise.
+- **The in-sample edge sits in Apr 2024 – Jun 2025**, gold's strongest bull leg. Jan 2023 – Mar 2024 alone had PF 0.97.
+- **The runner gave back profit out-of-sample.** Trades that reached the target exited at 1.67R on average against a 2.0R target. In-sample it was the other way round (runner PF 1.22 vs 1.17 for a fixed take-profit). The jury is still out.
+- **The harmonics almost never trade:** one AB=CD trade in four years after the filters. They can't be validated. They do no harm, but don't expect them to fire.
+- **The simulator is not cTrader.** It fills on M1 bars, adds no swap, and uses a different data feed. Re-run the same test in cTrader on tick data before relying on any number.
+
 ## Load it into cTrader (Desktop, on the laptop)
 
 1. **Stop any GoldGuard v2 instance.** v3 uses a different label (`GoldGuardV3-XAU`), so it won't manage v2's positions. Close those positions, or let their own stops and targets run.
@@ -99,7 +163,7 @@ To change any of these, edit the code, rebuild, and treat the result as a new va
 
 ## Validation plan (cbot-gate)
 
-Times are UTC. SAST = UTC+2, so the session 07:00–20:00 UTC is 09:00–22:00 SAST.
+Times are UTC. SAST = UTC+2, so the session 12:00–16:00 UTC is 14:00–18:00 SAST. The Daily Trend EMA needs 100 closed daily bars. If cTrader's backtest has no history before your start date, entries stay blocked ("daily trend warming up") for about 5 months, so start backtests early enough.
 
 1. **Smoke test.** Run a visual backtest of the last month on **tick data**. Check that:
    - entries appear,
@@ -152,4 +216,5 @@ Peak equity then restarts from current equity. There is deliberately no paramete
 |---|---|
 | `GoldGuard_XAUUSD_v3.cs` | The cBot. Paste this into cTrader |
 | `GoldGuard_XAUUSD_v2_Aggressive.cs` | The original, kept for comparison |
+| `backtest/` | The simulator, the data preparation script, and `results/` (trade log and cbot-gate report). See `backtest/README.md` |
 | `tests/` | Compiles the bot against `cTrader.Automate` (warnings as errors) and runs 36 checks. 21 cover the Gartley/ABCD logic: bull and bear, wrong ratios, failed patterns, no entry before a rejection candle. 15 cover the exits: break-even, trail, runner lock and trail, never loosening, sells, gaps. Run with `cd tests && dotnet run` |

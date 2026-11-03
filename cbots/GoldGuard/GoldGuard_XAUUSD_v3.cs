@@ -13,6 +13,9 @@
 //  cTrader Signals tab. Autochartist's own tolerances are looser and unpublished, so
 //  the two will not match one for one. The Signals feed itself cannot be read by a cBot.
 //
+//  Defaults come from the Nov 2026 backtest refinement (see README.md, "Backtest"):
+//  London/New York overlap session (12-16 UTC) and a daily EMA-100 trend filter.
+//
 //  Units: every distance is an ATR multiple or a price, never pips, so the same
 //  settings work whether the broker quotes gold with a $0.01 or a $0.10 pip.
 // =====================================================================================
@@ -68,11 +71,16 @@ namespace cAlgo.Robots
         // -----------------------------------------------------------------------------
         //  STRATEGY parameters. Safe to optimise: none of them changes position size.
         // -----------------------------------------------------------------------------
-        [Parameter("Fast H1 EMA", DefaultValue = 34, MinValue = 5, MaxValue = 200, Step = 1, Group = "Trend filter (H1)")]
+        [Parameter("Fast H1 EMA", DefaultValue = 34, MinValue = 5, MaxValue = 200, Step = 1, Group = "Trend filters")]
         public int H1Fast { get; set; }
 
-        [Parameter("Slow H1 EMA", DefaultValue = 100, MinValue = 10, MaxValue = 400, Step = 5, Group = "Trend filter (H1)")]
+        [Parameter("Slow H1 EMA", DefaultValue = 100, MinValue = 10, MaxValue = 400, Step = 5, Group = "Trend filters")]
         public int H1Slow { get; set; }
+
+        // Trade only in the direction of the daily trend: buys while the last closed daily bar
+        // closed above this EMA, sells while below. Applies to every setup.
+        [Parameter("Daily Trend EMA (0 = off)", DefaultValue = 100, MinValue = 0, MaxValue = 300, Step = 10, Group = "Trend filters")]
+        public int DailyTrendEma { get; set; }
 
         [Parameter("Enable Pullbacks (PB)", DefaultValue = true, Group = "Trend setups (M15)")]
         public bool EnablePullbacks { get; set; }
@@ -194,10 +202,10 @@ namespace cAlgo.Robots
         [Parameter("Use Session Filter", DefaultValue = true, Group = "Sessions (UTC)")]
         public bool UseSessionFilter { get; set; }
 
-        [Parameter("Session Start Hour", DefaultValue = 7, MinValue = 0, MaxValue = 23, Step = 1, Group = "Sessions (UTC)")]
+        [Parameter("Session Start Hour", DefaultValue = 12, MinValue = 0, MaxValue = 23, Step = 1, Group = "Sessions (UTC)")]
         public int SessionStartHour { get; set; }
 
-        [Parameter("Session End Hour (exclusive)", DefaultValue = 20, MinValue = 0, MaxValue = 23, Step = 1, Group = "Sessions (UTC)")]
+        [Parameter("Session End Hour (exclusive)", DefaultValue = 16, MinValue = 0, MaxValue = 23, Step = 1, Group = "Sessions (UTC)")]
         public int SessionEndHour { get; set; }
 
         [Parameter("Entry Blackouts (HH:mm-HH:mm, ...)", DefaultValue = "", Group = "Sessions (UTC)")]
@@ -239,6 +247,7 @@ namespace cAlgo.Robots
         private RelativeStrengthIndex _rsi;
         private AverageTrueRange _atr;
         private SimpleMovingAverage _atrBase;
+        private ExponentialMovingAverage _d1Ema;
 
         private bool _started, _persist, _visual, _stateDirty;
         private string _key;
@@ -306,6 +315,19 @@ namespace cAlgo.Robots
             _rsi = Indicators.RelativeStrengthIndex(Bars.ClosePrices, RsiPeriod);
             _atr = Indicators.AverageTrueRange(AtrPeriod, MovingAverageType.Exponential);
             _atrBase = Indicators.SimpleMovingAverage(_atr.Result, AtrBaseline);
+            if (DailyTrendEma > 0)
+            {
+                // The filter needs DailyTrendEma closed daily bars; fetch more if the chart has fewer.
+                try
+                {
+                    while (_d1.Count < DailyTrendEma * 2 && _d1.LoadMoreHistory() > 0) { }
+                }
+                catch (Exception ex)
+                {
+                    Print("Could not load more daily history ({0}); the daily trend filter blocks entries until {1} daily bars exist.", ex.Message, DailyTrendEma);
+                }
+                _d1Ema = Indicators.ExponentialMovingAverage(_d1.ClosePrices, DailyTrendEma);
+            }
             _exitRules = new ExitRules
             {
                 BreakEvenAtR = BreakEvenAtR, BreakEvenLockR = BreakEvenLockR,
@@ -601,6 +623,12 @@ namespace cAlgo.Robots
                 if (ratio > MaxAtrRatio) return "volatility too high";
             }
             if (c.NeedsTrend && !(c.Buy ? H1Up(h) : H1Down(h))) return "against H1 trend";
+            if (_d1Ema != null)
+            {
+                int d = LastClosedIndex(_d1, TimeSpan.FromDays(1));
+                if (d < DailyTrendEma) return "daily trend warming up";
+                if (c.Buy ? _d1.ClosePrices[d] <= _d1Ema.Result[d] : _d1.ClosePrices[d] >= _d1Ema.Result[d]) return "against daily trend";
+            }
             if (UsePivotBias)
             {
                 double pivot = DailyPivot();

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles the cBot against Spotware's cTrader.Automate package (proves it builds)
+       and runs the HarmonicMath unit tests. Run: dotnet run -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AlgoBuild>false</AlgoBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../GoldGuard_XAUUSD_v3.cs" />
+    <Compile Include="HarmonicTests.cs" />
+    <PackageReference Include="cTrader.Automate" Version="1.0.21" />
+  </ItemGroup>
+</Project>

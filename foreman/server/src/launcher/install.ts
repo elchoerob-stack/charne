@@ -86,6 +86,8 @@ export function ensureSettings(l: Layout): Record<string, string> {
   const existing = fs.existsSync(l.settings) ? parseEnvFile(fs.readFileSync(l.settings, "utf8")) : {};
   const before = JSON.stringify(existing);
   if (!existing.CMS_AGENT_TOKEN || existing.CMS_AGENT_TOKEN.length < 20) existing.CMS_AGENT_TOKEN = newToken();
+  // The Claude connector's own token. Separate from the access code so a leaked connector link cannot open the rest of Foreman.
+  if (!existing.MCP_TOKEN || existing.MCP_TOKEN.length < 20 || existing.MCP_TOKEN === existing.CMS_AGENT_TOKEN) existing.MCP_TOKEN = newToken();
   existing.PORT ??= "8787";
   existing.WORKSPACE_DIR ??= path.join(os.homedir(), "Foreman");
   if (JSON.stringify(existing) !== before) {
@@ -94,6 +96,8 @@ export function ensureSettings(l: Layout): Record<string, string> {
       formatEnvFile(existing, [
         "Foreman settings. Edit with Notepad, then restart Foreman.",
         "CMS_AGENT_TOKEN  the access code the phone and browser need. Keep it private.",
+        "MCP_TOKEN  the secret in the Claude connector link. Different from the access code on purpose.",
+        "MCP_ALLOW_APPROVE  set to 1 only if Claude itself may approve changes. Off by default.",
         "ANTHROPIC_API_KEY  paste your Claude API key here to enable chat and step recovery.",
         "WORKSPACE_DIR  where finished work is saved.",
       ]),

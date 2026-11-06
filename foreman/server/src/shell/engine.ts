@@ -78,14 +78,14 @@ export class Shell extends EventEmitter {
   }
 
   /** Approves the steps that change things. `refs` omitted approves every step still waiting. */
-  approve(jobId: string, refs?: string[]): JobView {
+  approve(jobId: string, refs?: string[], via?: string): JobView {
     const job = this.need(jobId);
     if (job.status === "cancelled") throw new ShellError(409, "This job was cancelled");
     const waiting = job.steps.filter((s) => s.status === "awaiting_approval");
     const chosen = refs ? waiting.filter((s) => refs.includes(s.ref)) : waiting;
     if (refs && chosen.length !== refs.length) throw new ShellError(409, "Some of those steps are not waiting for approval");
     if (!chosen.length) throw new ShellError(409, "Nothing is waiting for approval");
-    for (const s of chosen) { s.status = "ready"; s.approvedAt = this.now().toISOString(); event(jobId, "approved", s.title, s.id); }
+    for (const s of chosen) { s.status = "ready"; s.approvedAt = this.now().toISOString(); event(jobId, "approved", via ? `${s.title} (via ${via})` : s.title, s.id); }
     saveSteps(chosen);
     this.refresh(jobId);
     this.pump();

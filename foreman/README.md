@@ -47,6 +47,9 @@ website you sign it into.
   an e-mail, a ticket or a sentence; Claude plans the steps, workers do them, reads run
   at once, changes wait for your OK, several jobs run side by side without colliding.
   See `docs/SHELL.md`.
+- **Claude connector** (`server/src/mcp/`): an MCP server, so you can give Foreman jobs from
+  Claude on your computer, phone or claude.ai. Its own secret, approvals off by default,
+  e-mail text kept inside an untrusted block. See `docs/CLAUDE_CONNECTOR.md`.
 - **Support desk** (`/support.html`, `server/src/support/`): paste a client
   e-mail and Foreman sorts it, drafts the reply, and creates, assigns, tags and
   closes the Jira ticket, each step only on your approval. See `docs/SUPPORT_DESK.md`.

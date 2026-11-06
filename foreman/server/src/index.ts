@@ -7,7 +7,10 @@ import { reportRoutes } from "./reports/routes.js";
 import { reviewRoutes } from "./review.js";
 import { supportRoutes } from "./support/routes.js";
 import { shellRoutes } from "./shell/routes.js";
-import { startShell } from "./shell/index.js";
+import { createMcpRouter } from "./mcp/routes.js";
+import { mcpInfoRoutes } from "./mcp/info.js";
+import { remoteUrl } from "./remote.js";
+import { shell, startShell } from "./shell/index.js";
 import { taskRoutes } from "./tasks/routes.js";
 import { boardRoutes, tickAgents } from "./tasks/board-routes.js";
 import { startScheduler } from "./tasks/scheduler.js";
@@ -45,6 +48,10 @@ app.use("/api", reportRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", supportRoutes);
 app.use("/api", shellRoutes);
+app.use("/api", mcpInfoRoutes);
+
+// The Claude connector. It has its own token (MCP_TOKEN), separate from the master access code above.
+app.use(createMcpRouter({ shell, token: process.env.MCP_TOKEN, allowApprove: process.env.MCP_ALLOW_APPROVE === "1", publicUrl: () => process.env.PUBLIC_URL || remoteUrl() }));
 app.use("/api", taskRoutes);
 app.use("/api", boardRoutes);
 

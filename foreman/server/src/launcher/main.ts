@@ -295,6 +295,7 @@ async function showWhere(): Promise<void> {
   console.log(`Installed      : ${installedVersion(l) ?? "not yet"}`);
   console.log(`Saved work     : ${settings.WORKSPACE_DIR}`);
   console.log(`Access code    : ${settings.CMS_AGENT_TOKEN}`);
+  if (settings.MCP_TOKEN) console.log(`Claude link    : http://localhost:${port}/mcp/${settings.MCP_TOKEN}   (for Claude on this computer; see the Command screen for a phone link)`);
   for (const a of addresses(port)) console.log(`Address (${a.label}): ${a.url}/?token=${settings.CMS_AGENT_TOKEN}`);
 }
 

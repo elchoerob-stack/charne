@@ -35,6 +35,16 @@ test("the token is generated once and kept", () => {
   assert.equal(ensureSettings(l).CMS_AGENT_TOKEN, first);
 });
 
+test("the Claude connector gets its own token, different from the access code, and it is kept", () => {
+  const l = layout(tmp());
+  const a = ensureSettings(l);
+  assert.ok(a.MCP_TOKEN.length >= 20);
+  assert.notEqual(a.MCP_TOKEN, a.CMS_AGENT_TOKEN, "a leaked connector link must not be the master key");
+  assert.equal(ensureSettings(l).MCP_TOKEN, a.MCP_TOKEN);
+  fs.writeFileSync(l.settings, `CMS_AGENT_TOKEN=${a.CMS_AGENT_TOKEN}\nMCP_TOKEN=${a.CMS_AGENT_TOKEN}\n`);
+  assert.notEqual(ensureSettings(l).MCP_TOKEN, a.CMS_AGENT_TOKEN, "reusing the access code as the connector token is corrected");
+});
+
 test("a token too weak for the tunnel guard is replaced", () => {
   const l = layout(tmp());
   ensureSettings(l);

@@ -77,9 +77,7 @@ this way. With credentials, Claude plans anything the workers can do.
 
 ## Not built yet
 
-- **Claude as a remote control.** The Shell is a plain HTTP API
-  (`/api/shell/*`), which is what lets Claude instruct it. A connector that
-  exposes it to Claude is the next layer.
+- **Claude as a remote control** is built: see `docs/CLAUDE_CONNECTOR.md`.
 - **The CMS admin workers.** Each will run a recorded browser workflow in its
   own browser (no mouse or keyboard of yours) that stops for your approval
   before the final save.

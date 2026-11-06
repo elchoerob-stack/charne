@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
@@ -31,9 +32,9 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.15.0",
     "@types/nodemailer": "^6.4.24",
+    "esbuild": "^0.28.2",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "esbuild": "^0.28.2"
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=22.13"

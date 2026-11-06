@@ -1,6 +1,7 @@
 import { Router, type Response } from "express";
 import { ShellError } from "./engine.js";
 import { registry, shell } from "./index.js";
+import { previewFile } from "./previews.js";
 import { eventsFor, getJob, listJobs } from "./store.js";
 
 export const shellRoutes = Router();
@@ -13,8 +14,8 @@ function fail(res: Response, err: unknown) {
 
 /** What Foreman can do, built and planned. Never includes the run functions. */
 shellRoutes.get("/shell/workers", (_req, res) => {
-  const byWorker: Record<string, { id: string; title: string; description: string; risk: string; available: boolean; inputs: Record<string, unknown> }[]> = {};
-  for (const c of registry.all()) (byWorker[c.worker] ??= []).push({ id: c.id, title: c.title, description: c.description, risk: c.risk, available: c.available, inputs: c.inputs });
+  const byWorker: Record<string, { id: string; title: string; description: string; risk: string; available: boolean; unavailableReason?: string; inputs: Record<string, unknown> }[]> = {};
+  for (const c of registry.all()) (byWorker[c.worker] ??= []).push({ id: c.id, title: c.title, description: c.description, risk: c.risk, available: c.available, unavailableReason: c.available ? undefined : c.unavailableReason, inputs: c.inputs });
   res.json(byWorker);
 });
 
@@ -31,6 +32,14 @@ shellRoutes.get("/shell/jobs/:id", (req, res) => {
   const job = getJob(req.params.id);
   if (!job) return res.status(404).json({ error: "No such job" });
   res.json({ job, events: eventsFor(job.id) });
+});
+
+// The screenshot of what a change will look like, taken before anyone is asked to approve it.
+shellRoutes.get("/shell/jobs/:id/steps/:ref/preview", (req, res) => {
+  const step = getJob(req.params.id)?.steps.find((s) => s.ref === req.params.ref);
+  const file = step && previewFile(step);
+  if (!file) return res.status(404).json({ error: "No preview image" });
+  res.sendFile(file);
 });
 
 // The only way a step that changes something starts: a person approves it.

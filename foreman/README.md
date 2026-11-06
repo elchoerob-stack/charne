@@ -47,6 +47,10 @@ website you sign it into.
   an e-mail, a ticket or a sentence; Claude plans the steps, workers do them, reads run
   at once, changes wait for your OK, several jobs run side by side without colliding.
   See `docs/SHELL.md`.
+- **CMS admin user worker** (`server/src/shell/workers/cms.ts`, `/workflows.html`): create, change or
+  deactivate a user by running a workflow you recorded, in its own browser. It fills the form
+  and shows you a screenshot *before* Save, saves only after you approve, and only counts it as
+  done if CMS shows its success message. See `docs/CMS_USERS.md`.
 - **Claude connector** (`server/src/mcp/`): an MCP server, so you can give Foreman jobs from
   Claude on your computer, phone or claude.ai. Its own secret, approvals off by default,
   e-mail text kept inside an untrusted block. See `docs/CLAUDE_CONNECTOR.md`.

@@ -40,7 +40,7 @@ export function validatePlan(raw: RawPlan, registry: Registry, source: Plan["sou
     if (!REF.test(ref) || kept.has(ref) || dropped.has(ref)) { if (ref) dropped.add(ref); unsupported.push(`${label}: the plan was malformed, so it was left out`); continue; }
     const cap = registry.get(String(s.capability ?? ""));
     if (!cap) { dropped.add(ref); unsupported.push(`${label}: no worker does that`); continue; }
-    if (!cap.available) { dropped.add(ref); unsupported.push(`${cap.title}: not built yet`); continue; }
+    if (!cap.available) { dropped.add(ref); unsupported.push(`${cap.title}: ${cap.unavailableReason ?? "not built yet"}`); continue; }
 
     const inputs: Record<string, string> = {};
     for (const { key, value } of s.inputs ?? []) if (key && key in cap.inputs && value != null && String(value).trim() !== "") inputs[key] = String(value);
@@ -55,6 +55,12 @@ export function validatePlan(raw: RawPlan, registry: Registry, source: Plan["sou
 
     const missing = Object.entries(cap.inputs).filter(([k, spec]) => spec.required && !inputs[k]).map(([k]) => k);
     if (missing.length) { dropped.add(ref); questions.push(`${cap.title} needs: ${missing.join(", ")}`); continue; }
+
+    // The worker may know that what it was given isn't enough to act on safely (a missing role, a mistyped e-mail).
+    // That becomes a question for the person, never a guess. Only checked once nothing it reads from is still to come.
+    const unresolved = Object.values(inputs).some((v) => WHOLE_TEMPLATE.test(v));
+    const concern = unresolved ? undefined : cap.validate?.(inputs);
+    if (concern) { dropped.add(ref); questions.push(concern); continue; }
 
     kept.set(ref, { ref, capability: cap.id, title: String(s.title || cap.title).slice(0, 120), inputs, after: [...refs] });
   }

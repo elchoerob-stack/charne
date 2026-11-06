@@ -84,3 +84,8 @@ export function runningSteps(): Step[] {
 export function openJobs(): JobView[] {
   return (db.prepare("SELECT * FROM shell_jobs WHERE archived = 0 AND status NOT IN ('done','failed','cancelled')").all() as JobRow[]).map((r) => ({ ...jobFrom(r), steps: stepsOf(r.id) }));
 }
+
+/** Previews that were being prepared when the server stopped. They change nothing, so they are simply started again. */
+export function previewingSteps(): Step[] {
+  return (db.prepare("SELECT * FROM shell_steps WHERE data LIKE '%\"previewState\":\"running\"%'").all() as StepRow[]).map(stepFrom).filter((s) => s.previewState === "running");
+}

@@ -25,7 +25,7 @@ export class Registry {
   describe(): string {
     return this.all().map((c) => {
       const inputs = Object.entries(c.inputs).map(([k, v]) => `    - ${k}${v.required ? " (required)" : ""}: ${v.description}`).join("\n");
-      return `${c.id} — ${c.available ? "" : "[NOT BUILT YET, cannot be used] "}${c.title}\n  ${c.description}\n  Changes things outside Foreman: ${c.risk === "changes_data" ? "yes, needs approval" : "no"}\n  Inputs:\n${inputs || "    (none)"}`;
+      return `${c.id} — ${c.available ? "" : c.unavailableReason ? `[NOT AVAILABLE: ${c.unavailableReason}; cannot be used] ` : "[NOT BUILT YET, cannot be used] "}${c.title}\n  ${c.description}\n  Changes things outside Foreman: ${c.risk === "changes_data" ? "yes, needs approval" : "no"}\n  Inputs:\n${inputs || "    (none)"}`;
     }).join("\n\n");
   }
 }

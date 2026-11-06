@@ -15,9 +15,6 @@ const todo = (id: string, title: string, description: string, inputs: Capability
 });
 
 export const plannedCapabilities: Capability[] = [
-  todo("cms_admin.manage_user", "Create, change or deactivate a user in CMS admin", "Creates or updates a user profile for a dealer in CMS admin.", {
-    dealer: { description: "Dealer or branch", required: true }, name: { description: "The user's name", required: true }, email: { description: "The user's e-mail", required: true }, role: { description: "Role or access level", required: true },
-  }),
   todo("cms_admin.update_dealer_settings", "Change settings for one or more dealers", "Applies a settings change to a list of dealers in CMS admin.", {
     dealers: { description: "The dealers to change", required: true }, change: { description: "What to change", required: true },
   }),

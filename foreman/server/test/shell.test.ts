@@ -31,11 +31,20 @@ const fakeRun = (name: string) => async (i: Record<string, string>) => {
     return { value: `${name}-${i.tag ?? ""}`, jobId: `J-${i.tag ?? ""}` };
   } finally { live--; }
 };
-const inputs = { tag: { description: "label" }, gate: { description: "wait for this gate" }, boom: { description: "throw this" }, dep: { description: "from an earlier step" } };
+const inputs = { tag: { description: "label" }, gate: { description: "wait for this gate" }, boom: { description: "throw this" }, dep: { description: "from an earlier step" }, pgate: { description: "preview waits for this gate" }, pboom: { description: "preview fails once with this" } };
+const previewFailsLeft = new Map<string, number>();
 
 const reg = new Registry().register(
   { id: "fake.read", worker: "fake", title: "Read something", description: "reads", risk: "read_only", available: true, inputs, run: fakeRun("read") },
   { id: "fake.write", worker: "fake", title: "Change something", description: "changes", risk: "changes_data", available: true, inputs, run: fakeRun("write"), lockKey: (i) => (i.tag ? `thing:${i.tag}` : undefined) },
+  { id: "fake.previewed", worker: "fake", title: "Previewed change", description: "changes, after showing itself", risk: "changes_data", available: true, inputs,
+    preview: async (i) => {
+      calls.push(`preview:${i.tag ?? ""}`);
+      if (i.pgate && gates.has(i.pgate)) await gates.get(i.pgate);
+      if (i.pboom && (previewFailsLeft.get(i.tag ?? "") ?? 1) > 0) { previewFailsLeft.set(i.tag ?? "", 0); throw new Error(i.pboom); }
+      return { text: `Will change ${i.tag}`, data: { token: `tok-${i.tag}` } };
+    },
+    run: async (i, ctx) => { calls.push(`apply:${i.tag ?? ""}`); if (!ctx.preview) throw new Error("no preview was passed"); if (i.boom) throw new Error(i.boom); return { applied: ctx.preview.data?.token }; } },
   { id: "fake.todo", worker: "fake", title: "Not built", description: "later", risk: "changes_data", available: false, inputs },
   { id: "fake.need", worker: "fake", title: "Needs a name", description: "needs", risk: "read_only", available: true, inputs: { name: { description: "who", required: true } }, run: fakeRun("need") },
 );
@@ -114,7 +123,7 @@ test("a request that needs a worker that is not built is reported, not silently 
     { ref: "s2", capability: "cms_admin.manage_user", title: "make the user", inputs: [{ key: "dealer", value: "x" }, { key: "name", value: "y" }, { key: "email", value: "z" }, { key: "role", value: "r" }], after: [] },
   ] }, realRegistry);
   assert.deepEqual(p.steps.map((s) => s.capability), ["support.load_ticket"]);
-  assert.ok(p.unsupported.some((u) => /Create, change or deactivate a user in CMS admin: not built yet/.test(u)));
+  assert.ok(p.unsupported.some((u) => /Create, change or deactivate a user in CMS admin: no recorded workflow is set up for it yet/.test(u)), "it exists, but is not set up, and says so");
 });
 
 /* ── planning without Claude ─────────────────────────────────────────── */
@@ -450,4 +459,89 @@ test("over HTTP: a pasted client e-mail is triaged for real, and the ticket wait
     assert.match(store.getJob(id)!.steps[1].error!, /Jira is not set up/);
     assert.equal(store.getJob(id)!.steps[2].status, "skipped");
   } finally { await close(); }
+});
+
+
+/* ── a change that shows itself before it is approved ───────────────── */
+
+test("a previewed change shows itself on its own, can't be approved until it has, and then applies exactly what was shown", async () => {
+  reset();
+  const hold = open("pg1");
+  const shell = make(planOf(["s1", "fake.previewed", { tag: "p1", pgate: "pg1" }]));
+  const job = await shell.submit("go");
+  await until(() => step(job.id, "s1").previewState === "running");
+  assert.equal(store.getJob(job.id)!.status, "running", "still working, not yet waiting on the person");
+  assert.throws(() => shell.approve(job.id), (e: any) => e.status === 409 && /preview isn't ready/.test(e.message));
+  assert.ok(!calls.includes("apply:p1"));
+  hold();
+  await until(() => step(job.id, "s1").previewState === "ready");
+  assert.equal(store.getJob(job.id)!.status, "awaiting_approval");
+  assert.equal(step(job.id, "s1").preview!.text, "Will change p1");
+  shell.approve(job.id);
+  await until(() => step(job.id, "s1").status === "done");
+  assert.equal(step(job.id, "s1").output!.applied, "tok-p1", "the apply step received what was previewed");
+  assert.deepEqual(calls.filter((c) => /p1$/.test(c)), ["preview:p1", "apply:p1"], "shown once, applied once, in that order");
+});
+
+test("a preview waits for the steps before it", async () => {
+  reset();
+  const hold = open("early");
+  const shell = make(planOf(["s1", "fake.read", { tag: "e1", gate: "early" }], ["s2", "fake.previewed", { tag: "p2" }, ["s1"]]));
+  const job = await shell.submit("go");
+  await until(() => step(job.id, "s1").status === "running");
+  await new Promise((r) => setTimeout(r, 60));
+  assert.ok(!calls.includes("preview:p2"), "not previewed before what it depends on is done");
+  hold();
+  await until(() => step(job.id, "s2").previewState === "ready");
+  shell.cancel(job.id);
+});
+
+test("a failed preview blocks approval, reads as needing attention, and can be retried", async () => {
+  reset(); previewFailsLeft.clear();
+  const shell = make(planOf(["s1", "fake.previewed", { tag: "p3", pboom: "CMS is asking for a login" }]));
+  const job = await shell.submit("go");
+  await until(() => step(job.id, "s1").previewState === "failed");
+  assert.equal(step(job.id, "s1").previewError, "CMS is asking for a login");
+  assert.equal(store.getJob(job.id)!.status, "failed");
+  assert.throws(() => shell.approve(job.id), (e: any) => e.status === 409 && /preview failed \(CMS is asking for a login\)/.test(e.message));
+  assert.ok(!calls.includes("apply:p3"));
+  shell.retry(job.id, "s1");
+  await until(() => step(job.id, "s1").previewState === "ready");
+  assert.equal(step(job.id, "s1").previewError, undefined);
+  assert.equal(store.getJob(job.id)!.status, "awaiting_approval");
+  shell.cancel(job.id);
+});
+
+test("after a restart a half-prepared preview is simply started again; a preview changes nothing", async () => {
+  reset();
+  const hold = open("pg4");
+  const first = make(planOf(["s1", "fake.previewed", { tag: "p4", pgate: "pg4" }]));
+  const job = await first.submit("go");
+  await until(() => step(job.id, "s1").previewState === "running");
+  const second = make(planOf(["s1", "fake.read", {}]));
+  second.recover();
+  assert.equal(step(job.id, "s1").previewState, "pending", "picked up again, not marked failed");
+  assert.ok(!calls.includes("apply:p4"));
+  hold();
+  await until(() => step(job.id, "s1").previewState === "ready");
+  first.cancel(job.id);
+});
+
+test("retrying a failed change starts from a fresh preview and a fresh approval", async () => {
+  reset();
+  const shell = make(planOf(["s1", "fake.previewed", { tag: "p5", boom: "network dropped" }]));
+  const job = await shell.submit("go");
+  await until(() => step(job.id, "s1").previewState === "ready");
+  shell.approve(job.id);
+  await until(() => step(job.id, "s1").status === "failed");
+  assert.equal(step(job.id, "s1").error, "network dropped");
+  shell.retry(job.id, "s1");
+  const after = step(job.id, "s1");
+  assert.equal(after.status, "awaiting_approval", "a repeat of a change is a new decision");
+  assert.equal(after.approvedAt, undefined, "the old approval does not carry over");
+  assert.notEqual(after.previewState, "ready", "and the old preview is thrown away");
+  await until(() => step(job.id, "s1").previewState === "ready");
+  assert.equal(calls.filter((c) => c === "preview:p5").length, 2, "previewed again before it could be approved again");
+  assert.equal(calls.filter((c) => c === "apply:p5").length, 1, "and not applied a second time without approval");
+  shell.cancel(job.id);
 });

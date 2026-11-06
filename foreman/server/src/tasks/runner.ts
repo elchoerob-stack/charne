@@ -6,7 +6,8 @@ import type { Target } from "../recorder/schema.js";
 import { resolveInputs } from "./compile.js";
 import { anySiteSaved, hostOf, mergedState, saveSite, type StorageState } from "./sites.js";
 import { pruneIfEmpty, recordFile, runFolder, type SavedFile } from "./workspace.js";
-import { DEFAULT_RUNNER_OPTIONS, type RunLogEntry, type RunnerOptions, type Task, type TaskRun, type TaskStep } from "./types.js";
+import { compareForms, findErrors, readForm } from "./form.js";
+import { DEFAULT_RUNNER_OPTIONS, type RunLogEntry, type RunOutcome, type RunnerOptions, type Task, type TaskRun, type TaskStep } from "./types.js";
 
 /**
  * Runs a learned task in a browser of its own.
@@ -302,7 +303,7 @@ export interface RunHooks {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, options: Partial<RunnerOptions> = {}): Promise<void> {
+export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, options: Partial<RunnerOptions> = {}): Promise<RunOutcome> {
   const opts: RunnerOptions = { ...DEFAULT_RUNNER_OPTIONS, ...options };
   const values = resolveInputs(task, run.inputs);
   const log = (level: RunLogEntry["level"], message: string, stepN?: number, screenshot?: string) =>
@@ -356,7 +357,7 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
     }
 
     for (const step of task.steps) {
-      if (hooks.isCancelled()) { log("warn", "Cancelled"); return; }
+      if (hooks.isCancelled()) { log("warn", "Cancelled"); return {}; }
       run.currentStep = step.n;
       if (step.delayMs) await sleep(step.delayMs);
 
@@ -364,6 +365,23 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
       const label = step.variable ? `${step.text} → "${value}"` : step.text;
 
       if (opts.dryRun) { log("step", `[practice] ${label}`, step.n); continue; }
+
+      // Stop here, on purpose, for a person to look at the form. Nothing from this step on has happened.
+      if (opts.stopBeforeStep === step.n) {
+        const fields = await readForm(page);
+        const s = await shot("prepared");
+        log("info", `Stopped before step ${step.n} (${label}) so the form can be checked. Nothing has been saved.`, step.n, s);
+        return { prepared: { stepN: step.n, fields, screenshot: s } };
+      }
+      // About to save: the form must still be exactly what the person approved.
+      if (opts.commitStep === step.n && opts.approvedForm) {
+        const diffs = compareForms(opts.approvedForm, await readForm(page));
+        if (diffs.length) {
+          const s = await shot("form_changed");
+          log("error", `The form no longer matches what was approved: ${diffs.join("; ")}`, step.n, s);
+          throw Object.assign(new Error(`Not saved. The form no longer matches what you approved: ${diffs.join("; ")}`), { attention: true, screenshot: s });
+        }
+      }
 
       try {
         await runStep(page, step, value, opts.stepTimeoutMs, hooks, task, log);
@@ -375,10 +393,40 @@ export async function executeTask(task: Task, run: TaskRun, hooks: RunHooks, opt
         log("error", `Step ${step.n} failed: ${label} — ${message}`, step.n, s);
         throw Object.assign(new Error(`Step ${step.n} (${label}): ${message}`), { screenshot: s });
       }
+
+      // Just saved: a validation error or a "that already exists" banner means it did not work. Say so now, not later.
+      if (opts.commitStep === step.n) {
+        await sleep(800);
+        const errs = await findErrors(page);
+        if (errs.length) {
+          const s = await shot("after_save_error");
+          log("error", `The page reported a problem after saving: ${errs.join(" | ")}`, step.n, s);
+          throw Object.assign(new Error(`The page reported a problem after saving: ${errs.join(" | ")}`), { screenshot: s });
+        }
+      }
     }
 
     const s = await shot("done");
     log("info", "Finished", undefined, s);
+
+    const outcome: RunOutcome = {};
+    if (opts.commitStep !== undefined) {
+      // A save is only a save if the page says so.
+      if (opts.expectText) {
+        try {
+          await page.getByText(opts.expectText).first().waitFor({ state: "visible", timeout: 6000 });
+          outcome.verified = true;
+        } catch {
+          outcome.verified = false;
+          outcome.note = `The page did not show "${opts.expectText}" after saving, so the save could not be confirmed.`;
+        }
+      } else {
+        outcome.verified = false;
+        outcome.note = "No success message is set for this workflow, so the save could not be confirmed.";
+      }
+      log(outcome.verified ? "info" : "warn", outcome.verified ? `Save confirmed ("${opts.expectText}")` : outcome.note!);
+    }
+    return outcome;
   } finally {
     // Give a download that started on the last click a moment to land.
     await sleep(600);

@@ -3,10 +3,11 @@ import { Shell } from "./engine.js";
 import { Registry } from "./registry.js";
 import { supportCapabilities } from "./workers/support.js";
 import { plannedCapabilities } from "./workers/planned.js";
+import { cmsUserCapability } from "./workers/cms.js";
 import type { JobView } from "./types.js";
 
 /** Every worker Foreman has, built or planned. New workers are added here. */
-export const registry = new Registry().register(...supportCapabilities, ...plannedCapabilities);
+export const registry = new Registry().register(...supportCapabilities, cmsUserCapability, ...plannedCapabilities);
 
 export const shell = new Shell({ registry, concurrency: Number(process.env.SHELL_CONCURRENCY ?? 3) });
 

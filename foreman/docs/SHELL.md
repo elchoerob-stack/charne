@@ -32,7 +32,11 @@ instruction → plan → [reads run now] → you approve the changes → they ru
 
 ## The safety rules
 
-1. **Reads start, changes wait.** A step that only reads runs straight away.
+1. **Reads start, changes wait, and changes show themselves first.** A change can
+   come with a *preview* that runs before you are asked: it shows you what will
+   happen (for CMS admin, the form filled in but not saved, with a screenshot) and
+   the change can't be approved until the preview has worked. Approving applies
+   exactly what was shown, and stops if things differ. A step that only reads runs straight away.
    A step that changes Jira (or anything outside Foreman) runs only after you
    approve it, and the approval box shows what it will do and what it's based on.
 2. **Risk comes from the worker, never from the model.** Whatever Claude says
@@ -57,7 +61,8 @@ instruction → plan → [reads run now] → you approve the changes → they ru
 | Worker | Status | Steps |
 |---|---|---|
 | **support** | Built | read an e-mail, load a Jira ticket, draft a reply (read-only); create the ticket, fill the required fields, close the ticket (need approval) |
-| cms_admin | Not built | manage a user, change settings for dealers, build a dealer, add a product |
+| **cms_admin** (users) | Built, needs set-up | create, change or deactivate a user in CMS admin, by running a workflow you record (see `docs/CMS_USERS.md`) |
+| cms_admin (the rest) | Not built | change settings for dealers, build a dealer, add a product |
 | leads | Not built | activate a lead aggregator for a dealer |
 
 The support steps are the support desk's own operations, so its rules apply

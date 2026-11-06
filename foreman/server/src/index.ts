@@ -9,6 +9,7 @@ import { supportRoutes } from "./support/routes.js";
 import { shellRoutes } from "./shell/routes.js";
 import { createMcpRouter } from "./mcp/routes.js";
 import { mcpInfoRoutes } from "./mcp/info.js";
+import { cmsRoutes } from "./cms/routes.js";
 import { remoteUrl } from "./remote.js";
 import { shell, startShell } from "./shell/index.js";
 import { taskRoutes } from "./tasks/routes.js";
@@ -48,6 +49,7 @@ app.use("/api", reportRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", supportRoutes);
 app.use("/api", shellRoutes);
+app.use("/api", cmsRoutes);
 app.use("/api", mcpInfoRoutes);
 
 // The Claude connector. It has its own token (MCP_TOKEN), separate from the master access code above.

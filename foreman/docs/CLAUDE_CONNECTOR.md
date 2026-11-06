@@ -38,6 +38,14 @@ approve after you tell it to, set `MCP_ALLOW_APPROVE=1`. Even then:
 That reduces the risk; it doesn't remove it. If you turn it on, read what Claude
 shows you before telling it to go ahead.
 
+## Previews
+
+When a change comes with a preview (for CMS admin, the form as it will be
+saved), `foreman_job` shows Claude the preview text and the screenshot, so it can
+show you what it is asking about. The approval fingerprint covers the preview: if
+the preview changes, an approval given for the old one is refused. Approving
+isn't offered at all until the preview is ready.
+
 ## Text from e-mails is data
 
 Everything that came from a client e-mail or Jira (the summary, what was

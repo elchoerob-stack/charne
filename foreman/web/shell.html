@@ -46,7 +46,7 @@ details.workers summary{cursor:pointer;font-weight:600;padding:6px 0}
 .cap{font-size:12.5px;padding:4px 0;color:var(--t2)}.cap b{color:var(--t1)}
 .tabs{display:flex;gap:6px;margin:14px 0 8px}
 </style></head><body>
-<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>Command</b><a href="/support.html" style="margin-left:auto">Support desk</a><a href="/board.html" style="margin-left:14px">Board</a><a href="/" style="margin-left:14px">← Foreman</a></div>
+<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>Command</b><a href="/workflows.html" style="margin-left:auto">Workflows</a><a href="/support.html" style="margin-left:14px">Support desk</a><a href="/board.html" style="margin-left:14px">Board</a><a href="/" style="margin-left:14px">← Foreman</a></div>
 <main>
   <div class="box">
     <label class="f" for="text" style="margin-top:0">What do you need done?</label>
@@ -129,23 +129,35 @@ function renderJob(job) {
     const main = h("div", { class: "main" }, h("div", { class: "t" }, s.title, " ", s.risk === "changes_data" ? h("span", { class: "pill stop" }, "changes data") : null), h("div", { class: "w" }, s.capability));
     if (s.status === "done") main.append(...summarise(s).filter(Boolean)); // append(null) would print the word "null"
     if (s.error) main.append(h("div", { class: "err" }, s.error));
+    if (s.status === "awaiting_approval" && (s.previewState === "running" || s.previewState === "pending")) main.append(h("div", { class: "muted" }, "Preparing a preview: filling in the form without saving it…"));
+    if (s.status === "awaiting_approval" && s.previewState === "failed") {
+      const r = h("button", { class: "btn small", style: "margin-top:4px" }, "Retry the preview");
+      r.onclick = () => busy(r, async () => { await post(`/shell/jobs/${job.id}/steps/${s.ref}/retry`); await refresh(); });
+      main.append(h("div", { class: "err" }, "The preview failed, so this can't be approved yet: " + s.previewError), r);
+    }
     if (s.status === "failed") { const r = h("button", { class: "btn small", style: "margin-top:4px" }, s.risk === "changes_data" ? "Retry (asks again)" : "Retry"); r.onclick = () => busy(r, async () => { await post(`/shell/jobs/${job.id}/steps/${s.ref}/retry`); await refresh(); }); main.append(r); }
     if (s.status === "ready" && s.after.some((a) => byRef[a] && byRef[a].status !== "done")) main.append(h("div", { class: "muted" }, "Waiting for " + s.after.filter((a) => byRef[a] && byRef[a].status !== "done").map((a) => byRef[a].title).join(", ")));
     body.append(h("div", { class: "step" }, h("div", { class: "dot " + s.status }, ICON[s.status] || "·"), main));
   }
 
-  // The approval box: say exactly what will change, and on what basis.
+  // The approval box: say exactly what will change, on what basis, and (for form changes) show the form as it will be saved.
   const waiting = job.steps.filter((s) => s.status === "awaiting_approval");
   if (waiting.length && job.status !== "cancelled") {
-    const box = h("div", { class: "needs" }, h("b", { class: "h" }, waiting.length > 1 ? "These change things and are waiting for your OK" : "This changes things and is waiting for your OK"));
+    const ready = (s) => !s.previewState || s.previewState === "ready";
+    const allReady = waiting.every(ready);
+    const tokenQ = getToken() ? `?token=${encodeURIComponent(getToken())}` : "";
+    const box = h("div", { class: "needs" }, h("b", { class: "h" }, !allReady ? "Getting a preview ready. You can approve once you've seen it." : waiting.length > 1 ? "These change things and are waiting for your OK" : "This changes things and is waiting for your OK"));
     const ul = h("ul");
     for (const s of waiting) {
       const basis = s.after.map((a) => byRef[a]).filter((x) => x && x.status === "done" && x.output && x.output.category).map((x) => `${x.output.category.replace(/_/g, " ")}${x.output.dealers && x.output.dealers.length ? " for " + x.output.dealers.join(", ") : ""}`);
-      const one = h("button", { class: "btn small", style: "margin-left:8px" }, "Approve this");
+      const one = h("button", { class: "btn small", style: "margin-left:8px", disabled: !ready(s) }, "Approve this");
       one.onclick = () => busy(one, async () => { await post(`/shell/jobs/${job.id}/approve`, { steps: [s.ref] }); openJobs.add(job.id); await refresh(); });
-      ul.append(h("li", {}, h("b", {}, s.title), caps[s.capability] ? h("div", { class: "muted" }, caps[s.capability].description) : null, basis.length ? h("div", { class: "based" }, "Based on: " + basis.join("; ")) : null, one));
+      ul.append(h("li", {}, h("b", {}, s.title), caps[s.capability] && !s.preview ? h("div", { class: "muted" }, caps[s.capability].description) : null, basis.length ? h("div", { class: "based" }, "Based on: " + basis.join("; ")) : null,
+        s.preview ? h("pre", { style: "white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12.5px;margin:6px 0" }, s.preview.text) : null,
+        s.preview && s.preview.image ? h("img", { src: `/api/shell/jobs/${job.id}/steps/${s.ref}/preview${tokenQ}`, alt: "The form as it will be saved", style: "max-width:100%;border:1px solid var(--line);border-radius:8px;margin:4px 0" }) : null,
+        one));
     }
-    const all = h("button", { class: "btn go", style: "margin-top:8px" }, waiting.length > 1 ? "Approve all" : "Approve");
+    const all = h("button", { class: "btn go", style: "margin-top:8px", disabled: !allReady }, waiting.length > 1 ? "Approve all" : "Approve");
     all.onclick = () => busy(all, async () => { if (!confirm(`Approve: ${waiting.map((s) => s.title).join("; ")}?`)) return; await post(`/shell/jobs/${job.id}/approve`, {}); openJobs.add(job.id); await refresh(); });
     box.append(ul, all);
     body.append(box);
@@ -204,7 +216,7 @@ async function loadWorkers() {
   const el = document.getElementById("wlist"); el.replaceChildren();
   for (const [w, list] of Object.entries(workers)) {
     el.append(h("div", { style: "margin-top:8px;font-weight:600;color:var(--t1)" }, w.replace(/_/g, " ")));
-    for (const c of list) { caps[c.id] = c; el.append(h("div", { class: "cap" }, h("b", {}, c.title), " ", c.available ? (c.risk === "changes_data" ? h("span", { class: "pill stop" }, "needs your OK") : h("span", { class: "pill go" }, "reads only")) : h("span", { class: "pill" }, "not built yet"))); }
+    for (const c of list) { caps[c.id] = c; el.append(h("div", { class: "cap" }, h("b", {}, c.title), " ", c.available ? (c.risk === "changes_data" ? h("span", { class: "pill stop" }, "needs your OK") : h("span", { class: "pill go" }, "reads only")) : h("span", { class: "pill", title: c.unavailableReason || "" }, c.unavailableReason ? "not set up yet" : "not built yet"))); }
   }
 }
 

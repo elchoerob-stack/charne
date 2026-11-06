@@ -112,9 +112,23 @@ export interface TaskRun {
   error?: string;
   /** Set when the run stopped for a human decision rather than a hard failure. */
   attention?: string;
+  /** What the run found out: the form it stopped at, or whether a save was confirmed. */
+  outcome?: RunOutcome;
   /** Documents the run downloaded or wrote, on disk where you can open them. */
   files?: { name: string; path: string; bytes: number; savedAt: string }[];
   createdAt: string;
+}
+
+/** One editable control on the form and what it holds. */
+export interface FormField { label: string; value: string }
+
+/** What a run found out beyond "it finished". */
+export interface RunOutcome {
+  /** Set when the run stopped on purpose just before a step, for a person to look at the form. */
+  prepared?: { stepN: number; fields: FormField[]; screenshot?: string };
+  /** After a commit step: whether the page confirmed it. */
+  verified?: boolean;
+  note?: string;
 }
 
 export interface RunnerOptions {
@@ -124,6 +138,14 @@ export interface RunnerOptions {
   /** Slow each action down, useful when watching a run. */
   slowMoMs: number;
   dryRun: boolean;
+  /** Run every step before this one for real, then stop, read the form and take a picture. Nothing from this step on happens. */
+  stopBeforeStep?: number;
+  /** The step that saves. After it, the page must show no error, and (with expectText) the success message. */
+  commitStep?: number;
+  /** With commitStep: the form as the person approved it. If the form now differs, the save does not happen. */
+  approvedForm?: FormField[];
+  /** With commitStep: text the page must show after saving, or the save is reported as unconfirmed. */
+  expectText?: string;
 }
 
 export const DEFAULT_RUNNER_OPTIONS: RunnerOptions = { headless: true, stepTimeoutMs: 15000, slowMoMs: 0, dryRun: false };

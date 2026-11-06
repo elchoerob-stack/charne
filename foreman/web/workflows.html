@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Foreman · Workflows</title>
+<link rel="icon" href="/assets/foreman-icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0F2040">
+<style>
+:root{--ink:#0F2040;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--wait:#8A6100;--wait-bg:#FBF1DC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--r:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--t1);font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.bar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;position:sticky;top:0;z-index:5}
+.bar b{font-size:15px}.bar a{color:#fff;font-size:12.5px;opacity:.85;text-decoration:none}
+main{max-width:780px;margin:0 auto;padding:12px 12px 60px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+label.f{display:block;font-size:11px;color:var(--t2);margin:12px 0 3px}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font-size:16px}
+.btn{padding:9px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);font-weight:600;cursor:pointer;min-height:40px}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}.btn.small{padding:6px 10px;min-height:34px;font-size:12px}.btn[disabled]{opacity:.5}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.row .btn{flex:1;min-width:120px}
+.pill{display:inline-block;font-size:10.5px;padding:1px 8px;border-radius:999px;background:var(--wait-bg);color:var(--wait)}
+.pill.go{background:var(--go-bg);color:var(--go)}.pill.stop{background:var(--stop-bg);color:var(--stop)}
+.muted{color:var(--t3);font-size:12.5px}
+.warn{background:var(--wait-bg);color:var(--wait);border-radius:8px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+.err{background:var(--stop-bg);color:var(--stop);border-radius:8px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+.ok{background:var(--go-bg);color:var(--go);border-radius:8px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+details.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+details.card>summary{list-style:none;cursor:pointer;padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+details.card>summary::-webkit-details-marker{display:none}
+details.card .body{padding:0 12px 12px;border-top:1px solid var(--line)}
+.ttl{flex:1 1 200px;font-weight:600}
+ol.how{margin:6px 0 0;padding-left:20px;color:var(--t2)}
+</style></head><body>
+<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>Workflows</b><a href="/shell.html" style="margin-left:auto">Command</a><a href="/" style="margin-left:14px">← Foreman</a></div>
+<main>
+  <div class="box">
+    <b>How CMS admin jobs work</b>
+    <div class="muted" style="margin-top:4px">Foreman doesn't know what your CMS admin screens look like, so it learns from you. For each kind of user job:</div>
+    <ol class="how">
+      <li>Do the job <b>once</b> with the recorder running, using a test user. Press <b>Make a task</b> on the recording.</li>
+      <li>Come back here and pick that task for the job below.</li>
+      <li>Tell Foreman <b>which step presses Save</b>, which fields hold the dealer, name, e-mail and role, and what message CMS shows when the save worked.</li>
+    </ol>
+    <div class="warn">Everything <b>before</b> the Save step is shown to you for approval, so make sure nothing before it saves anything (no auto-save, no "Next" that creates the record). The Save only happens after you approve it, and only counts if CMS shows the message you give here.</div>
+    <div class="muted">You also need to be signed in to CMS admin: on the Foreman screen open <b>Sites</b> and sign in once a day.</div>
+  </div>
+  <div id="msg"></div>
+  <div id="cards" class="muted">Loading…</div>
+</main>
+<script>
+const tokenKey = "foreman_token";
+const getToken = () => { try { return localStorage.getItem(tokenKey) || ""; } catch { return ""; } };
+const raw = window.fetch.bind(window);
+window.fetch = async (u, o = {}) => { const h = new Headers(o.headers || {}); if (String(u).startsWith("/api") && getToken()) h.set("Authorization", "Bearer " + getToken()); let r = await raw(u, { ...o, headers: h }); if (r.status === 401 && String(u).startsWith("/api")) { const t = prompt("Access token (CMS_AGENT_TOKEN):", getToken()); if (t) { try { localStorage.setItem(tokenKey, t.trim()); } catch {} h.set("Authorization", "Bearer " + t.trim()); r = await raw(u, { ...o, headers: h }); } } return r; };
+const api = async (p, o) => { const r = await fetch("/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), j); return j; };
+
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v); }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+}
+const LABEL = { dealer: "The dealer or branch", name: "The user's name", email: "The user's e-mail", role: "The role or access level" };
+const open = new Set();
+
+function card(a, tasks) {
+  const b = a.binding;
+  const task0 = b ? tasks.find((t) => t.id === b.taskId) : null;
+  const msg = h("div");
+  const taskSel = h("select", {}, h("option", { value: "" }, tasks.length ? "Choose a recorded task…" : "No recorded tasks yet"), tasks.map((t) => h("option", { value: t.id, selected: b && b.taskId === t.id }, t.title)));
+  const saveSel = h("select");
+  const expect = h("input", { placeholder: "e.g. User saved successfully", value: b ? b.expectText : "", autocomplete: "off" });
+  const keys = [...new Set([...a.requires, ...(a.oneOf || []), ...(a.optional || [])])];
+  const maps = {};
+  const mapBox = h("div");
+
+  function fill() {
+    const t = tasks.find((x) => x.id === taskSel.value);
+    saveSel.replaceChildren(); mapBox.replaceChildren();
+    if (!t) return;
+    const sugg = t.suggestion || { fieldMap: {} };
+    const wantCommit = b && b.taskId === t.id ? b.commitStep : sugg.commitStep;
+    for (const s of t.steps) saveSel.append(h("option", { value: s.n, selected: s.n === wantCommit }, `${s.n}. ${s.text}${["click", "submit"].includes(s.action) ? "" : "  (not a click)"}`));
+    for (const k of keys) {
+      const need = a.requires.includes(k);
+      const sel = h("select", {}, h("option", { value: "" }, need ? "Choose the field…" : "(not used for this job)"), t.variables.map((v) => h("option", { value: v.name, selected: ((b && b.taskId === t.id ? b.fieldMap[k] : sugg.fieldMap[k]) === v.name) }, v.label + (v.sensitive ? " (masked)" : ""))));
+      maps[k] = sel;
+      mapBox.append(h("label", { class: "f" }, LABEL[k] + (need ? "" : " (optional)")), sel);
+    }
+  }
+  taskSel.onchange = fill; fill();
+
+  const save = h("button", { class: "btn primary" }, "Save this workflow");
+  save.onclick = async () => {
+    msg.replaceChildren(); save.disabled = true;
+    try {
+      const fieldMap = {}; for (const [k, s] of Object.entries(maps)) if (s.value) fieldMap[k] = s.value;
+      const r = await api("/cms/workflows/" + a.action, { method: "PUT", body: JSON.stringify({ taskId: taskSel.value, commitStep: Number(saveSel.value), fieldMap, expectText: expect.value }) });
+      open.add(a.action); await load();
+    } catch (e) { msg.append(h("div", { class: "err" }, e.message), ...((e.issues && e.issues.errors || []).slice(1).map((x) => h("div", { class: "err" }, x)))); }
+    finally { save.disabled = false; }
+  };
+  const rm = h("button", { class: "btn" }, "Remove"); rm.onclick = async () => { if (!confirm("Remove this workflow?")) return; await api("/cms/workflows/" + a.action, { method: "DELETE" }); await load(); };
+
+  const issues = a.issues ? [...a.issues.errors.map((x) => h("div", { class: "err" }, x)), ...a.issues.warnings.map((x) => h("div", { class: "warn" }, x))] : [];
+  const pill = a.usable ? h("span", { class: "pill go" }, "ready") : b ? h("span", { class: "pill stop" }, "needs fixing") : h("span", { class: "pill" }, "not set up");
+  const det = h("details", { class: "card", open: Boolean(open.has(a.action) || (!a.usable && b)) },
+    h("summary", {}, h("div", { class: "ttl" }, a.title, h("div", { class: "muted" }, a.action === "create" ? "Needs the dealer, name, e-mail and role" : a.action === "update" ? "Needs the e-mail, and what to change" : "Needs only the e-mail")), pill),
+    h("div", { class: "body" }, ...issues,
+      h("label", { class: "f" }, "Which recorded task does this job?"), taskSel,
+      h("label", { class: "f" }, "Which step presses Save?"), saveSel, h("div", { class: "muted" }, "Everything before this step is shown to you first. This step only happens after you approve."),
+      mapBox,
+      h("label", { class: "f" }, "What does CMS show when the save worked?"), expect, h("div", { class: "muted" }, "Foreman only calls the job done if it sees this on the page. If you can't see one, record it again and note what appears."),
+      h("div", { class: "row" }, save, b ? rm : null), msg));
+  det.addEventListener("toggle", () => (det.open ? open.add(a.action) : open.delete(a.action)));
+  return det;
+}
+
+async function load() {
+  try {
+    const d = await api("/cms/workflows");
+    const el = document.getElementById("cards"); el.replaceChildren();
+    if (!d.tasks.length) el.append(h("div", { class: "warn" }, "No recorded tasks yet. Record a job with the recorder extension, then press “Make a task” on the recording in the Foreman screen."));
+    for (const a of d.actions) el.append(card(a, d.tasks));
+  } catch (e) { document.getElementById("cards").replaceChildren(h("div", { class: "err" }, e.message)); }
+}
+load();
+</script></body></html>

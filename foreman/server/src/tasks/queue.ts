@@ -84,7 +84,7 @@ class RunQueue extends EventEmitter {
     };
 
     try {
-      await executeTask(task, run, {
+      run.outcome = await executeTask(task, run, {
         onLog: append,
         isCancelled: () => this.cancelled.has(run.id),
         onHeal: (stepN, selector) => {

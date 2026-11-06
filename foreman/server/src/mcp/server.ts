@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { ShellError, type Shell } from "../shell/engine.js";
 import { event, eventsFor, getJob, listJobs } from "../shell/store.js";
+import { previewImages } from "../shell/previews.js";
 import { approvalFingerprint, formatJob, formatJobList } from "./format.js";
 
 /**
@@ -38,8 +39,9 @@ How to use it:
 const text = (t: string) => ({ content: [{ type: "text" as const, text: t }] });
 const problem = (t: string) => ({ content: [{ type: "text" as const, text: t }], isError: true });
 
-async function guarded(fn: () => string | Promise<string>) {
-  try { return text(await fn()); }
+type Rich = string | { text: string; images: { type: "image"; data: string; mimeType: string }[] };
+async function guarded(fn: () => Rich | Promise<Rich>) {
+  try { const r = await fn(); return typeof r === "string" ? text(r) : { content: [{ type: "text" as const, text: r.text }, ...r.images] }; }
   catch (err) { return problem(err instanceof ShellError ? err.message : `Foreman could not do that: ${(err as Error).message}`); }
 }
 
@@ -47,14 +49,15 @@ export function buildMcpServer(o: McpOptions): McpServer {
   const server = new McpServer({ name: "foreman", version: process.env.FOREMAN_VERSION ?? "dev" }, { instructions: INSTRUCTIONS });
   const base = () => (o.publicUrl?.() ?? "").replace(/\/$/, "");
   const link = (id?: string) => (base() ? `${base()}/shell.html${id ? `#${id}` : ""}` : undefined);
-  const fmt = (id: string) => { const j = getJob(id); if (!j) throw new ShellError(404, "No such job"); return formatJob(j, { link: link(id), allowApprove: o.allowApprove }); };
+  // The job as text, plus a picture of any form waiting for approval, so Claude can show you what it is asking about.
+  const fmt = (id: string) => { const j = getJob(id); if (!j) throw new ShellError(404, "No such job"); return { text: formatJob(j, { link: link(id), allowApprove: o.allowApprove }), images: previewImages(j.steps) }; };
 
   server.registerTool("foreman_capabilities", {
     title: "What Foreman can do",
     description: "Lists the workers and steps Foreman has, which are built, and which change things (and so need approval). Call this before promising the user anything.",
     inputSchema: {},
     annotations: { readOnlyHint: true, openWorldHint: false },
-  }, async () => guarded(() => o.shell.registry.all().map((c) => `- ${c.id} — ${c.title}${c.available ? "" : " [NOT BUILT YET]"}${c.available && c.risk === "changes_data" ? " [changes data: needs approval]" : ""}\n  ${c.description}`).join("\n")));
+  }, async () => guarded(() => o.shell.registry.all().map((c) => `- ${c.id} — ${c.title}${c.available ? "" : c.unavailableReason ? ` [NOT AVAILABLE: ${c.unavailableReason}]` : " [NOT BUILT YET]"}${c.available && c.risk === "changes_data" ? " [changes data: needs approval]" : ""}\n  ${c.description}`).join("\n")));
 
   server.registerTool("foreman_submit", {
     title: "Give Foreman a job",
@@ -111,8 +114,8 @@ export function buildMcpServer(o: McpOptions): McpServer {
   }, async ({ id }) => guarded(() => { o.shell.cancel(id); return fmt(id); }));
 
   server.registerTool("foreman_retry", {
-    title: "Retry a failed step",
-    description: "Puts a failed step (and the steps skipped because of it) back. A step that changes things then waits for approval again. Only retry after looking at why it failed.",
+    title: "Retry a failed step or preview",
+    description: "Puts a failed step (and the steps skipped because of it) back, or retries a failed preview of a change. A step that changes things then waits for approval again. Only retry after looking at why it failed.",
     inputSchema: { id: z.string(), step: z.string().describe("The ref of the failed step, e.g. s1") },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   }, async ({ id, step }) => guarded(() => { o.shell.retry(id, step); return fmt(id); }));

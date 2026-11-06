@@ -18,6 +18,22 @@ export type Risk = "read_only" | "changes_data";
 
 export interface InputSpec { description: string; required?: boolean }
 
+/** What a person gets to look at before approving a change: what it will do, shown as it will happen. */
+export interface Preview {
+  text: string;
+  /** A screenshot, as a file name the Shell can serve. */
+  image?: string;
+  /** Whatever the worker needs to carry to the apply step (e.g. the form as previewed). Shown to nobody. */
+  data?: Record<string, unknown>;
+}
+
+export interface RunContext {
+  /** Aborted when the step times out or the job is cancelled mid-step. Workers must stop what they can. */
+  signal: AbortSignal;
+  /** The preview the person approved, for steps that have one. */
+  preview?: Preview;
+}
+
 export interface Capability {
   /** worker.action, e.g. "support.close_ticket" */
   id: string;
@@ -27,14 +43,29 @@ export interface Capability {
   description: string;
   risk: Risk;
   inputs: Record<string, InputSpec>;
-  /** False for workers that are planned but not built. The CEO is told, so it can say "I can't do that yet". */
+  /** False for workers that are planned but not built (or not set up). The CEO is told, so it can say "I can't do that yet". May be a getter. */
   available: boolean;
+  /** Why it can't be used, when "not built yet" is not the reason. */
+  unavailableReason?: string;
+  /**
+   * Checked when the plan is made. Returns a question for the person when the
+   * inputs are not enough to do this safely (a missing role, a mistyped e-mail).
+   */
+  validate?: (inputs: Record<string, string>) => string | undefined;
+  /** Overrides the Shell's default time limit for this step (browser work is slow). */
+  timeoutMs?: number
+  /**
+   * For steps that change things: runs BEFORE approval, changes nothing, and
+   * shows what the change will look like. The step cannot be approved until it
+   * has succeeded, and run() receives exactly what was shown.
+   */
+  preview?: (inputs: Record<string, string>, ctx: RunContext) => Promise<Preview>;
   /**
    * Steps that return the same key never run at the same time. This is what
    * lets many jobs run at once without two of them editing the same ticket or dealer.
    */
   lockKey?: (inputs: Record<string, string>) => string | undefined;
-  run?: (inputs: Record<string, string>) => Promise<Record<string, unknown>>;
+  run?: (inputs: Record<string, string>, ctx: RunContext) => Promise<Record<string, unknown>>;
 }
 
 export type StepStatus = "awaiting_approval" | "ready" | "running" | "done" | "failed" | "skipped" | "cancelled";
@@ -53,6 +84,10 @@ export interface Step {
   risk: Risk;
   status: StepStatus;
   approvedAt?: string;
+  /** For steps with a preview: pending (not yet started), running, ready (approvable), failed. */
+  previewState?: "pending" | "running" | "ready" | "failed";
+  preview?: Preview;
+  previewError?: string;
   output?: Record<string, unknown>;
   error?: string;
   startedAt?: string;

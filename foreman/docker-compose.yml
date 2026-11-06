@@ -1,0 +1,15 @@
+# docker compose up -d   (from the foreman directory; put secrets in server/.env)
+services:
+  foreman:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports: ["8787:8787"]
+    env_file: server/.env
+    environment:
+      - FOREMAN_DB=/data/foreman.db
+    volumes:
+      - foreman-data:/data
+    restart: unless-stopped
+volumes:
+  foreman-data:

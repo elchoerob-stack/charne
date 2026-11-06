@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: cms-agent/server
+        working-directory: foreman/server
         shell: pwsh
 
     steps:
@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: "22.x"
           cache: npm
-          cache-dependency-path: cms-agent/server/package-lock.json
+          cache-dependency-path: foreman/server/package-lock.json
 
       - name: Install build dependencies
         run: npm ci --no-audit --no-fund
@@ -63,11 +63,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "building the icon failed (exit $LASTEXITCODE)" }
 
       - name: Prepare the single-executable blob
-        working-directory: cms-agent/server/build
+        working-directory: foreman/server/build
         run: node --experimental-sea-config sea-config.json
 
       - name: Take a copy of the Node runtime to build on
-        working-directory: cms-agent/server/build
+        working-directory: foreman/server/build
         run: |
           Copy-Item (Get-Command node).Source -Destination Foreman.exe
           # node.exe ships signed, and neither the icon edit nor the payload
@@ -89,7 +89,7 @@ jobs:
       # allowed to fail — a Foreman.exe wearing the default Node icon still
       # does every single thing it is meant to do.
       - name: Give it Foreman's icon and version info
-        working-directory: cms-agent/server/build
+        working-directory: foreman/server/build
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -102,7 +102,7 @@ jobs:
           #
           # --prefix . matters: this directory (build/) has no package.json of
           # its own, and npm's default behaviour is to walk up to the nearest
-          # one it finds — cms-agent/server/package.json — and install there
+          # one it finds — foreman/server/package.json — and install there
           # instead. Without it, rcedit lands in ../node_modules and the path
           # below silently does not exist.
           npm install --no-save --no-audit --no-fund --prefix . rcedit@5.0.2
@@ -116,7 +116,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "rcedit failed to set the icon and version info (exit $LASTEXITCODE)" }
 
       - name: Put Foreman inside it
-        working-directory: cms-agent/server/build
+        working-directory: foreman/server/build
         timeout-minutes: 10
         run: |
           npx --yes postject@1.0.0-alpha.6 Foreman.exe NODE_SEA_BLOB sea-prep.blob `
@@ -127,7 +127,7 @@ jobs:
       # as plain node, which reads from standard input and would otherwise
       # sit there until the job times out rather than failing.
       - name: Check the executable answers for itself
-        working-directory: cms-agent/server/build
+        working-directory: foreman/server/build
         timeout-minutes: 3
         run: |
           $version = & .\Foreman.exe --version
@@ -138,14 +138,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Foreman-windows-x64
-          path: cms-agent/server/build/Foreman.exe
+          path: foreman/server/build/Foreman.exe
           if-no-files-found: error
 
       - name: Attach it to the release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: cms-agent/server/build/Foreman.exe
+          files: foreman/server/build/Foreman.exe
           body: |
             Download `Foreman.exe`, put it wherever you like, and double-click it.
 

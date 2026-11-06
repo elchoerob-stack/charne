@@ -43,6 +43,10 @@ website you sign it into.
   background queue in its own browser. Every step carries several ways to find
   its element, and Claude repairs the ones that break, writing the fix back so
   it sticks. See `docs/TASKS.md`.
+- **Shell / Command** (`/shell.html`, `server/src/shell/`): one front door. Give it
+  an e-mail, a ticket or a sentence; Claude plans the steps, workers do them, reads run
+  at once, changes wait for your OK, several jobs run side by side without colliding.
+  See `docs/SHELL.md`.
 - **Support desk** (`/support.html`, `server/src/support/`): paste a client
   e-mail and Foreman sorts it, drafts the reply, and creates, assigns, tags and
   closes the Jira ticket, each step only on your approval. See `docs/SUPPORT_DESK.md`.

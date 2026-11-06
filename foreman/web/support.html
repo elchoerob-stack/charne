@@ -37,7 +37,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface2);borde
 .reply{min-height:170px}.muted{color:var(--t3);font-size:12px}
 .tabs{display:flex;gap:6px;margin:14px 0 8px}.tabs button{flex:0 0 auto}
 </style></head><body>
-<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>Support desk</b><a href="/board.html" style="margin-left:auto">Board</a><a href="/" style="margin-left:14px">← Foreman</a></div>
+<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>Support desk</b><a href="/shell.html" style="margin-left:auto">Command</a><a href="/board.html" style="margin-left:14px">Board</a><a href="/" style="margin-left:14px">← Foreman</a></div>
 <main>
   <div id="cfg"></div>
 
@@ -85,6 +85,7 @@ const when = (iso) => new Date(iso).toLocaleString("en-ZA", { day: "numeric", mo
 
 let cfg = null, showArchived = false;
 const openJobs = new Set(); // keep a job open across refreshes
+try { const j = new URLSearchParams(location.search).get("job"); if (j) openJobs.add(j); } catch {}
 
 async function loadCfg() {
   cfg = await api("/support/config");

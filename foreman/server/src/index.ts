@@ -6,6 +6,8 @@ import { recorderRoutes } from "./recorder/routes.js";
 import { reportRoutes } from "./reports/routes.js";
 import { reviewRoutes } from "./review.js";
 import { supportRoutes } from "./support/routes.js";
+import { shellRoutes } from "./shell/routes.js";
+import { startShell } from "./shell/index.js";
 import { taskRoutes } from "./tasks/routes.js";
 import { boardRoutes, tickAgents } from "./tasks/board-routes.js";
 import { startScheduler } from "./tasks/scheduler.js";
@@ -42,6 +44,7 @@ app.use("/api", recorderRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", supportRoutes);
+app.use("/api", shellRoutes);
 app.use("/api", taskRoutes);
 app.use("/api", boardRoutes);
 
@@ -54,6 +57,10 @@ app.use(express.static(resource("web")));
 startScheduler(listTasks);
 // Agent reports go to the phone too (ntfy / webhook / e-mail), if configured.
 startNotifier(agentEvents);
+// The Shell: marks anything that was mid-step when we last stopped, then watches the clock for scheduled jobs.
+startShell();
+// The Shell: marks anything that was mid-step when we last stopped, then watches the clock for scheduled jobs.
+startShell();
 setInterval(() => { try { tickAgents(); } catch (err) { console.error("agent tick failed:", (err as Error).message); } }, 30_000).unref();
 
 app.listen(config.port, config.bindHost, () => {

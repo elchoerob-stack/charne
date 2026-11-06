@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Foreman · Command</title>
+<link rel="icon" href="/assets/foreman-icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0F2040">
+<style>
+:root{--ink:#0F2040;--gold:#C49A2F;--paper:#F7F5F1;--surface:#fff;--surface2:#FBFAF7;--line:#E5E0D8;--t1:#16203A;--t2:#4E5468;--t3:#7C7A78;--go:#1A6B3A;--go-bg:#E9F3EC;--wait:#8A6100;--wait-bg:#FBF1DC;--stop:#8B1A1A;--stop-bg:#F8EAEA;--r:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0A1122;--surface:#111B31;--surface2:#16223B;--line:#22304C;--t1:#ECE9E2;--t2:#A9B2C6;--t3:#7C879E;--go:#5FBF87;--go-bg:#12301F;--wait:#D9A93C;--wait-bg:#332715;--stop:#E28080;--stop-bg:#331919}}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--t1);font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.bar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;position:sticky;top:0;z-index:5}
+.bar b{font-size:15px}.bar a{color:#fff;font-size:12.5px;opacity:.85;text-decoration:none}
+main{max-width:780px;margin:0 auto;padding:12px 12px 60px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+label.f{display:block;font-size:11px;color:var(--t2);margin:10px 0 3px}
+input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font-size:16px}
+textarea{min-height:110px;resize:vertical}
+.btn{padding:9px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);font-weight:600;cursor:pointer;min-height:40px}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}.btn.go{background:var(--go);color:#fff;border-color:var(--go)}
+.btn.small{padding:6px 10px;min-height:34px;font-size:12px}.btn[disabled]{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}.row .btn{flex:1;min-width:120px}
+.pill{display:inline-block;font-size:10.5px;padding:1px 8px;border-radius:999px;background:var(--wait-bg);color:var(--wait);white-space:nowrap}
+.pill.go{background:var(--go-bg);color:var(--go)}.pill.stop{background:var(--stop-bg);color:var(--stop)}.pill.plain{background:var(--surface2);color:var(--t2);border:1px solid var(--line)}
+.muted{color:var(--t3);font-size:12px}
+.job{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.job>summary{list-style:none;cursor:pointer;padding:11px 12px;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.job>summary::-webkit-details-marker{display:none}
+.job .ttl{flex:1 1 220px;font-weight:600;min-width:0;overflow-wrap:anywhere}.job .sub{font-size:12px;color:var(--t3);font-weight:400}
+.job .body{padding:4px 12px 12px;border-top:1px solid var(--line)}
+.warn{background:var(--wait-bg);color:var(--wait);border-radius:8px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+.err{background:var(--stop-bg);color:var(--stop);border-radius:8px;padding:8px 10px;font-size:12.5px;margin:6px 0;overflow-wrap:anywhere}
+.ok{background:var(--go-bg);color:var(--go);border-radius:8px;padding:8px 10px;font-size:12.5px;margin:6px 0}
+.step{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.step:last-child{border-bottom:0}
+.dot{flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--surface2);border:1px solid var(--line);color:var(--t3)}
+.dot.done{background:var(--go-bg);color:var(--go);border-color:transparent}.dot.failed{background:var(--stop-bg);color:var(--stop);border-color:transparent}
+.dot.running{background:var(--wait-bg);color:var(--wait);border-color:transparent;animation:p 1.2s infinite}.dot.awaiting_approval{background:var(--wait-bg);color:var(--wait);border-color:transparent}
+@keyframes p{50%{opacity:.4}}
+.step .main{flex:1;min-width:0}.step .t{font-weight:600}.step .w{font-size:11px;color:var(--t3);font-family:ui-monospace,Consolas,monospace}
+.out{font-size:12.5px;color:var(--t2);margin-top:3px;overflow-wrap:anywhere}
+.needs{background:var(--wait-bg);border:1px solid var(--wait);border-radius:10px;padding:10px;margin:10px 0}
+.needs b.h{color:var(--wait)}
+.needs ul{margin:6px 0 0;padding-left:18px}
+.based{font-size:12px;color:var(--t2);margin-top:3px}
+textarea.reply{min-height:160px;font-size:14px;margin-top:6px}
+details.workers summary{cursor:pointer;font-weight:600;padding:6px 0}
+.cap{font-size:12.5px;padding:4px 0;color:var(--t2)}.cap b{color:var(--t1)}
+.tabs{display:flex;gap:6px;margin:14px 0 8px}
+</style></head><body>
+<div class="bar"><img src="/assets/foreman-mark.svg" alt="Foreman" style="height:24px"><b>Command</b><a href="/support.html" style="margin-left:auto">Support desk</a><a href="/board.html" style="margin-left:14px">Board</a><a href="/" style="margin-left:14px">← Foreman</a></div>
+<main>
+  <div class="box">
+    <label class="f" for="text" style="margin-top:0">What do you need done?</label>
+    <textarea id="text" placeholder="Paste a client e-mail, a Jira ticket (CS-259412), or tell me in your own words."></textarea>
+    <label class="f" for="runAt">Start later (optional)</label>
+    <input id="runAt" type="datetime-local">
+    <div class="row"><button class="btn primary" id="go">Plan it</button></div>
+    <div class="muted" style="margin-top:8px">I'll show you the plan. Anything that only reads starts straight away; anything that <b>changes</b> Jira or another system waits for your OK.</div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="tabs"><button class="btn small primary" id="tabActive">Active</button><button class="btn small" id="tabArchive">Archived</button></div>
+  <div id="jobs"></div>
+
+  <details class="workers box" id="workers"><summary>What I can do (and what I can't yet)</summary><div id="wlist" class="muted">Loading…</div></details>
+</main>
+<script>
+const tokenKey = "foreman_token";
+const getToken = () => { try { return localStorage.getItem(tokenKey) || ""; } catch { return ""; } };
+const raw = window.fetch.bind(window);
+window.fetch = async (u, o = {}) => { const h = new Headers(o.headers || {}); if (String(u).startsWith("/api") && getToken()) h.set("Authorization", "Bearer " + getToken()); let r = await raw(u, { ...o, headers: h }); if (r.status === 401 && String(u).startsWith("/api")) { const t = prompt("Access token (CMS_AGENT_TOKEN):", getToken()); if (t) { try { localStorage.setItem(tokenKey, t.trim()); } catch {} h.set("Authorization", "Bearer " + t.trim()); r = await raw(u, { ...o, headers: h }); } } return r; };
+const api = async (p, o) => { const r = await fetch("/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), j); return j; };
+const post = (p, body) => api(p, { method: "POST", body: JSON.stringify(body || {}) });
+
+// Everything dynamic goes in as text. Client e-mails and Jira content are untrusted.
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v); }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+}
+const when = (iso) => new Date(iso).toLocaleString("en-ZA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+let workers = {}, showArchived = false, jobsCache = [];
+const caps = {}; // id -> capability
+const openJobs = new Set((location.hash || "").slice(1).split(",").filter(Boolean));
+
+const STATUS = {
+  planning: ["planning", "plain"], awaiting_approval: ["needs your OK", ""], scheduled: ["scheduled", "plain"], running: ["working…", "plain"],
+  done: ["done", "go"], failed: ["needs attention", "stop"], cancelled: ["cancelled", "plain"], needs_input: ["needs more from you", ""],
+};
+const ICON = { done: "✓", failed: "✗", running: "…", awaiting_approval: "?", ready: "○", skipped: "–", cancelled: "–" };
+
+function summarise(step) {
+  const o = step.output || {}, c = step.capability;
+  if (c === "support.triage" || c === "support.load_ticket") {
+    return [h("div", { class: "out" }, `${(o.category || "").replace(/_/g, " ")}${o.dealers && o.dealers.length ? " · " + o.dealers.join(", ") : ""}${o.group ? " · group " + o.group : ""}`),
+      o.missing && o.missing.length ? h("div", { class: "out" }, "Still missing from the client: " + o.missing.join("; ")) : null,
+      o.jobId ? h("a", { href: "/support.html?job=" + encodeURIComponent(o.jobId), class: "muted" }, "Open in the Support desk →") : null];
+  }
+  if (c === "support.create_ticket") return [h("div", { class: "out" }, o.url ? h("span", {}, "Ticket ", h("a", { href: o.url, target: "_blank", rel: "noopener" }, o.ticket)) : "No ticket"), ...(o.warnings || []).map((w) => h("div", { class: "warn" }, w))];
+  if (c === "support.fill_fields") return [h("div", { class: "out" }, (o.written && o.written.length ? "Written to Jira: " + o.written.join("; ") : "Nothing needed changing") + (o.complete ? " · all required fields filled" : o.stillEmpty && o.stillEmpty.length ? " · still empty: " + o.stillEmpty.join(", ") : ""))];
+  if (c === "support.draft_reply") {
+    const ta = h("textarea", { class: "reply" }, o.reply || "");
+    const copy = h("button", { class: "btn small" }, "Copy reply");
+    copy.onclick = async () => { try { await navigator.clipboard.writeText(ta.value); } catch { ta.select(); document.execCommand("copy"); } copy.textContent = "Copied ✓"; setTimeout(() => (copy.textContent = "Copy reply"), 1500); };
+    return [h("div", { class: "muted" }, "Draft only: copy it into the shared inbox. Check anything in [square brackets] first."), ta, h("div", { class: "row" }, copy)];
+  }
+  if (c === "support.close_ticket") return [h("div", { class: "out" }, `${o.ticket || "Job"} closed`)];
+  return [h("div", { class: "out" }, JSON.stringify(o))];
+}
+
+function renderJob(job) {
+  const [label, kind] = STATUS[job.status] || [job.status, "plain"];
+  const msg = h("div");
+  const busy = async (btn, fn) => { btn.disabled = true; msg.replaceChildren(); try { await fn(); } catch (e) { msg.append(h("div", { class: "err" }, e.message)); } finally { btn.disabled = false; } };
+  const body = h("div", { class: "body" });
+  const byRef = Object.fromEntries(job.steps.map((s) => [s.ref, s]));
+
+  if (job.planSource === "rules") body.append(h("div", { class: "warn" }, "Claude wasn't used to plan this (no credentials, or it was unreachable), so this is a simple rule-based plan. Check it."));
+  for (const u of job.unsupported) body.append(h("div", { class: "warn" }, h("b", {}, "Can't do yet: "), u));
+  for (const q of job.questions) body.append(h("div", { class: "warn" }, h("b", {}, "I need to know: "), q));
+  if (job.runAt && job.status === "scheduled") body.append(h("div", { class: "ok" }, "Starts " + when(job.runAt)));
+
+  // Steps
+  for (const s of job.steps) {
+    const cap = caps[s.capability];
+    const main = h("div", { class: "main" }, h("div", { class: "t" }, s.title, " ", s.risk === "changes_data" ? h("span", { class: "pill stop" }, "changes data") : null), h("div", { class: "w" }, s.capability));
+    if (s.status === "done") main.append(...summarise(s).filter(Boolean)); // append(null) would print the word "null"
+    if (s.error) main.append(h("div", { class: "err" }, s.error));
+    if (s.status === "failed") { const r = h("button", { class: "btn small", style: "margin-top:4px" }, s.risk === "changes_data" ? "Retry (asks again)" : "Retry"); r.onclick = () => busy(r, async () => { await post(`/shell/jobs/${job.id}/steps/${s.ref}/retry`); await refresh(); }); main.append(r); }
+    if (s.status === "ready" && s.after.some((a) => byRef[a] && byRef[a].status !== "done")) main.append(h("div", { class: "muted" }, "Waiting for " + s.after.filter((a) => byRef[a] && byRef[a].status !== "done").map((a) => byRef[a].title).join(", ")));
+    body.append(h("div", { class: "step" }, h("div", { class: "dot " + s.status }, ICON[s.status] || "·"), main));
+  }
+
+  // The approval box: say exactly what will change, and on what basis.
+  const waiting = job.steps.filter((s) => s.status === "awaiting_approval");
+  if (waiting.length && job.status !== "cancelled") {
+    const box = h("div", { class: "needs" }, h("b", { class: "h" }, waiting.length > 1 ? "These change things and are waiting for your OK" : "This changes things and is waiting for your OK"));
+    const ul = h("ul");
+    for (const s of waiting) {
+      const basis = s.after.map((a) => byRef[a]).filter((x) => x && x.status === "done" && x.output && x.output.category).map((x) => `${x.output.category.replace(/_/g, " ")}${x.output.dealers && x.output.dealers.length ? " for " + x.output.dealers.join(", ") : ""}`);
+      const one = h("button", { class: "btn small", style: "margin-left:8px" }, "Approve this");
+      one.onclick = () => busy(one, async () => { await post(`/shell/jobs/${job.id}/approve`, { steps: [s.ref] }); openJobs.add(job.id); await refresh(); });
+      ul.append(h("li", {}, h("b", {}, s.title), caps[s.capability] ? h("div", { class: "muted" }, caps[s.capability].description) : null, basis.length ? h("div", { class: "based" }, "Based on: " + basis.join("; ")) : null, one));
+    }
+    const all = h("button", { class: "btn go", style: "margin-top:8px" }, waiting.length > 1 ? "Approve all" : "Approve");
+    all.onclick = () => busy(all, async () => { if (!confirm(`Approve: ${waiting.map((s) => s.title).join("; ")}?`)) return; await post(`/shell/jobs/${job.id}/approve`, {}); openJobs.add(job.id); await refresh(); });
+    box.append(ul, all);
+    body.append(box);
+  }
+
+  // Footer actions
+  const acts = h("div", { class: "row" });
+  if (["done", "failed", "cancelled", "needs_input"].includes(job.status)) {
+    const a = h("button", { class: "btn" }, job.archived ? "Move back to Active" : "Archive");
+    a.onclick = () => busy(a, async () => { await post(`/shell/jobs/${job.id}/archive`, { archived: !job.archived }); await refresh(); });
+    acts.append(a);
+  } else {
+    const c = h("button", { class: "btn" }, "Cancel the job");
+    c.onclick = () => busy(c, async () => { if (!confirm("Cancel everything not yet started? A step already running will finish.")) return; await post(`/shell/jobs/${job.id}/cancel`); await refresh(); });
+    acts.append(c);
+  }
+  body.append(acts, msg);
+  body.append(h("details", { style: "margin-top:8px" }, h("summary", { class: "muted", style: "cursor:pointer" }, "The original request"), h("pre", { class: "muted", style: "white-space:pre-wrap;overflow-wrap:anywhere" }, job.text)));
+
+  const det = h("details", { class: "job", id: job.id, open: openJobs.has(job.id) },
+    h("summary", {}, h("div", { class: "ttl" }, job.summary, h("div", { class: "sub" }, `${job.steps.length} step${job.steps.length === 1 ? "" : "s"} · ${when(job.createdAt)}`)), h("span", { class: "pill " + kind }, label)), body);
+  det.addEventListener("toggle", () => (det.open ? openJobs.add(job.id) : openJobs.delete(job.id)));
+  return det;
+}
+
+let busyRender = false;
+async function refresh() {
+  if (busyRender) return; busyRender = true;
+  try {
+    jobsCache = await api("/shell/jobs" + (showArchived ? "?archived=1" : ""));
+    // Don't rebuild the page while someone is typing in a draft or has text selected.
+    const el = document.getElementById("jobs");
+    if (document.activeElement && el.contains(document.activeElement) && document.activeElement.tagName === "TEXTAREA") return;
+    el.replaceChildren(...(jobsCache.length ? jobsCache.map(renderJob) : [h("div", { class: "muted", style: "padding:14px" }, showArchived ? "Nothing archived yet." : "No active jobs. Tell me what you need above.")]));
+  } catch (e) { document.getElementById("jobs").replaceChildren(h("div", { class: "err" }, e.message)); }
+  finally { busyRender = false; }
+}
+
+document.getElementById("go").onclick = async (ev) => {
+  const btn = ev.target, text = document.getElementById("text").value, m = document.getElementById("msg"); m.replaceChildren();
+  if (!text.trim()) return m.append(h("div", { class: "err" }, "Tell me what you need first."));
+  btn.disabled = true; btn.textContent = "Planning…";
+  try {
+    const runAt = document.getElementById("runAt").value;
+    const job = await post("/shell/jobs", { text, runAt: runAt ? new Date(runAt).toISOString() : undefined });
+    openJobs.add(job.id); document.getElementById("text").value = ""; document.getElementById("runAt").value = ""; showArchived = false; setTabs(); await refresh();
+  } catch (e) { m.append(h("div", { class: "err" }, e.message)); }
+  finally { btn.disabled = false; btn.textContent = "Plan it"; }
+};
+function setTabs() { document.getElementById("tabActive").classList.toggle("primary", !showArchived); document.getElementById("tabArchive").classList.toggle("primary", showArchived); }
+document.getElementById("tabActive").onclick = () => { showArchived = false; setTabs(); refresh(); };
+document.getElementById("tabArchive").onclick = () => { showArchived = true; setTabs(); refresh(); };
+
+async function loadWorkers() {
+  workers = await api("/shell/workers");
+  const el = document.getElementById("wlist"); el.replaceChildren();
+  for (const [w, list] of Object.entries(workers)) {
+    el.append(h("div", { style: "margin-top:8px;font-weight:600;color:var(--t1)" }, w.replace(/_/g, " ")));
+    for (const c of list) { caps[c.id] = c; el.append(h("div", { class: "cap" }, h("b", {}, c.title), " ", c.available ? (c.risk === "changes_data" ? h("span", { class: "pill stop" }, "needs your OK") : h("span", { class: "pill go" }, "reads only")) : h("span", { class: "pill" }, "not built yet"))); }
+  }
+}
+
+(async () => {
+  try { await loadWorkers(); } catch {}
+  await refresh();
+  // Quick while anything is moving, slow otherwise.
+  const tick = async () => { await refresh(); const busy = jobsCache.some((j) => ["running", "planning"].includes(j.status)); setTimeout(tick, busy ? 1500 : 6000); };
+  setTimeout(tick, 1500);
+})();
+</script></body></html>

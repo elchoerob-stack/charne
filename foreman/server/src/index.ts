@@ -5,6 +5,7 @@ import { apiRoutes } from "./routes.js";
 import { recorderRoutes } from "./recorder/routes.js";
 import { reportRoutes } from "./reports/routes.js";
 import { reviewRoutes } from "./review.js";
+import { supportRoutes } from "./support/routes.js";
 import { taskRoutes } from "./tasks/routes.js";
 import { boardRoutes, tickAgents } from "./tasks/board-routes.js";
 import { startScheduler } from "./tasks/scheduler.js";
@@ -40,6 +41,7 @@ app.use("/api", apiRoutes);
 app.use("/api", recorderRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", reviewRoutes);
+app.use("/api", supportRoutes);
 app.use("/api", taskRoutes);
 app.use("/api", boardRoutes);
 

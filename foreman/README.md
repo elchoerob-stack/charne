@@ -43,6 +43,9 @@ website you sign it into.
   background queue in its own browser. Every step carries several ways to find
   its element, and Claude repairs the ones that break, writing the fix back so
   it sticks. See `docs/TASKS.md`.
+- **Support desk** (`/support.html`, `server/src/support/`): paste a client
+  e-mail and Foreman sorts it, drafts the reply, and creates, assigns, tags and
+  closes the Jira ticket, each step only on your approval. See `docs/SUPPORT_DESK.md`.
 - **Workflow recorder** (`recorder-extension/` + `server/src/recorder/`):
   Chrome extension that captures clicks, fields, screens, screenshots,
   console errors and failed requests with POPIA masking; the server compiles

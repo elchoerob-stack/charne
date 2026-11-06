@@ -12,6 +12,7 @@ const { classifyEmail, heuristicClassify } = await import("../src/support/classi
 const { JiraClient, applyTag, buildIssueFields, jiraConfig } = await import("../src/support/jira.js");
 const { draftReply, templateReply } = await import("../src/support/reply.js");
 const svc = await import("../src/support/service.js");
+const F = await import("../src/support/fields.js");
 const { auditFor, getJob, listJobs } = await import("../src/support/store.js");
 
 /* ── sorting ─────────────────────────────────────────────────────────── */
@@ -96,23 +97,48 @@ test("Jira is simply 'not configured' until all four settings exist", () => {
 
 /* ── the Jira client, against a fake ─────────────────────────────────── */
 
-function fakeJira(opts: { assignFails?: boolean; transitions?: { id: string; name: string }[]; createFails?: boolean } = {}) {
+const GROUPS = [
+  { id: "10", value: "Morgan", cascadingOptions: [{ id: "11", value: "Toyota Kimberley" }, { id: "12", value: "Toyota Upington" }] },
+  { id: "20", value: "Super Group", cascadingOptions: [{ id: "21", value: "Suzuki Boksburg" }, { id: "22", value: "Suzuki Edenvale" }] },
+];
+const ME = { accountId: "acc-jacques", displayName: "Jacques Robilliard" };
+
+function fakeJira(opts: { assignFails?: boolean; transitions?: { id: string; name: string }[]; createFails?: boolean; filled?: boolean } = {}) {
   const calls: { method: string; path: string; body: any }[] = [];
+  const state: { assignee?: typeof ME; fields: Record<string, any> } = {
+    assignee: opts.filled ? ME : undefined,
+    fields: opts.filled ? { customfield_1: ME, customfield_2: { id: "1", value: "Product Support" }, customfield_3: { id: "20", value: "Super Group", child: { id: "21", value: "Suzuki Boksburg" } } } : {},
+  };
   const doFetch = async (url: string, init: any = {}) => {
     const p = url.replace("https://x.atlassian.net/rest/api/3", "");
+    const p0 = p.split("?")[0];
     const method = init.method ?? "GET";
     calls.push({ method, path: p, body: init.body ? JSON.parse(init.body) : undefined });
     const reply = (status: number, body: unknown) => ({ ok: status < 400, status, text: async () => (body === undefined ? "" : JSON.stringify(body)) });
-    if (p === "/myself") return reply(200, { accountId: "acc-jacques" });
-    if (p === "/issue" && method === "POST") return opts.createFails ? reply(400, { errors: { components: "Component name 'Product Support' is not valid" } }) : reply(201, { key: "PS-101" });
-    if (p.endsWith("/assignee")) return opts.assignFails ? reply(403, { errorMessages: ["no permission"] }) : reply(204, undefined);
-    if (p.endsWith("/transitions") && method === "GET") return reply(200, { transitions: opts.transitions ?? [{ id: "31", name: "Done" }] });
-    if (p.endsWith("/transitions") && method === "POST") return reply(204, undefined);
-    if (p.endsWith("/comment")) return reply(201, {});
-    return reply(404, { errorMessages: ["unexpected " + p] });
+    if (p0 === "/myself") return reply(200, ME);
+    if (p0 === "/issue" && method === "POST") return opts.createFails ? reply(400, { errors: { components: "Component name 'Product Support' is not valid" } }) : reply(201, { key: "PS-101" });
+    if (p0.endsWith("/assignee")) { if (opts.assignFails) return reply(403, { errorMessages: ["no permission"] }); state.assignee = ME; return reply(204, undefined); }
+    if (p0.endsWith("/editmeta")) return reply(200, { fields: {
+      summary: { name: "Summary", schema: { type: "string" } },
+      customfield_1: { name: "Support Agent", schema: { type: "user" } },
+      customfield_2: { name: "Support Enquiry", schema: { type: "option" }, allowedValues: [{ id: "1", value: "Product Support" }, { id: "2", value: "Billing" }] },
+      customfield_3: { name: "Group and Dealership", schema: { type: "option-with-child" }, allowedValues: GROUPS },
+    } });
+    if (p0.endsWith("/transitions") && method === "GET") return reply(200, { transitions: opts.transitions ?? [{ id: "31", name: "Done" }] });
+    if (p0.endsWith("/transitions") && method === "POST") return reply(204, undefined);
+    if (p0.endsWith("/comment")) return reply(201, {});
+    const m = /^\/issue\/([A-Z]+-\d+)$/.exec(p0);
+    if (m && method === "GET") return reply(200, { key: m[1], fields: {
+      summary: "[187-328044D2-005E] Violations",
+      description: { type: "doc", version: 1, content: [{ type: "paragraph", content: [{ type: "text", text: "Please raise violations with respective dealers" }] }, { type: "paragraph", content: [{ type: "text", text: "Suzuki Boksburg 168066 Incorrect 1st image" }] }] },
+      reporter: { displayName: "Auto Trader Group Support", emailAddress: "groupsupport@autotrader.co.za" },
+      assignee: state.assignee, status: { name: "Open" }, ...state.fields,
+    } });
+    if (m && method === "PUT") { Object.assign(state.fields, JSON.parse(init.body).fields); return reply(204, undefined); }
+    return reply(404, { errorMessages: ["unexpected " + method + " " + p] });
   };
   const cfg = jiraConfig({ JIRA_BASE_URL: "https://x.atlassian.net", JIRA_EMAIL: "a@b.c", JIRA_API_TOKEN: "t", JIRA_PROJECT_KEY: "PS", JIRA_SUPPORT_TAG: "component:Product Support" })!;
-  return { calls, client: new JiraClient(cfg, doFetch as never) };
+  return { calls, state, client: new JiraClient(cfg, doFetch as never) };
 }
 
 test("a ticket is created, then assigned to the token's owner", async () => {
@@ -207,14 +233,14 @@ test("without Jira set up, approval is refused with a clear reason", async () =>
 });
 
 test("a job is only marked done after Jira has closed the ticket", async () => {
-  const stuck = fakeJira({ transitions: [{ id: "1", name: "Resolve" }] });
+  const stuck = fakeJira({ transitions: [{ id: "1", name: "Resolve" }], filled: true });
   const d = deps(stuck.client);
   const job = await svc.intake(EMAIL, {}, d);
   await svc.createTicket(job.id, d);
   await assert.rejects(svc.complete(job.id, {}, d), (e: any) => e.status === 502 && /did not close PS-101/.test(e.message));
   assert.equal(getJob(job.id)!.status, "open", "still open, so it cannot be forgotten");
 
-  const fine = fakeJira();
+  const fine = fakeJira({ filled: true });
   const done = await svc.complete(job.id, { note: "Profile created." }, deps(fine.client));
   assert.equal(done.status, "done");
   assert.ok(fine.calls.some((c) => c.path.endsWith("/comment")));
@@ -228,6 +254,7 @@ test("only finished jobs archive, and archiving takes them off the active list",
   const job = await svc.intake(EMAIL, {}, d);
   assert.throws(() => svc.archive(job.id), (e: any) => e.status === 409);
   await svc.createTicket(job.id, d);
+  await svc.fillFields(job.id, {}, d);
   await svc.complete(job.id, {}, d);
   svc.archive(job.id);
   assert.ok(!listJobs().some((j) => j.id === job.id));
@@ -255,10 +282,11 @@ test("every step leaves an audit trail", async () => {
   const d = deps(f.client);
   const job = await svc.intake(EMAIL, {}, d);
   await svc.createTicket(job.id, d);
+  await svc.fillFields(job.id, {}, d);
   await svc.complete(job.id, {}, d);
   svc.archive(job.id);
   const actions = auditFor(job.id).map((a) => a.action);
-  assert.deepEqual(actions, ["received", "ticket-created", "ticket-closed", "done", "archived"]);
+  assert.deepEqual(actions, ["received", "ticket-created", "fields-filled", "ticket-closed", "done", "archived"]);
 });
 
 test("the ticket preview shows exactly what would be sent", async () => {
@@ -269,3 +297,141 @@ test("the ticket preview shows exactly what would be sent", async () => {
   assert.match(d.description, /Original e-mail:/);
   assert.equal(d.group, "Super Group");
 });
+
+/* ── the fields the desk requires on every closed ticket ─────────────── */
+
+const meta = (id: string, name: string, type: string, allowed: any[] = []) => F.parseMeta(id, { name, schema: { type }, allowedValues: allowed });
+const ctx = (over: Partial<Parameters<typeof F.planFields>[3]> = {}) => ({ me: ME, enquiry: ["Product Support"], group: undefined, dealers: [], ...over });
+const METAS = [
+  meta("customfield_1", "Support Agent", "user"),
+  meta("customfield_2", "Support Enquiry", "option", [{ id: "1", value: "Product Support" }, { id: "2", value: "Billing" }]),
+  meta("customfield_3", "Group and Dealership", "option-with-child", GROUPS),
+];
+const plan = (c: ReturnType<typeof ctx>, current: Record<string, unknown> = {}) => F.planFields(F.DEFAULT_FIELD_NAMES, METAS, current, c);
+
+test("a value is matched only when exactly one allowed value clearly fits", () => {
+  const opts = [{ label: "Toyota Kimberley" }, { label: "Toyota Upington" }, { label: "Toyota Kimberley Used" }];
+  assert.equal(F.matchOne(opts, ["toyota kimberley"])?.label, "Toyota Kimberley", "an exact match wins over a longer name");
+  assert.equal(F.matchOne(opts, ["Toyota"]), undefined, "several fit, so nothing is picked");
+  assert.equal(F.matchOne(opts, ["Honda Pretoria"]), undefined);
+  assert.equal(F.matchOne([{ label: "A" }, { label: "A" }], ["a"]), undefined, "duplicate exact matches are ambiguous");
+});
+
+test("the agent is you, the enquiry is Product Support, and the group comes from the dealership", () => {
+  const p = plan(ctx({ dealers: ["Suzuki Boksburg"] }));
+  assert.deepEqual(p.find((x) => x.role === "agent")!.proposal!.payload, { accountId: "acc-jacques" });
+  assert.deepEqual(p.find((x) => x.role === "enquiry")!.proposal!.payload, { id: "1" });
+  const g = p.find((x) => x.role === "group")!;
+  assert.equal(g.proposal!.label, "Super Group › Suzuki Boksburg");
+  assert.deepEqual(g.proposal!.payload, { id: "20", child: { id: "21" } });
+});
+
+test("a known group narrows the dealership; an unknown dealership is left for you to choose", () => {
+  const known = plan(ctx({ group: "Morgan", dealers: ["Toyota Upington"] })).find((x) => x.role === "group")!;
+  assert.equal(known.proposal!.label, "Morgan › Toyota Upington");
+  const unknown = plan(ctx({ group: "Morgan", dealers: ["Toyota Springbok"] })).find((x) => x.role === "group")!;
+  assert.equal(unknown.proposal, undefined, "no guessing");
+  assert.ok(unknown.options.includes("Morgan › Toyota Kimberley"), "but every choice is offered");
+  assert.equal(plan(ctx()).find((x) => x.role === "group")!.proposal, undefined, "no group and no dealer: nothing to go on");
+});
+
+test("a ticket about several dealers is never settled by taking the first", () => {
+  // Real shape: one e-mail naming two dealerships that sit under the same group.
+  const two = plan(ctx({ dealers: ["Suzuki Boksburg", "Suzuki Edenvale"], group: "Super Group" }), {});
+  assert.equal(two.find((x) => x.role === "group")!.proposal, undefined, "same group, two dealerships: pick one");
+  assert.equal(plan(ctx({ dealers: ["Suzuki Boksburg", "Suzuki Edenvale"] })).find((x) => x.role === "group")!.proposal, undefined, "and with no group given");
+  assert.equal(plan(ctx({ dealers: ["Suzuki Boksburg"], group: "Super Group" })).find((x) => x.role === "group")!.proposal!.label, "Super Group › Suzuki Boksburg", "one dealership is still settled automatically");
+  const noGroup = plan(ctx({ dealers: ["Suzuki Boksburg", "Toyota Kimberley"] })).find((x) => x.role === "group")!;
+  assert.equal(noGroup.proposal, undefined, "two dealers in two groups: still a choice");
+  assert.ok(noGroup.options.length > 0, "but the options are all there to choose from");
+  // The same dealer named twice is still just one dealer.
+  assert.equal(plan(ctx({ dealers: ["Suzuki Boksburg", "suzuki boksburg"] })).find((x) => x.role === "group")!.proposal!.label, "Super Group › Suzuki Boksburg");
+});
+
+test("fields already filled are left alone and not proposed again", () => {
+  const p = plan(ctx({ dealers: ["Suzuki Boksburg"] }), { customfield_2: { id: "2", value: "Billing" } });
+  const e = p.find((x) => x.role === "enquiry")!;
+  assert.equal(e.filled, true);
+  assert.equal(e.current, "Billing");
+  assert.equal(e.proposal, undefined);
+  assert.deepEqual(F.fieldsToWrite(p, METAS, {}, ME).fields.customfield_2, undefined, "Billing is not overwritten");
+});
+
+test("an operator's choice is checked against the allowed values", () => {
+  const p = plan(ctx());
+  const ok = F.fieldsToWrite(p, METAS, { "Group and Dealership": "Morgan › Toyota Kimberley" }, ME);
+  assert.deepEqual(ok.fields.customfield_3, { id: "10", child: { id: "11" } });
+  assert.throws(() => F.fieldsToWrite(p, METAS, { "Group and Dealership": "Morgan › Nowhere" }, ME), /not an allowed value/);
+  assert.throws(() => F.fieldsToWrite(p, METAS, {}, ME), /Group and Dealership needs a choice/);
+});
+
+test("a field missing from the ticket's edit screen is reported, not skipped", () => {
+  const p = F.planFields(F.DEFAULT_FIELD_NAMES, METAS.slice(0, 2), {}, ctx());
+  const g = p.find((x) => x.role === "group")!;
+  assert.equal(g.kind, "missing");
+  assert.match(g.note!, /not on this ticket's edit screen/);
+});
+
+test("a ticket's rich-text body reads back as plain text", () => {
+  const doc = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Hi CMS" }] }, { type: "paragraph", content: [{ type: "text", text: "line one" }, { type: "hardBreak" }, { type: "text", text: "line two" }] }] };
+  assert.equal(F.adfToText(doc).trim(), "Hi CMS\n\nline one\nline two");
+});
+
+/* ── loading a ticket the desk already made ──────────────────────────── */
+
+test("an existing ticket is loaded read-only, sorted, and not duplicated", async () => {
+  const f = fakeJira();
+  const d = deps(f.client);
+  const job = await svc.importTicket("https://cmsdev.atlassian.net/browse/cs-259412?focusedId=1", d);
+  assert.equal(job.ticket?.key, "CS-259412");
+  assert.equal(job.status, "open");
+  assert.equal(job.source, "ticket");
+  assert.match(job.email, /From: Auto Trader Group Support <groupsupport@autotrader.co.za>/);
+  assert.match(job.email, /Suzuki Boksburg 168066/);
+  assert.deepEqual(job.classification.dealers, ["Suzuki Boksburg"]);
+  assert.ok(f.calls.every((c) => c.method === "GET"), "importing must not change anything in Jira");
+  const again = await svc.importTicket("CS-259412", d);
+  assert.equal(again.id, job.id);
+});
+
+test("a bad key or a missing Jira setup is refused plainly", async () => {
+  await assert.rejects(svc.importTicket("not a key", deps(fakeJira().client)), (e: any) => e.status === 400);
+  await assert.rejects(svc.importTicket("CS-1", deps(undefined)), (e: any) => e.status === 412);
+});
+
+/* ── the close gate ──────────────────────────────────────────────────── */
+
+test("a ticket cannot be closed until all four required things are filled", async () => {
+  const f = fakeJira();
+  const d = deps(f.client);
+  const job = await svc.importTicket("CS-300001", d);
+  await assert.rejects(svc.complete(job.id, {}, d), (e: any) => e.status === 409 && /Assignee, Support Agent, Support Enquiry, Group and Dealership/.test(e.message));
+  assert.equal(f.calls.filter((c) => c.path.endsWith("/transitions") && c.method === "POST").length, 0, "no close attempted");
+  assert.equal(getJob(job.id)!.status, "open");
+  assert.ok(auditFor(job.id).some((a) => a.action === "close-blocked"));
+});
+
+test("filling the fields takes the ticket and writes only what clearly matched", async () => {
+  const f = fakeJira();
+  const d = deps(f.client);
+  const job = await svc.importTicket("CS-300002", d);
+  const r = await svc.fillFields(job.id, {}, d);
+  assert.deepEqual(r.written, ["Assignee → Jacques Robilliard", "Support Agent → Jacques Robilliard", "Support Enquiry → Product Support", "Group and Dealership → Super Group › Suzuki Boksburg"]);
+  assert.equal(r.status.complete, true);
+  const done = await svc.complete(job.id, {}, d);
+  assert.equal(done.status, "done");
+});
+
+test("when a field needs a choice nothing is written until the operator makes it", async () => {
+  const f = fakeJira();
+  const d = deps(f.client);
+  const job = await svc.importTicket("CS-300003", d);
+  svc.correct(job.id, { dealers: ["Toyota Springbok"], group: "Morgan" });
+  const before = f.calls.length;
+  await assert.rejects(svc.fillFields(job.id, {}, d), (e: any) => e.status === 422 && /Group and Dealership needs a choice/.test(e.message));
+  assert.ok(!f.calls.slice(before).some((c) => c.method === "PUT"), "a refused fill must not write anything");
+  const r = await svc.fillFields(job.id, { "Group and Dealership": "Morgan › Toyota Kimberley" }, d);
+  assert.equal(r.status.complete, true);
+  assert.deepEqual(f.state.fields.customfield_3, { id: "10", child: { id: "11" } }, "Morgan › Toyota Kimberley, by id");
+});
+

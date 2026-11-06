@@ -18,6 +18,8 @@
  *                     `option:customfield_10042`); the group name is the value.
  */
 
+import { DEFAULT_FIELD_NAMES, adfToText, fieldsToWrite, parseMeta, planFields, type FieldMeta, type FieldNames, type FieldPlan } from "./fields.js";
+
 export interface JiraConfig {
   baseUrl: string;
   email: string;
@@ -32,6 +34,10 @@ export interface JiraConfig {
   doneTransition: string;
   /** Overrides the assignee; default is whoever owns the API token. */
   assigneeAccountId?: string;
+  /** The fields that must be filled before a ticket can be closed, by their names in Jira. */
+  fieldNames: FieldNames;
+  /** Value for Support Enquiry. The CMS desk files these under "Product Support". */
+  enquiryValue: string;
 }
 
 export function jiraConfig(env: NodeJS.ProcessEnv = process.env): JiraConfig | undefined {
@@ -47,6 +53,8 @@ export function jiraConfig(env: NodeJS.ProcessEnv = process.env): JiraConfig | u
     groupTag: env.JIRA_GROUP_TAG || undefined,
     doneTransition: env.JIRA_DONE_TRANSITION || "Done",
     assigneeAccountId: env.JIRA_ASSIGNEE_ACCOUNT_ID || undefined,
+    fieldNames: { agent: env.JIRA_AGENT_FIELD || DEFAULT_FIELD_NAMES.agent, enquiry: env.JIRA_ENQUIRY_FIELD || DEFAULT_FIELD_NAMES.enquiry, group: env.JIRA_GROUP_FIELD || DEFAULT_FIELD_NAMES.group },
+    enquiryValue: env.JIRA_ENQUIRY_VALUE || "Product Support",
   };
 }
 
@@ -111,6 +119,21 @@ export function buildIssueFields(cfg: JiraConfig, draft: TicketDraft): Fields {
 
 export type FetchLike = (url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) => Promise<{ ok: boolean; status: number; text(): Promise<string> }>;
 
+export interface TicketSnapshot {
+  key: string; url: string; summary: string; description: string; reporter: string; status: string;
+  assignee?: { accountId: string; displayName: string };
+  raw: Record<string, unknown>;
+}
+
+export interface FieldsStatus {
+  plan: FieldPlan[];
+  assignee: { ok: boolean; name?: string };
+  /** True when the assignee and every required field are filled. */
+  complete: boolean;
+  /** What is still empty, in words. */
+  missing: string[];
+}
+
 export interface CreatedTicket { key: string; url: string; assigned: boolean; warnings: string[] }
 
 export class JiraClient {
@@ -149,6 +172,54 @@ export class JiraClient {
       out.warnings.push(`Ticket ${created.key} was created but could not be assigned: ${(err as Error).message}`);
     }
     return out;
+  }
+
+  async me(): Promise<{ accountId: string; displayName: string }> {
+    const m = await this.call<{ accountId: string; displayName?: string }>("/myself");
+    return { accountId: this.cfg.assigneeAccountId ?? m.accountId, displayName: m.displayName ?? this.cfg.email };
+  }
+
+  /** Reads a ticket the way the desk sees it: who raised it, what they wrote, who has it. */
+  async getTicket(key: string, extraFields: string[] = []): Promise<TicketSnapshot> {
+    const fields = ["summary", "description", "reporter", "assignee", "status", ...extraFields].join(",");
+    const r = await this.call<{ key: string; fields: Record<string, any> }>(`/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`);
+    const f = r.fields ?? {};
+    return {
+      key: r.key, url: `${this.cfg.baseUrl}/browse/${r.key}`,
+      summary: String(f.summary ?? ""),
+      description: adfToText(f.description).trim(),
+      reporter: f.reporter ? `${f.reporter.displayName ?? ""}${f.reporter.emailAddress ? ` <${f.reporter.emailAddress}>` : ""}`.trim() : "",
+      status: String(f.status?.name ?? ""),
+      assignee: f.assignee ? { accountId: f.assignee.accountId, displayName: f.assignee.displayName } : undefined,
+      raw: f,
+    };
+  }
+
+  private async editMeta(key: string): Promise<FieldMeta[]> {
+    const r = await this.call<{ fields?: Record<string, any> }>(`/issue/${encodeURIComponent(key)}/editmeta`);
+    return Object.entries(r.fields ?? {}).map(([id, raw]) => parseMeta(id, raw));
+  }
+
+  /** What each required field holds now and what could go in it. Read-only. */
+  async fieldsStatus(key: string, ctx: { group?: string; dealers: string[] }): Promise<FieldsStatus & { metas: FieldMeta[]; me: { accountId: string; displayName: string } }> {
+    const [metas, me] = await Promise.all([this.editMeta(key), this.me()]);
+    const names = Object.values(this.cfg.fieldNames).map((n) => n.toLowerCase());
+    const wanted = metas.filter((m) => names.includes(m.name.toLowerCase()));
+    const ticket = await this.getTicket(key, wanted.map((m) => m.id));
+    const plan = planFields(this.cfg.fieldNames, metas, ticket.raw, { me, enquiry: [this.cfg.enquiryValue], group: ctx.group, dealers: ctx.dealers });
+    const assigneeOk = ticket.assignee?.accountId === me.accountId;
+    const missing = [...(assigneeOk ? [] : ["Assignee"]), ...plan.filter((p) => !p.filled).map((p) => p.name)];
+    return { plan, assignee: { ok: assigneeOk, name: ticket.assignee?.displayName }, complete: missing.length === 0, missing, metas, me };
+  }
+
+  /** Fills the required fields (the confident matches plus the operator's choices) and takes the ticket. Throws rather than guess. */
+  async fillFields(key: string, ctx: { group?: string; dealers: string[] }, choices: Record<string, string> = {}): Promise<{ written: string[]; status: FieldsStatus }> {
+    const st = await this.fieldsStatus(key, ctx);
+    const { fields, summary } = fieldsToWrite(st.plan, st.metas, choices, st.me);
+    if (Object.keys(fields).length) await this.call(`/issue/${encodeURIComponent(key)}`, "PUT", { fields });
+    if (!st.assignee.ok) { await this.call(`/issue/${encodeURIComponent(key)}/assignee`, "PUT", { accountId: st.me.accountId }); summary.unshift(`Assignee → ${st.me.displayName}`); }
+    const after = await this.fieldsStatus(key, ctx);
+    return { written: summary, status: after };
   }
 
   async comment(key: string, text: string): Promise<void> {

@@ -53,6 +53,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface2);borde
     <div id="intakeMsg"></div>
   </div>
 
+  <div class="box">
+    <label class="f" for="tkey" style="margin-top:0">Or load a ticket that's already in Jira</label>
+    <div style="display:flex;gap:8px"><input id="tkey" placeholder="CS-259412, or paste the ticket link" autocomplete="off"><button class="btn" id="load" style="flex:0 0 auto">Load</button></div>
+    <div class="muted" style="margin-top:8px">For e-mails the desk has already turned into tickets. Loading only reads the ticket; nothing changes in Jira.</div>
+    <div id="loadMsg"></div>
+  </div>
+
   <div class="tabs"><button class="btn small primary" id="tabActive">Active</button><button class="btn small" id="tabArchive">Archived</button></div>
   <div id="jobs"></div>
 </main>
@@ -63,6 +70,9 @@ const raw = window.fetch.bind(window);
 window.fetch = async (u, o = {}) => { const h = new Headers(o.headers || {}); if (String(u).startsWith("/api") && getToken()) h.set("Authorization", "Bearer " + getToken()); let r = await raw(u, { ...o, headers: h }); if (r.status === 401 && String(u).startsWith("/api")) { const t = prompt("Access token (CMS_AGENT_TOKEN):", getToken()); if (t) { try { localStorage.setItem(tokenKey, t.trim()); } catch {} h.set("Authorization", "Bearer " + t.trim()); r = await raw(u, { ...o, headers: h }); } } return r; };
 const api = async (p, o) => { const r = await fetch("/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), j); return j; };
 const post = (p, body) => api(p, { method: "POST", body: JSON.stringify(body || {}) });
+
+// Element.append(null) writes the text "null", so every append goes through here.
+const put = (el, ...kids) => { el.append(...kids.flat().filter((k) => k != null && k !== false)); return el; };
 
 // E-mails are untrusted text. Everything dynamic goes in through textContent, never innerHTML.
 function h(tag, attrs, ...kids) {
@@ -80,7 +90,6 @@ async function loadCfg() {
   cfg = await api("/support/config");
   const el = document.getElementById("cfg"); el.replaceChildren();
   if (!cfg.jira) el.append(h("div", { class: "warn" }, "Jira is not set up yet, so tickets can't be created or closed. Add JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN and JIRA_PROJECT_KEY to server/.env and restart. You can still sort e-mails and draft replies."));
-  else if (!cfg.supportTag) el.append(h("div", { class: "warn" }, "JIRA_SUPPORT_TAG isn't set, so tickets won't be marked Product Support. Example: component:Product Support"));
 }
 
 function catSelect(job, locked) {
@@ -93,8 +102,49 @@ function statusPill(job) {
   return job.status === "proposed" ? h("span", { class: "pill" }, "needs your approval") : job.status === "open" ? h("span", { class: "pill plain" }, "in progress") : h("span", { class: "pill go" }, "done");
 }
 
+// What the desk requires before a ticket can be closed, read live from Jira.
+function fieldsPanel(job) {
+  const el = h("div", { class: "box", style: "margin:10px 0 0;background:var(--surface2)" });
+  const out = h("div"), msg = h("div");
+  el.append(h("div", { class: "kv", style: "margin-top:0" }, h("b", {}, "Required before closing")), out, msg);
+  const api_ = { el, loaded: false };
+  const inputs = {};
+  const mark = (ok) => h("span", { class: "pill " + (ok ? "go" : "stop") }, ok ? "✓" : "empty");
+  function line(label, ok, text, extra) { return h("div", { class: "kv", style: "display:flex;gap:8px;align-items:baseline;flex-wrap:wrap" }, mark(ok), h("b", {}, label), h("span", {}, text), extra); }
+  function draw(st) {
+    out.replaceChildren(); for (const k of Object.keys(inputs)) delete inputs[k];
+    out.append(line("Assignee", st.assignee.ok, st.assignee.ok ? st.assignee.name : (st.assignee.name || "Unassigned") + " — will assign to you"));
+    st.plan.forEach((p, i) => {
+      if (p.filled) return out.append(line(p.name, true, p.current));
+      if (p.kind !== "supported") return out.append(line(p.name, false, p.note || "cannot be set from here"));
+      const listId = `dl-${job.id}-${i}`;
+      const inp = h("input", { value: p.proposal ? p.proposal.label : "", placeholder: p.options.length ? "Start typing to choose…" : "Type the value", list: p.options.length ? listId : null, autocomplete: "off", style: "margin-top:4px" });
+      inputs[p.name] = inp;
+      put(out, line(p.name, false, p.proposal ? "will set to:" : "needs your choice:"), inp, p.options.length ? h("datalist", { id: listId }, p.options.map((o) => h("option", { value: o }))) : null);
+    });
+    const need = Object.keys(inputs).length > 0 || !st.assignee.ok;
+    if (st.complete) out.append(h("div", { class: "ok" }, "All required fields are filled. This ticket is ready to close."));
+    else if (need) {
+      const go = h("button", { class: "btn small primary", style: "margin-top:8px" }, "Fill these in Jira");
+      go.onclick = async () => { go.disabled = true; msg.replaceChildren();
+        try { const choices = {}; for (const [k, v] of Object.entries(inputs)) if (v.value.trim()) choices[k] = v.value.trim();
+          const r = await post("/support/jobs/" + job.id + "/fields", { choices });
+          msg.replaceChildren(h("div", { class: "ok" }, r.written.length ? "Written to Jira: " + r.written.join("; ") : "Nothing needed changing.")); draw(r.status);
+        } catch (e) { msg.replaceChildren(h("div", { class: "err" }, e.message)); } finally { go.disabled = false; } };
+      out.append(go);
+    }
+  }
+  api_.load = async () => {
+    api_.loaded = true; out.replaceChildren(h("div", { class: "muted" }, "Checking Jira…"));
+    try { const st = await api("/support/jobs/" + job.id + "/fields"); if (st.configured === false) out.replaceChildren(h("div", { class: "warn" }, "Jira isn't set up.")); else draw(st); }
+    catch (e) { out.replaceChildren(h("div", { class: "err" }, e.message)); }
+  };
+  const re = h("button", { class: "btn small", style: "margin-top:6px" }, "Re-check"); re.onclick = () => api_.load(); el.append(re);
+  return api_;
+}
+
 function renderJob(job) {
-  const c = job.classification, locked = job.status !== "proposed";
+  const c = job.classification, imported = job.source === "ticket" && job.status === "open", locked = !(job.status === "proposed" || imported);
   const body = h("div", { class: "body" });
   const msg = h("div");
   const say = (kind, text) => msg.replaceChildren(text ? h("div", { class: kind }, text) : "");
@@ -124,12 +174,12 @@ function renderJob(job) {
     pv.onclick = () => busy(pv, async () => {
       await api("/support/jobs/" + job.id, { method: "PATCH", body: JSON.stringify(patch()) });
       const p = await api("/support/jobs/" + job.id + "/ticket-preview");
-      preview.replaceChildren(
+      preview.replaceChildren(...[
         p.error ? h("div", { class: "err" }, p.error) : null,
         h("div", { class: "kv" }, h("b", {}, p.draft.summary)),
         h("pre", {}, p.draft.description),
         p.fields ? h("div", { class: "muted" }, "Tags: " + (JSON.stringify({ components: p.fields.components, labels: p.fields.labels }).replace(/"/g, "") || "none") + " · assigned to you on creation") : h("div", { class: "muted" }, "Jira isn't set up, so this is only a preview.")
-      );
+      ].filter(Boolean));
     });
     approve.onclick = () => busy(approve, async () => {
       if (!confirm("Create this ticket in Jira and assign it to you?")) return;
@@ -139,8 +189,17 @@ function renderJob(job) {
     body.append(h("div", { class: "row" }, save, pv, approve), preview);
   }
 
+  if (imported) {
+    const save = h("button", { class: "btn small" }, "Save changes");
+    save.onclick = () => busy(save, async () => { await api("/support/jobs/" + job.id, { method: "PATCH", body: JSON.stringify({ category: document.getElementById("cat-" + job.id).value, summary: document.getElementById("sum-" + job.id).value, dealers: document.getElementById("dl-" + job.id).value.split("\n"), group: document.getElementById("gr-" + job.id).value, requester: document.getElementById("rq-" + job.id).value }) }); openJobs.add(job.id); await refresh(); });
+    body.append(h("div", { class: "row" }, save), h("div", { class: "muted" }, "These only steer what Foreman suggests below; the ticket in Jira isn't changed by them."));
+  }
+
   // 3. Ticket
+  let fp = null;
   if (job.ticket) body.append(h("div", { class: "ok" }, "Ticket ", h("a", { href: job.ticket.url, target: "_blank", rel: "noopener", style: "color:inherit;font-weight:700" }, job.ticket.key), job.ticket.assigned ? " — assigned to you" : " — NOT assigned, please assign it in Jira"));
+
+  if (job.ticket && job.status === "open" && cfg.jira) { fp = fieldsPanel(job); body.append(fp.el); }
 
   // 4. Reply
   const reply = h("textarea", { class: "reply", id: "rp-" + job.id }, job.reply ? job.reply.text : "");
@@ -158,7 +217,7 @@ function renderJob(job) {
     const note = h("input", { id: "nt-" + job.id, placeholder: job.ticket ? "Optional comment to add to the Jira ticket" : "" });
     const done = h("button", { class: "btn primary" }, job.ticket ? "Work is done — close the ticket" : "Mark done");
     done.onclick = () => busy(done, async () => { if (!confirm(job.ticket ? `Close ${job.ticket.key} in Jira and mark this done?` : "Mark this done?")) return; await post("/support/jobs/" + job.id + "/complete", { note: note.value }); openJobs.add(job.id); await refresh(); });
-    if (job.status === "open" || !cfg.jira) body.append(h("label", { class: "f" }, "When the work is finished"), job.ticket ? note : null, h("div", { class: "row" }, done));
+    if (job.status === "open" || !cfg.jira) put(body, h("label", { class: "f" }, "When the work is finished"), job.ticket ? note : null, h("div", { class: "row" }, done));
   } else {
     const arch = h("button", { class: "btn" }, job.archived ? "Move back to Active" : "Archive");
     arch.onclick = () => busy(arch, async () => { await post("/support/jobs/" + job.id + "/archive", { archived: !job.archived }); await refresh(); });
@@ -169,7 +228,8 @@ function renderJob(job) {
   const det = h("details", { class: "job", open: openJobs.has(job.id) },
     h("summary", {}, h("div", { class: "ttl" }, c.summary, h("div", { class: "sub" }, `${c.category.replace(/_/g, " ")} · ${c.dealers.join(", ") || "no dealer yet"} · ${when(job.createdAt)}`)), statusPill(job)),
     body);
-  det.addEventListener("toggle", () => (det.open ? openJobs.add(job.id) : openJobs.delete(job.id)));
+  det.addEventListener("toggle", () => { if (det.open) { openJobs.add(job.id); if (fp && !fp.loaded) fp.load(); } else openJobs.delete(job.id); });
+  if (fp && openJobs.has(job.id)) fp.load();
   return det;
 }
 
@@ -189,6 +249,15 @@ document.getElementById("sort").onclick = async (ev) => {
     openJobs.add(job.id); document.getElementById("email").value = ""; showArchived = false; setTabs(); await refresh();
   } catch (e) { m.append(h("div", { class: "err" }, e.message)); }
   finally { btn.disabled = false; btn.textContent = "Sort it"; }
+};
+document.getElementById("load").onclick = async (ev) => {
+  const btn = ev.target, key = document.getElementById("tkey").value;
+  const m = document.getElementById("loadMsg"); m.replaceChildren();
+  if (!key.trim()) return m.append(h("div", { class: "err" }, "Enter a ticket key like CS-259412."));
+  btn.disabled = true; btn.textContent = "Loading…";
+  try { const job = await post("/support/import", { key }); openJobs.add(job.id); document.getElementById("tkey").value = ""; showArchived = false; setTabs(); await refresh(); }
+  catch (e) { m.append(h("div", { class: "err" }, e.message)); }
+  finally { btn.disabled = false; btn.textContent = "Load"; }
 };
 function setTabs() { document.getElementById("tabActive").classList.toggle("primary", !showArchived); document.getElementById("tabArchive").classList.toggle("primary", showArchived); }
 document.getElementById("tabActive").onclick = () => { showArchived = false; setTabs(); refresh(); };

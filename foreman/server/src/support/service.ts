@@ -1,7 +1,7 @@
 import { CATEGORY_IDS, classifyEmail, type Category, type Classification } from "./classify.js";
-import { JiraClient, buildIssueFields, jiraConfig, type TicketDraft } from "./jira.js";
+import { JiraClient, buildIssueFields, jiraConfig, type FieldsStatus, type TicketDraft } from "./jira.js";
 import { draftReply } from "./reply.js";
-import { audit, createJob, getJob, save, type SupportJob } from "./store.js";
+import { audit, createJob, findByTicket, getJob, save, type SupportJob } from "./store.js";
 
 /**
  * The rules of the support desk, in one place.
@@ -48,10 +48,36 @@ export async function intake(email: string, hints: { dealer?: string; group?: st
   return job;
 }
 
+const KEY = /^[A-Z][A-Z0-9]+-\d+$/;
+
+/**
+ * Loads a ticket that already exists in Jira (the desk makes one from every
+ * client e-mail), reads what the client wrote, and sorts it like a pasted e-mail.
+ * Read-only: nothing in Jira changes. Loading the same ticket twice returns the same job.
+ */
+export async function importTicket(rawKey: string, deps: Deps = defaultDeps): Promise<SupportJob> {
+  const key = rawKey.trim().toUpperCase().replace(/^.*\/browse\//i, "").replace(/\?.*$/, "");
+  if (!KEY.test(key)) throw new SupportError(400, "That doesn't look like a Jira ticket key. Use something like CS-259412.");
+  const known = findByTicket(key);
+  if (known) return known;
+  const jira = deps.jira();
+  if (!jira) throw new SupportError(412, "Jira is not set up. Add JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN and JIRA_PROJECT_KEY to server/.env and restart.");
+  let t;
+  try { t = await jira.getTicket(key); } catch (err) { throw new SupportError(502, (err as Error).message); }
+  const me = await jira.me().catch(() => undefined);
+  const email = `From: ${t.reporter || "unknown"}\nSubject: ${t.summary}\n\n${t.description}`.trim();
+  const classification = await deps.classify(email, {});
+  const job = createJob(email, classification, { key: t.key, url: t.url, assigned: Boolean(me && t.assignee?.accountId === me.accountId), createdAt: new Date().toISOString() });
+  job.reply = { ...(await deps.reply(job)), draftedAt: new Date().toISOString() };
+  return save(job);
+}
+
 /** Corrections made on the screen before approving. Only while nothing has been created yet. */
 export function correct(id: string, patch: Partial<Pick<Classification, "category" | "summary" | "dealers" | "group" | "requester" | "missing">>): SupportJob {
   const job = need(id);
-  if (job.status !== "proposed") throw new SupportError(409, "The ticket already exists, so the details are fixed. Edit them in Jira.");
+  // An imported ticket is already in Jira, but its type, dealers and group only steer what Foreman proposes, so they stay editable until done.
+  const editable = job.status === "proposed" || (job.source === "ticket" && job.status === "open");
+  if (!editable) throw new SupportError(409, "The ticket already exists, so the details are fixed. Edit them in Jira.");
   const c = job.classification;
   for (const k of ["dealers", "missing"] as const) if (patch[k] !== undefined && !Array.isArray(patch[k])) throw new SupportError(400, `${k} must be a list`);
   if (patch.category !== undefined) {
@@ -114,6 +140,36 @@ export async function createTicket(id: string, deps: Deps = defaultDeps): Promis
   return job;
 }
 
+/** Read-only: what each required field holds now and what Foreman would put in it. */
+export async function fieldsStatus(id: string, deps: Deps = defaultDeps): Promise<Omit<FieldsStatus, never> | { configured: false }> {
+  const job = need(id);
+  if (!job.ticket) throw new SupportError(409, "There is no Jira ticket for this job yet.");
+  const jira = deps.jira();
+  if (!jira) return { configured: false };
+  try {
+    const { plan, assignee, complete, missing } = await jira.fieldsStatus(job.ticket.key, { group: job.classification.group, dealers: job.classification.dealers });
+    return { plan, assignee, complete, missing };
+  } catch (err) { throw new SupportError(502, (err as Error).message); }
+}
+
+/** Fills the required fields and takes the ticket. Explicit and operator-triggered; refuses rather than guesses. */
+export async function fillFields(id: string, choices: Record<string, string> = {}, deps: Deps = defaultDeps): Promise<{ written: string[]; status: FieldsStatus }> {
+  const job = need(id);
+  if (!job.ticket) throw new SupportError(409, "There is no Jira ticket for this job yet.");
+  if (job.status === "done") throw new SupportError(409, "This job is already done.");
+  const jira = deps.jira();
+  if (!jira) throw new SupportError(412, "Jira is not set up.");
+  try {
+    const r = await jira.fillFields(job.ticket.key, { group: job.classification.group, dealers: job.classification.dealers }, choices);
+    job.ticket.assigned = r.status.assignee.ok; save(job);
+    audit(id, "fields-filled", r.written.join("; ") || "nothing to change");
+    return r;
+  } catch (err) {
+    audit(id, "fields-failed", (err as Error).message);
+    throw new SupportError(422, (err as Error).message);
+  }
+}
+
 export async function redraft(id: string, instruction?: string, deps: Deps = defaultDeps): Promise<SupportJob> {
   const job = need(id);
   job.reply = { ...(await deps.reply(job, { done: job.status === "done", instruction: instruction?.slice(0, 1000) })), draftedAt: new Date().toISOString() };
@@ -127,6 +183,14 @@ export async function complete(id: string, opts: { note?: string } = {}, deps: D
   if (job.ticket) {
     const jira = deps.jira();
     if (!jira) throw new SupportError(412, "Jira is not set up, so the ticket cannot be closed from here.");
+    // The desk requires these on every closed ticket. Check first, so a close never half-happens.
+    try {
+      const st = await jira.fieldsStatus(job.ticket.key, { group: job.classification.group, dealers: job.classification.dealers });
+      if (!st.complete) { audit(id, "close-blocked", `missing: ${st.missing.join(", ")}`); throw new SupportError(409, `Not closed. Still empty in Jira: ${st.missing.join(", ")}. Fill them in (the Required fields panel does it) and try again.`); }
+    } catch (err) {
+      if (err instanceof SupportError) throw err;
+      throw new SupportError(502, `Could not check the required fields on ${job.ticket.key}: ${(err as Error).message}`);
+    }
     try {
       if (opts.note?.trim()) await jira.comment(job.ticket.key, opts.note.trim());
       const { transition } = await jira.close(job.ticket.key);

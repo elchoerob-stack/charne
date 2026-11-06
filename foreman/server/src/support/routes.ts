@@ -2,7 +2,7 @@ import { Router, type Response } from "express";
 import { jiraConfig } from "./jira.js";
 import { CATEGORIES } from "./classify.js";
 import { auditFor, getJob, listJobs } from "./store.js";
-import { SupportError, archive, complete, correct, createTicket, intake, previewTicket, redraft } from "./service.js";
+import { SupportError, archive, complete, correct, createTicket, fieldsStatus, fillFields, importTicket, intake, previewTicket, redraft } from "./service.js";
 
 export const supportRoutes = Router();
 
@@ -14,7 +14,7 @@ function fail(res: Response, err: unknown) {
 
 supportRoutes.get("/support/config", (_req, res) => {
   const c = jiraConfig();
-  res.json({ jira: Boolean(c), project: c?.projectKey, issueType: c?.issueType, supportTag: c?.supportTag ?? null, groupTag: c?.groupTag ?? null, doneTransition: c?.doneTransition, categories: CATEGORIES });
+  res.json({ jira: Boolean(c), project: c?.projectKey, issueType: c?.issueType, supportTag: c?.supportTag ?? null, groupTag: c?.groupTag ?? null, doneTransition: c?.doneTransition, requiredFields: c ? [ "Assignee", ...Object.values(c.fieldNames) ] : [], categories: CATEGORIES });
 });
 
 supportRoutes.post("/support/intake", async (req, res) => {
@@ -22,6 +22,12 @@ supportRoutes.post("/support/intake", async (req, res) => {
   if (typeof email !== "string") return res.status(400).json({ error: "email (the pasted text) is required" });
   try { res.status(201).json(await intake(email, { dealer: typeof dealer === "string" && dealer.trim() ? dealer.trim() : undefined, group: typeof group === "string" && group.trim() ? group.trim() : undefined })); }
   catch (err) { fail(res, err); }
+});
+
+// Loads a ticket that already exists in Jira. Read-only.
+supportRoutes.post("/support/import", async (req, res) => {
+  if (typeof req.body?.key !== "string") return res.status(400).json({ error: "key (e.g. CS-259412) is required" });
+  try { res.status(201).json(await importTicket(req.body.key)); } catch (err) { fail(res, err); }
 });
 
 supportRoutes.get("/support/jobs", (req, res) => res.json(listJobs({ archived: req.query.archived === "1" })));
@@ -43,6 +49,16 @@ supportRoutes.get("/support/jobs/:id/ticket-preview", (req, res) => {
 // The approval step: this is the only route that creates anything in Jira.
 supportRoutes.post("/support/jobs/:id/ticket", async (req, res) => {
   try { res.json(await createTicket(req.params.id)); } catch (err) { fail(res, err); }
+});
+
+supportRoutes.get("/support/jobs/:id/fields", async (req, res) => {
+  try { res.json(await fieldsStatus(req.params.id)); } catch (err) { fail(res, err); }
+});
+
+// Writes the required fields to the ticket. Like Approve, only ever on an explicit press.
+supportRoutes.post("/support/jobs/:id/fields", async (req, res) => {
+  const choices = req.body?.choices && typeof req.body.choices === "object" ? Object.fromEntries(Object.entries(req.body.choices).filter(([, v]) => typeof v === "string")) as Record<string, string> : {};
+  try { res.json(await fillFields(req.params.id, choices)); } catch (err) { fail(res, err); }
 });
 
 supportRoutes.post("/support/jobs/:id/reply", async (req, res) => {

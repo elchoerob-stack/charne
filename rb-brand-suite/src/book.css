@@ -82,8 +82,8 @@ html:not(.js) .page::before{display:none}
 /* ---------- Photos ---------- */
 .ph{--img:none;position:relative;background:var(--img) center/cover no-repeat,var(--ph-bg,linear-gradient(135deg,#9aa6b8,#4b5871))}
 .ph.fill{position:absolute;inset:0}
-.ph>span{position:absolute;inset:0;display:grid;place-items:center}
-.ph.has-img>span{display:none}
+.ph>span:not(.so-tag){position:absolute;inset:0;display:grid;place-items:center}  /* initials on profile pictures */
+.ph.has-img>span:not(.so-tag){display:none}
 
 /* ---------- Cover ---------- */
 .j-cover{color:#fff}

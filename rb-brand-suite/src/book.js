@@ -1,7 +1,8 @@
 // RB Brand books · flipbook, tap-to-edit, photo upload, client copy, music
 // UI holds this book's interface text in its language (set by build.py)
 const CLIENT = document.documentElement.hasAttribute('data-client');
-const STORE = 'rbbook:' + document.title; // one saved draft per book
+const STUDIO = document.documentElement.dataset.studio || ''; // set by Agent Studio: one draft per client and book
+const STORE = 'rbbook:' + document.title + (STUDIO ? ':' + STUDIO : '');
 const book = document.getElementById('book');
 
 // ---- Restore Charné's saved draft (never in a client copy) ----

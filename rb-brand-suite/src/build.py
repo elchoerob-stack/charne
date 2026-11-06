@@ -325,6 +325,84 @@ DEMO_NAME = 'RB Brand Client Books - Interactive.html'
 (OUT / DEMO_NAME).write_text(demo)
 print('built', DEMO_NAME)
 
+# ---- RB Brand Agent Studio: the agents' desktop app (listing directory, clients, personalised books) ----
+# One HTML app that opens in Microsoft Edge's app mode on Windows (in its own window, offline),
+# plus start and desktop-shortcut files, zipped for download.
+import zipfile
+sbooks = {}
+for (lang, key), h in built.items():
+    out = dict((k, o) for k, _, o in BOOKS)[key]
+    h = re.sub(r'<a class="edit-only back" href="[^"]*">‹</a>',
+               '<a class="edit-only back" href="#" onclick="parent.postMessage(\'rb-close\', \'*\'); return false" style="font-size:15px;letter-spacing:.12em;opacity:.8;display:block;margin-bottom:4px">‹ Studio</a>', h)
+    h = re.sub(r'<span class="langsw[^"]*".*?</span>', '', h, count=1, flags=re.S)  # language is set per client
+    m = re.search(r'<style id="photos">\n(.*?)\n</style>', h, re.S)
+    keys = re.findall(r'\.ph\[data-img="(\w+)"\]', m.group(1))
+    h = h.replace(m.group(0), '<style id="photos">/*PHOTOS:' + ','.join(keys) + '*/</style>')
+    sbooks.setdefault(lang, {})[out] = h
+app = (SRC / 'studio.html').read_text()
+app = app.replace('%PHOTO_CSS%', PHOTO_CSS, 1).replace('%BOOKS%', json.dumps(sbooks, ensure_ascii=False).replace('</', '<\\/'), 1)
+CRLF = lambda t: t.strip('\n').replace('\n', '\r\n') + '\r\n'
+START = CRLF(r"""
+@echo off
+rem Opens RB Brand Agent Studio in its own window (Microsoft Edge app mode), or the default browser.
+start "" msedge --app="file:///%~dp0studio.html" 2>nul || start "" "%~dp0studio.html"
+""")
+SHORTCUT = CRLF(r"""
+@echo off
+rem Puts an "RB Brand Studio" shortcut on the desktop that opens the Studio in its own window.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$d=[Environment]::GetFolderPath('Desktop'); $s=(New-Object -ComObject WScript.Shell).CreateShortcut($d+'\RB Brand Studio.lnk');" ^
+  "$e=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe' -ErrorAction SilentlyContinue).'(default)';" ^
+  "if($e){$s.TargetPath=$e; $s.Arguments='--app=\"file:///%~dp0studio.html\"'; $s.IconLocation=$e+',0'} else {$s.TargetPath='%~dp0Start RB Brand Studio.cmd'};" ^
+  "$s.WorkingDirectory='%~dp0'; $s.Save()"
+echo.
+echo Done: "RB Brand Studio" is now on your desktop.
+pause
+""")
+README = CRLF("""
+RB BRAND AGENT STUDIO
+=====================
+
+Personalised client books for every seller, buyer and new owner, made from your own
+listing directory. Works offline. Your listings and clients stay on this PC.
+
+INSTALL (once)
+1. Right-click the downloaded zip > Extract All. Put the folder somewhere permanent,
+   such as Documents\\RB Brand Agent Studio. (Don't run it from inside the zip.)
+2. Double-click "Create desktop shortcut.cmd". If Windows asks, click More info > Run anyway.
+3. Open the Studio from the "RB Brand Studio" shortcut on your desktop.
+   Always open it the same way: your work is saved in that browser on this PC.
+
+FIRST TIME
+- My details & backup: add your name, title, cell number, email, FFC number and photo.
+- Listings: add each house you are selling, with photos. Add sold houses too: they fill the
+  comparable sales and recent sales in your Listing Presentations.
+
+FOR EACH CLIENT
+1. Clients > New client. Choose seller, buyer or new owner, the book language, and link the
+   house (or up to 3 homes for a buyer).
+2. Click the book to open it: the client's name, the house, its photos, your details and your
+   sold houses are filled in for you.
+3. Tap Edit to change anything else. Your edits are kept for that client.
+4. Tap "Save as PDF", choose "Save as PDF", and send that PDF to the client on WhatsApp or
+   email. It opens on every phone, iPhones included.
+
+BACKUP
+My details & backup > Download backup, every week. Keep it on OneDrive or Google Drive.
+"Restore from a backup" brings everything back, or moves it to a new PC.
+
+Needs: Windows 10 or 11 with Microsoft Edge (already installed on every Windows PC).
+Also runs in Chrome or Edge on a Mac: open studio.html.
+""")
+dist = OUT / '.pdf-work' / 'RB Brand Agent Studio'
+dist.mkdir(parents=True, exist_ok=True)
+files = {'studio.html': app, 'Start RB Brand Studio.cmd': START, 'Create desktop shortcut.cmd': SHORTCUT, 'README.txt': README}
+for name, body in files.items():
+    (dist / name).write_bytes(body.encode('utf-8'))
+with zipfile.ZipFile(OUT / 'RB Brand Agent Studio.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+    for name in files: z.write(dist / name, f'RB Brand Agent Studio/{name}')
+print('built RB Brand Agent Studio.zip')
+
 # ---- Overview page for the PDF (src/make_pdf.js turns it and the books into one PDF) ----
 work = OUT / '.pdf-work'; work.mkdir(exist_ok=True)
 for suffix in ('', '.af'):

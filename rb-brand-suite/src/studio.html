@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RB Brand Agent Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#242E43;--blue:#314F8E;--jac:#8E6BBF;--jac-soft:#ece5f5;--amber:#E0A458;--amber-soft:#f8ead5;--paper:#FDFBF6;--line:#e3e1dc;--muted:#6a7280;--ink:#242E43;--ok:#2f8f5b;--bad:#b3433f}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Noto Sans',sans-serif;font-size:14px;color:var(--ink);background:#f4f1ea}
+header{background:var(--navy);color:var(--paper);display:flex;align-items:center;gap:28px;padding:0 24px;height:60px;position:sticky;top:0;z-index:5}
+.wm{font-family:'Cormorant Garamond',serif;font-size:22px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+.wm i{width:1px;height:18px;background:currentColor;opacity:.6}
+.wm small{font-family:'Noto Sans',sans-serif;font-size:10px;letter-spacing:.25em;color:var(--amber);margin-left:4px}
+nav{display:flex;gap:4px;height:100%}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:#c9d3e6;font:inherit;font-weight:500;padding:0 14px;cursor:pointer;height:100%}
+nav button[aria-selected="true"]{color:#fff;border-bottom-color:var(--amber)}
+main{max-width:1240px;margin:0 auto;padding:24px}
+h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:34px;margin:0}
+h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:24px;margin:0 0 12px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 20px}
+.bar .grow{flex:1;min-width:200px}
+input,select,textarea{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:6px;padding:9px 11px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--jac)}
+textarea{min-height:70px;resize:vertical}
+.btn{font:inherit;font-weight:500;border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:6px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--jac-soft)}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:var(--navy)}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.btn.small{padding:6px 10px;font-size:13px}
+.muted{color:var(--muted)}
+.empty{background:#fff;border:1.5px dashed var(--line);border-radius:10px;padding:40px;text-align:center;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(36,46,67,.08);display:flex;flex-direction:column;cursor:pointer;border:0;padding:0;text-align:left;font:inherit;color:inherit}
+.card:hover{box-shadow:0 6px 18px rgba(36,46,67,.16)}
+.card .ph{height:160px;background:linear-gradient(135deg,#9aa6b8,#4b5871) center/cover;position:relative}
+.card .body{padding:12px 14px 14px}
+.card .price{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500}
+.card .specs{color:var(--muted);font-size:12.5px;margin-top:4px}
+.pill{position:absolute;top:10px;left:10px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:20px;background:#fff;color:var(--navy)}
+.pill.sale{background:var(--ok);color:#fff}.pill.offer{background:var(--amber);color:var(--navy)}.pill.sold{background:var(--bad);color:#fff}
+table.list{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(36,46,67,.08)}
+table.list th{text-align:left;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 14px;border-bottom:1px solid var(--line)}
+table.list td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.list tr:last-child td{border-bottom:0}
+.acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:12px;background:var(--jac-soft);color:var(--jac)}
+.tag.buyer{background:#e4edf7;color:var(--blue)}.tag.owner{background:var(--amber-soft);color:#9a6420}
+dialog{border:0;border-radius:12px;padding:0;width:min(860px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(22,28,41,.55)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.dlg-body{padding:20px 22px}
+.dlg-foot{display:flex;gap:8px;justify-content:space-between;padding:14px 22px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 14px}
+.form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:500;color:var(--muted)}
+.form .s2{grid-column:span 2}.form .s4{grid-column:1/-1}
+.photos{display:flex;flex-wrap:wrap;gap:10px}
+.photos figure{margin:0;width:150px;position:relative}
+.photos img{width:150px;height:100px;object-fit:cover;border-radius:6px;display:block}
+.photos figure.cover img{outline:3px solid var(--amber)}
+.photos figcaption{display:flex;gap:4px;margin-top:4px}
+.photos figcaption button{flex:1;font:inherit;font-size:11px;border:1px solid var(--line);background:#fff;border-radius:4px;padding:3px;cursor:pointer}
+.add-photo{width:150px;height:100px;border:1.5px dashed var(--line);border-radius:6px;display:grid;place-items:center;color:var(--muted);cursor:pointer;background:#fff;font:inherit}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:220px;overflow:auto;border:1.5px solid var(--line);border-radius:6px;padding:8px;background:#fff}
+.pick label{display:flex;gap:8px;align-items:center;padding:6px;border-radius:6px;flex-direction:row;color:var(--ink);font-size:13px;cursor:pointer}
+.pick label:hover{background:var(--jac-soft)}
+.pick input{width:auto}
+.panel{background:#fff;border-radius:10px;padding:20px 22px;box-shadow:0 2px 8px rgba(36,46,67,.08);margin-bottom:18px}
+.note{background:var(--amber-soft);border-left:4px solid var(--amber);padding:10px 14px;border-radius:4px;font-size:13px;line-height:1.5}
+.warn{background:#fbe9e7;border-left:4px solid var(--bad);padding:10px 14px;border-radius:4px;margin-bottom:16px}
+#viewer{position:fixed;inset:0;z-index:50;background:#161c29}
+#viewer iframe{width:100%;height:100%;border:0;display:block}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:30px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:60}
+#toast.show{opacity:1}
+@media (max-width:760px){.form{grid-template-columns:1fr 1fr}.form .s2{grid-column:1/-1}}
+</style>
+<style id="photos">
+%PHOTO_CSS%
+</style>
+</head>
+<body>
+<header>
+  <span class="wm">RB <i></i> BRAND <small>AGENT STUDIO</small></span>
+  <nav role="tablist">
+    <button role="tab" data-tab="listings" aria-selected="true">Listings</button>
+    <button role="tab" data-tab="clients" aria-selected="false">Clients</button>
+    <button role="tab" data-tab="settings" aria-selected="false">My details &amp; backup</button>
+  </nav>
+</header>
+<main id="main"></main>
+
+<dialog id="dlg"></dialog>
+<div id="viewer" hidden><iframe id="frame" title="Client book"></iframe></div>
+<div id="toast" role="status"></div>
+<input type="file" id="filePick" hidden>
+
+<script>
+// ===== RB Brand Agent Studio =====
+// A listing directory and client list, kept on this PC (IndexedDB), that turn the three
+// client books into a personalised book per client in one click.
+const BOOKS = %BOOKS%;            // {en|af: {listing-presentation|buyer-guide|moving-day-pack: html}}
+const PHOTOS = {};                // built-in placeholder photos, stored once in <style id="photos">
+document.getElementById('photos').textContent.replace(/\.ph\[data-img="(\w+)"\]\{--img:url\(([^)]*)\)\}/g, (_, k, u) => (PHOTOS[k] = u));
+const BOOK_NAMES = { 'listing-presentation': 'Listing Presentation', 'buyer-guide': 'Buyer Guide', 'moving-day-pack': 'Moving Day Pack' };
+const STATUS = { sale: 'For sale', offer: 'Under offer', sold: 'Sold' };
+const STATUS_AF = { sale: 'Te koop', offer: 'Onder aanbod', sold: 'Verkoop' };
+const TYPES = { seller: 'Seller', buyer: 'Buyer', owner: 'New owner' };
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => parseFloat(String(v ?? '').replace(/[^\d.]/g, '')) || 0;
+const rand = v => { const n = num(v); return n ? 'R ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''; };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const toast = msg => { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); };
+const fmtDate = (d, lang) => (d ? new Date(d) : new Date()).toLocaleDateString(lang === 'af' ? 'af-ZA' : 'en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+const fmtMonth = (d, lang) => d ? new Date(d).toLocaleDateString(lang === 'af' ? 'af-ZA' : 'en-ZA', { month: 'short', year: 'numeric' }) : '';
+const specs = (l, lang) => [l.beds && `${l.beds} ${lang === 'af' ? 'slaapk.' : 'bed'}`, l.baths && `${l.baths} ${lang === 'af' ? 'badk.' : 'bath'}`].filter(Boolean).join(' · ');
+const cover = l => (l.photos && l.photos[0]) || '';
+
+// ---------- storage: IndexedDB on this PC ----------
+let STORAGE_OK = true;
+const DB = (() => {
+  let db;
+  const open = () => db ? Promise.resolve(db) : new Promise((res, rej) => {
+    const r = indexedDB.open('rb-agent-studio', 1);
+    r.onupgradeneeded = () => ['listings', 'clients', 'settings'].forEach(n => r.result.objectStoreNames.contains(n) || r.result.createObjectStore(n, { keyPath: 'id' }));
+    r.onsuccess = () => res(db = r.result); r.onerror = () => rej(r.error);
+  });
+  const run = (store, mode, fn) => open().then(d => new Promise((res, rej) => {
+    const t = d.transaction(store, mode), req = fn(t.objectStore(store));
+    t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error);
+  }));
+  return {
+    all: s => run(s, 'readonly', st => st.getAll()),
+    put: (s, v) => run(s, 'readwrite', st => st.put(v)),
+    del: (s, id) => run(s, 'readwrite', st => st.delete(id)),
+  };
+})();
+let listings = [], clients = [], profile = { id: 'profile' };
+async function load() {
+  try {
+    [listings, clients] = await Promise.all([DB.all('listings'), DB.all('clients')]);
+    profile = (await DB.all('settings')).find(x => x.id === 'profile') || profile;
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+  } catch (e) { STORAGE_OK = false; }
+}
+async function save(store, obj) {
+  obj.updated = Date.now();
+  if (STORAGE_OK) try { await DB.put(store, obj); } catch (e) { STORAGE_OK = false; }
+  const list = store === 'listings' ? listings : store === 'clients' ? clients : null;
+  if (list) { const i = list.findIndex(x => x.id === obj.id); i < 0 ? list.push(obj) : (list[i] = obj); }
+  if (!STORAGE_OK) toast('Not saved on this PC: use Backup to keep your work');
+}
+async function remove(store, id) {
+  if (STORAGE_OK) try { await DB.del(store, id); } catch (e) {}
+  if (store === 'listings') listings = listings.filter(x => x.id !== id);
+  if (store === 'clients') clients = clients.filter(x => x.id !== id);
+}
+
+// ---------- photos: shrink before saving so the directory stays fast ----------
+const shrink = file => new Promise(res => {
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = img.width * k; c.height = img.height * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .82));
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+  img.src = url;
+});
+const pickFiles = (accept, multiple) => new Promise(res => {
+  const f = $('#filePick'); f.accept = accept; f.multiple = multiple; f.value = '';
+  f.onchange = () => res([...f.files]); f.click();
+});
+
+// ---------- tabs ----------
+let tab = 'listings';
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+function render() {
+  document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  const warn = STORAGE_OK ? '' : '<div class="warn"><b>This browser is not saving data on this PC.</b> Your work will be lost when you close the window. Use <b>My details &amp; backup → Download backup</b> before closing, or open the Studio with the “Start RB Brand Studio” shortcut.</div>';
+  $('#main').innerHTML = warn + (tab === 'listings' ? viewListings() : tab === 'clients' ? viewClients() : viewSettings());
+  bind[tab]();
+}
+
+// ---------- listings directory ----------
+let q = '', fStatus = '';
+function viewListings() {
+  const hits = listings.filter(l => (!fStatus || l.status === fStatus) &&
+    (!q || [l.address, l.suburb, l.ref, l.type].join(' ').toLowerCase().includes(q.toLowerCase())))
+    .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  return `<h1>Listing directory</h1>
+  <div class="bar">
+    <input class="grow" id="q" placeholder="Search address, suburb or reference" value="${esc(q)}">
+    <select id="fStatus" style="width:auto"><option value="">All listings</option>${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${fStatus === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+    <button class="btn primary" id="addListing">+ Add listing</button>
+  </div>
+  ${!listings.length ? `<div class="empty"><h2>No listings yet</h2><p>Add the houses you are selling (and ones you have sold) with their photos.<br>Sold houses fill the comparable sales and recent sales in your Listing Presentations.</p><button class="btn primary" id="addListing2">+ Add your first listing</button></div>`
+  : !hits.length ? '<div class="empty">No listings match your search.</div>'
+  : `<div class="grid">${hits.map(l => `<button class="card" data-id="${l.id}">
+      <div class="ph" style="${cover(l) ? `background-image:url('${cover(l)}')` : ''}"><span class="pill ${l.status}">${STATUS[l.status] || ''}</span></div>
+      <div class="body"><div class="price">${esc(l.status === 'sold' && l.soldPrice ? rand(l.soldPrice) : rand(l.price)) || '<span class="muted">No price</span>'}</div>
+        <div><b>${esc(l.address)}</b>${l.suburb ? ', ' + esc(l.suburb) : ''}</div>
+        <div class="specs">${[specs(l), l.garages && l.garages + ' garage', l.floor && l.floor + ' m²', l.ref && 'Ref ' + l.ref].filter(Boolean).map(esc).join(' · ')}</div></div>
+    </button>`).join('')}</div>`}`;
+}
+const bind = {};
+bind.listings = () => {
+  const q1 = $('#q'); q1.oninput = () => { q = q1.value; const pos = q1.selectionStart; render(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
+  $('#fStatus').onchange = e => { fStatus = e.target.value; render(); };
+  [$('#addListing'), $('#addListing2')].forEach(b => b && (b.onclick = () => editListing()));
+  document.querySelectorAll('.card[data-id]').forEach(c => c.onclick = () => editListing(listings.find(l => l.id === c.dataset.id)));
+};
+function editListing(orig) {
+  const l = orig ? JSON.parse(JSON.stringify(orig)) : { id: uid(), status: 'sale', photos: [], created: Date.now() };
+  const F = (k, label, cls = '', type = 'text', extra = '') => `<label class="${cls}">${label}<input data-k="${k}" type="${type}" value="${esc(l[k])}" ${extra}></label>`;
+  const dlg = $('#dlg');
+  const draw = () => {
+    dlg.innerHTML = `<div class="dlg-head"><h2 style="margin:0">${orig ? 'Edit listing' : 'New listing'}</h2><button class="btn small" data-x>Close</button></div>
+    <div class="dlg-body"><div class="form">
+      ${F('address', 'Street address *', 's2')}${F('suburb', 'Suburb *')}${F('ref', 'Reference / erf no.')}
+      <label>Status<select data-k="status">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${l.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      ${F('price', 'Asking price (R)', '', 'text', 'inputmode="numeric"')}${F('type', 'Type (house, townhouse…)')}${F('beds', 'Bedrooms', '', 'number', 'min="0"')}
+      ${F('baths', 'Bathrooms', '', 'number', 'min="0" step="0.5"')}${F('garages', 'Garages', '', 'number', 'min="0"')}${F('floor', 'Floor size (m²)', '', 'number', 'min="0"')}${F('erf', 'Erf size (m²)', '', 'number', 'min="0"')}
+      <label class="s4">Standout features (comma-separated: the first one is used in the social post)<input data-k="features" value="${esc(l.features)}" placeholder="e.g. heated pool, solar power, north-facing garden"></label>
+      <label class="s4">Description<textarea data-k="description">${esc(l.description)}</textarea></label>
+      <div class="s4" style="border-top:1px solid var(--line);padding-top:12px"><b>When sold</b> <span class="muted">(fills comparable sales and recent sales)</span></div>
+      ${F('soldPrice', 'Sold price (R)', '', 'text', 'inputmode="numeric"')}${F('soldDate', 'Date sold', '', 'date')}${F('days', 'Days on market', '', 'number', 'min="0"')}<span></span>
+      <div class="s4" style="border-top:1px solid var(--line);padding-top:12px"><b>Photos</b> <span class="muted">· the first photo is the cover of the client’s book</span></div>
+      <div class="s4 photos">${l.photos.map((p, i) => `<figure class="${i ? '' : 'cover'}"><img src="${p}" alt="Photo ${i + 1}"><figcaption>${i ? `<button data-cover="${i}">Make cover</button>` : '<button disabled>Cover</button>'}<button data-rm="${i}">Remove</button></figcaption></figure>`).join('')}
+        <button class="add-photo" data-addphoto>+ Add photos</button></div>
+    </div></div>
+    <div class="dlg-foot">${orig ? '<button class="btn danger" data-del>Delete listing</button>' : '<span></span>'}<span style="display:flex;gap:8px"><button class="btn" data-x>Cancel</button><button class="btn primary" data-save>Save listing</button></span></div>`;
+    const grab = () => dlg.querySelectorAll('[data-k]').forEach(i => l[i.dataset.k] = i.value.trim());
+    dlg.querySelectorAll('[data-x]').forEach(b => b.onclick = () => dlg.close());
+    dlg.querySelector('[data-addphoto]').onclick = async () => { grab(); for (const f of await pickFiles('image/*', true)) { const d = await shrink(f); if (d) l.photos.push(d); } draw(); };
+    dlg.querySelectorAll('[data-cover]').forEach(b => b.onclick = () => { grab(); const [p] = l.photos.splice(+b.dataset.cover, 1); l.photos.unshift(p); draw(); });
+    dlg.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { grab(); l.photos.splice(+b.dataset.rm, 1); draw(); });
+    const del = dlg.querySelector('[data-del]');
+    if (del) del.onclick = async () => {
+      if (!confirm('Delete this listing? Clients linked to it keep their details but lose the house.')) return;
+      await remove('listings', l.id); dlg.close(); render(); toast('Listing deleted');
+    };
+    dlg.querySelector('[data-save]').onclick = async () => {
+      grab();
+      if (!l.address || !l.suburb) { toast('Add the street address and suburb'); return; }
+      await save('listings', l); dlg.close(); render(); toast('Listing saved');
+    };
+  };
+  draw(); dlg.showModal();
+}
+
+// ---------- clients ----------
+function viewClients() {
+  const L = id => listings.find(l => l.id === id);
+  const sorted = [...clients].sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  const books = c => ({ seller: ['listing-presentation'], buyer: ['buyer-guide'], owner: ['moving-day-pack'] }[c.type] || [])
+    .concat(['listing-presentation', 'buyer-guide', 'moving-day-pack']).filter((v, i, a) => a.indexOf(v) === i);
+  return `<h1>Clients</h1>
+  <div class="bar"><span class="grow muted">Each client gets their own personalised book. Pick a client, then the book to open.</span><button class="btn primary" id="addClient">+ New client</button></div>
+  ${!clients.length ? `<div class="empty"><h2>No clients yet</h2><p>Add a seller, buyer or new owner and link them to a house from your listing directory.</p><button class="btn primary" id="addClient2">+ Add your first client</button></div>`
+  : `<table class="list"><thead><tr><th>Client</th><th>House</th><th>Book language</th><th style="text-align:right">Open their book</th></tr></thead><tbody>
+    ${sorted.map(c => { const hs = (c.listingIds || []).map(L).filter(Boolean); const [first, ...rest] = books(c); return `<tr>
+      <td><b>${esc(c.name)}</b> <span class="tag ${c.type}">${TYPES[c.type]}</span><div class="muted" style="font-size:12.5px">${esc([c.phone, c.email].filter(Boolean).join(' · '))}</div></td>
+      <td>${hs.length ? hs.map(h => esc(h.address + ', ' + h.suburb)).join('<br>') : '<span class="muted">None linked</span>'}</td>
+      <td>${c.lang === 'af' ? 'Afrikaans' : 'English'}</td>
+      <td><div class="acts"><button class="btn small amber" data-open="${c.id}" data-book="${first}">${BOOK_NAMES[first]}</button>
+        ${rest.map(b => `<button class="btn small" data-open="${c.id}" data-book="${b}">${BOOK_NAMES[b]}</button>`).join('')}
+        <button class="btn small" data-edit="${c.id}">Edit</button></div></td></tr>`; }).join('')}
+  </tbody></table>`}`;
+}
+bind.clients = () => {
+  [$('#addClient'), $('#addClient2')].forEach(b => b && (b.onclick = () => editClient()));
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editClient(clients.find(c => c.id === b.dataset.edit)));
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openBook(clients.find(c => c.id === b.dataset.open), b.dataset.book));
+};
+function editClient(orig) {
+  const c = orig ? JSON.parse(JSON.stringify(orig)) : { id: uid(), type: 'seller', lang: 'en', listingIds: [], created: Date.now() };
+  const dlg = $('#dlg');
+  const draw = () => {
+    const multi = c.type === 'buyer';
+    const pool = listings.filter(l => multi ? l.status !== 'sold' : true).sort((a, b) => (a.suburb || '').localeCompare(b.suburb || ''));
+    dlg.innerHTML = `<div class="dlg-head"><h2 style="margin:0">${orig ? 'Edit client' : 'New client'}</h2><button class="btn small" data-x>Close</button></div>
+    <div class="dlg-body"><div class="form">
+      <label class="s2">Full name(s) as on the book *<input data-k="name" value="${esc(c.name)}" placeholder="e.g. Mr &amp; Mrs Botha"></label>
+      <label>First name(s) for the letter<input data-k="first" value="${esc(c.first)}" placeholder="e.g. Johan &amp; Elmarie"></label>
+      <label>Client is a<select data-k="type">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}" ${c.type === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>Cell number<input data-k="phone" value="${esc(c.phone)}"></label>
+      <label>Email<input data-k="email" type="email" value="${esc(c.email)}"></label>
+      <label>Book language<select data-k="lang"><option value="en" ${c.lang !== 'af' ? 'selected' : ''}>English</option><option value="af" ${c.lang === 'af' ? 'selected' : ''}>Afrikaans</option></select></label>
+      ${c.type === 'owner' ? `<label>Registration date<input data-k="regDate" type="date" value="${esc(c.regDate)}"></label>` : '<span></span>'}
+      <div class="s4"><b>${multi ? 'Homes to show this buyer (up to 3)' : c.type === 'owner' ? 'The house they bought' : 'The house they are selling'}</b>
+        ${!pool.length ? '<p class="muted">Add houses in the Listings tab first.</p>' : `<div class="pick" style="margin-top:8px">${pool.map(l => `<label><input type="${multi ? 'checkbox' : 'radio'}" name="lst" value="${l.id}" ${(c.listingIds || []).includes(l.id) ? 'checked' : ''}>${esc(l.address)}, ${esc(l.suburb)} <span class="muted">${esc(rand(l.price))}</span></label>`).join('')}</div>`}</div>
+      <label class="s4">Notes (only for you)<textarea data-k="notes">${esc(c.notes)}</textarea></label>
+    </div></div>
+    <div class="dlg-foot">${orig ? '<button class="btn danger" data-del>Delete client</button>' : '<span></span>'}<span style="display:flex;gap:8px"><button class="btn" data-x>Cancel</button><button class="btn primary" data-save>Save client</button></span></div>`;
+    const grab = () => {
+      dlg.querySelectorAll('[data-k]').forEach(i => c[i.dataset.k] = i.value.trim());
+      c.listingIds = [...dlg.querySelectorAll('input[name=lst]:checked')].map(i => i.value).slice(0, 3);
+    };
+    dlg.querySelector('[data-k=type]').onchange = () => { grab(); c.listingIds = []; draw(); };
+    dlg.querySelectorAll('input[name=lst][type=checkbox]').forEach(i => i.onchange = () => {
+      if (dlg.querySelectorAll('input[name=lst]:checked').length > 3) { i.checked = false; toast('Up to 3 homes per buyer'); }
+    });
+    dlg.querySelectorAll('[data-x]').forEach(b => b.onclick = () => dlg.close());
+    const del = dlg.querySelector('[data-del]');
+    if (del) del.onclick = async () => {
+      if (!confirm('Delete this client and their saved book edits?')) return;
+      forgetDrafts(c.id); await remove('clients', c.id); dlg.close(); render(); toast('Client deleted');
+    };
+    dlg.querySelector('[data-save]').onclick = async () => {
+      grab();
+      if (!c.name) { toast('Add the client’s name'); return; }
+      // "Mr & Mrs Botha" or "Mnr Smit" stay as written; "Lerato Dlamini" becomes "Lerato"
+      if (!c.first) c.first = /^(mr|mrs|ms|miss|dr|prof|mnr|mev|mej)\b/i.test(c.name) || /&| and | en /i.test(c.name) ? c.name : c.name.split(/\s+/)[0];
+      await save('clients', c); dlg.close(); tab = 'clients'; render(); toast('Client saved');
+    };
+  };
+  draw(); dlg.showModal();
+}
+
+// ---------- my details & backup ----------
+function viewSettings() {
+  const P = (k, label, ph = '') => `<label>${label}<input data-p="${k}" value="${esc(profile[k])}" placeholder="${ph}"></label>`;
+  return `<h1>My details &amp; backup</h1>
+  <div class="panel" style="margin-top:18px"><h2>My details</h2><p class="muted" style="margin-top:-6px">These go into every book you make: the letter, the team page, the WhatsApp and call buttons, and your credentials.</p>
+    <div class="form">${P('name', 'Your full name', 'e.g. Charné Robilliard')}${P('title', 'Job title', 'e.g. Property Practitioner')}${P('phone', 'Cell number', 'e.g. 082 000 0000')}${P('email', 'Email', 'name@rbbrand.co.za')}${P('ffc', 'FFC number', 'Fidelity Fund Certificate no.')}
+      <label>Your photo (team page)<button class="btn" id="myPhoto" type="button">${profile.photo ? 'Change photo' : 'Add photo'}</button></label>
+      <span></span><span style="display:flex;align-items:end;justify-content:flex-end"><button class="btn primary" id="saveProfile">Save my details</button></span></div></div>
+  <div class="panel"><h2>Backup</h2>
+    <p>Your listings, clients and photos are kept on <b>this PC</b>. Download a backup every week, and keep it somewhere safe such as OneDrive or Google Drive. A backup also moves your work to a new PC.</p>
+    <div class="bar" style="margin-bottom:0"><button class="btn primary" id="backup">Download backup</button><button class="btn" id="restore">Restore from a backup…</button>
+      <span class="muted">${listings.length} listings · ${clients.length} clients</span></div></div>
+  <div class="note"><b>Sending a book to a client:</b> open the client’s book, check it, then tap <b>📄 Save as PDF</b> and choose <i>Save as PDF</i>. Send that PDF on WhatsApp or email: it opens on every phone, iPhones included, and its WhatsApp and call buttons still work.</div>`;
+}
+bind.settings = () => {
+  $('#saveProfile').onclick = async () => {
+    document.querySelectorAll('[data-p]').forEach(i => profile[i.dataset.p] = i.value.trim());
+    await save('settings', profile); toast('Your details are saved');
+  };
+  $('#myPhoto').onclick = async () => {
+    const [f] = await pickFiles('image/*', false); if (!f) return;
+    document.querySelectorAll('[data-p]').forEach(i => profile[i.dataset.p] = i.value.trim());
+    profile.photo = await shrink(f); await save('settings', profile); render(); toast('Photo saved');
+  };
+  $('#backup').onclick = () => {
+    const data = JSON.stringify({ app: 'rb-agent-studio', version: 1, saved: new Date().toISOString(), profile, listings, clients });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    a.download = `RB Brand Studio backup ${new Date().toISOString().slice(0, 10)}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('Backup downloaded');
+  };
+  $('#restore').onclick = async () => {
+    const [f] = await pickFiles('.json,application/json', false); if (!f) return;
+    let d; try { d = JSON.parse(await f.text()); } catch (e) { toast('That file is not a Studio backup'); return; }
+    if (d.app !== 'rb-agent-studio') { toast('That file is not a Studio backup'); return; }
+    if (!confirm(`Restore ${d.listings.length} listings and ${d.clients.length} clients? Records with the same ID are replaced; others are kept.`)) return;
+    for (const l of d.listings) await save('listings', l);
+    for (const c of d.clients) await save('clients', c);
+    if (d.profile) { profile = { ...d.profile, id: 'profile' }; await save('settings', profile); }
+    render(); toast('Backup restored');
+  };
+};
+
+// ---------- making a client's book ----------
+// Fills the book's placeholders from the client, their house, sold houses in the directory and
+// the agent's details. Selectors are the same in both languages; bracketed tokens are replaced
+// in order, so wording differences between English and Afrikaans don't matter.
+function tokens(el, values) {            // replace [bracketed] placeholders in el, one value each, in order
+  if (!el) return;
+  const walk = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT); let i = 0, n;
+  while ((n = walk.nextNode()) && i < values.length)
+    n.nodeValue = n.nodeValue.replace(/\[[^\]]*\]/g, m => i < values.length ? (values[i] ? values[i++] : (i++, m)) : m);
+}
+function everywhere(doc, find, value) {  // replace a fixed placeholder wherever it appears in the book
+  if (!value) return;
+  const walk = doc.createTreeWalker(doc.getElementById('book'), NodeFilter.SHOW_TEXT); let n;
+  while ((n = walk.nextNode())) if (n.nodeValue.includes(find)) n.nodeValue = n.nodeValue.split(find).join(value);
+}
+const text = (doc, sel, v) => { if (v) doc.querySelectorAll(sel).forEach(e => e.textContent = v); };
+function photo(el, src) { if (el && src) { el.style.setProperty('--img', `url('${src}')`); el.removeAttribute('data-img'); el.classList.add('has-img'); } }
+function card(doc, sc, l, lang, opts = {}) {   // a photo card: sold houses, or homes for a buyer
+  photo(sc.querySelector('.ph'), cover(l));
+  const h4 = sc.querySelector('h4'); if (h4) h4.textContent = opts.full ? `${l.suburb} · ${l.address}` : l.suburb;
+  const sp = sc.querySelector('.sc-t > span'); if (sp) sp.textContent = [specs(l, lang), l.floor && l.floor + ' m²'].filter(Boolean).join(' · ');
+  const b = sc.querySelector('.pr b'); if (b) b.textContent = rand(opts.sold ? l.soldPrice || l.price : l.price);
+  const em = sc.querySelector('.pr em');
+  if (em) em.textContent = opts.sold ? (l.days ? `${l.days} ${lang === 'af' ? 'dae' : 'days'}` : (lang === 'af' ? 'Verkoop' : 'Sold')) : (lang === 'af' ? STATUS_AF : STATUS)[l.status];
+}
+function fillBook(doc, key, c, lang) {
+  const h = listings.find(l => l.id === (c.listingIds || [])[0]);
+  const sold = listings.filter(l => l.status === 'sold' && l.id !== (h && h.id)).sort((a, b) => (b.soldDate || '').localeCompare(a.soldDate || ''));
+  // the client
+  text(doc, '.j-cover .who', c.name);
+  if (h) text(doc, '.j-cover .addr2', `${h.address}, ${h.suburb}`);
+  if (key === 'listing-presentation') {
+    tokens(doc.querySelector('.j-cover .cv-meta span'), [fmtDate(null, lang)]);
+    text(doc, '.j-letter h2 em', c.first || c.name);
+    if (h) {
+      photo(doc.querySelector('[data-key="home"]'), cover(h));
+      tokens(doc.querySelector('.j-area h2'), [h.suburb]);
+      text(doc, '.j-value .price strong', rand(h.price));
+      text(doc, '.j-mkt .lst b', rand(h.price));
+      text(doc, '.j-mkt .lst span', [specs(h, lang), h.suburb].filter(Boolean).join(' · '));
+      tokens(doc.querySelector('.j-mkt .so-cap'), [h.suburb, h.beds, (h.features || '').split(',')[0].trim()]);
+      tokens(doc.querySelector('.j-mkt .fl-in small'), [`14:00 – 16:00 · ${h.address}`]);
+      const sun = new Date(); sun.setDate(sun.getDate() + ((7 - sun.getDay()) % 7 || 7));   // the coming Sunday
+      text(doc, '.j-mkt .fl-in b', sun.toLocaleDateString(lang === 'af' ? 'af-ZA' : 'en-ZA', { weekday: 'long', day: 'numeric', month: 'long' }));
+      const priceIn = doc.querySelector('#netCalc [data-k="price"]'); if (priceIn && h.price) priceIn.setAttribute('value', rand(h.price).slice(2));
+      // comparable sales: sold houses in the same suburb first
+      const comps = sold.filter(l => l.suburb.toLowerCase() === h.suburb.toLowerCase()).concat(sold.filter(l => l.suburb.toLowerCase() !== h.suburb.toLowerCase())).slice(0, 5);
+      const rows = [...doc.querySelectorAll('.j-value .comps tbody tr')];
+      if (comps.length) rows.forEach((tr, i) => {
+        const l = comps[i]; if (!l) { tr.remove(); return; }
+        const td = tr.querySelectorAll('td');
+        [`${l.address}, ${l.suburb}`, l.floor ? l.floor + ' m²' : '–', l.beds || '–', fmtMonth(l.soldDate, lang) || '–', rand(l.soldPrice || l.price)].forEach((v, j) => td[j].textContent = v);
+      });
+    }
+    // recent sales from the directory
+    if (sold.length) doc.querySelectorAll('.j-proof .sc').forEach((sc, i) => sold[i] ? card(doc, sc, sold[i], lang, { sold: true }) : sc.remove());
+  }
+  if (key === 'buyer-guide') {
+    const homes = (c.listingIds || []).map(id => listings.find(l => l.id === id)).filter(Boolean);
+    if (homes.length) doc.querySelectorAll('.j-listings .sc').forEach((sc, i) => homes[i] ? card(doc, sc, homes[i], lang, { full: i === 0 }) : sc.remove());
+  }
+  if (key === 'moving-day-pack') {
+    if (h) photo(doc.querySelector('[data-key="home"]'), cover(h));
+    tokens(doc.querySelector('.j-cover .cv-meta span'), [fmtDate(c.regDate, lang)]);
+    if (h) tokens(doc.querySelector('.j-hand .hd-in > p'), [`${h.address}, ${h.suburb}`]);
+    if (c.regDate) tokens(doc.querySelector('.j-hand .hd-head .kick'), [fmtDate(c.regDate, lang)]);
+  }
+  // the agent
+  const P = profile;
+  if (P.name) {
+    everywhere(doc, 'Charné Robilliard', P.name);
+    doc.querySelectorAll('.cv-meta span:last-child').forEach(s => s.textContent = `${P.name} · RB Brand Real Estate`);
+    const me = doc.querySelector('.j-team .tm');
+    if (me) { me.querySelector('b').textContent = P.name; const sp = me.querySelector('.ph span'); if (sp) sp.textContent = P.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+  }
+  if (P.title) {
+    doc.querySelectorAll('.role').forEach(r => r.textContent = `${P.title} · RB Brand Real Estate`);
+    const me = doc.querySelector('.j-team .tm small'); if (me) me.textContent = P.title;
+  }
+  if (P.photo) { photo(doc.querySelector('.j-letter .av-lg'), P.photo); photo(doc.querySelector('.j-team .tm .ph'), P.photo); }
+  if (P.phone) {
+    const intl = '27' + P.phone.replace(/\D/g, '').replace(/^0/, '');
+    doc.querySelectorAll('a[data-link="wa"]').forEach(a => { a.dataset.num = P.phone; a.href = 'https://wa.me/' + intl; });
+    doc.querySelectorAll('a[data-link="tel"]').forEach(a => { a.dataset.num = P.phone; a.href = 'tel:+' + intl; const s = a.querySelector('.num'); if (s) s.textContent = P.phone; });
+    everywhere(doc, '[082 000 0000]', P.phone);
+  }
+  everywhere(doc, '[0000000000]', P.ffc);
+  everywhere(doc, '[charne@rbbrand.co.za]', P.email);
+}
+function studioId(c, key) { return c.id + '-' + key; }
+function forgetDrafts(clientId) {
+  try { Object.keys(localStorage).filter(k => k.startsWith('rbbook:') && k.includes(':' + clientId + '-')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+}
+function bookHTML(c, key) {
+  const lang = c.lang === 'af' ? 'af' : 'en';
+  const html = BOOKS[lang][key].replace(/\/\*PHOTOS:([\w,]*)\*\//, (_, keys) =>
+    keys.split(',').filter(Boolean).map(x => '.ph[data-img="' + x + '"]{--img:url(' + PHOTOS[x] + ')}').join('\n'));
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  fillBook(doc, key, c, lang);
+  doc.documentElement.dataset.studio = studioId(c, key);
+  return '<!doctype html>\n' + doc.documentElement.outerHTML;
+}
+function openBook(c, key) {
+  if ((c.type === 'seller' || c.type === 'owner') && !(c.listingIds || []).length && key !== 'buyer-guide')
+    toast('Tip: link this client to a house to fill in the address and photos');
+  let fresh = false;
+  try { fresh = !localStorage.getItem('rbbook:' + bookTitle(c, key) + ':' + studioId(c, key)); } catch (e) {}
+  if (!fresh && !confirm(`Open ${c.name}’s ${BOOK_NAMES[key]} with the edits you made last time?\n\nOK = keep my edits · Cancel = start again from the latest client and listing details`)) forgetDrafts(c.id);
+  $('#frame').srcdoc = bookHTML(c, key);
+  $('#viewer').hidden = false; document.body.style.overflow = 'hidden';
+}
+function bookTitle(c, key) { const m = BOOKS[c.lang === 'af' ? 'af' : 'en'][key].match(/<title>([^<]*)<\/title>/); return m ? m[1] : ''; }
+function closeBook() { $('#viewer').hidden = true; $('#frame').srcdoc = ''; document.body.style.overflow = ''; }
+addEventListener('message', e => { if (e.data === 'rb-close') closeBook(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#viewer').hidden && !$('#dlg').open) closeBook(); });
+
+load().then(render);
+</script>
+</body>
+</html>

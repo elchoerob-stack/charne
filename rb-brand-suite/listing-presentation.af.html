@@ -91,8 +91,8 @@ html:not(.js) .page::before{display:none}
 /* ---------- Photos ---------- */
 .ph{--img:none;position:relative;background:var(--img) center/cover no-repeat,var(--ph-bg,linear-gradient(135deg,#9aa6b8,#4b5871))}
 .ph.fill{position:absolute;inset:0}
-.ph>span{position:absolute;inset:0;display:grid;place-items:center}
-.ph.has-img>span{display:none}
+.ph>span:not(.so-tag){position:absolute;inset:0;display:grid;place-items:center}  /* initials on profile pictures */
+.ph.has-img>span:not(.so-tag){display:none}
 
 /* ---------- Cover ---------- */
 .j-cover{color:#fff}
@@ -626,7 +626,8 @@ const UI = {"edit": "✎ Wysig", "doneEditing": "✓ Klaar", "musicOn": "♪ Mus
 // RB Brand books · flipbook, tap-to-edit, photo upload, client copy, music
 // UI holds this book's interface text in its language (set by build.py)
 const CLIENT = document.documentElement.hasAttribute('data-client');
-const STORE = 'rbbook:' + document.title; // one saved draft per book
+const STUDIO = document.documentElement.dataset.studio || ''; // set by Agent Studio: one draft per client and book
+const STORE = 'rbbook:' + document.title + (STUDIO ? ':' + STUDIO : '');
 const book = document.getElementById('book');
 
 // ---- Restore Charné's saved draft (never in a client copy) ----

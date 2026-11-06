@@ -10,7 +10,14 @@ StallFlow pricing proposal.
 python3 src/build.py      # books, home pages and the interactive demo
 node src/make_pdf.js      # showcase PDFs (pdf/) and the pricing proposal
 node src/check_devices.js # device check, see below
+node src/check_studio.js  # Agent Studio workflow check
 ```
+
+`build.py` also builds **RB Brand Agent Studio** (`src/studio.html` → `RB Brand Agent Studio.zip`): the
+agents' desktop app with a listing directory and clients, which fills each book per client. It runs
+offline in Microsoft Edge's app mode on Windows; data stays on the PC (IndexedDB) with JSON backups.
+Book fields are filled by CSS selectors and `[bracketed]` placeholders, so any change to a book's
+structure must keep `src/check_studio.js` passing.
 
 Edit `src/`, never the built files: a rebuild overwrites them.
 

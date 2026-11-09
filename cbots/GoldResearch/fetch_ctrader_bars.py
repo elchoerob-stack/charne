@@ -14,7 +14,11 @@ rollover hour. Commission is added separately by the harness.
 Authentication: the network proxy adds the Authorization header for mcp.ctrader.com; this
 script never holds a token. Only the read-only tool get_trendbars is called.
 
-Usage: python3 fetch_ctrader_bars.py <symbolId> <pip> 2016-09-01 2026-11-09 out.csv cache_dir
+Usage: python3 fetch_ctrader_bars.py <symbolId> <pip> 2016-09-01 2026-11-09 out.csv cache_dir [spread]
+
+With [spread] (price units, the spread in liquid hours) the EURUSD table is replaced by a
+generic profile: that spread from 07:00 to 20:00 UTC, 2.5x it at other hours and 5x it in the
+two hours around the 17:00 New York rollover. Without it, the measured EURUSD table is used.
 """
 import json
 import os
@@ -81,6 +85,7 @@ def main():
     d0 = datetime.fromisoformat(sys.argv[3]).replace(tzinfo=timezone.utc)
     d1 = datetime.fromisoformat(sys.argv[4]).replace(tzinfo=timezone.utc)
     out, cache = sys.argv[5], sys.argv[6]
+    generic = float(sys.argv[7]) if len(sys.argv) > 7 else None
     os.makedirs(cache, exist_ok=True)
     mcp, step = Mcp(), timedelta(hours=16)          # 960 minutes per call, under the 1000-bar cap
     month = d0.replace(day=1)
@@ -119,8 +124,16 @@ def main():
             for k in sorted(bars, key=int):
                 m = int(k)
                 o, h, l, c = (x * 1e-5 for x in bars[k])
-                ny_hour = datetime.fromtimestamp(m * 60, timezone.utc).astimezone(NY).hour
-                s = SPREAD_PIPS_BY_NY_HOUR[ny_hour] * pip
+                when = datetime.fromtimestamp(m * 60, timezone.utc)
+                ny_hour = when.astimezone(NY).hour
+                if generic is None:
+                    s = SPREAD_PIPS_BY_NY_HOUR[ny_hour] * pip
+                elif ny_hour in (16, 17):
+                    s = 5 * generic
+                elif 7 <= when.hour < 20:
+                    s = generic
+                else:
+                    s = 2.5 * generic
                 f.write(f"{m},{o:.5f},{h:.5f},{l:.5f},{c:.5f},{o+s:.5f},{h+s:.5f},{l+s:.5f},{c+s:.5f},C\n")
                 n += 1
             month = (month + timedelta(days=32)).replace(day=1)

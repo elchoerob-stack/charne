@@ -222,6 +222,54 @@ Account size at the median stop:
 | 2026-11-09 | EURUSD RSI(2) H4 | <5 / >95, 200-day trend filter | FAIL | OOS PF 1.12 | 217 trades | WFE 0.50 | variants tested: 108 |
 ```
 
+## High-frequency scan (stage 7): > 1,000 trades a year at PF 1.5–3?
+
+You asked for more than 1,000 trades a year at PF 1.5–3, screening on 2025 first. The
+data is 2025 one-minute bars for **18 symbols** from your broker through the cTrader
+connection:
+
+- Forex: EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD, EURJPY.
+- Metals: gold, silver.
+- Indices: US500, Nasdaq 100, Dow, DAX, FTSE, Nikkei.
+- Crypto: Bitcoin, Ethereum.
+- Oil: WTI, Brent.
+
+Spreads are the broker's live spread in liquid hours, 2.5× outside them and 5× at rollover.
+Commission is $35 per $1M per side on forex and metals.
+
+There were **12 intraday variants per symbol, 216 tests**, all trading 07:00–20:00 UTC:
+- Bollinger fades.
+- RSI(2) dips with the H1 trend, on M5 and M15.
+- M15 channel breakouts.
+- M5 momentum bursts.
+- M5 pullbacks to the EMA20.
+
+| | Result |
+|---|---|
+| Tests that pass (≥ 1,000 trades and PF 1.5–3) | **0 of 216** |
+| Best PF with ≥ 1,000 trades | 0.98 (Dow, M15 breakout) |
+| Best PF of any test | 1.02 (Nasdaq, RSI(2) M15, 474 trades) |
+| Best PF with **zero costs** (no spread, no commission) | **1.19** (Bitcoin, RSI(2) M5) |
+
+Even with free trading, none of these strategy types reaches PF 1.5. The edge isn't there to
+begin with, so no broker, account type or leverage can supply it. Across the whole project
+(324 variants on gold, EURUSD and these 18 symbols), PF falls as trade frequency rises:
+
+| Trades a year | Best honest out-of-sample PF found |
+|---|---|
+| ~5 | 2–3 (gold daily trend) |
+| ~100 | ~1.2 (gold London breakout) |
+| 1,000+ | below 1 after costs |
+
+Systems sold with "PF 1.5–3 and thousands of trades" are almost always grids or martingales:
+they show a high PF until the one losing streak that wipes the account out.
+
+FxPro's notional commission, re-checked on GoldBreakout (about $0.29/oz, not $0.07):
+PF 1.10 on 2016–22 and 1.21 on 2023–26, against 1.12 and 1.23 before.
+
+Files: `scan_hf.py`, [`results/stage7_scan_2025.tsv`](results/stage7_scan_2025.tsv),
+[`results/stage7_scan_2025_zero_cost.tsv`](results/stage7_scan_2025_zero_cost.tsv).
+
 ## Read this before you get excited
 
 1. **PF is not return.**
@@ -266,6 +314,7 @@ Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (
 | `run_excl.py` | The COVID-years exclusion (stage 4) |
 | `run_hf.py` | The high-frequency round (stage 5) |
 | `run_fx.py`, `fetch_ctrader_bars.py`, `fetch_dukascopy.py` | EURUSD (stage 6) and its data |
+| `scan_hf.py` | The 18-symbol high-frequency scan (stage 7) |
 | `export_logs.py` | Trade logs in cbot-gate format and the account-size table |
 | `export_lb.py` | The London-breakout trades for the GoldBreakout cBot's replay test |
 | `export_d1.py` | Daily bars and signals for the cBot's parity test |

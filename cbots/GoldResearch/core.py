@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 COMMISSION = 0.07          # $ per oz round trip
+COMMISSION_FRAC = 0.0      # extra commission as a fraction of the entry price (notional-based brokers)
 FF = {2016: .4, 2017: 1.0, 2018: 1.8, 2019: 2.2, 2020: .4, 2021: .1, 2022: 1.7,
       2023: 5.0, 2024: 5.1, 2025: 4.2, 2026: 3.6}   # rough fed funds, % per year
 SWAP_MARKUP = 2.0          # broker markup, % per year
@@ -182,7 +183,7 @@ def run(d: Data, signals, mg=None, tag=""):
         t = Trade()
         t.i0, t.i1, t.dir, t.entry, t.exit, t.reason, t.tag = g["i0"], i1, g["dir"], g["entry"], px, why, g.get("tag", tag)
         risk = abs(g["entry"] - g["stop"])
-        pnl = (px - g["entry"]) * g["dir"] - COMMISSION - swap_cost(d, g["i0"], i1, g["dir"], g["entry"])
+        pnl = (px - g["entry"]) * g["dir"] - COMMISSION - COMMISSION_FRAC * g["entry"] - swap_cost(d, g["i0"], i1, g["dir"], g["entry"])
         t.R, t.r = risk, pnl / risk
         out.append(t)
         free = i1

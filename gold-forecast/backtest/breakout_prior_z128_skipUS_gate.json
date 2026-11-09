@@ -1,0 +1,152 @@
+{
+  "name": "GoldBandBreakout breakout_prior_z128_skipUS (16 variants)",
+  "verdict": "PASS",
+  "reason": "Every check that could be run passed.",
+  "deployment": "Eligible for the next stage: forward test on demo, same constants, no re-tuning.",
+  "checks": [
+    {
+      "key": "oos_trades",
+      "label": "Out-of-sample trades",
+      "value": 111,
+      "shown": "111",
+      "threshold": "\u2265 100",
+      "result": "PASS"
+    },
+    {
+      "key": "oos_pf_above_1",
+      "label": "OOS Profit Factor (break-even)",
+      "value": 1.4361733709366185,
+      "shown": "1.436",
+      "threshold": "> 1.00",
+      "result": "PASS"
+    },
+    {
+      "key": "oos_pf",
+      "label": "OOS Profit Factor (target)",
+      "value": 1.4361733709366185,
+      "shown": "1.436",
+      "threshold": "\u2265 1.30",
+      "result": "PASS"
+    },
+    {
+      "key": "pf_retention",
+      "label": "PF retention (OOS \u00f7 IS)",
+      "value": 1.386569487112009,
+      "shown": "1.387",
+      "threshold": "\u2265 0.70",
+      "result": "PASS"
+    },
+    {
+      "key": "wfe",
+      "label": "Walk-forward efficiency (per day)",
+      "value": 6.216395750244983,
+      "shown": "6.216",
+      "threshold": "\u2265 0.50",
+      "result": "PASS"
+    },
+    {
+      "key": "oos_max_dd",
+      "label": "OOS max drawdown % of peak",
+      "value": 14.264133111862067,
+      "shown": "14.3%",
+      "threshold": "\u2264 20%",
+      "result": "PASS"
+    },
+    {
+      "key": "mc_edge",
+      "label": "Bootstrap P(PF < 1)",
+      "value": 4.366666666666666,
+      "shown": "4.4%",
+      "threshold": "\u2264 10%",
+      "result": "PASS"
+    },
+    {
+      "key": "mc_dd95",
+      "label": "Monte Carlo 95th pct drawdown",
+      "value": 21.55401059152149,
+      "shown": "21.6%",
+      "threshold": "\u2264 30%",
+      "result": "PASS"
+    },
+    {
+      "key": "fragility",
+      "label": "PF without best 6 trades",
+      "value": 1.1473537512575658,
+      "shown": "1.147",
+      "threshold": "\u2265 1.00",
+      "result": "PASS"
+    },
+    {
+      "key": "stress",
+      "label": "PF after extra cost per trade",
+      "value": 1.3828790942175495,
+      "shown": "1.383",
+      "threshold": "\u2265 1.10",
+      "result": "PASS"
+    }
+  ],
+  "rules_changed": [],
+  "in_sample": {
+    "trades": 124,
+    "net": 120.01999999999998,
+    "pf": 1.0357745387343884,
+    "win_rate": 47.58064516129033,
+    "avg_win": 58.89694915254237,
+    "avg_loss": -51.613846153846154,
+    "payoff": 1.1411075426734787,
+    "expectancy": 0.9679032258064515,
+    "t_stat": 0.16772961998680322,
+    "max_dd": 585.2,
+    "max_dd_pct": 53.23339185489079,
+    "recovery": 0.2050922761449077,
+    "max_losing_streak": 7,
+    "pf_ex_top": 0.7998539449760051,
+    "top_removed": 7,
+    "first": "2026-01-15",
+    "last": "2026-07-03",
+    "days": 168.78819444444446,
+    "net_per_day": 0.7110686881570013,
+    "trades_per_month": 22.362701446174732
+  },
+  "out_of_sample": {
+    "trades": 111,
+    "net": 528.9300000000001,
+    "pf": 1.4361733709366185,
+    "win_rate": 57.65765765765766,
+    "avg_win": 27.21234375,
+    "avg_loss": -25.80127659574468,
+    "payoff": 1.0546898192815792,
+    "expectancy": 4.765135135135136,
+    "t_stat": 1.691677560953468,
+    "max_dd": 199.2299999999998,
+    "max_dd_pct": 14.264133111862067,
+    "recovery": 2.6548712543291706,
+    "max_losing_streak": 4,
+    "pf_ex_top": 1.1473537512575658,
+    "top_removed": 6,
+    "first": "2026-07-13",
+    "last": "2026-11-09",
+    "days": 119.65972222222223,
+    "net_per_day": 4.420284371191458,
+    "trades_per_month": 28.23707039637862
+  },
+  "folds": [],
+  "monte_carlo": {
+    "runs": 3000,
+    "seed": 42,
+    "dd95": 303.6300000000001,
+    "dd99": 362.0600000000002,
+    "dd95_pct": 21.55401059152149,
+    "dd99_pct": 26.92184068141636,
+    "p_pf_below_1": 0.043666666666666666,
+    "pf_p05": 1.0137173818004601,
+    "pf_p50": 1.4438847599964875,
+    "net_p05": 19.120000000000015
+  },
+  "audit": null,
+  "notes": [
+    "breakout_prior_z128_skipUS_trades.csv: profit from 'Net Profit'",
+    "breakout_prior_z128_skipUS_trades.csv: time from 'Closing Time', format %Y-%m-%d %H:%M:%S (day-first where ambiguous)"
+  ],
+  "balance": 1000.0
+}

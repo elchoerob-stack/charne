@@ -206,6 +206,20 @@ def main(day=None, base=None):
     for s in T["scenarios"]:
         print(f"{s['key'].upper():4s}: {sc_out[s['key']]['text']}")
     print(f"Levels touched: {int(sum(touched))}/{len(T['levels'])}, Brier {brier:.3f} (coin flip 0.25)")
+    # forward paper test of the cBot rules (fixed before the day traded), on closed 5-minute bars
+    try:
+        import paper
+        m5 = ct.bars(sid, "M_5", start, min(end, now.floor("5min")))
+        m5 = m5[m5.time_utc + pd.Timedelta(minutes=5) <= now]
+        ptr, _ = paper.run(F, m5)
+        (base / "backtest").mkdir(exist_ok=True)
+        ptr.to_csv(base / "backtest" / f"paper_{day}.csv", index=False)
+        print(f"\nBot paper test (GoldBandBreakoutBot v1, 0.01 lot, $0.50 cost): {len(ptr)} trades, "
+              f"net {ptr.net.sum() if len(ptr) else 0:+.2f} $" + ("" if complete else " so far"))
+        for t in ptr.itertuples():
+            print(f"  {hm(t.entry_time)} {t.side:4s} {t.entry:.2f} -> {t.exit_reason} {hm(t.exit_time)} {t.exit:.2f}  {t.net:+.2f} $")
+    except Exception as e:                      # the paper test must never block the scorecard
+        print(f"Bot paper test skipped: {e}")
     pre = [x for x in rows if 0 < x["end_sast"].hour <= 15]
     post = [x for x in rows if x not in pre]
     for name, grp in (("Before 15:30", pre), ("After 15:30", post)):

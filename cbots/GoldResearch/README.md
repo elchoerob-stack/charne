@@ -146,6 +146,36 @@ What changes:
 | 2026-11-09 | GoldTrend XAUUSD D1 | A, trades opened 2020-2021 excluded | INCONCLUSIVE | OOS PF 3.57 | 21 trades | WFE 5.18 | variants tested: 59 |
 ```
 
+## High-frequency round (stage 5): many trades, PF 1.2–1.8
+
+You asked for many trades with PF between 1.2 and 1.8. I fixed 26 variants and the selection rule in
+`run_hf.py` before running anything:
+
+- **Variants:**
+  - The London breakout with each trend filter (EMA50, EMA100, SMA200), each exit (published, 1.5R, trailing runner), and both order types (OCO, or only the with-trend order).
+  - A range-compression filter.
+  - Previous-day high/low breakouts.
+  - H1 Donchian breakouts with the daily trend.
+- **Rule:** among variants with at least 60 trades a year and PF ≥ 1.10 on 2016–22, take the two best on 2016–22 without 2020–21. Then run only those two on 2023–26, once.
+
+| Result | |
+|---|---|
+| Variants meeting the rule | 2 of 26 |
+| Selected | London breakout + EMA100, published exits (the same as reference C) and the 1.5R-target version |
+| Best one, 2016–22 / ex 2020–21 / **2023–26** | PF 1.12 / 1.15 / **1.23**, 83–114 trades a year |
+| Best one, 10 years ex 2020–21 | 742 trades, **PF 1.20**, +39% at 0.5% risk, max DD 7.6% |
+| 1.5R-target version, 2023–26 | PF 1.09 |
+| Everything else | PF 0.86–1.08 (previous-day breakouts 0.97–1.00, H1 Donchian 0.93–1.08, one-sided orders worse than OCO) |
+
+No refinement beat the published rules plus the trend filter. It stays the only high-frequency gold
+strategy here with an edge, and it sits at the bottom of the 1.2–1.8 band. cbot-gate still says
+**FAIL** (OOS PF 1.23 < 1.30, PF 0.94 without its best 22 trades).
+Output: [`results/stage5_high_frequency.txt`](results/stage5_high_frequency.txt).
+
+```
+| 2026-11-09 | London breakout + D1 EMA100 | stage 5 re-selection (published exits, OCO) | FAIL | OOS PF 1.23 | 435 trades | WFE 3.32 | variants tested: 85 |
+```
+
 ## Read this before you get excited
 
 1. **PF is not return.**
@@ -173,6 +203,7 @@ python3 run_is2.py xau_m1_10y.csv     # stage 2: trend neighbourhood, discovery 
 python3 run_oos.py xau_m1_10y.csv     # stage 3: finalists, out-of-sample, once
 python3 export_logs.py xau_m1_10y.csv # trade logs for cbot-gate + account-size table
 python3 run_excl.py xau_m1_10y.csv    # every variant re-scored without trades opened in 2020-2021
+python3 run_hf.py xau_m1_10y.csv      # stage 5: high-frequency round, selection rule fixed in code
 ```
 
 Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (≈250 MB).
@@ -185,6 +216,7 @@ Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (
 | `families.py` | Every strategy family tested |
 | `run_is.py`, `run_is2.py`, `run_oos.py` | The three stages, each with its variants listed in code |
 | `run_excl.py` | The COVID-years exclusion (stage 4) |
+| `run_hf.py` | The high-frequency round (stage 5) |
 | `export_logs.py` | Trade logs in cbot-gate format and the account-size table |
 | `export_d1.py` | Daily bars and signals for the cBot's parity test |
 | `results/` | Raw output of every stage, trade logs for A and C (cbot-gate format), both gate reports, the account-size table |

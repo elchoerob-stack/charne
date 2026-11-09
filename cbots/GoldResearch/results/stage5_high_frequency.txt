@@ -1,0 +1,52 @@
+26 pre-registered variants. Running total for this project's gold research: 59 + 26 = 85
+
+variant                                                       discovery 2016-22          ex 2020-21
+LB ema50 spec oco                            n= 531 PF 1.00 /yr  84.3 DD 12.6%   n= 316 PF 0.98
+LB ema50 spec one-sided                      n= 744 PF 0.91 /yr 118.1 DD 23.1%   n= 431 PF 0.95
+LB ema50 tp1.5 oco                           n= 531 PF 1.00 /yr  84.3 DD 11.7%   n= 316 PF 1.01
+LB ema50 tp1.5 one-sided                     n= 744 PF 0.92 /yr 118.1 DD 18.1%   n= 431 PF 0.96
+LB ema50 runner oco                          n= 531 PF 0.94 /yr  84.3 DD 15.1%   n= 316 PF 0.95
+LB ema50 runner one-sided                    n= 744 PF 0.86 /yr 118.1 DD 23.3%   n= 431 PF 0.91
+LB ema100 spec oco                           n= 526 PF 1.12 /yr  83.5 DD  7.5%   n= 307 PF 1.15
+LB ema100 spec one-sided                     n= 752 PF 0.99 /yr 119.4 DD 14.1%   n= 435 PF 1.08
+LB ema100 tp1.5 oco                          n= 526 PF 1.11 /yr  83.5 DD  7.0%   n= 307 PF 1.15
+LB ema100 tp1.5 one-sided                    n= 752 PF 1.01 /yr 119.4 DD 12.5%   n= 435 PF 1.07
+LB ema100 runner oco                         n= 526 PF 1.06 /yr  83.5 DD  7.8%   n= 307 PF 1.11
+LB ema100 runner one-sided                   n= 752 PF 0.95 /yr 119.4 DD 15.6%   n= 435 PF 1.02
+LB sma200 spec oco                           n= 469 PF 1.01 /yr  85.1 DD 14.2%   n= 246 PF 1.14
+LB sma200 spec one-sided                     n= 669 PF 0.96 /yr 120.8 DD 19.6%   n= 356 PF 1.12
+LB sma200 tp1.5 oco                          n= 469 PF 1.03 /yr  85.1 DD 14.5%   n= 246 PF 1.17
+LB sma200 tp1.5 one-sided                    n= 669 PF 0.98 /yr 120.8 DD 17.2%   n= 356 PF 1.12
+LB sma200 runner oco                         n= 469 PF 0.96 /yr  85.1 DD 16.7%   n= 246 PF 1.10
+LB sma200 runner one-sided                   n= 669 PF 0.91 /yr 120.8 DD 22.6%   n= 356 PF 1.05
+LB ema100 spec oco compressed<0.6ATR         n= 493 PF 1.07 /yr  78.3 DD  8.2%   n= 284 PF 1.10
+LB ema100 spec one-sided compressed<0.6ATR   n= 714 PF 0.97 /yr 113.3 DD 15.0%   n= 407 PF 1.05
+PDH/PDL ema100 tp1.5                         n= 569 PF 0.97 /yr  90.1 DD 12.2%   n= 373 PF 0.98
+PDH/PDL ema100 tp2.5                         n= 569 PF 1.00 /yr  90.1 DD 10.1%   n= 373 PF 0.99
+H1 Donchian n24 trail2.0                     n= 738 PF 0.93 /yr 116.9 DD 21.4%   n= 506 PF 0.95
+H1 Donchian n24 trail3.0                     n= 626 PF 0.98 /yr  99.2 DD 12.7%   n= 429 PF 0.99
+H1 Donchian n48 trail2.0                     n= 541 PF 1.06 /yr  85.8 DD 14.1%   n= 369 PF 1.09
+H1 Donchian n48 trail3.0                     n= 457 PF 1.08 /yr  72.5 DD  8.8%   n= 312 PF 1.07
+
+2 variants meet >= 60 trades/yr and discovery PF >= 1.10.
+Selected for the out-of-sample run: LB ema100 spec oco, LB ema100 tp1.5 oco
+
+=== LB ema100 spec oco ===
+discovery 2016-22     n= 526 PF= 1.12 avgR=+0.055 win=42.2% DD=  7.5% /yr= 83.5
+discovery ex 2020-21  n= 307 PF= 1.15 avgR=+0.069 win=43.0% DD=  4.8% /yr= 48.7
+OUT-OF-SAMPLE 2023-26 n= 435 PF= 1.23 avgR=+0.108 win=43.0% DD=  7.6% /yr=114.0
+10 yrs ex 2020-21     n= 742 PF= 1.20 avgR=+0.092 win=43.0% DD=  7.6% /yr= 73.2  ret=+39%
+by year (trades/PF): 16:31/0.82 17:49/1.43 18:60/1.13 19:62/1.13 20:122/0.99 21:97/1.17 22:105/1.17 23:84/0.81 24:116/1.44 25:131/1.31 26:104/1.32
+OOS longs  n= 375 PF= 1.13 avgR=+0.062 win=41.3% DD=  8.5% /yr=101.8
+OOS shorts n=  60 PF= 2.02 avgR=+0.398 win=53.3% DD=  2.0% /yr= 16.4
+trade log: results/trades_LB_ema100_spec_oco.csv
+
+=== LB ema100 tp1.5 oco ===
+discovery 2016-22     n= 526 PF= 1.11 avgR=+0.049 win=43.7% DD=  7.0% /yr= 83.5
+discovery ex 2020-21  n= 307 PF= 1.15 avgR=+0.065 win=44.6% DD=  4.9% /yr= 48.7
+OUT-OF-SAMPLE 2023-26 n= 435 PF= 1.09 avgR=+0.037 win=40.9% DD=  7.7% /yr=114.0
+10 yrs ex 2020-21     n= 742 PF= 1.11 avgR=+0.049 win=42.5% DD=  7.7% /yr= 73.2  ret=+19%
+by year (trades/PF): 16:31/0.83 17:49/1.33 18:60/1.03 19:62/1.24 20:122/1.08 21:97/1.03 22:105/1.20 23:84/0.76 24:116/1.24 25:131/1.19 26:104/1.13
+OOS longs  n= 375 PF= 1.01 avgR=+0.005 win=40.0% DD=  8.0% /yr=101.8
+OOS shorts n=  60 PF= 1.68 avgR=+0.238 win=46.7% DD=  1.9% /yr= 16.4
+trade log: results/trades_LB_ema100_tp1.5_oco.csv

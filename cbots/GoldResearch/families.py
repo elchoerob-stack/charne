@@ -42,7 +42,12 @@ class Ctx:
         return c > ref if direction > 0 else c < ref
 
 
-def _range_breakout(cx, r_from, r_to, e_to, x_at, min_w, max_w, stop_cap, min_stop, tp_r, be_r, trend, tag, long_only=False):
+def _range_breakout(cx, r_from, r_to, e_to, x_at, min_w, max_w, stop_cap, min_stop, tp_r, be_r, trend, tag, long_only=False,
+                    one_sided=False, trail_start_r=0.0, trail_r=0.0, atr_w_max=None):
+    """one_sided: with a trend filter, only the with-trend stop order is placed (else OCO and the day is
+    skipped when the first break is against the trend). tp_r None = no target. trail_r: trail distance
+    in multiples of the initial risk, active from trail_start_r. atr_w_max: skip ranges wider than
+    this many daily ATRs (prior day)."""
     d, D, out = cx.d, cx.D, []
     for k in range(1, D.n):
         if cx.d_dow[k] > 4:
@@ -56,9 +61,16 @@ def _range_breakout(cx, r_from, r_to, e_to, x_at, min_w, max_w, stop_cap, min_st
         w = (hi - lo) / p
         if w < min_w or w > max_w:
             continue
+        if atr_w_max is not None and (hi - lo) > atr_w_max * cx.d_atr14[k - 1]:
+            continue
         buf = 1e-4 * p
         bt = np.flatnonzero(d.ah[r1:e1] >= hi + buf)
         st = np.flatnonzero(d.bl[r1:e1] <= lo - buf)
+        if one_sided and trend is not None:
+            if not cx.trend_ok(k, 1, trend):
+                bt = bt[:0]
+            if not cx.trend_ok(k, -1, trend):
+                st = st[:0]
         ib = r1 + bt[0] if len(bt) else None
         is_ = r1 + st[0] if len(st) else None
         if ib is None and is_ is None:
@@ -79,8 +91,8 @@ def _range_breakout(cx, r_from, r_to, e_to, x_at, min_w, max_w, stop_cap, min_st
             continue
         dist = max(dist, min_stop * entry)
         stop = entry - s * dist
-        out.append(dict(i0=i0, entry=entry, dir=s, stop=stop, tp=entry + s * tp_r * dist, j_end=x1,
-                        mg=Mgmt(be_r=be_r), tag=tag))
+        out.append(dict(i0=i0, entry=entry, dir=s, stop=stop, tp=None if tp_r is None else entry + s * tp_r * dist, j_end=x1,
+                        mg=Mgmt(be_r=be_r, trail_start_r=trail_start_r, trail_k=trail_r * dist), tag=tag))
     return out
 
 
@@ -224,4 +236,75 @@ def donchian_h4(cx, n=20, k_trail=3.0, k_stop=2.0, trend="ema50", max_bars=180):
             out.append(dict(i0=i0, entry=entry, dir=s, stop=entry - s * k_stop * a, tp=None,
                             j_end=H.first[min(k + 1 + max_bars, H.n - 1)],
                             mg=Mgmt(trail_start_r=0.0, trail_k=k_trail * a), fill_bar_checked=False, tag="D4"))
+    return out
+
+
+# ------------------------------------------------------------------ stage 5 (high-frequency round)
+LB_EXITS = {"spec": dict(tp_r=2.5, be_r=1.5), "tp1.5": dict(tp_r=1.5, be_r=1.0),
+            "runner": dict(tp_r=None, be_r=1.0, trail_start_r=1.0, trail_r=1.0)}
+
+
+def london_breakout_v(cx, trend="ema100", exit="spec", one_sided=False, atr_w_max=None):
+    """Published London breakout with a daily trend filter, plus one change at a time."""
+    e = LB_EXITS[exit]
+    return _range_breakout(cx, 180, 480, 1260, 1260, 0.003, 0.016, 0.006, 0.0, e["tp_r"], e["be_r"], trend, "LB",
+                           one_sided=one_sided, trail_start_r=e.get("trail_start_r", 0.0), trail_r=e.get("trail_r", 0.0),
+                           atr_w_max=atr_w_max)
+
+
+def pdhl_breakout(cx, trend="ema100", tp_r=2.0, stop_atr=0.5):
+    """Break of the previous day's high (buy) or low (sell), with-trend only, 08:00-21:00 server,
+    stop stop_atr x prior-day ATR(14), break-even at 1R, flat 23:00 server."""
+    d, D, out = cx.d, cx.D, []
+    for k in range(2, D.n):
+        if cx.d_dow[k] > 4:
+            continue
+        e0, e1, x1 = cx.at(k, 480), cx.at(k, 1260), cx.at(k, 1380)
+        if e1 - e0 < 300:
+            continue
+        a = cx.d_atr14[k - 1]
+        hi, lo = D.h[k - 1], D.l[k - 1]
+        cands = []
+        if cx.trend_ok(k, 1, trend):
+            b = np.flatnonzero(d.ah[e0:e1] >= hi)
+            if len(b) and d.ao[e0] < hi:          # must break during the window, not gap above it
+                cands.append((e0 + b[0], 1))
+        if cx.trend_ok(k, -1, trend):
+            b = np.flatnonzero(d.bl[e0:e1] <= lo)
+            if len(b) and d.bo[e0] > lo:
+                cands.append((e0 + b[0], -1))
+        if not cands:
+            continue
+        i0, s = min(cands)
+        entry = max(d.ao[i0], hi) if s > 0 else min(d.bo[i0], lo)
+        dist = stop_atr * a
+        out.append(dict(i0=i0, entry=entry, dir=s, stop=entry - s * dist, tp=entry + s * tp_r * dist, j_end=x1,
+                        mg=Mgmt(be_r=1.0), tag="PD"))
+    return out
+
+
+def donchian_h1(cx, n=24, k_trail=2.0, k_stop=2.0, trend="ema100", max_bars=48):
+    """H1 close beyond the n-bar channel, with the daily trend. Stop k_stop x ATR(H1), chandelier
+    k_trail x ATR(H1). Closed after max_bars hours and always flat by Friday 21:00 server."""
+    d, H, D, out = cx.d, cx.H1, cx.D, []
+    hi, lo = rollmax_prev(H.h, n), rollmin_prev(H.l, n)
+    fri = np.flatnonzero((d.sdow == 4) & (d.smod >= 1260))
+    fri = fri[np.r_[True, np.diff(fri) > 1]]          # first minute of each Friday cut-off
+    for k in range(n + 1, H.n - 1):
+        kd = D.of[H.first[k]]
+        for s in (1, -1):
+            if not (H.c[k] > hi[k] if s > 0 else H.c[k] < lo[k]):
+                continue
+            if not cx.trend_ok(kd, s, trend):
+                continue
+            i0 = H.last[k] + 1
+            if d.sdow[i0] == 4 and d.smod[i0] >= 1200:  # no new entries late on Friday
+                continue
+            j = np.searchsorted(fri, i0, side="right")
+            cut = fri[j] if j < len(fri) else d.n - 1
+            entry = d.ao[i0] if s > 0 else d.bo[i0]
+            a = cx.h1_atr14[k]
+            out.append(dict(i0=i0, entry=entry, dir=s, stop=entry - s * k_stop * a, tp=None,
+                            j_end=min(H.first[min(k + 1 + max_bars, H.n - 1)], cut),
+                            mg=Mgmt(trail_start_r=0.0, trail_k=k_trail * a), fill_bar_checked=False, tag="H1"))
     return out

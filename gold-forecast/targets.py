@@ -82,6 +82,14 @@ def merged_levels(R, max_atr=1.5):
     return out
 
 
+def mtf_score(t):
+    """Same six votes as the MTF Trend sheet formulas."""
+    L, em = t["last"], t["df"].ema_mid
+    return ((1 if L.close > L.ema_fast else -1) + (1 if L.close > L.ema_mid else -1) + (1 if L.close > L.ema_slow else -1)
+            + (1 if L.ema_fast > L.ema_mid > L.ema_slow else (-1 if L.ema_fast < L.ema_mid < L.ema_slow else 0))
+            + int(np.sign(L.ema_mid - em.iloc[-11])) + (1 if L.rsi > 55 else (-1 if L.rsi < 45 else 0)))
+
+
 def level_by(R, prefix):
     return next(x["price"] for x in R["levels"] if x["level"].startswith(prefix))
 
@@ -121,27 +129,40 @@ def build_targets(R, forecast_json):
     swings_below = sorted((x["price"] for x in R["levels"] if x["level"].startswith("1h swing low") and x["price"] < sup_mid),
                           reverse=True)
 
+    if len(swings_above) < 2:
+        swings_above += [res_top + 0.5 * atr, res_top + 0.75 * atr][len(swings_above):]
+    if not swings_below:
+        swings_below = [sup_mid - 0.25 * atr]
+    w = {"M_1": .5, "M_5": 1, "M_15": 1.5, "M_30": 2, "H_1": 2.5, "H_4": 3}
+    score = sum(w[p] * mtf_score(R["tfs"][p]) for p in w) / sum(w.values())
+    pwh, D1 = level_by(R, "PWH"), R["d1"].iloc[-1]
+    swept = d["pdh"] > pwh and d["pdc"] < pwh
+    bear_why = ((f"The prior session swept PWH {pwh:.2f} by ${d['pdh'] - pwh:.2f} and closed back below it" if swept
+                 else f"Price is pressing into the resistance cluster up to {res_top:.2f}")
+                + (f", under the daily EMA50 (~{D1.ema_mid:,.0f}) with the daily trend down" if D1.ema_fast < D1.ema_mid < D1.ema_slow
+                   else "") + f". Losing {sup_top:.2f} would confirm the move failed.")
+    bull_why = (f"Weighted intraday trend score {score:+.1f} (1m-4h). Acceptance above {res_top:.2f} (top of the resistance "
+                "cluster) would mean the push is continuation rather than a liquidity grab.")
+
     def tgt(name, px):
         return dict(name=name, price=round(float(px), 2), p_touch=round(p_touch((px - anc) / atr, th, tl), 3))
 
     scenarios = [
         dict(key="bull", name="Bull - break and hold above the resistance cluster",
-             why=f"Every intraday timeframe is bullish (weighted +5.7). Acceptance above {res_top:.2f} (top of the 4h bearish FVG, "
-                 "above PDH and PWH) would mean Monday's sweep of the previous-week high was continuation, not a trap.",
+             why=bull_why,
              trigger=dict(rule="1h candle CLOSES above", price=float(res_top)),
              targets=[tgt("T1 daily pivot R1", r1), tgt("T2 4h swing high", swings_above[0]),
                       tgt("T3 4h swing high / 4,200", swings_above[1] if len(swings_above) > 1 else 4200)],
              invalidation=dict(rule="after trigger, 1h close back below PWH", price=round(float(level_by(R, "PWH")), 2))),
-        dict(key="bear", name="Bear - PWH sweep fails, price rotates back down",
-             why=f"Monday swept PWH {level_by(R, 'PWH'):.2f} by $1.65 and closed back below it, into the daily EMA50 "
-                 "(~4,154) with the daily trend still down. Losing the 1h FVG top would confirm a buy-side liquidity grab.",
+        dict(key="bear", name="Bear - the push fails, price rotates back down",
+             why=bear_why,
              trigger=dict(rule="1h candle CLOSES below", price=float(sup_top)),
              targets=[tgt("T1 1h bullish FVG midpoint", sup_mid), tgt("T2 daily pivot P", P),
                       tgt("T3 NY low / 1h swing low", swings_below[0] if swings_below else 4100)],
              invalidation=dict(rule="after trigger, 1h close back above PDH", price=round(float(d["pdh"]), 2))),
     ]
     neutral = dict(name="Neutral - no trigger by the London close (17:00 SAST)",
-                   rule=f"Price rotates between {sup_top:.2f} and {res_top:.2f}; the CPI print at 15:30 is the likely catalyst.")
+                   rule=f"Price rotates between {sup_top:.2f} and {res_top:.2f}; the 15:30 US data window is the usual catalyst.")
 
     # --- pass/fail tests with historical pass rates on the same backtest days
     F = json.loads(Path(forecast_json).read_text())
@@ -187,21 +208,13 @@ def build_targets(R, forecast_json):
 
 
 if __name__ == "__main__":
+    # normally run by build_workbook.py; standalone: python3 targets.py <forecast json>
     import sys
-    cutoff = sys.argv[1] if len(sys.argv) > 1 else "2026-11-09T22:00:00Z"
-    R = A.run(cutoff)
-    fj = HERE / "forecast_2026-11-10.json"
-    T = build_targets(R, fj)
-    p = HERE / "targets_2026-11-10.json"
+    fj = Path(sys.argv[1])
+    F = json.loads(fj.read_text())
+    T = build_targets(A.run(F["cutoff_utc"]), fj)
+    p = fj.with_name(fj.name.replace("forecast_", "targets_"))
+    if p.exists():
+        raise SystemExit(f"{p.name} already exists - targets are locked")
     p.write_text(json.dumps(T, indent=1))
-    print("targets sha256", sha(p))
-    for L in T["levels"]:
-        print(f"{L['price']:9.2f} {L['dist']:+8.2f} p={L['p_touch']:.2f}  {L['label'][:90]}")
-    print(json.dumps(T["range_quantiles"]))
-    for s in T["scenarios"]:
-        print(s["name"], s["trigger"], [(x["name"], x["price"], x["p_touch"]) for x in s["targets"]], s["invalidation"])
-    for t in T["tests"]:
-        print(t["id"], t["name"], "|", t["rule"], "| hist", t["hist_pass"])
-    print("hist >=5/8:", T["hist_overall"], "mean passes", T["hist_mean_passes"], "calib brier", T["calibration_brier"])
-    print("pass-count distribution", T["hist_pass_counts"])
-    print(pd.DataFrame(T["calibration"]).to_string())
+    print("wrote", p, "sha256", sha(p))

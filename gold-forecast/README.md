@@ -12,23 +12,28 @@ session's network proxy and is never stored in this repo.
 
 | File | What it is |
 |---|---|
-| `XAUUSD_MTF_Forecast_<day>.xlsx` | The workbook: MTF trend, forecast timeline, scorecard, key levels, markers, analogs, volatility profile, backtest, raw data with live indicator formulas |
-| `forecast_<day>.json` | The projection frozen at the cutoff, used by `check.py` |
+| `XAUUSD_MTF_Forecast_<day>.xlsx` | The workbook. Opens on **Dashboard**; **Targets** holds the tests, scenarios and level probabilities; **Guide** explains every sheet |
+| `forecast_<day>.json` | The projection, frozen at the cutoff (never overwritten) |
+| `targets_<day>.json` | The targets, locked straight after the forecast, with its SHA-256 |
+| `layout_<day>.json` | Where `check.py` writes in the workbook |
 | `data/XAUUSD_*.csv` | The bar snapshot the forecast was built from |
 | `fetch.py` | Pull bars for every timeframe from cTrader |
 | `analysis.py` | Indicators, swings, BOS/CHoCH, FVGs, levels, analog model, walk-forward backtest |
-| `build_workbook.py` | Writes the workbook + frozen JSON |
-| `check.py` | Fills in the actual hourly bars, recalculates, scores, logs the day |
+| `targets.py` | Level touch probabilities, scenario plan, tests T1-T8 with historical pass rates |
+| `build_workbook.py` | Freezes forecast -> locks targets -> writes the workbook |
+| `check.py` | Fills actual H1/M1 bars, times level touches and scenario steps, scores T1-T8, logs the day |
+| `ROADMAP.md` | What it would take to make this platform grade |
 
-## Run
+## Run (one day)
 
 ```bash
-python3 fetch.py                                   # snapshot (after the 00:00 SAST close)
+python3 fetch.py                                   # after the 00:00 SAST close
 python3 build_workbook.py 2026-11-09T22:00:00Z     # cutoff = that close, in UTC
 python3 check.py                                   # any time during / after the forecast day
 ```
 
 Recalculate after building (`recalc.py` from the xlsx skill, or open in Excel).
+High-impact events for a day go in `EVENTS` in `build_workbook.py`.
 
 ## Method in one paragraph
 

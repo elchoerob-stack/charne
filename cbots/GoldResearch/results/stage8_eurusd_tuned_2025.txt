@@ -1,2 +1,5 @@
 591 distinct settings, tuned on 2025 only
 
+  100/591 done
+  200/591 done
+  300/591 done

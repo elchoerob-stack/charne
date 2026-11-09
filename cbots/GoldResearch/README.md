@@ -270,6 +270,42 @@ PF 1.10 on 2016–22 and 1.21 on 2023–26, against 1.12 and 1.23 before.
 Files: `scan_hf.py`, [`results/stage7_scan_2025.tsv`](results/stage7_scan_2025.tsv),
 [`results/stage7_scan_2025_zero_cost.tsv`](results/stage7_scan_2025_zero_cost.tsv).
 
+## Tuned on 2025, tested on unseen years (stage 8): EURUSD
+
+You asked for one currency, tuned on 2025 for high PF and many trades, then tested on data
+it never saw. `tune_fx.py` sampled **591 distinct settings** across three templates
+(session range breakout, RSI(2) mean reversion on M15/H1/H4, ATR-trailed channel breakout).
+Each was scored on 2025 only, using broker data, measured spread and 0.7 pip commission.
+Output: [`results/stage8_eurusd_tuned_2025.txt`](results/stage8_eurusd_tuned_2025.txt).
+
+**Even when tuned on 2025 itself**, many trades and a high PF don't come together:
+
+| Minimum trades in 2025 | Best PF found in 2025 |
+|---|---|
+| 100 | 1.45 |
+| 250 | 1.13 |
+| 500 | 0.95 |
+| 1,000 | 0.89 |
+| 2,000 | 0.77 |
+
+**The five most profitable 2025 settings, run once on years they never saw:**
+
+| # | Setting | 2025 (tuned) | **2026 Jan–Nov** | **2016–2024** |
+|---|---|---|---|---|
+| 1 | Range breakout 03–09h, TP 3R | PF 1.30, 201 trades | **0.83** | **1.00** |
+| 2 | Range breakout 03–09h, TP 2.5R | 1.25, 207 | **0.93** | **1.00** |
+| 3 | RSI(2) H4 with daily trend | 1.45, 105 | **0.81** | **0.88** |
+| 4 | Range breakout 01–10h, SMA200 | 1.25, 109 | **0.86** | **1.02** |
+| 5 | Same, break-even 1.5R | 1.24, 109 | **0.91** | **1.03** |
+
+All five lose in 2026 and break even over 2016–2024. The 2025 numbers came from fitting
+that one year (591 tries); none of it carried forward. EURUSD has no tradeable edge at this
+frequency after costs. Variants tested across the project: 915.
+
+```
+| 2026-11-09 | EURUSD tuned on 2025 | top 5 of 591 settings | FAIL | 2026 PF 0.81-0.93 | 78-134 trades | - | variants tested: 915 |
+```
+
 ## Read this before you get excited
 
 1. **PF is not return.**
@@ -315,6 +351,7 @@ Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (
 | `run_hf.py` | The high-frequency round (stage 5) |
 | `run_fx.py`, `fetch_ctrader_bars.py`, `fetch_dukascopy.py` | EURUSD (stage 6) and its data |
 | `scan_hf.py` | The 18-symbol high-frequency scan (stage 7) |
+| `tune_fx.py` | EURUSD tuned on 2025, tested on unseen years (stage 8) |
 | `export_logs.py` | Trade logs in cbot-gate format and the account-size table |
 | `export_lb.py` | The London-breakout trades for the GoldBreakout cBot's replay test |
 | `export_d1.py` | Daily bars and signals for the cBot's parity test |

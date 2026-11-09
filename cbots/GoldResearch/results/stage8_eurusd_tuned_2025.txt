@@ -17,3 +17,31 @@
 
 #1 kind=RB r_from=180 r_to=540 e_to=1260 min_w=0.0015 max_w=0.006 cap=0.003 tp=3.0 be=0.0 trend=None
    2025 (tuned)      n=  201 PF=1.30 avgR=+0.142 total=+28.6R win=43%
+   2026 Jan-Nov      n=  133 PF=0.83 avgR=-0.082 total=-10.9R  (158/yr)
+   2016-2024         n= 1375 PF=1.00 avgR=-0.002 total=-2.9R  (166/yr)
+   by year PF: 16:0.81 17:1.06 18:0.75 19:0.79 20:0.99 21:1.28 22:1.04 23:1.09 24:1.08 25:1.30 26:0.83
+
+#2 kind=RB r_from=180 r_to=540 e_to=1080 min_w=0.0015 max_w=0.01 cap=0.002 tp=2.5 be=0.0 trend=None
+   2025 (tuned)      n=  207 PF=1.25 avgR=+0.132 total=+27.4R win=42%
+   2026 Jan-Nov      n=  134 PF=0.93 avgR=-0.035 total=-4.7R  (159/yr)
+   2016-2024         n= 1397 PF=1.00 avgR=+0.002 total=+2.5R  (168/yr)
+   by year PF: 16:1.38 17:1.14 18:0.82 19:0.67 20:1.05 21:1.12 22:1.02 23:0.93 24:1.10 25:1.25 26:0.93
+
+#3 kind=MR tf=240 th=15 exit=70 hold=8 stop=2.0 trend=ema100 sess=07-20h
+   2025 (tuned)      n=  105 PF=1.45 avgR=+0.101 total=+10.6R win=68%
+   2026 Jan-Nov      n=   78 PF=0.81 avgR=-0.060 total=-4.7R  (94/yr)
+   2016-2024         n=  848 PF=0.88 avgR=-0.035 total=-29.9R  (102/yr)
+   by year PF: 16:0.51 17:0.95 18:0.79 19:0.64 20:0.91 21:1.12 22:1.46 23:0.80 24:0.87 25:1.45 26:0.81
+
+#4 kind=RB r_from=60 r_to=600 e_to=1260 min_w=0.001 max_w=0.006 cap=0.004 tp=2.0 be=0.0 trend=sma200
+   2025 (tuned)      n=  109 PF=1.25 avgR=+0.093 total=+10.1R win=50%
+   2026 Jan-Nov      n=  104 PF=0.86 avgR=-0.058 total=-6.0R  (128/yr)
+   2016-2024         n=  894 PF=1.02 avgR=+0.009 total=+8.2R  (118/yr)
+   by year PF: 17:1.07 18:0.90 19:0.77 20:1.21 21:1.12 22:1.47 23:0.87 24:0.88 25:1.25 26:0.86
+
+#5 kind=RB r_from=60 r_to=600 e_to=1260 min_w=0.0005 max_w=0.006 cap=0.004 tp=2.0 be=1.5 trend=sma200
+   2025 (tuned)      n=  109 PF=1.24 avgR=+0.091 total=+9.9R win=49%
+   2026 Jan-Nov      n=  105 PF=0.91 avgR=-0.036 total=-3.8R  (129/yr)
+   2016-2024         n=  915 PF=1.03 avgR=+0.013 total=+12.1R  (121/yr)
+   by year PF: 17:1.09 18:0.86 19:0.90 20:1.15 21:1.15 22:1.47 23:0.88 24:0.85 25:1.24 26:0.91
+

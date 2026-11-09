@@ -1,4 +1,6 @@
-// GoldBandBreakoutBot v1  -  XAUUSD, hourly volatility bands, breakout rules.
+// GoldBandBreakoutBot v1.1  -  XAUUSD, hourly volatility bands, breakout rules.
+// v1.1: runs in cTrader cloud (AccessRights.None, trade log printed instead of written to a file,
+//       calibrates on 60+ sessions if the cloud supplies less history). Trading rules unchanged.
 //
 // Mirrors gold-forecast/bandfade_backtest.py with mode="breakout", centre="prior_close",
 // z=1.2816 (80% band), US-data hour skipped. On 5-minute bars (Jan-Nov 2026) that variant
@@ -18,15 +20,13 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
 using cAlgo.API;
 using cAlgo.API.Internals;
 
 namespace cAlgo.Robots
 {
-    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
     public class GoldBandBreakoutBot : Robot
     {
         // ---- Risk: fixed constants, never [Parameter]. Change them by editing code, on purpose. ----
@@ -42,6 +42,7 @@ namespace cAlgo.Robots
         // ---- Fixed rules, exactly as backtested ----
         private const int AtrPeriod = 14;
         private const int MinSessionBars = 16;                // skip holiday stubs in the profile
+        private const int MinProfileSessions = 60;            // fewest sessions the bands may be built from
         private const int BarsPerSession = 23;
         private const int DataHourBar = 14;                   // US 08:30 ET bar (winter and summer)
         private const double SessionGapHours = 2.0;
@@ -89,7 +90,7 @@ namespace cAlgo.Robots
                 if (p.StopLoss == null)
                     ClosePosition(p);
 
-            Print("GoldBandBreakoutBot v1: {0} H1 bars loaded, {1} units per trade", _h1.Count, _volume);
+            Print("GoldBandBreakoutBot v1.1: {0} H1 bars loaded, {1} units per trade", _h1.Count, _volume);
         }
 
         private void OnHourOpened(BarOpenedEventArgs args)
@@ -167,8 +168,15 @@ namespace cAlgo.Robots
 
         private void OnPositionClosed(PositionClosedEventArgs args)
         {
-            if (args.Position.Label == BotLabel && args.Position.SymbolName == SymbolName)
-                _pnlThisSession += args.Position.NetProfit;
+            if (args.Position.Label != BotLabel || args.Position.SymbolName != SymbolName)
+                return;
+            var p = args.Position;
+            _pnlThisSession += p.NetProfit;
+            var inv = CultureInfo.InvariantCulture;
+            // One CSV line per closed trade in the log (cloud instances cannot write files).
+            Print("TRADE,{0},{1},{2},{3},{4},{5}", Server.Time.ToString("yyyy-MM-dd HH:mm:ss", inv), p.TradeType,
+                  p.EntryPrice.ToString(inv), p.EntryTime.ToString("yyyy-MM-dd HH:mm:ss", inv),
+                  p.NetProfit.ToString(inv), args.Reason);
         }
 
         private void CancelOwnOrders()
@@ -218,17 +226,20 @@ namespace cAlgo.Robots
         private bool Calibrate(int sessionStart)
         {
             var s = CompletedSessions(sessionStart);
-            if (s.Count < ProfileSessions + AtrPeriod + 2)
+            int use = Math.Min(ProfileSessions, s.Count - AtrPeriod - 2);
+            if (use < MinProfileSessions)
             {
                 Print("Not enough history to calibrate ({0} sessions)", s.Count);
                 return false;
             }
+            if (use < ProfileSessions)
+                Print("Only {0} sessions of history: bands built from {1} instead of {2}", s.Count, use, ProfileSessions);
             var last = s[s.Count - 1];
             _anchor = last.Close;
             _atr = last.Atr;
             var sum = new double[BarsPerSession];
             var n = new int[BarsPerSession];
-            for (int d = s.Count - 1 - ProfileSessions; d < s.Count - 1; d++)
+            for (int d = s.Count - 1 - use; d < s.Count - 1; d++)
             {
                 Session a = s[d], b = s[d + 1];
                 if (a.Bars < MinSessionBars || b.Bars < MinSessionBars || a.Atr <= 0)
@@ -248,29 +259,13 @@ namespace cAlgo.Robots
             return _sigma[1] > 0;
         }
 
-        // Writes this bot's closed trades to Documents/cBotLogs for cbot-gate (skipped in optimisation).
         protected override void OnStop()
         {
-            if (RunningMode == RunningMode.Optimization)
-                return;
-            var inv = CultureInfo.InvariantCulture;
-            var sb = new StringBuilder("Closing Time,Entry Time,Symbol,Direction,Volume,Pips,Gross,Commissions,Swap,Net Profit,Balance\n");
-            foreach (var t in History)
-            {
-                if (t.Label != BotLabel)
-                    continue;
-                sb.AppendLine(string.Join(",",
-                    t.ClosingTime.ToString("yyyy-MM-dd HH:mm:ss", inv), t.EntryTime.ToString("yyyy-MM-dd HH:mm:ss", inv),
-                    t.SymbolName, t.TradeType, t.VolumeInUnits.ToString(inv), t.Pips.ToString(inv),
-                    t.GrossProfit.ToString(inv), t.Commissions.ToString(inv), t.Swap.ToString(inv),
-                    t.NetProfit.ToString(inv), t.Balance.ToString(inv)));
-            }
-            var mode = RunningMode == RunningMode.RealTime ? "live" : "backtest";
-            var name = string.Format("GoldBandBreakoutBot_{0}_{1}_{2:yyyyMMdd_HHmmss}.csv", SymbolName, mode, DateTime.Now);
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "cBotLogs", name);
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            System.IO.File.WriteAllText(path, sb.ToString());
-            Print("Trade log written: {0}", path);
+            var mine = History.Where(t => t.Label == BotLabel).ToList();
+            double won = mine.Where(t => t.NetProfit > 0).Sum(t => t.NetProfit);
+            double lost = -mine.Where(t => t.NetProfit < 0).Sum(t => t.NetProfit);
+            Print("Stopped: {0} trades, net {1:F2}, profit factor {2}", mine.Count, won - lost,
+                  lost > 0 ? (won / lost).ToString("F2", CultureInfo.InvariantCulture) : "n/a");
         }
     }
 }

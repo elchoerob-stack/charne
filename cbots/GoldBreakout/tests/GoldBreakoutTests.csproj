@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles the cBot against Spotware's cTrader.Automate package (proves it builds) and
+       runs the BreakoutMath unit tests. Given the 10-year M1 file, it also replays the bot's
+       daily decisions and checks every trade against the research harness:
+       (see the header of BreakoutTests.cs for the two commands). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AlgoBuild>false</AlgoBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../GoldBreakout_XAUUSD.cs" />
+    <Compile Include="BreakoutTests.cs" />
+    <PackageReference Include="cTrader.Automate" Version="1.0.21" />
+  </ItemGroup>
+</Project>

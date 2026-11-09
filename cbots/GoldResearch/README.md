@@ -218,5 +218,6 @@ Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (
 | `run_excl.py` | The COVID-years exclusion (stage 4) |
 | `run_hf.py` | The high-frequency round (stage 5) |
 | `export_logs.py` | Trade logs in cbot-gate format and the account-size table |
+| `export_lb.py` | The London-breakout trades for the GoldBreakout cBot's replay test |
 | `export_d1.py` | Daily bars and signals for the cBot's parity test |
 | `results/` | Raw output of every stage, trade logs for A and C (cbot-gate format), both gate reports, the account-size table |

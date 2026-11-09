@@ -30,6 +30,9 @@ above 1.8 in both halves of 10 years of data.
 
 Losing years were 2017, 2021 and 2023. Gold went sideways in all three.
 
+Without trades opened in the COVID years (2020–2021): in-sample PF 1.93 on 21 trades, all 10 years PF 2.61. COVID helped this strategy slightly.
+See [the research](../GoldResearch/README.md#excluding-the-covid-years-20202021).
+
 ## Four things to know before you run it
 
 1. **It makes little money at 0.5% risk.**

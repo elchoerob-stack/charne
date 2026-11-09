@@ -1,0 +1,84 @@
+55 variants (stage 1 + stage 2, the chandelier n20/n55 k3 ones counted once)
+
+variant                              IS 2016-22 all    IS ex 2020-21  IS ex Mar20-Jun21   covid-window PF
+LB spec                            1053 PF  1.00    625 PF  1.01    744 PF  0.99       428 PF  0.99
+LB spec +D1 EMA100                  526 PF  1.12    307 PF  1.15    363 PF  1.11       219 PF  1.07
+LB spec long-only                   561 PF  0.94    313 PF  0.96    383 PF  0.94       248 PF  0.93
+NY ORB tp1.5 trend=None            1612 PF  0.83   1101 PF  0.88   1272 PF  0.86       511 PF  0.72
+NY ORB tp1.5 trend=ema100           823 PF  0.90    558 PF  0.98    652 PF  0.95       265 PF  0.74
+NY ORB tp2.5 trend=None            1612 PF  0.85   1101 PF  0.89   1272 PF  0.86       511 PF  0.76
+NY ORB tp2.5 trend=ema100           823 PF  0.93    558 PF  1.01    652 PF  0.97       265 PF  0.78
+DC D1 n20 donchian-exit both         46 PF  1.05     32 PF  1.40     37 PF  1.11        14 PF  0.40
+DC D1 n20 donchian-exit long         24 PF  1.70     17 PF  2.13     19 PF  1.80         7 PF  0.73
+DC D1 n55 donchian-exit both         21 PF  0.99     14 PF  1.32     17 PF  1.14         7 PF  0.47
+DC D1 n55 donchian-exit long         12 PF  1.20      8 PF  1.27     10 PF  1.21         4 PF  1.04
+DC D1 n20 chand2.5 both              56 PF  1.32     40 PF  1.33     47 PF  1.20        16 PF  1.32
+DC D1 n20 chand3.0 both              49 PF  1.32     33 PF  1.37     41 PF  1.24        16 PF  1.20
+DC D1 n20 chand4.0 both              41 PF  0.90     27 PF  1.02     33 PF  0.89        14 PF  0.65
+DC D1 n30 chand2.5 both              41 PF  1.58     29 PF  1.70     33 PF  1.52        12 PF  1.28
+DC D1 n30 chand3.0 both              37 PF  1.45     24 PF  1.67     29 PF  1.54        13 PF  1.07
+DC D1 n30 chand4.0 both              34 PF  0.97     22 PF  1.13     26 PF  1.07        12 PF  0.61
+DC D1 n40 chand2.5 both              32 PF  2.77     23 PF  2.17     27 PF  2.28         9 PF  7.01
+DC D1 n40 chand3.0 both              30 PF  2.18     21 PF  1.93     25 PF  1.91         9 PF  3.42
+DC D1 n40 chand4.0 both              28 PF  1.27     19 PF  1.31     23 PF  1.24         9 PF  1.13
+DC D1 n55 chand2.5 both              29 PF  2.39     21 PF  2.25     25 PF  2.12         8 PF  2.79
+DC D1 n55 chand3.0 both              27 PF  1.78     19 PF  1.86     23 PF  1.68         8 PF  1.57
+DC D1 n55 chand4.0 both              26 PF  0.93     18 PF  1.05     22 PF  0.94         8 PF  0.69
+DC D1 n20 chand2.5 long              30 PF  1.72     23 PF  1.50     26 PF  1.47         7 PF  2.80
+DC D1 n20 chand3.0 long              26 PF  2.06     19 PF  2.13     22 PF  1.94         7 PF  1.87
+DC D1 n20 chand4.0 long              25 PF  1.23     18 PF  1.31     21 PF  1.16         7 PF  1.04
+DC D1 n30 chand2.5 long              23 PF  2.47     17 PF  2.40     19 PF  2.53         6 PF  2.73
+DC D1 n30 chand3.0 long              20 PF  2.86     14 PF  3.53     16 PF  3.48         6 PF  1.70
+DC D1 n30 chand4.0 long              19 PF  1.82     13 PF  2.34     15 PF  2.08         6 PF  0.95
+DC D1 n40 chand2.5 long              19 PF  4.33     14 PF  2.69     17 PF  3.47         5 PF 559.83
+DC D1 n40 chand3.0 long              17 PF  4.27     12 PF  3.09     15 PF  3.55         5 PF 22.29
+DC D1 n40 chand4.0 long              16 PF  2.33     11 PF  1.88     14 PF  1.94         5 PF  5.03
+DC D1 n55 chand2.5 long              17 PF  5.31     12 PF  4.28     15 PF  4.23         5 PF  8.59
+DC D1 n55 chand3.0 long              15 PF  5.35     10 PF  5.39     13 PF  4.40         5 PF  5.25
+DC D1 n55 chand4.0 long              15 PF  1.82     10 PF  1.73     13 PF  1.57         5 PF  2.01
+CR D1 rsi2<5 long                    16 PF  1.15      9 PF  1.69     10 PF  1.19         7 PF  0.91
+CR D1 rsi2<5 both                    26 PF  0.92     15 PF  0.69     18 PF  0.72        11 PF  1.25
+CR D1 rsi2<10 long                   37 PF  0.84     25 PF  1.01     26 PF  0.95        12 PF  0.67
+CR D1 rsi2<10 both                   55 PF  0.80     35 PF  0.74     41 PF  0.77        20 PF  0.89
+CR H4 rsi2<5 both                   293 PF  0.74    181 PF  0.76    220 PF  0.77       112 PF  0.72
+CR H4 rsi2<5 long                   188 PF  0.75    120 PF  0.74    135 PF  0.72        68 PF  0.75
+CR H4 rsi2<10 both                  481 PF  0.71    302 PF  0.74    367 PF  0.73       179 PF  0.66
+CR H4 rsi2<10 long                  302 PF  0.68    196 PF  0.68    222 PF  0.65       106 PF  0.69
+AS drift exit08h trend=None        1633 PF  0.81   1116 PF  0.81   1288 PF  0.84       517 PF  0.81
+AS drift exit08h trend=ema50        884 PF  0.79    589 PF  0.82    678 PF  0.82       295 PF  0.74
+AS drift exit10h trend=None        1633 PF  0.80   1116 PF  0.78   1288 PF  0.81       517 PF  0.86
+AS drift exit10h trend=ema50        884 PF  0.78    589 PF  0.79    678 PF  0.79       295 PF  0.77
+IM momentum thr0.25                 722 PF  0.95    513 PF  0.94    586 PF  0.95       209 PF  0.99
+IM momentum thr0.5                  261 PF  0.96    175 PF  0.97    204 PF  0.92        86 PF  0.93
+D4 H4 n20 trail3.0                  202 PF  1.09    136 PF  1.19    162 PF  1.11        66 PF  0.88
+D4 H4 n20 trail4.5                  168 PF  0.98    115 PF  1.02    138 PF  0.96        53 PF  0.90
+D4 H4 n55 trail3.0                  149 PF  1.23     99 PF  1.29    121 PF  1.21        50 PF  1.12
+D4 H4 n55 trail4.5                  125 PF  1.11     86 PF  1.08    105 PF  1.03        39 PF  1.17
+D4 H4 n20 trail3.0 long             125 PF  1.06     79 PF  1.24     96 PF  1.15        46 PF  0.80
+D4 H4 n55 trail3.0 long              90 PF  1.32     57 PF  1.40     73 PF  1.25        33 PF  1.20
+
+Best in-sample PF ex 2020-21 (at least 20 trades):
+  DC D1 n55 chand2.5 both            PF  2.25 on 21 trades
+  DC D1 n40 chand2.5 both            PF  2.17 on 23 trades
+  DC D1 n40 chand3.0 both            PF  1.93 on 21 trades
+  DC D1 n30 chand2.5 both            PF  1.70 on 29 trades
+  DC D1 n30 chand3.0 both            PF  1.67 on 24 trades
+  DC D1 n20 chand2.5 long            PF  1.50 on 23 trades
+  D4 H4 n55 trail3.0 long            PF  1.40 on 57 trades
+  DC D1 n20 donchian-exit both       PF  1.40 on 32 trades
+
+Trend plateau (n20-55, trail 2.5-3 ATR, 16 settings), in-sample ex 2020-21: min 1.33, median 2.15
+
+=== Finalist A (40-day breakout, 3 ATR trail, both sides) ===
+ex 2020-21       IS  n=  21 PF= 1.93 avgR=+0.318 win=52.4% DD=  1.1% /yr=  3.5
+                 OOS n=  20 PF= 3.37 avgR=+0.768 win=50.0% DD=  1.1% /yr=  5.6   (unchanged: no COVID years in it)
+                 ALL n=  41 PF= 2.61 avgR=+0.538 win=51.2% DD=  1.1% /yr=  4.1  ret=+11%
+ex Mar20-Jun21   IS  n=  25 PF= 1.91 avgR=+0.307 win=52.0% DD=  1.1% /yr=  4.2
+                 OOS n=  20 PF= 3.37 avgR=+0.768 win=50.0% DD=  1.1% /yr=  5.6   (unchanged: no COVID years in it)
+                 ALL n=  45 PF= 2.54 avgR=+0.512 win=51.1% DD=  1.1% /yr=  4.5  ret=+12%
+
+=== Reference C (London breakout + D1 EMA100), ex 2020-21 ===
+IS  n= 307 PF= 1.15 avgR=+0.069 win=43.0% DD=  4.8% /yr= 48.7
+OOS n= 435 PF= 1.23 avgR=+0.108 win=43.0% DD=  7.6% /yr=114.0
+
+trade log (A ex 2020-21) end balance 11146.31

@@ -114,6 +114,38 @@ the edge is likely, not proven.
 Reference C (the London breakout with the trend filter) **fails** the gate: OOS PF 1.23, below 1.30, and 0.94 without its best 22 trades.
 Reports: [`results/gate_report_trend_A.md`](results/gate_report_trend_A.md), [`results/gate_report_london_C.md`](results/gate_report_london_C.md).
 
+## Excluding the COVID years (2020–2021)
+
+Added at your request. Trades **opened** between 1 Jan 2020 and 31 Dec 2021 are left out of the scoring.
+The strategies still run through those years, so their indicators and open positions are unaffected.
+A narrower window, Mar 2020 – Jun 2021 (the acute phase), was checked as well.
+The out-of-sample period (2023–2026) has no COVID years in it, so it doesn't change.
+Output: [`results/stage4_ex_covid.txt`](results/stage4_ex_covid.txt).
+
+| Strategy | 2016–22 all | 2016–22 ex 2020–21 | Ex Mar 20 – Jun 21 | Inside 2020–21 |
+|---|---|---|---|---|
+| **A: 40-day breakout, 3 ATR trail** | 30 trades, PF 2.18 | 21 trades, **PF 1.93** | 25 trades, PF 1.91 | 9 trades, PF 3.42 |
+| Trend group (16 settings), median | – | **PF 2.15** (lowest 1.33) | – | – |
+| C: London breakout + daily trend | 526, PF 1.12 | 307, PF 1.15 | 363, PF 1.11 | 219, PF 1.07 |
+| H4 trend, long only, n55 | 90, PF 1.32 | 57, PF 1.40 | 73, PF 1.25 | 33, PF 1.20 |
+| **GoldGuard v3 (refined)** | 483, PF 0.88 | 258, **PF 1.02** | 322, PF 0.98 | 225, PF 0.72 |
+| NY opening range, Asian drift, mean reversion, momentum | 0.68–0.96 | 0.68–1.01 | | |
+
+What changes:
+
+- **The trend bot gets slightly worse without COVID, not better.**
+  - 2020 was one of its best years: gold trended hard to $2,075.
+  - It still clears 1.8 in-sample (1.93), and 2.61 over all 10 years.
+  - cbot-gate is still INCONCLUSIVE on trade count (21 OOS).
+  - Its in-sample t-statistic falls to 0.95, so on fewer trades the evidence is thinner.
+  - Gate report: [`results/gate_report_trend_A_ex_covid.md`](results/gate_report_trend_A_ex_covid.md).
+- **GoldGuard v3 was hurt by COVID** (PF 0.72 inside the window). Without it, it breaks even (PF 1.02). It still fails.
+- **Nothing new reaches 1.8.** The ranking of strategies is the same with or without those years.
+
+```
+| 2026-11-09 | GoldTrend XAUUSD D1 | A, trades opened 2020-2021 excluded | INCONCLUSIVE | OOS PF 3.57 | 21 trades | WFE 5.18 | variants tested: 59 |
+```
+
 ## Read this before you get excited
 
 1. **PF is not return.**
@@ -140,6 +172,7 @@ python3 run_is.py  xau_m1_10y.csv     # stage 1: 33 variants, discovery only
 python3 run_is2.py xau_m1_10y.csv     # stage 2: trend neighbourhood, discovery only
 python3 run_oos.py xau_m1_10y.csv     # stage 3: finalists, out-of-sample, once
 python3 export_logs.py xau_m1_10y.csv # trade logs for cbot-gate + account-size table
+python3 run_excl.py xau_m1_10y.csv    # every variant re-scored without trades opened in 2020-2021
 ```
 
 Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (≈250 MB).
@@ -151,6 +184,7 @@ Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (
 | `core.py` | Data loading (server clock), bars, indicators, the M1 bid/ask trade simulator, statistics |
 | `families.py` | Every strategy family tested |
 | `run_is.py`, `run_is2.py`, `run_oos.py` | The three stages, each with its variants listed in code |
+| `run_excl.py` | The COVID-years exclusion (stage 4) |
 | `export_logs.py` | Trade logs in cbot-gate format and the account-size table |
 | `export_d1.py` | Daily bars and signals for the cBot's parity test |
 | `results/` | Raw output of every stage, trade logs for A and C (cbot-gate format), both gate reports, the account-size table |

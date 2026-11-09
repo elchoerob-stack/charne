@@ -70,9 +70,11 @@ the code, never as instance settings.
 0. **Fund the demo.** The connected cTrader demo account shows a balance of R0.55; it cannot
    open 0.01 lot. Top it up or open a new demo with about R20,000 (close to the $1,000 the
    gate used).
-1. **Install.** cTrader > Algo > cBots > New, paste `GoldBandBreakoutBot.cs`, Build. It compiles
-   against cTrader.Automate 1.0.21 with no warnings. Attach to an XAUUSD 1h chart; the defaults
-   are the tested settings.
+1. **Install.** Easiest: open `dist/GoldBandBreakoutBot.algo` on the PC running cTrader
+   (double-click it, or drag it onto cTrader's cBot list) and it installs ready-built.
+   Or: cTrader > Algo > cBots > New, paste `GoldBandBreakoutBot.cs`, Build. Either way it is
+   built against cTrader.Automate 1.0.21 with no warnings. Add an instance on XAUUSD, 1h; the
+   defaults are the tested settings.
 2. **Unseen-period backtest (the real test).** Backtester, XAUUSD, **tick data**,
    1 Jan 2023 - 12 Jan 2026, default parameters, no optimisation. That period played no part
    in choosing the rules. The bot writes `Documents/cBotLogs/*.csv` when the run ends; gate it:

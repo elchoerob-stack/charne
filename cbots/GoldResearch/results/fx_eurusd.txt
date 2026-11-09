@@ -1,0 +1,52 @@
+EURUSD, 3,753,403 M1 bars. 23 pre-registered variants.
+
+median spread 0.40 pip; commission 0.7 pip round trip
+
+variant                                                         discovery 2016-22        ex 2020-21     stop
+Asian-range breakout to 08:00 trend=ema100 spec n=  718 PF 0.94 /yr  113.9 DD  22.7%   n=  487 PF 0.89    21.6p
+Asian-range breakout to 08:00 trend=ema100 tp1.5 n=  718 PF 0.85 /yr  113.9 DD  29.1%   n=  487 PF 0.76    21.6p
+Asian-range breakout to 08:00 trend=None spec n= 1393 PF 0.88 /yr  220.3 DD  48.8%   n=  957 PF 0.84    21.2p
+Asian-range breakout to 08:00 trend=None tp1.5 n= 1393 PF 0.82 /yr  220.3 DD  51.6%   n=  957 PF 0.76    21.2p
+Asian-range breakout to 10:00 trend=ema100 spec n=  752 PF 1.13 /yr  119.1 DD  17.5%   n=  509 PF 1.09    27.8p
+Asian-range breakout to 10:00 trend=ema100 tp1.5 n=  752 PF 1.10 /yr  119.1 DD  17.5%   n=  509 PF 1.03    27.8p
+Asian-range breakout to 10:00 trend=None spec n= 1527 PF 0.95 /yr  241.4 DD  39.4%   n= 1040 PF 0.90    27.2p
+Asian-range breakout to 10:00 trend=None tp1.5 n= 1527 PF 0.91 /yr  241.4 DD  40.6%   n= 1040 PF 0.83    27.2p
+Daily Donchian n20 chand3                    n=   54 PF 0.61 /yr    8.9 DD   6.6%   n=   38 PF 0.46   189.8p
+Daily Donchian n40 chand3                    n=   42 PF 0.56 /yr    7.0 DD   6.9%   n=   29 PF 0.44   184.8p
+Daily Donchian n55 chand3                    n=   34 PF 0.65 /yr    5.7 DD   5.1%   n=   23 PF 0.59   184.9p
+H1 Donchian n24 trail2                       n=  791 PF 0.98 /yr  125.3 DD  15.8%   n=  534 PF 1.06    27.9p
+H1 Donchian n48 trail3                       n=  497 PF 1.02 /yr   78.8 DD   9.4%   n=  341 PF 1.07    28.4p
+RSI(2) daily <5 both                         n=   36 PF 1.86 /yr    7.1 DD   0.5%   n=   21 PF 2.23   224.1p
+RSI(2) daily <10 both                        n=   66 PF 0.93 /yr   12.2 DD   2.7%   n=   43 PF 1.78   234.3p
+RSI(2) H4 <5 both sma200                     n=  271 PF 1.29 /yr   49.6 DD   3.2%   n=  178 PF 1.33    85.1p
+RSI(2) H4 <10 both sma200                    n=  483 PF 1.04 /yr   86.9 DD   4.5%   n=  317 PF 1.10    84.8p
+Asian fade BB20 2.0sd                        n= 3006 PF 0.77 /yr  475.3 DD  85.9%   n= 2019 PF 0.80     7.2p
+Asian fade BB20 2.5sd                        n= 1451 PF 0.83 /yr  229.7 DD  56.6%   n=  971 PF 0.87     7.3p
+NY ORB ema100 tp1.5                          n=  818 PF 1.02 /yr  129.5 DD  19.3%   n=  552 PF 1.14    17.8p
+NY ORB ema100 tp2.5                          n=  818 PF 1.01 /yr  129.5 DD  18.6%   n=  552 PF 1.12    17.8p
+Intraday momentum thr0.5                     n=  369 PF 1.09 /yr   58.9 DD   5.5%   n=  247 PF 1.06    38.4p
+PDH/PDL ema100 tp2.5                         n=  678 PF 0.98 /yr  107.3 DD  13.6%   n=  454 PF 1.00    37.9p
+
+1 variants meet >= 60 trades/yr and discovery PF >= 1.10.
+High-frequency picks: Asian-range breakout to 10:00 trend=ema100 spec
+Reference pick (>= 20/yr): RSI(2) H4 <5 both sma200
+
+=== Asian-range breakout to 10:00 trend=ema100 spec ===
+discovery 2016-22     n= 752 PF= 1.13 avgR=+0.062 win=43.4% DD= 17.5% /yr=119.1
+discovery ex 2020-21  n= 509 PF= 1.09 avgR=+0.046 win=42.4% DD= 17.5% /yr= 80.6
+OUT-OF-SAMPLE 2023-26 n= 456 PF= 0.89 avgR=-0.052 win=40.4% DD= 17.2% /yr=118.8
+10 yrs ex 2020-21     n= 965 PF= 1.00 avgR=-0.000 win=41.5% DD= 18.8% /yr= 94.9  ret=-2%
+by year (trades/PF): 16:34/1.67 17:127/1.19 18:124/0.85 19:105/0.69 20:121/1.26 21:122/1.19 22:119/1.60 23:119/0.81 24:112/0.73 25:113/1.13 26:112/0.97
+median stop 24.9 pips -> standard 0.01 lot (1,000 units): R44.86 per stop; account for 0.5% risk R8,972, 1% R4,486
+median stop 24.9 pips -> cent/micro 0.01 lot (10 units): R0.45 per stop; account for 0.5% risk R90, 1% R45
+trade log: results/fx_trades_Asian_range_breakout_to_10_00_trend_ema100_spec.csv
+
+=== RSI(2) H4 <5 both sma200 ===
+discovery 2016-22     n= 271 PF= 1.29 avgR=+0.038 win=66.4% DD=  3.2% /yr= 49.6
+discovery ex 2020-21  n= 178 PF= 1.33 avgR=+0.043 win=67.4% DD=  2.5% /yr= 32.6
+OUT-OF-SAMPLE 2023-26 n= 217 PF= 1.12 avgR=+0.016 win=66.8% DD=  2.5% /yr= 56.6
+10 yrs ex 2020-21     n= 395 PF= 1.21 avgR=+0.028 win=67.1% DD=  2.5% /yr= 42.0  ret=+6%
+by year (trades/PF): 17:29/1.18 18:55/2.12 19:49/0.76 20:40/1.13 21:53/1.26 22:45/1.91 23:53/1.23 24:61/0.79 25:58/2.17 26:45/0.81
+median stop 79.0 pips -> standard 0.01 lot (1,000 units): R142.22 per stop; account for 0.5% risk R28,444, 1% R14,222
+median stop 79.0 pips -> cent/micro 0.01 lot (10 units): R1.42 per stop; account for 0.5% risk R284, 1% R142
+trade log: results/fx_trades_RSI_2__H4__5_both_sma200.csv

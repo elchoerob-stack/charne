@@ -176,6 +176,52 @@ Output: [`results/stage5_high_frequency.txt`](results/stage5_high_frequency.txt)
 | 2026-11-09 | London breakout + D1 EMA100 | stage 5 re-selection (published exits, OCO) | FAIL | OOS PF 1.23 | 435 trades | WFE 3.32 | variants tested: 85 |
 ```
 
+## EURUSD (stage 6): the same method on a currency pair
+
+You asked whether a currency pair could do better with a small account. The data is
+**your broker's own EURUSD 1-minute prices**, Sep 2016 – Nov 2026 (3.75 million minutes),
+pulled read-only through the cTrader remote MCP server (`fetch_ctrader_bars.py`).
+
+- cTrader bars are bid prices, so the ask adds a measured spread by hour: about 0.4 pip median, about 4 pips at the 17:00 New York rollover.
+- Commission is 0.7 pip per round trip.
+- Dukascopy's free feed throttled bulk downloads (HTTP 429), so it wasn't used.
+
+**23 pre-registered variants**, with the selection rule fixed in `run_fx.py`. Variants tested
+across the project: 108. Output: [`results/fx_eurusd.txt`](results/fx_eurusd.txt).
+
+| Family | 2016–22 PF | Note |
+|---|---|---|
+| Asian-range breakout (gold's winner, rescaled) | 0.82–1.13 | best: range to 10:00, daily-trend filter |
+| Asian-session Bollinger fade ("night scalper") | 0.77–0.83 | 230–475 trades a year, eaten by costs |
+| Daily Donchian trend-following | 0.56–0.65 | EURUSD doesn't trend like gold |
+| H1 Donchian, NY opening range, previous-day breakout, momentum | 0.98–1.09 | no edge |
+| RSI(2) mean reversion, H4, with the 200-day trend | 1.04–1.29 | 50–87 trades a year |
+| RSI(2) mean reversion, daily | 0.93–1.86 | 7–12 trades a year |
+
+Picks, run once on 2023–2026:
+
+| Pick | 2016–22 | **2023–26** | Gate |
+|---|---|---|---|
+| Asian-range breakout to 10:00 + daily trend (~119 trades a year) | PF 1.13 | **PF 0.89** (456 trades) | **FAIL**: loses out of sample |
+| RSI(2) < 5 on H4 with the 200-day trend (~50 a year) | PF 1.29 | **PF 1.12** (217 trades) | **FAIL**: P(PF<1) 28%, PF 0.91 after $1.50 extra cost a trade |
+
+**No EURUSD strategy has a dependable edge here.** The gold London breakout (OOS PF 1.23, ~110
+trades a year) is still the best high-frequency candidate in this research. Currency pairs are
+also more expensive to trade per unit of movement: the RSI(2) pick makes about +1.3 pips a trade
+before extra costs.
+
+Account size at the median stop:
+
+| Pick | Median stop | FxPro 0.01 lot (1,000 units) | Cent/micro 0.01 lot (10 units) |
+|---|---|---|---|
+| Asian-range breakout | 25 pips | R45 a stop, R9,000 for 0.5% risk | R0.45 a stop, R90 for 0.5% |
+| RSI(2) H4 | 79 pips | R142 a stop, R28,400 for 0.5% risk | R1.42 a stop, R284 for 0.5% |
+
+```
+| 2026-11-09 | EURUSD Asian-range breakout | to 10:00, D1 EMA100, 2.5R / BE 1.5R | FAIL | OOS PF 0.89 | 456 trades | WFE -0.99 | variants tested: 108 |
+| 2026-11-09 | EURUSD RSI(2) H4 | <5 / >95, 200-day trend filter | FAIL | OOS PF 1.12 | 217 trades | WFE 0.50 | variants tested: 108 |
+```
+
 ## Read this before you get excited
 
 1. **PF is not return.**
@@ -204,6 +250,8 @@ python3 run_oos.py xau_m1_10y.csv     # stage 3: finalists, out-of-sample, once
 python3 export_logs.py xau_m1_10y.csv # trade logs for cbot-gate + account-size table
 python3 run_excl.py xau_m1_10y.csv    # every variant re-scored without trades opened in 2020-2021
 python3 run_hf.py xau_m1_10y.csv      # stage 5: high-frequency round, selection rule fixed in code
+python3 fetch_ctrader_bars.py 1 0.0001 2016-09-01 2026-11-09 eurusd_m1_10y.csv cache/   # needs the cTrader MCP token
+python3 run_fx.py eurusd_m1_10y.csv   # stage 6: EURUSD
 ```
 
 Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (≈250 MB).
@@ -217,6 +265,7 @@ Needs Python 3 with numpy and pandas. The first load caches the data as `.npz` (
 | `run_is.py`, `run_is2.py`, `run_oos.py` | The three stages, each with its variants listed in code |
 | `run_excl.py` | The COVID-years exclusion (stage 4) |
 | `run_hf.py` | The high-frequency round (stage 5) |
+| `run_fx.py`, `fetch_ctrader_bars.py`, `fetch_dukascopy.py` | EURUSD (stage 6) and its data |
 | `export_logs.py` | Trade logs in cbot-gate format and the account-size table |
 | `export_lb.py` | The London-breakout trades for the GoldBreakout cBot's replay test |
 | `export_d1.py` | Daily bars and signals for the cBot's parity test |

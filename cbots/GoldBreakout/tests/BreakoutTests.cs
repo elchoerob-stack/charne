@@ -79,6 +79,11 @@ internal static class Program
         // Broker clock: New York + 7h, so 17:00 New York is 00:00 of the next broker day
         var b = BreakoutMath.BrokerClock(new DateTime(2026, 3, 9, 17, 0, 0), 7);
         Check("17:00 New York = 00:00 broker clock next day", b == new DateTime(2026, 3, 10, 0, 0, 0));
+
+        // Storage keys: cTrader allows Latin letters, digits and spaces only, no outer spaces
+        string key = BreakoutMath.StorageKey("GoldBreakout", 5123456, "XAUUSD.r_", "ddHalt");
+        Check("storage key is clean", key == "GoldBreakout 5123456 XAUUSDr ddHalt", key);
+        Check("storage key has only letters, digits, spaces", key.All(c => char.IsAsciiLetterOrDigit(c) || c == ' ') && key.Trim() == key);
     }
 
     private static void Replay(string path)

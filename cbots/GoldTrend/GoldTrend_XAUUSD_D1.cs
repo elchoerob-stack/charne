@@ -51,7 +51,7 @@ namespace cAlgo.Robots
 
         private const string Label = "GoldTrendD1-XAU";
         private const string CommentTag = "GTD1";
-        private const string StatePrefix = "GoldTrendD1_";
+        private const string StatePrefix = "GoldTrendD1";
 
         // -----------------------------------------------------------------------------
         //  Parameters (defaults = the validated research settings)
@@ -84,7 +84,8 @@ namespace cAlgo.Robots
         private Bars _d1, _m1;
         private AverageTrueRange _atr;
         private bool _persist, _ddHalt;
-        private string _key;
+        private long _keyAccount;
+        private string _keySymbol;
         private double _peakEquity, _lastSavedPeak;
         private int _ddTrips, _signals, _entries;
         private readonly Dictionary<int, double> _extreme = new Dictionary<int, double>();   // position id -> best close
@@ -113,7 +114,7 @@ namespace cAlgo.Robots
                 Print("Note: Chandelier Trail ({0}) is tighter than Initial Stop ({1}); the trail will take over at entry.", TrailAtr, StopAtr);
 
             _persist = RunningMode == RunningMode.RealTime;
-            _key = StatePrefix + Account.Number.ToString(Inv) + "_" + SymbolName.Replace(".", "_") + "_";
+            _keyAccount = Account.Number; _keySymbol = SymbolName;
 
             _d1 = MarketData.GetBars(TimeFrame.Daily);
             try { while (_d1.Count < BreakoutDays + AtrPeriod * 5 + 5 && _d1.LoadMoreHistory() > 0) { } }
@@ -357,15 +358,59 @@ namespace cAlgo.Robots
         {
             _lastSavedPeak = _peakEquity;
             if (!_persist) return;
-            LocalStorage.SetString(_key + "epoch", KillSwitchEpoch.ToString(Inv), LocalStorageScope.Device);
-            LocalStorage.SetString(_key + "peak", _peakEquity.ToString("R", Inv), LocalStorageScope.Device);
-            LocalStorage.SetString(_key + "ddHalt", _ddHalt ? "1" : "0", LocalStorageScope.Device);
-            LocalStorage.Flush(LocalStorageScope.Device);
+            Set("epoch", KillSwitchEpoch.ToString(Inv));
+            Set("peak", _peakEquity.ToString("R", Inv));
+            Set("ddHalt", _ddHalt ? "1" : "0");
+            FlushStore();
         }
+
+        // LocalStorage keys may only hold Latin letters, digits and spaces, with no space at
+        // either end (cTrader throws otherwise). A storage failure must never stop the bot:
+        // it falls back from Device to Instance scope, then to memory only, and says so once.
+        private LocalStorageScope _scope = LocalStorageScope.Device;
+        private bool _storageOk = true;
 
         private string Get(string name)
         {
-            return LocalStorage.GetString(_key + name, LocalStorageScope.Device);
+            for (int attempt = 0; attempt < 2 && _storageOk; attempt++)
+            {
+                try { return LocalStorage.GetString(Key(name), _scope); }
+                catch (Exception e) { StorageFailed(e); }
+            }
+            return null;
+        }
+
+        private void Set(string name, string value)
+        {
+            for (int attempt = 0; attempt < 2 && _storageOk; attempt++)
+            {
+                try { LocalStorage.SetString(Key(name), value, _scope); return; }
+                catch (Exception e) { StorageFailed(e); }
+            }
+        }
+
+        private void FlushStore()
+        {
+            if (!_storageOk) return;
+            try { LocalStorage.Flush(_scope); }
+            catch (Exception e) { StorageFailed(e); }
+        }
+
+        private string Key(string name)
+        {
+            return TrendMath.StorageKey(StatePrefix, _keyAccount, _keySymbol, name);
+        }
+
+        private void StorageFailed(Exception e)
+        {
+            if (_scope == LocalStorageScope.Device)
+            {
+                _scope = LocalStorageScope.Instance;
+                Print("Device storage unavailable ({0}); using instance storage. A drawdown halt then survives restarts of this instance only.", e.Message);
+                return;
+            }
+            _storageOk = false;
+            Print("Local storage unavailable ({0}). Risk state is kept in memory for this run only.", e.Message);
         }
 
         private void Count(string key)
@@ -411,6 +456,13 @@ namespace cAlgo.Robots
     // =====================================================================================
     public static class TrendMath
     {
+        /// LocalStorage key: Latin letters, digits and single spaces only, no space at either end.
+        public static string StorageKey(string prefix, long account, string symbol, string name)
+        {
+            string Clean(string s) => new string((s ?? "").Where(c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')).ToArray());
+            return string.Join(" ", new[] { Clean(prefix), account.ToString(CultureInfo.InvariantCulture), Clean(symbol), Clean(name) }.Where(x => x.Length > 0));
+        }
+
         /// Highest (max=true) or lowest value of the n bars BEFORE index `bar`.
         public static double Channel(Func<int, double> x, int bar, int n, bool max)
         {

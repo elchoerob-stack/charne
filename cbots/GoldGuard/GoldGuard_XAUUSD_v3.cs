@@ -66,7 +66,7 @@ namespace cAlgo.Robots
 
         private const string Label = "GoldGuardV3-XAU";
         private const string CommentTag = "GG3";
-        private const string StatePrefix = "GoldGuardV3_";
+        private const string StatePrefix = "GoldGuardV3";
 
         // -----------------------------------------------------------------------------
         //  STRATEGY parameters. Safe to optimise: none of them changes position size.
@@ -250,7 +250,8 @@ namespace cAlgo.Robots
         private ExponentialMovingAverage _d1Ema;
 
         private bool _started, _persist, _visual, _stateDirty;
-        private string _key;
+        private long _keyAccount;
+        private string _keySymbol;
 
         private DateTime _day;
         private double _dayStartEquity, _peakEquity, _lastSavedPeak;
@@ -305,7 +306,7 @@ namespace cAlgo.Robots
             // next optimisation pass).
             _persist = RunningMode == RunningMode.RealTime;
             _visual = RunningMode == RunningMode.RealTime || RunningMode == RunningMode.VisualBacktesting;
-            _key = StatePrefix + Account.Number.ToString(Inv) + "_" + SymbolName.Replace(".", "_") + "_";
+            _keyAccount = Account.Number; _keySymbol = SymbolName;
 
             _h1 = MarketData.GetBars(TimeFrame.Hour);
             _d1 = MarketData.GetBars(TimeFrame.Daily);
@@ -916,14 +917,53 @@ namespace cAlgo.Robots
         // -----------------------------------------------------------------------------
         // Device scope: the halt survives removing and re-adding the instance, or renaming
         // the cBot. The key is per account and symbol.
+        // LocalStorage keys may only hold Latin letters, digits and spaces, with no space at
+        // either end (cTrader throws otherwise). A storage failure must never stop the bot:
+        // it falls back from Device to Instance scope, then to memory only, and says so once.
+        private LocalStorageScope _scope = LocalStorageScope.Device;
+        private bool _storageOk = true;
+
         private string Get(string name)
         {
-            return LocalStorage.GetString(_key + name, LocalStorageScope.Device);
+            for (int attempt = 0; attempt < 2 && _storageOk; attempt++)
+            {
+                try { return LocalStorage.GetString(Key(name), _scope); }
+                catch (Exception e) { StorageFailed(e); }
+            }
+            return null;
         }
 
         private void Set(string name, string value)
         {
-            LocalStorage.SetString(_key + name, value, LocalStorageScope.Device);
+            for (int attempt = 0; attempt < 2 && _storageOk; attempt++)
+            {
+                try { LocalStorage.SetString(Key(name), value, _scope); return; }
+                catch (Exception e) { StorageFailed(e); }
+            }
+        }
+
+        private void FlushStore()
+        {
+            if (!_storageOk) return;
+            try { LocalStorage.Flush(_scope); }
+            catch (Exception e) { StorageFailed(e); }
+        }
+
+        private string Key(string name)
+        {
+            return ExitMath.StorageKey(StatePrefix, _keyAccount, _keySymbol, name);
+        }
+
+        private void StorageFailed(Exception e)
+        {
+            if (_scope == LocalStorageScope.Device)
+            {
+                _scope = LocalStorageScope.Instance;
+                Print("Device storage unavailable ({0}); using instance storage. A drawdown halt then survives restarts of this instance only.", e.Message);
+                return;
+            }
+            _storageOk = false;
+            Print("Local storage unavailable ({0}). Risk state is kept in memory for this run only.", e.Message);
         }
 
         private double ReadDouble(string name, double fallback)
@@ -985,7 +1025,7 @@ namespace cAlgo.Robots
             Set("losses", _lossStreak.ToString(Inv));
             Set("dayHalt", _dayHalt ? "1" : "0");
             Set("ddHalt", _ddHalt ? "1" : "0");
-            LocalStorage.Flush(LocalStorageScope.Device);
+            FlushStore();
         }
 
         // -----------------------------------------------------------------------------
@@ -1151,6 +1191,13 @@ namespace cAlgo.Robots
 
     public static class ExitMath
     {
+        /// LocalStorage key: Latin letters, digits and single spaces only, no space at either end.
+        public static string StorageKey(string prefix, long account, string symbol, string name)
+        {
+            string Clean(string s) => new string((s ?? "").Where(c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')).ToArray());
+            return string.Join(" ", new[] { Clean(prefix), account.ToString(CultureInfo.InvariantCulture), Clean(symbol), Clean(name) }.Where(x => x.Length > 0));
+        }
+
         // The stop a position should have right now. It is never looser than currentStop:
         // a stop only ever moves in the trade's favour.
         //   1. at BreakEvenAtR:        entry + BreakEvenLockR x R

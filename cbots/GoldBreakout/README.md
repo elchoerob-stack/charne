@@ -76,7 +76,8 @@ On a smaller account the bot skips the day and logs `account too small ... (need
    - Set the starting balance to **10,000** or more.
    - Compare the per-year PF with the table above. Different broker data will move it a little, not a lot.
 5. **Run it on demo:**
-   - Add an instance on XAUUSD on a **demo** account, balance 10,000 or more, and press **Start**.
+   - Add an instance on XAUUSD on its **own demo** account, balance 10,000 or more, and press **Start**.
+   - Keep nothing else trading on that account. The 6% drawdown halt watches the whole account's equity, so manual trades or other bots there can trip it.
    - The Log shows `GoldBreakout on XAUUSD | mode RealTime | ... daily closes (EMA100 ...)`.
    - The chart panel shows the broker clock, today's trend side, the range and the order.
    - Start it before 08:00 broker clock. A start after 08:00 waits for the next day.

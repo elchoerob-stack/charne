@@ -44,6 +44,10 @@ internal static class Program
         Near("short: trail = best close + k ATR", TrendMath.Trail(false, 102.5, 99.0, 1.0, 3.0), 102.0);
         Near("short: never loosens", TrendMath.Trail(false, 101.5, 99.0, 1.0, 3.0), 101.5);
 
+        // ---- Storage key: Latin letters, digits and spaces only (cTrader rule) ----------
+        string key = TrendMath.StorageKey("GoldTrendD1", 5123456, "XAUUSD.r_", "peak");
+        Check("storage key is clean", key == "GoldTrendD1 5123456 XAUUSDr peak", key);
+
         // ---- Parity with the research harness (40-day breakout, every day 2016-2026) --
         string path = Path.Combine(AppContext.BaseDirectory, "../../../d1_bars_signals.csv");
         if (!File.Exists(path)) path = "d1_bars_signals.csv";

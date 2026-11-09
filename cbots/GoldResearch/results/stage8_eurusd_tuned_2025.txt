@@ -3,3 +3,17 @@
   100/591 done
   200/591 done
   300/591 done
+  400/591 done
+  500/591 done
+
+2025 frontier: best PF at each minimum trade count
+  >=  100 trades: PF 1.45 (105 trades, +10.6R)  kind=MR tf=240 th=15 exit=70 hold=8 stop=2.0 trend=ema100 sess=07-20h
+  >=  250 trades: PF 1.13 (361 trades, +7.2R)  kind=MR tf=60 th=10 exit=60 hold=8 stop=3.0 trend=ema100 sess=00-24h
+  >=  500 trades: PF 0.95 (591 trades, -6.7R)  kind=MR tf=15 th=3 exit=70 hold=32 stop=3.0 trend=None sess=07-20h
+  >= 1000 trades: PF 0.89 (1070 trades, -46.2R)  kind=MR tf=60 th=15 exit=70 hold=8 stop=1.5 trend=None sess=00-24h
+  >= 2000 trades: PF 0.77 (2016 trades, -148.9R)  kind=MR tf=15 th=15 exit=70 hold=8 stop=2.0 trend=ema100 sess=00-24h
+
+8 settings reach PF >= 1.2 with >= 100 trades in 2025. Top 5 by total R, then tested ONCE on unseen years:
+
+#1 kind=RB r_from=180 r_to=540 e_to=1260 min_w=0.0015 max_w=0.006 cap=0.003 tp=3.0 be=0.0 trend=None
+   2025 (tuned)      n=  201 PF=1.30 avgR=+0.142 total=+28.6R win=43%

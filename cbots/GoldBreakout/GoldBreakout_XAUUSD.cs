@@ -241,9 +241,11 @@ namespace cAlgo.Robots
             {
                 if (BotOrders().Any() || BotPositions().Any())
                 {
+                    int orders = BotOrders().Count(), positions = BotPositions().Count();
                     foreach (var o in BotOrders().ToList()) CancelPendingOrder(o);
                     foreach (var p in BotPositions().ToList()) ClosePosition(p);
                     _status = "flat at " + FlatHour + ":00";
+                    Print("{0:yyyy-MM-dd} {1}:00 flat: closed {2} position(s), cancelled {3} unfilled order(s).", day, FlatHour, positions, orders);
                 }
                 _dayDone = true;
                 return;
@@ -330,8 +332,12 @@ namespace cAlgo.Robots
             TradeResult r = through
                 ? ExecuteMarketOrder(type, SymbolName, volume, Label, dist / Symbol.PipSize, TargetR * dist / Symbol.PipSize, comment)
                 : PlaceStopOrder(type, SymbolName, volume, level, Label, stop, target, ProtectionType.Absolute, null, comment);
-            if (!r.IsSuccessful) { Skip("order rejected: " + r.Error); Print("{0} order rejected: {1}", type, r.Error); return; }
+            if (!r.IsSuccessful) { Skip("order rejected: " + r.Error); return; }
             if (through) _dayDone = true;     // filled at market: no second order today
+            Print("{0:yyyy-MM-dd} {1} {2:F2} | range {3:F2}-{4:F2} ({5:F2}%) | trend {6} | {7} units | stop {8:F2} | target {9:F2} | risk {10:F2}",
+                _planDay, through ? (buy ? "BUY at market, price already above" : "SELL at market, price already below") : (buy ? "BUY STOP at" : "SELL STOP at"),
+                level, plan.Lo, plan.Hi, (plan.Hi - plan.Lo) / plan.Price * 100, _trendSide > 0 ? "up" : _trendSide < 0 ? "down" : "off",
+                volume, stop, target, Symbol.AmountRisked(volume, dist / Symbol.PipSize));
             // Sized from the planned level; a fill that slips past the level widens the stop by
             // the slippage, so the loss can exceed the budget by that much (as in the research).
         }
@@ -560,10 +566,12 @@ namespace cAlgo.Robots
             Print("Local storage unavailable ({0}). Risk state is kept in memory for this run only.", e.Message);
         }
 
+        // Every skipped day is one Journal line, so a cloud instance can be checked from the phone.
         private void Skip(string why)
         {
             _skips.TryGetValue(why, out int n);
             _skips[why] = n + 1;
+            Print("{0:yyyy-MM-dd} no trade: {1}", _planDay, why);
         }
 
         // -----------------------------------------------------------------------------

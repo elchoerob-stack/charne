@@ -1,0 +1,73 @@
+loaded 3,597,173 M1 bars, 240,019 M15 bars in 4.4s
+
+IN-SAMPLE  (2016-09-01 .. 2020-01-01)
+  PB  trades  100 | win  43.0% | PF  0.83 | net    -411.40 | avg -0.08R
+  BO  trades   50 | win  32.0% | PF  0.48 | net    -664.94 | avg -0.28R
+  ALL trades  150 | win  39.3% | PF  0.71 | net   -1076.34 | avg -0.15R
+  buys  trades  106 | win  41.5% | PF  0.73 | net    -692.65 | avg -0.13R
+  sells trades   44 | win  34.1% | PF  0.67 | net    -383.69 | avg -0.19R
+  runners: 15 reached target | exit avg 1.99R vs target avg 2.00R | best 2.83R | below target 7
+
+OUT-OF-SAMPLE  (2020-01-01 .. 2023-01-01)
+  PB  trades  251 | win  49.4% | PF  1.06 | net     267.14 | avg  0.03R
+  BO  trades   81 | win  43.2% | PF  0.75 | net    -381.41 | avg -0.12R
+  AB  trades    1 | win   0.0% | PF  0.00 | net     -38.05 | avg -0.92R
+  ALL trades  333 | win  47.7% | PF  0.98 | net    -152.32 | avg -0.01R
+  buys  trades  179 | win  51.4% | PF  1.12 | net     364.72 | avg  0.05R
+  sells trades  154 | win  43.5% | PF  0.83 | net    -517.05 | avg -0.08R
+  runners: 36 reached target | exit avg 2.00R vs target avg 2.00R | best 3.38R | below target 24
+
+WHOLE PERIOD  (2016-09-01 .. 2023-01-01)
+  PB  trades  351 | win  47.6% | PF  0.98 | net    -144.27 | avg -0.00R
+  BO  trades  131 | win  38.9% | PF  0.63 | net   -1046.35 | avg -0.18R
+  AB  trades    1 | win   0.0% | PF  0.00 | net     -38.05 | avg -0.92R
+  ALL trades  483 | win  45.1% | PF  0.88 | net   -1228.67 | avg -0.05R
+  buys  trades  285 | win  47.7% | PF  0.94 | net    -327.93 | avg -0.02R
+  sells trades  198 | win  41.4% | PF  0.79 | net    -900.74 | avg -0.10R
+  runners: 51 reached target | exit avg 2.00R vs target avg 2.00R | best 3.38R | below target 31
+
+max equity drawdown 26.6% | peak-drawdown halts 8 | daily-loss halts 0 | end balance 8771.33
+signals AB: 1291 found, 1 traded
+signals BO: 5699 found, 131 traded
+signals GT: 301 found, 0 traded
+signals PB: 6162 found, 351 traded
+  skipped  4682x  PB: outside session
+  skipped  4408x  BO: outside session
+  skipped   942x  AB: outside session
+  skipped   572x  PB: spread too wide
+  skipped   452x  BO: spread too wide
+  skipped   237x  GT: outside session
+  skipped   233x  BO: against daily trend
+  skipped   226x  PB: against daily trend
+  skipped   187x  BO: max open positions
+  skipped   154x  PB: max open positions
+  skipped   145x  BO: stop too wide
+  skipped   121x  AB: spread too wide
+  skipped    80x  AB: opposite position open
+  skipped    75x  AB: reward/risk too low
+  skipped    67x  BO: cooldown
+  skipped    48x  PB: cooldown
+  skipped    42x  BO: volatility too high
+  skipped    42x  AB: against daily trend
+  skipped    37x  PB: same bar as harmonic entry
+  skipped    33x  PB: daily trend warming up
+  skipped    25x  BO: daily trend warming up
+  skipped    24x  AB: max open positions
+  skipped    23x  GT: spread too wide
+  skipped    18x  PB: volatility too high
+  skipped    16x  PB: stop too wide
+  skipped    14x  PB: halt: peak drawdown
+  skipped    13x  GT: opposite position open
+  skipped    11x  GT: max open positions
+  skipped    10x  PB: opposite position open
+  skipped     9x  GT: reward/risk too low
+  skipped     7x  BO: halt: peak drawdown
+  skipped     6x  GT: against daily trend
+  skipped     5x  AB: daily trend warming up
+  skipped     2x  BO: opposite position open
+  skipped     1x  GT: daily trend warming up
+  skipped     1x  AB: halt: peak drawdown
+  skipped     1x  PB: volatility too low
+  skipped     1x  GT: halt: peak drawdown
+exits: stop 415, weekend flat 58, risk halt 10
+trade log: v3_2016_2022.csv

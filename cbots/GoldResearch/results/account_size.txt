@@ -1,0 +1,8 @@
+trend_A.csv end balance 11346.53
+london_C.csv end balance 14384.55
+2017 median D1 ATR20 $13  stop $32/oz  min account at 0.5% risk $6,349
+2020 median D1 ATR20 $29  stop $73/oz  min account at 0.5% risk $14,632
+2023 median D1 ATR20 $24  stop $60/oz  min account at 0.5% risk $11,921
+2025 median D1 ATR20 $52  stop $130/oz  min account at 0.5% risk $26,002
+2026 median D1 ATR20 $111  stop $277/oz  min account at 0.5% risk $55,482
+trend A holding days: median 15.0, max 81.7

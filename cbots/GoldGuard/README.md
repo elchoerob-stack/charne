@@ -9,7 +9,7 @@ M15 gold cBot for cTrader. It has four setups, each tagged and scored separately
 | `GT` | Gartley: B = 0.618 XA, D = 0.786 XA, entry on a rejection candle at D, stop beyond X | new: Autochartist-style pattern |
 | `AB` | AB=CD: CD = AB, entry on a rejection candle at D | new: Autochartist-style pattern |
 
-**Status: DEMO ONLY. cbot-gate FAIL (Nov 2026 backtest, see "Backtest" below).** Out-of-sample PF 1.18 across 221 trades: positive, but below the 1.30 bar and not yet distinguishable from luck.
+**Status: RETIRED. Do not run it, even on demo, expecting an edge.** cbot-gate FAIL (Nov 2026 backtest): out-of-sample PF 1.18 across 221 trades. Then, on 9 Nov 2026, the same refined settings were run on six earlier years of gold (Sep 2016 – Dec 2022) and lost money: **PF 0.88 over 483 trades, 26.6% drawdown, 8 kill-switch trips.** The 2023–2026 result came from gold's bull market, not from the setups. See "2016–2022 check" below and `../GoldResearch/README.md` for what replaced it.
 
 ## What changed from v2, and why
 
@@ -139,6 +139,19 @@ Full report: `backtest/results/gate_report_v3_refined.md`.
 ```
 | 2026-11-03 | GoldGuard XAUUSD m15 | v3 refined (12-16 UTC, D1 EMA100, runner) | FAIL | OOS PF 1.18 | 221 trades | WFE 1.28 | variants tested: 203 |
 ```
+
+### 2016–2022 check (added 9 Nov 2026): **PF 0.88**
+
+The refined defaults, unchanged, on Sep 2016 – Dec 2022 (the same C# backtester; bid/ask M1 data from the same source):
+
+| Period | Trades | Win | PF | Avg R |
+|---|---|---|---|---|
+| Sep 2016 – Dec 2019 | 150 | 39.3% | 0.71 | −0.15 |
+| Jan 2020 – Dec 2022 | 333 | 47.7% | 0.98 | −0.01 |
+| All | 483 | 45.1% | **0.88** | −0.05 |
+
+Breakouts PF 0.63, pullbacks 0.98, sells 0.79, buys 0.94. Max equity drawdown 26.6%, 8 peak-drawdown halts.
+The setups only made money in a strong uptrend. Output: `backtest/results/v3_2016_2022.txt`.
 
 ### Read this before trusting any of it
 

@@ -149,12 +149,20 @@ def sim_trade(d: Data, i0, entry, direction, stop, tp, j_end, mg: Mgmt = None, f
     return j_end, s * O[j_end], "time"
 
 
+# Instrument hooks. Defaults are gold; run_fx.py switches them for EURUSD.
+SWAP_FN = None      # f(year, direction) -> % of price per year charged on overnight holds
+
+
+def gold_swap_pct(year, direction):
+    ff = FF.get(year, 2.0)
+    return (ff + SWAP_MARKUP) if direction > 0 else max(0.0, SWAP_MARKUP - ff)
+
+
 def swap_cost(d: Data, i0, i1, direction, price):
     nights = int(d.sday[i1] - d.sday[i0])
     if nights <= 0:
         return 0.0
-    ff = FF.get(int(d.year[i0]), 2.0)
-    rate = (ff + SWAP_MARKUP) if direction > 0 else max(0.0, SWAP_MARKUP - ff)
+    rate = (SWAP_FN or gold_swap_pct)(int(d.year[i0]), direction)
     return nights * price * rate / 100 / 360
 
 

@@ -1,5 +1,6 @@
 """Candidate strategy families. Each returns a list of signal dicts for core.run()."""
 import numpy as np
+import pandas as pd
 from core import Bars, Mgmt, atr, ema, sma, rsi, rollmax_prev, rollmin_prev
 
 
@@ -22,6 +23,13 @@ class Ctx:
         self.h4_atr14 = atr(self.H4, 14)
         self.h4_rsi2 = rsi(self.H4.c, 2)
         self.h4_sma5 = sma(self.H4.c, 5)
+        self._m15 = None
+
+    @property
+    def M15(self):
+        if self._m15 is None:
+            self._m15 = Bars(self.d, 15)
+        return self._m15
 
     def at(self, k, minute):
         """First M1 index of server day k at or after server minute-of-day `minute`."""
@@ -307,4 +315,46 @@ def donchian_h1(cx, n=24, k_trail=2.0, k_stop=2.0, trend="ema100", max_bars=48):
             out.append(dict(i0=i0, entry=entry, dir=s, stop=entry - s * k_stop * a, tp=None,
                             j_end=min(H.first[min(k + 1 + max_bars, H.n - 1)], cut),
                             mg=Mgmt(trail_start_r=0.0, trail_k=k_trail * a), fill_bar_checked=False, tag="H1"))
+    return out
+
+
+# ------------------------------------------------------------------ forex additions (run_fx.py)
+def range_breakout_fx(cx, r_to=480, trend="ema100", exit="spec", min_w=0.001, max_w=0.006, stop_cap=0.004):
+    """The gold London breakout, re-scaled for a currency pair: Asian range 03:00-r_to broker
+    clock, range filter 0.10-0.60% of price, stop capped at 0.40%. Flat 21:00."""
+    e = LB_EXITS[exit]
+    return _range_breakout(cx, 180, r_to, 1260, 1260, min_w, max_w, stop_cap, 0.0, e["tp_r"], e["be_r"], trend, "FB",
+                           trail_start_r=e.get("trail_start_r", 0.0), trail_r=e.get("trail_r", 0.0))
+
+
+def asian_fade(cx, band=2.0, n=20, w_from=60, w_to=480, x_at=540, k_stop=1.5):
+    """Asian-session mean reversion ("night scalper"): an M15 close beyond the n-bar Bollinger
+    band (band std) between w_from and w_to broker clock is faded at the next open. Target = the
+    band's middle at the signal, stop = k_stop x ATR(M15, 14), closed at x_at."""
+    d, M, D, out = cx.d, cx.M15, cx.D, []
+    mid = sma(M.c, n)
+    sd = pd.Series(M.c).rolling(n).std(ddof=0).to_numpy()
+    a = atr(M, 14)
+    for b in range(n + 14, M.n - 1):
+        m0 = d.smod[M.first[b]]
+        if not (w_from <= m0 < w_to) or d.sdow[M.first[b]] > 4:
+            continue
+        up, dn = mid[b] + band * sd[b], mid[b] - band * sd[b]
+        if M.c[b] > up:
+            s = -1
+        elif M.c[b] < dn:
+            s = 1
+        else:
+            continue
+        i0 = M.last[b] + 1
+        if i0 >= d.n or d.sday[i0] != d.sday[M.first[b]]:
+            continue
+        entry = d.ao[i0] if s > 0 else d.bo[i0]
+        tp = mid[b]
+        if (tp - entry) * s <= 0:
+            continue
+        kd = D.of[i0]
+        j = cx.at(kd, x_at)
+        out.append(dict(i0=i0, entry=entry, dir=s, stop=entry - s * k_stop * a[b], tp=tp, j_end=j,
+                        fill_bar_checked=False, tag="AF"))
     return out

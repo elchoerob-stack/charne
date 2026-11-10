@@ -1,4 +1,6 @@
-// GoldBandBreakoutBot v1.1  -  XAUUSD, hourly volatility bands, breakout rules.
+// GoldBandBreakoutBot v1.2  -  XAUUSD, hourly volatility bands, breakout rules.
+// v1.2: loss caps are in USD (gold's quote currency) so they mean the same on a ZAR, EUR or USD account;
+//       a restart keeps an open position and rebuilds this session's trade count and loss from history.
 // v1.1: runs in cTrader cloud (AccessRights.None, trade log printed instead of written to a file,
 //       calibrates on 60+ sessions if the cloud supplies less history). Trading rules unchanged.
 //
@@ -33,9 +35,9 @@ namespace cAlgo.Robots
         private const double LotSize = 0.01;                  // 0.01 lot = 1 oz of gold
         private const int MaxOpenPositions = 1;
         private const int MaxTradesPerSession = 4;
-        private const double MaxLossPerTradeAccount = 1800.0; // account currency (ZAR on the demo); skip wider set-ups
-        private const double MaxDailyLossAccount = 3000.0;    // no new entries this session after losing this much
-        private const double MinFreeMarginAccount = 500.0;    // no new orders below this free margin
+        private const double MaxLossPerTradeUsd = 100.0;      // skip set-ups whose stop would risk more than this (USD)
+        private const double MaxDailyLossUsd = 150.0;         // no new entries this session after losing this much (USD)
+        private const double MinFreeMarginAccount = 100.0;    // no new orders below this free margin (account currency)
         private const double MaxSpreadPrice = 1.00;           // $ per oz
         private const string BotLabel = "GBB1";
 
@@ -66,7 +68,7 @@ namespace cAlgo.Robots
         private double _anchor, _atr;
         private double[] _sigma = new double[BarsPerSession];
         private int _tradesThisSession;
-        private double _pnlThisSession;
+        private double _pnlUsdThisSession;
 
         private class Session
         {
@@ -90,7 +92,19 @@ namespace cAlgo.Robots
                 if (p.StopLoss == null)
                     ClosePosition(p);
 
-            Print("GoldBandBreakoutBot v1.1: {0} H1 bars loaded, {1} units per trade", _h1.Count, _volume);
+            // Rebuild the current session so a restart keeps open trades and cannot reset the limits.
+            _sessionStart = SessionStartOf(_h1.Count - 1);
+            _ready = Calibrate(_sessionStart);
+            DateTime sessionOpen = _h1.OpenTimes[_sessionStart];
+            foreach (var t in History.Where(t => t.Label == BotLabel && t.SymbolName == SymbolName && t.EntryTime >= sessionOpen))
+            {
+                _tradesThisSession++;
+                _pnlUsdThisSession += t.Pips * Symbol.PipSize * t.VolumeInUnits;
+            }
+            _tradesThisSession += Positions.FindAll(BotLabel, SymbolName).Length;
+
+            Print("GoldBandBreakoutBot v1.2: {0} H1 bars loaded, {1} units per trade, {2} trades / ${3:F2} so far this session",
+                  _h1.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
         }
 
         private void OnHourOpened(BarOpenedEventArgs args)
@@ -106,7 +120,7 @@ namespace cAlgo.Robots
                     ClosePosition(p);
                 _sessionStart = start;
                 _tradesThisSession = 0;
-                _pnlThisSession = 0;
+                _pnlUsdThisSession = 0;
                 _ready = Calibrate(start);
             }
             if (!_ready)
@@ -121,16 +135,16 @@ namespace cAlgo.Robots
                 return;
             if (Positions.FindAll(BotLabel, SymbolName).Length >= MaxOpenPositions)
                 return;
-            if (_tradesThisSession >= MaxTradesPerSession || _pnlThisSession <= -MaxDailyLossAccount)
+            if (_tradesThisSession >= MaxTradesPerSession || _pnlUsdThisSession <= -MaxDailyLossUsd)
                 return;
             if (Symbol.Spread > MaxSpreadPrice || Account.FreeMargin < MinFreeMarginAccount)
                 return;
 
             double d = BandZ * _sigma[k] * _atr;
-            double riskAccount = d / Symbol.PipSize * Symbol.PipValue * _volume;
-            if (d <= 0 || riskAccount > MaxLossPerTradeAccount)
+            double riskUsd = d * _volume;                     // 1 unit = 1 oz, so price distance x units = USD
+            if (d <= 0 || riskUsd > MaxLossPerTradeUsd)
             {
-                Print("Bar {0}: skipped, stop would risk {1:F0} (cap {2:F0})", k, riskAccount, MaxLossPerTradeAccount);
+                Print("Bar {0}: skipped, stop would risk ${1:F0} (cap ${2:F0})", k, riskUsd, MaxLossPerTradeUsd);
                 return;
             }
             double pips = Math.Round(d / Symbol.PipSize, 1);
@@ -171,7 +185,7 @@ namespace cAlgo.Robots
             if (args.Position.Label != BotLabel || args.Position.SymbolName != SymbolName)
                 return;
             var p = args.Position;
-            _pnlThisSession += p.NetProfit;
+            _pnlUsdThisSession += p.Pips * Symbol.PipSize * p.VolumeInUnits;   // price move x oz = USD
             var inv = CultureInfo.InvariantCulture;
             // One CSV line per closed trade in the log (cloud instances cannot write files).
             Print("TRADE,{0},{1},{2},{3},{4},{5}", Server.Time.ToString("yyyy-MM-dd HH:mm:ss", inv), p.TradeType,

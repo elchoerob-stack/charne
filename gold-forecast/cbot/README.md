@@ -58,12 +58,13 @@ Validation log rows:
 | `LotSize` | 0.01 | 1 oz: $1 per $1 move |
 | `MaxOpenPositions` | 1 | as backtested |
 | `MaxTradesPerSession` | 4 | the backtest averaged 1.1 per day |
-| `MaxLossPerTradeAccount` | 1,800 (ZAR) | skips set-ups whose stop would risk more (very high volatility) |
-| `MaxDailyLossAccount` | 3,000 (ZAR) | no new entries that session after this |
-| `MinFreeMarginAccount` | 500 (ZAR) | no orders on an empty account |
+| `MaxLossPerTradeUsd` | 100 (USD) | skips set-ups whose stop would risk more (very high volatility) |
+| `MaxDailyLossUsd` | 150 (USD) | no new entries that session after this realised loss |
+| `MinFreeMarginAccount` | 100 (account currency) | no orders on an empty account |
 
-Amounts are in the account currency (ZAR on the cTrader demo). Change them only by editing
-the code, never as instance settings.
+Loss caps are in USD (gold's quote currency), so they mean the same on a ZAR, EUR or USD account
+(v1.2; v1.1 had them in account currency and the EUR demo made them ~18x looser than intended).
+Change them only by editing the code, never as instance settings.
 
 ## Steps
 
@@ -71,7 +72,7 @@ the code, never as instance settings.
    open 0.01 lot. Top it up or open a new demo with about R20,000 (close to the $1,000 the
    gate used).
 1. **Install.** On any cTrader app (Mobile too): Algo > cBots > Upload, pick
-   `dist/GoldBandBreakoutBot.algo`. v1.1 runs in the cloud (AccessRights.None; cloud refuses
+   `dist/GoldBandBreakoutBot.algo`. v1.2 runs in the cloud (AccessRights.None; cloud refuses
    Full access). Add an instance on XAUUSD, 1h; the defaults are the tested settings.
    Cloud limits on demo accounts: **1 running cloud instance per demo account** and a
    **7-day maximum** before it stops and must be restarted. Run it on its own demo account if

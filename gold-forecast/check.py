@@ -214,10 +214,16 @@ def main(day=None, base=None):
         ptr, _ = paper.run(F, m5)
         (base / "backtest").mkdir(exist_ok=True)
         ptr.to_csv(base / "backtest" / f"paper_{day}.csv", index=False)
-        print(f"\nBot paper test (GoldBandBreakoutBot v1, 0.01 lot, $0.50 cost): {len(ptr)} trades, "
-              f"net {ptr.net.sum() if len(ptr) else 0:+.2f} $" + ("" if complete else " so far"))
+        print(f"\nBot paper test (GoldBandBreakoutBot v1, 0.01 lot, $0.50 cost): {len(ptr)} closed trades, "
+              f"closed net {ptr.net.sum() if len(ptr) else 0:+.2f} $" + ("" if complete else " so far"))
         for t in ptr.itertuples():
             print(f"  {hm(t.entry_time)} {t.side:4s} {t.entry:.2f} -> {t.exit_reason} {hm(t.exit_time)} {t.exit:.2f}  {t.net:+.2f} $")
+        op = ptr.attrs.get("open")
+        if op is not None:
+            last_px = float(m5.close.iloc[-1])
+            float_pnl = (last_px - op["entry"]) * op["side"] * paper.B.OZ_PER_001_LOT
+            print(f"  OPEN {hm(op['t_in'])} {'Buy' if op['side'] == 1 else 'Sell':4s} {op['entry']:.2f}  TP {op['tp']:.2f}  SL {op['sl']:.2f}  "
+                  f"floating {float_pnl:+.2f} $ (last {last_px:.2f})")
     except Exception as e:                      # the paper test must never block the scorecard
         print(f"Bot paper test skipped: {e}")
     pre = [x for x in rows if 0 < x["end_sast"].hour <= 15]

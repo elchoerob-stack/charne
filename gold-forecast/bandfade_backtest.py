@@ -56,6 +56,7 @@ def day_plans(cutoff="2026-11-09T22:00:00Z", m5_start=None):
 
 def simulate(plans, m5, centre="analog", z=0.674, skip_data_hour=False, mode="fade"):
     trades = []
+    open_pos = None
     m5 = m5.set_index("time_utc")
     for p in plans:
         a, atr = p["anchor"], p["atr"]
@@ -105,7 +106,11 @@ def simulate(plans, m5, centre="analog", z=0.674, skip_data_hour=False, mode="fa
             last_bar = m5.loc[p["bars"][-1]:p["bars"][-1] + pd.Timedelta(minutes=55)]
             if not last_bar.empty:
                 trades.append(_close(pos, last_bar.close.iloc[-1], last_bar.index[-1], "EOD"))
-    return pd.DataFrame(trades)
+            else:
+                open_pos = pos                      # session still running: report, do not close
+    out = pd.DataFrame(trades)
+    out.attrs["open"] = open_pos
+    return out
 
 
 def _close(pos, px, ts, why):

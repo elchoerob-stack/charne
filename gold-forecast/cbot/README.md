@@ -1,13 +1,22 @@
-# GoldBandBreakoutBot v2.0 - guide
+# GoldBandBreakoutBot v2.1 - guide
 
 An XAUUSD cBot for cTrader built from the gold-forecast bands.
 
-**Status (10 Nov 2026): FAILED the unseen-period test. Demo forward-test only; do not go live.**
+**Status (10 Nov 2026): FAILED the unseen-period test; running on a LIVE cTrader account is the owner's decision.**
 On 5-minute bars from May 2025 to Jan 2026 (never used to design the rules) the locked rules made
-223 trades with Profit Factor **0.99** (net -$26.87). The earlier PASS on 2026 data does not hold up.
-Pooled over both periods (458 trades) the Profit Factor is 1.09 with a 23% chance the edge is luck.
-Running it on demo is still useful as a live forward test, but expect roughly break-even.
+223 trades with Profit Factor **0.99** (net -$26.87). Pooled over both periods (458 trades) the Profit Factor is 1.09
+with a 23% chance the edge is luck. Expect roughly break-even before costs.
 
+### Live settings (v2.1)
+| Setting | Live | Demo |
+|---|---|---|
+| Lot size | exactly 0.01 (code constant; never rounded up; the bot stops itself if the broker cannot trade 0.01) | same |
+| 10% equity guard | **off** (owner's decision) | on |
+| $100 per-trade cap, $150 per session, 4 trades per session, 1 position, $1 spread cap | on | on |
+| Cloud | up to 10 instances, runs 24/7 | 1 instance, stops after 7 days |
+
+With the guard off, a small live account is exposed to the pressure-test result: R200-R1,000 accounts were wiped out in
+83-98% of 60-trade runs; about R10,000 is the smallest account that never failed in the history.
 
 ## v2.0: the planning engine inside the bot
 
@@ -66,6 +75,7 @@ Validation log rows:
 | 2026-11-09 | GoldBandBreakout prior-close/80%/skip US | v1 | PASS (5m bars, 2026) | OOS PF 1.44 | 111 trades | WFE 6.2 | variants tested: 16 |
 | 2026-11-10 | GoldBandBreakout prior-close/80%/skip US, unseen May 2025-Jan 2026 | v1 | **FAIL** | OOS PF 0.99 | 223 trades | WFE -0.05 | variants tested: 16 + 2 looks |
 | 2026-11-10 | GoldBandFade same settings, unseen | v1 | FAIL | PF 0.92 | 213 trades | - | looks: 2 |
+| 2026-11-10 | GoldBandBreakout v2.1 | v2.1 | LIVE by owner's decision despite FAIL | - | - | - | guard off on live; lot fixed 0.01 |
 ```
 
 ## Rules (identical in the backtest and the cBot)
@@ -100,7 +110,7 @@ Change them only by editing the code, never as instance settings.
    open 0.01 lot. Top it up or open a new demo with about R20,000 (close to the $1,000 the
    gate used).
 1. **Install.** On any cTrader app (Mobile too): Algo > cBots > Upload, pick
-   `dist/GoldBandBreakoutBot.algo`. v2.0 runs in the cloud (AccessRights.None; cloud refuses
+   `dist/GoldBandBreakoutBot.algo`. v2.1 runs in the cloud (AccessRights.None; cloud refuses
    Full access). Add an instance on XAUUSD, 1h; the defaults are the tested settings.
    Cloud limits on demo accounts: **1 running cloud instance per demo account** and a
    **7-day maximum** before it stops and must be restarted. Run it on its own demo account if

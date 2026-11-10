@@ -1,5 +1,9 @@
-// GoldBandBreakoutBot v2.0  -  XAUUSD planning engine + breakout rules.  DEMO ONLY.
+// GoldBandBreakoutBot v2.1  -  XAUUSD planning engine + breakout rules.
 //
+// v2.1: live-ready. Lot size stays a code constant (exactly 0.01): the volume is never rounded up and the bot stops
+//       itself if the broker cannot trade exactly 0.01 lot. The 10%-of-equity guard is OFF on live accounts (decision
+//       10 Nov 2026, against the pressure test: R200-R1,000 accounts were wiped in 83-98% of 60-trade runs) and stays on
+//       for demo. The startup log states LIVE/DEMO, account, balance and the rules' validation status.
 // v2.0: the bot builds its own daily plan with PlanEngine (engine/PlanEngine.cs) - the gold-forecast model ported to
 //       C# and verified number-for-number against the Python on 20 past closes (parity_check.py). At every session
 //       close it prints the plan (bands, projected range, key levels with touch odds, bull/bear scenarios) and scores
@@ -9,7 +13,7 @@
 // v1.2: USD loss caps; a restart keeps open trades.   v1.1: runs in cTrader cloud (AccessRights.None).
 //
 // Status: the breakout rules FAILED the unseen-period test (May 2025 - Jan 2026, 223 trades, PF 0.99). The plan is a
-// map of ranges and levels, not a direction signal (direction hit rate ~50%). Use on demo as a forward test.
+// map of ranges and levels, not a direction signal (direction hit rate ~50%). Running it live was the owner's decision.
 //
 // Trading rule, each hour k (not the first, not the last, not the US-data bar), while flat:
 //   d = BandZ * sigma[k] * ATR;  BUY STOP at anchor + d, SELL STOP at anchor - d, SL = TP = d (1:1);
@@ -37,6 +41,7 @@ namespace cAlgo.Robots
         private const double MaxDailyLossUsd = 150.0;           // no new entries this session after losing this much (USD)
         private const double MinFreeMarginAccount = 100.0;      // no new orders below this free margin (account currency)
         private const double MaxStopRiskPercentOfEquity = 10.0; // skip set-ups whose stop risks more than this share of equity
+        private const bool EquityGuardOnLive = false;           // owner's decision 10 Nov 2026: live always trades 0.01 lot if margin allows
         private const double MaxSpreadPrice = 1.00;             // $ per oz
         private const string BotLabel = "GBB1";
 
@@ -84,7 +89,23 @@ namespace cAlgo.Robots
             if (_h1.OpenTimes[0] > HistoryStartUtc)
                 Print("Note: H1 history starts {0:yyyy-MM-dd}; the research pool starts 2024-10-10, so plans can differ slightly from the workbook",
                       _h1.OpenTimes[0]);
-            _volume = Symbol.NormalizeVolumeInUnits(Symbol.QuantityToVolumeInUnits(LotSize));
+            // Exactly 0.01 lot or nothing: never round the volume up to a broker minimum.
+            double wanted = Symbol.QuantityToVolumeInUnits(LotSize);
+            _volume = Symbol.NormalizeVolumeInUnits(wanted, RoundingMode.Down);
+            if (_volume < Symbol.VolumeInUnitsMin || Math.Abs(_volume - wanted) > 1e-9)
+            {
+                Print("STOPPED: this broker cannot trade exactly {0} lot of {1} (wanted {2} units; min {3}, step {4}). Refusing to trade a different size.",
+                      LotSize, SymbolName, wanted, Symbol.VolumeInUnitsMin, Symbol.VolumeInUnitsStep);
+                Stop();
+                return;
+            }
+            bool live = Account.IsLive;
+            Print("{0} account {1} | balance {2:F2} {3} | fixed {4} lot = {5} units (1 lot = {6} oz) | 10% equity guard {7}",
+                  live ? "LIVE" : "DEMO", Account.Number, Account.Balance, Account.Asset.Name, LotSize, _volume, Symbol.LotSize,
+                  live && !EquityGuardOnLive ? "OFF (live)" : "ON");
+            if (live)
+                Print("LIVE NOTE: these rules failed the unseen-period test (May 2025 - Jan 2026, 223 trades, PF 0.99) - expect roughly " +
+                      "break-even before costs. One stop is about $17-$75 per 0.01 lot; caps: $100 per trade, $150 per session, 4 trades per session.");
 
             _h1.BarOpened += OnHourOpened;
             Positions.Opened += OnPositionOpened;
@@ -105,7 +126,7 @@ namespace cAlgo.Robots
                 _pnlUsdThisSession += t.Pips * Symbol.PipSize * t.VolumeInUnits;
             }
             _tradesThisSession += Positions.FindAll(BotLabel, SymbolName).Length;
-            Print("GoldBandBreakoutBot v2.0: {0} H1 / {1} H4 bars, {2} units per trade, {3} trades / ${4:F2} so far this session",
+            Print("GoldBandBreakoutBot v2.1: {0} H1 / {1} H4 bars, {2} units per trade, {3} trades / ${4:F2} so far this session",
                   _h1.Count, _h4.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
         }
 
@@ -258,7 +279,7 @@ namespace cAlgo.Robots
                 return;
             }
             double riskAccount = d / Symbol.PipSize * Symbol.PipValue * _volume;   // same loss, in account currency
-            if (riskAccount > Account.Equity * MaxStopRiskPercentOfEquity / 100.0)
+            if ((!Account.IsLive || EquityGuardOnLive) && riskAccount > Account.Equity * MaxStopRiskPercentOfEquity / 100.0)
             {
                 Print("Bar {0}: skipped, stop would risk {1:F2} = {2:F1}% of equity (cap {3:F0}%)",
                       k, riskAccount, 100.0 * riskAccount / Math.Max(Account.Equity, 0.01), MaxStopRiskPercentOfEquity);

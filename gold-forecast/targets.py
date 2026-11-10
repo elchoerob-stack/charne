@@ -25,6 +25,7 @@ HERE = Path(__file__).parent
 TRAIL = 250                                   # sessions behind each probability
 GRID = [0.1, 0.2, 0.3, 0.5, 0.75, 1.0, 1.25, 1.5]
 MODEL_VERSION = "analog-v1.0"
+SCENARIO_VERSION = "levels-v2"
 
 
 def sha(path):
@@ -113,56 +114,55 @@ def build_targets(R, forecast_json):
     rng = (th - tl) * atr
     q = {k: float(np.quantile(rng, v)) for k, v in (("q10", .1), ("q25", .25), ("q50", .5), ("q75", .75), ("q90", .9))}
 
-    # --- scenario plan (from the resistance / support clusters around the anchor)
-    bear_fvg = [g for g in R["tfs"]["H_4"]["gaps"] if g["side"] == "Bearish" and g["state"] != "filled"
-                and anc < g["top"] < anc + 0.5 * atr]
-    bull_fvg = [g for g in R["tfs"]["H_1"]["gaps"] if g["side"] == "Bullish" and g["state"] != "filled"
-                and anc - 0.5 * atr < g["top"] < anc]
-    res_top = round(max([g["top"] for g in bear_fvg] + [level_by(R, "PDH")]), 2)
-    near = max(bull_fvg, key=lambda g: g["top"]) if bull_fvg else None       # nearest support gap below
-    sup_top = round(min(([near["top"]] if near else []) + [level_by(R, "Asia session high")]), 2)
-    sup_mid = round((near["top"] + near["bottom"]) / 2, 2) if near else round(sup_top - 10, 2)
-    d = R["day"]
-    P = (d["pdh"] + d["pdl"] + d["pdc"]) / 3
-    r1 = round(2 * P - d["pdl"], 2)
-    swings_above = sorted(x["price"] for x in R["levels"] if x["level"].startswith("4h swing high") and x["price"] > res_top)
-    swings_below = sorted((x["price"] for x in R["levels"] if x["level"].startswith("1h swing low") and x["price"] < sup_mid),
-                          reverse=True)
+    # --- scenario plan v2 (generic, 10 Nov 2026): built from the level ladder on each side of the prior close.
+    # Trigger = first key level at least 0.20 ATR from the close; targets = the next three levels, each at least
+    # 0.15 ATR beyond the previous (filled at 0.25 ATR steps if the ladder runs out); invalidation = a 1h close back
+    # through the prior close. Works for any chart shape (the v1 rules were written around Monday 9 Nov's structure).
+    from build_workbook import short_label
+    lv = sorted(merged_levels(R), key=lambda x: x["price"])
+    above = [L for L in lv if L["price"] > anc]
+    below = [L for L in lv if L["price"] < anc][::-1]
+    MIN_TRIG, MIN_GAP = 0.20 * atr, 0.15 * atr
 
-    if len(swings_above) < 2:
-        swings_above += [res_top + 0.5 * atr, res_top + 0.75 * atr][len(swings_above):]
-    if not swings_below:
-        swings_below = [sup_mid - 0.25 * atr]
+    def ladder(side, sign):
+        trig = next((L for L in side if abs(L["price"] - anc) >= MIN_TRIG), None)
+        tp = trig["price"] if trig else anc + sign * 0.25 * atr
+        tname = short_label(" / ".join(trig["names"])) if trig else "0.25 ATR from the close"
+        out, last = [], tp
+        for L in side:
+            if len(out) < 3 and sign * (L["price"] - last) >= MIN_GAP:
+                out.append((short_label(" / ".join(L["names"])), L["price"]))
+                last = L["price"]
+        while len(out) < 3:
+            last = last + sign * 0.25 * atr
+            out.append((f"{abs(last - anc) / atr:.2f} ATR from the close", last))
+        return round(float(tp), 2), tname, out
+
+    up_tp, up_name, up_tg = ladder(above, +1)
+    dn_tp, dn_name, dn_tg = ladder(below, -1)
     w = {"M_1": .5, "M_5": 1, "M_15": 1.5, "M_30": 2, "H_1": 2.5, "H_4": 3}
     score = sum(w[p] * mtf_score(R["tfs"][p]) for p in w) / sum(w.values())
-    pwh, D1 = level_by(R, "PWH"), R["d1"].iloc[-1]
-    swept = d["pdh"] > pwh and d["pdc"] < pwh
-    bear_why = ((f"The prior session swept PWH {pwh:.2f} by ${d['pdh'] - pwh:.2f} and closed back below it" if swept
-                 else f"Price is pressing into the resistance cluster up to {res_top:.2f}")
-                + (f", under the daily EMA50 (~{D1.ema_mid:,.0f}) with the daily trend down" if D1.ema_fast < D1.ema_mid < D1.ema_slow
-                   else "") + f". Losing {sup_top:.2f} would confirm the move failed.")
-    bull_why = (f"Weighted intraday trend score {score:+.1f} (1m-4h). Acceptance above {res_top:.2f} (top of the resistance "
-                "cluster) would mean the push is continuation rather than a liquidity grab.")
+    D1 = R["d1"].iloc[-1]
+    trend = ("down" if D1.ema_fast < D1.ema_mid < D1.ema_slow else "up" if D1.ema_fast > D1.ema_mid > D1.ema_slow else "mixed")
+    ctx = f"Intraday trend score {score:+.1f} (1m-4h), daily EMA stack {trend}."
 
     def tgt(name, px):
         return dict(name=name, price=round(float(px), 2), p_touch=round(p_touch((px - anc) / atr, th, tl), 3))
 
     scenarios = [
-        dict(key="bull", name="Bull - break and hold above the resistance cluster",
-             why=bull_why,
-             trigger=dict(rule="1h candle CLOSES above", price=float(res_top)),
-             targets=[tgt("T1 daily pivot R1", r1), tgt("T2 4h swing high", swings_above[0]),
-                      tgt("T3 4h swing high / 4,200", swings_above[1] if len(swings_above) > 1 else 4200)],
-             invalidation=dict(rule="after trigger, 1h close back below PWH", price=round(float(level_by(R, "PWH")), 2))),
-        dict(key="bear", name="Bear - the push fails, price rotates back down",
-             why=bear_why,
-             trigger=dict(rule="1h candle CLOSES below", price=float(sup_top)),
-             targets=[tgt("T1 1h bullish FVG midpoint", sup_mid), tgt("T2 daily pivot P", P),
-                      tgt("T3 NY low / 1h swing low", swings_below[0] if swings_below else 4100)],
-             invalidation=dict(rule="after trigger, 1h close back above PDH", price=round(float(d["pdh"]), 2))),
+        dict(key="bull", name=f"Bull - reclaim and hold above {up_name}",
+             why=f"A 1h close above {up_tp:.2f} ({up_name}) puts price back above the nearest resistance. {ctx}",
+             trigger=dict(rule="1h candle CLOSES above", price=up_tp),
+             targets=[tgt(f"T{i+1} {n}", p) for i, (n, p) in enumerate(up_tg)],
+             invalidation=dict(rule="after trigger, 1h close back below the prior close", price=round(anc, 2))),
+        dict(key="bear", name=f"Bear - break and hold below {dn_name}",
+             why=f"A 1h close below {dn_tp:.2f} ({dn_name}) extends the move through the nearest support. {ctx}",
+             trigger=dict(rule="1h candle CLOSES below", price=dn_tp),
+             targets=[tgt(f"T{i+1} {n}", p) for i, (n, p) in enumerate(dn_tg)],
+             invalidation=dict(rule="after trigger, 1h close back above the prior close", price=round(anc, 2))),
     ]
     neutral = dict(name="Neutral - no trigger by the London close (17:00 SAST)",
-                   rule=f"Price rotates between {sup_top:.2f} and {res_top:.2f}; the 15:30 US data window is the usual catalyst.")
+                   rule=f"Price rotates between {dn_tp:.2f} and {up_tp:.2f}; the 15:30 US data window is the usual catalyst.")
 
     # --- pass/fail tests with historical pass rates on the same backtest days
     F = json.loads(Path(forecast_json).read_text())
@@ -194,7 +194,7 @@ def build_targets(R, forecast_json):
     ]
     for i, t in enumerate(tests, 1):
         t["hist_pass"] = round(float(bt[f"t{i}"].mean()), 3)
-    out = dict(model_version=MODEL_VERSION, created_utc=str(pd.Timestamp.now(tz="UTC").floor("s")),
+    out = dict(model_version=MODEL_VERSION, scenario_version=SCENARIO_VERSION, created_utc=str(pd.Timestamp.now(tz="UTC").floor("s")),
                cutoff_utc=str(R["cutoff"]), anchor=anc, atr=atr, trail_sessions=TRAIL,
                levels=levels, range_quantiles=q, scenarios=scenarios, neutral=neutral, tests=tests,
                overall_rule="Par is 5 of 8 (the 200-day average). 6+ = better than a typical day, 5 = par, 4 or fewer = below par",

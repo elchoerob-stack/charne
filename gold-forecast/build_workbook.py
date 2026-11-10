@@ -40,7 +40,11 @@ DATA_SHEET = {"M_1": "Data 1m", "M_5": "Data 5m", "M_15": "Data 15m", "M_30": "D
 CPI_SAST_HOUR = 15   # US data window: 08:30 ET = 13:30 UTC = 15:30 SAST (winter)
 # High-impact scheduled events by forecast day (bar = 0-based hourly bar of the session, 14 = 15:00-16:00 SAST)
 EVENTS = {"2026-11-10": dict(name="US CPI (Oct)", short="US CPI 15:30", bar=14)}
+# Non-timed context for a day (holidays, thin markets)
+DAY_NOTES = {"2026-11-11": dict(short="US holiday", text="US Veterans Day: bond market shut, stocks open, no scheduled US data "
+                                "(next: PPI Fri 13 Nov). Expect a thinner New York session.")}
 EVENT = None
+DAY_NOTE = None
 
 
 def q(name):
@@ -831,8 +835,8 @@ def dashboard_sheet(wb, R, T, TR, MR, first, last, chart_y):
          tile(ws, 7, 6, "PATTERN (20 ANALOGS)", f'=TEXT({TL}$B$9,"0%")&" up"', "centre line = coin flip (Backtest)"),
          tile(ws, 9, 6, "PROJECTED RANGE", f'=TEXT({TL}$B$11,"#,##0")&" - "&TEXT({TL}$B$10,"#,##0")',
               f'="close near "&TEXT({TL}$B$12,"#,##0")'),
-         tile(ws, 11, 6, "EVENT RISK", EVENT["short"] if EVENT else "None flagged",
-              "bands after 15:30 likely too narrow" if EVENT else "check the calendar before trading")]
+         tile(ws, 11, 6, "EVENT RISK", EVENT["short"] if EVENT else (DAY_NOTE["short"] if DAY_NOTE else "None flagged"),
+              "bands after 15:30 likely too narrow" if EVENT else ("bonds shut, no US data" if DAY_NOTE else "check the calendar before trading"))]
     for ref in v[1:3]:
         ws.conditional_formatting.add(ref, CellIsRule(operator="equal", formula=['"Bullish"'], fill=GREEN))
         ws.conditional_formatting.add(ref, CellIsRule(operator="equal", formula=['"Bearish"'], fill=RED))
@@ -1000,7 +1004,8 @@ def guide_sheet(wb, R, T, bt_summary, mtf_lines):
     r += 1
     put(ws, f"A{r}", "Honest caveats", F_SEC); r += 1
     for t in bt_summary + [(f"{EVENT['name']} prints at 15:30 SAST Tuesday; the model ignores scheduled news, so post-15:30 bands are "
-                            "probably too narrow." if EVENT else "No high-impact event flagged for this day - check the calendar."),
+                            "probably too narrow." if EVENT else (DAY_NOTE["text"] if DAY_NOTE else
+                                                                   "No high-impact event flagged for this day - check the calendar.")),
                            "Not financial advice and not a trade signal. Demo-feed prices can differ slightly from your live CFI / MT5 feed."]:
         put(ws, f"B{r}", t); r += 1
     for row in ws.iter_rows(min_row=5, max_row=r, min_col=2, max_col=2):
@@ -1066,8 +1071,9 @@ def build(cutoff, out):
     bar_end_sast = [(b + pd.Timedelta(hours=1)).tz_convert(None).to_pydatetime() + A.SAST for b in bars_utc]
     day = (bars_utc[0] + pd.Timedelta(hours=1)).tz_convert(None) + A.SAST
     outdir = Path(out).parent
-    global EVENT
+    global EVENT, DAY_NOTE
     EVENT = EVENTS.get(f"{day:%Y-%m-%d}")
+    DAY_NOTE = DAY_NOTES.get(f"{day:%Y-%m-%d}")
     prev_day = sess.end[li].tz_convert(None) + A.SAST            # last bar of the anchor session, in SAST
 
     bt = R["bt"]
@@ -1142,7 +1148,7 @@ def build(cutoff, out):
     backtest_sheet(wb, R)
     backtest_calibration(wb, T)
     cpi = (f"{EVENT['name']} at 15:30 SAST: expect a volatility spike the bands do not model." if EVENT
-           else "No high-impact event flagged - check the calendar before trading.")
+           else (DAY_NOTE["text"] if DAY_NOTE else "No high-impact event flagged - check the calendar before trading."))
     first, last = timeline_sheet(wb, R, AN, bars_utc, cpi)
     log_row = scorecard_sheet(wb, first, last)
     MR = mtf_sheet(wb, R)

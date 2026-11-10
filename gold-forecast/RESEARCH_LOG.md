@@ -35,3 +35,21 @@ R200 ($12.08 at USDZAR 16.56) at 1:10,000, 1:1,000, 1:500: stopped out on today'
 17-20 minutes before the bot's own stop). In history 96-98% of 60-trade windows wiped it, median at the first trade. 1:200 cannot open a
 position (margin R343 > R200). R10,000+ survived every window. Caveat: adverse move uses 5-minute highs/lows, so it is conservative for
 larger accounts; the R200 conclusion does not depend on it (the smallest stop, $17, already exceeds the account).
+
+## The day after a big move, and a band challenger (10 Nov 2026, `challenger.py`, data before Tuesday)
+| After ... | n | next day up | mean move | mean range | range > 1.5 ATR |
+|---|---|---|---|---|---|
+| a big DOWN day (< -1 ATR) | 29 | 69% +-17% | +0.16 ATR | 1.20 ATR | 28% |
+| a big UP day (> +1 ATR) | 42 | 57% +-15% | +0.09 ATR | 1.33 ATR | 26% |
+| a normal day | 439 | 55% +-5% | +0.07 ATR | 0.98 ATR | 9% |
+Volatility clusters (big days are followed by wider days); direction after a big down day leans up but is not significant.
+Challenger v2 (bands x1.24 after a big day, k walk-forward): coverage after big days 80% -> 87%, but the 80% interval score got
+WORSE (1.94 -> 2.02; all days 1.704 -> 1.712). Rejected - v1 stays the champion. The trend-day failure is on the trend day itself,
+not predictable from the day before. Looks: +1 (model).
+
+## Pipeline fixes (10 Nov 2026)
+- Reproducibility: fetch.py used a rolling 760-day window, so the oldest session dropped out and a rebuild of a frozen forecast
+  came out different. H1 and D1 history now have fixed start dates; Tuesday's forecast rebuilds byte-for-byte.
+- Scenario plan v2 (targets.py, scenario_version "levels-v2"): the v1 rules were written around Monday 9 Nov's chart and
+  would have produced nonsense triggers after a one-way day. v2: trigger = first key level >= 0.20 ATR from the close on each side,
+  targets = next three levels >= 0.15 ATR apart, invalidation = a 1h close back through the prior close. Tuesday's locked plan is unchanged.

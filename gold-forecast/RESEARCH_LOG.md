@@ -53,3 +53,8 @@ not predictable from the day before. Looks: +1 (model).
 - Scenario plan v2 (targets.py, scenario_version "levels-v2"): the v1 rules were written around Monday 9 Nov's chart and
   would have produced nonsense triggers after a one-way day. v2: trigger = first key level >= 0.20 ATR from the close on each side,
   targets = next three levels >= 0.15 ATR apart, invalidation = a 1h close back through the prior close. Tuesday's locked plan is unchanged.
+
+## Planning engine in C# (10 Nov 2026)
+`cbot/engine/PlanEngine.cs` ports analysis.py + targets.py. Parity: 20 closes (Dec 2025 - Nov 2026) identical, worst numeric
+difference 1.1e-16; one rounding subtlety fixed (Python rounds the exact binary value, e.g. 3976.915 -> 3976.91). Self-score
+identical to check.py on Tue 10 Nov. Bot v2.0 uses it for planning and trading inputs; no new trading rules (looks: +0).

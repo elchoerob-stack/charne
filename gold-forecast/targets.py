@@ -95,6 +95,38 @@ def level_by(R, prefix):
     return next(x["price"] for x in R["levels"] if x["level"].startswith(prefix))
 
 
+def scenario_plan(R, th, tl):
+    """Scenario plan v2 (levels-v2): trigger = first key level >= 0.20 ATR from the prior close on each side;
+    targets = the next three levels, each >= 0.15 ATR beyond the previous (0.25 ATR steps if the ladder runs out);
+    invalidation = a 1h close back through the prior close. Returns (bull, bear) dicts without the narrative text."""
+    from build_workbook import short_label
+    anc, atr = float(R["anchor"]), float(R["atr_now"])
+    lv = sorted(merged_levels(R), key=lambda x: x["price"])
+    above = [L for L in lv if L["price"] > anc]
+    below = [L for L in lv if L["price"] < anc][::-1]
+    MIN_TRIG, MIN_GAP = 0.20 * atr, 0.15 * atr
+
+    def tgt(name, px):
+        return dict(name=name, price=round(float(px), 2), p_touch=round(p_touch((px - anc) / atr, th, tl), 3))
+
+    def ladder(side, sign):
+        trig = next((L for L in side if abs(L["price"] - anc) >= MIN_TRIG), None)
+        tp = trig["price"] if trig else anc + sign * 0.25 * atr
+        tname = short_label(" / ".join(trig["names"])) if trig else "0.25 ATR from the close"
+        out, last = [], tp
+        for L in side:
+            if len(out) < 3 and sign * (L["price"] - last) >= MIN_GAP:
+                out.append((short_label(" / ".join(L["names"])), L["price"]))
+                last = L["price"]
+        while len(out) < 3:
+            last = last + sign * 0.25 * atr
+            out.append((f"{abs(last - anc) / atr:.2f} ATR from the close", last))
+        return dict(trigger=round(float(tp), 2), name=tname, targets=[tgt(f"T{i+1} {n}", p) for i, (n, p) in enumerate(out)],
+                    invalidation=round(anc, 2))
+
+    return ladder(above, +1), ladder(below, -1)
+
+
 def build_targets(R, forecast_json):
     h1, sess, li = R["h1"], R["sess"], R["last_i"]
     atr, anc = float(R["atr_now"]), float(R["anchor"])
@@ -114,52 +146,24 @@ def build_targets(R, forecast_json):
     rng = (th - tl) * atr
     q = {k: float(np.quantile(rng, v)) for k, v in (("q10", .1), ("q25", .25), ("q50", .5), ("q75", .75), ("q90", .9))}
 
-    # --- scenario plan v2 (generic, 10 Nov 2026): built from the level ladder on each side of the prior close.
-    # Trigger = first key level at least 0.20 ATR from the close; targets = the next three levels, each at least
-    # 0.15 ATR beyond the previous (filled at 0.25 ATR steps if the ladder runs out); invalidation = a 1h close back
-    # through the prior close. Works for any chart shape (the v1 rules were written around Monday 9 Nov's structure).
-    from build_workbook import short_label
-    lv = sorted(merged_levels(R), key=lambda x: x["price"])
-    above = [L for L in lv if L["price"] > anc]
-    below = [L for L in lv if L["price"] < anc][::-1]
-    MIN_TRIG, MIN_GAP = 0.20 * atr, 0.15 * atr
-
-    def ladder(side, sign):
-        trig = next((L for L in side if abs(L["price"] - anc) >= MIN_TRIG), None)
-        tp = trig["price"] if trig else anc + sign * 0.25 * atr
-        tname = short_label(" / ".join(trig["names"])) if trig else "0.25 ATR from the close"
-        out, last = [], tp
-        for L in side:
-            if len(out) < 3 and sign * (L["price"] - last) >= MIN_GAP:
-                out.append((short_label(" / ".join(L["names"])), L["price"]))
-                last = L["price"]
-        while len(out) < 3:
-            last = last + sign * 0.25 * atr
-            out.append((f"{abs(last - anc) / atr:.2f} ATR from the close", last))
-        return round(float(tp), 2), tname, out
-
-    up_tp, up_name, up_tg = ladder(above, +1)
-    dn_tp, dn_name, dn_tg = ladder(below, -1)
+    # --- scenario plan v2 (generic, 10 Nov 2026) - see scenario_plan()
+    bull, bear = scenario_plan(R, th, tl)
+    up_tp, up_name, dn_tp, dn_name = bull["trigger"], bull["name"], bear["trigger"], bear["name"]
     w = {"M_1": .5, "M_5": 1, "M_15": 1.5, "M_30": 2, "H_1": 2.5, "H_4": 3}
     score = sum(w[p] * mtf_score(R["tfs"][p]) for p in w) / sum(w.values())
     D1 = R["d1"].iloc[-1]
     trend = ("down" if D1.ema_fast < D1.ema_mid < D1.ema_slow else "up" if D1.ema_fast > D1.ema_mid > D1.ema_slow else "mixed")
     ctx = f"Intraday trend score {score:+.1f} (1m-4h), daily EMA stack {trend}."
 
-    def tgt(name, px):
-        return dict(name=name, price=round(float(px), 2), p_touch=round(p_touch((px - anc) / atr, th, tl), 3))
-
     scenarios = [
         dict(key="bull", name=f"Bull - reclaim and hold above {up_name}",
              why=f"A 1h close above {up_tp:.2f} ({up_name}) puts price back above the nearest resistance. {ctx}",
-             trigger=dict(rule="1h candle CLOSES above", price=up_tp),
-             targets=[tgt(f"T{i+1} {n}", p) for i, (n, p) in enumerate(up_tg)],
-             invalidation=dict(rule="after trigger, 1h close back below the prior close", price=round(anc, 2))),
+             trigger=dict(rule="1h candle CLOSES above", price=up_tp), targets=bull["targets"],
+             invalidation=dict(rule="after trigger, 1h close back below the prior close", price=bull["invalidation"])),
         dict(key="bear", name=f"Bear - break and hold below {dn_name}",
              why=f"A 1h close below {dn_tp:.2f} ({dn_name}) extends the move through the nearest support. {ctx}",
-             trigger=dict(rule="1h candle CLOSES below", price=dn_tp),
-             targets=[tgt(f"T{i+1} {n}", p) for i, (n, p) in enumerate(dn_tg)],
-             invalidation=dict(rule="after trigger, 1h close back above the prior close", price=round(anc, 2))),
+             trigger=dict(rule="1h candle CLOSES below", price=dn_tp), targets=bear["targets"],
+             invalidation=dict(rule="after trigger, 1h close back above the prior close", price=bear["invalidation"])),
     ]
     neutral = dict(name="Neutral - no trigger by the London close (17:00 SAST)",
                    rule=f"Price rotates between {dn_tp:.2f} and {up_tp:.2f}; the 15:30 US data window is the usual catalyst.")

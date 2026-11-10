@@ -1,4 +1,4 @@
-# GoldBandBreakoutBot v1.3 - guide
+# GoldBandBreakoutBot v2.0 - guide
 
 An XAUUSD cBot for cTrader built from the gold-forecast bands.
 
@@ -7,6 +7,27 @@ On 5-minute bars from May 2025 to Jan 2026 (never used to design the rules) the 
 223 trades with Profit Factor **0.99** (net -$26.87). The earlier PASS on 2026 data does not hold up.
 Pooled over both periods (458 trades) the Profit Factor is 1.09 with a 23% chance the edge is luck.
 Running it on demo is still useful as a live forward test, but expect roughly break-even.
+
+
+## v2.0: the planning engine inside the bot
+
+`engine/PlanEngine.cs` is the gold-forecast model in plain C#: sessions and ATR, the hourly volatility profile, the 20-day
+analog pattern forecast, the key-level ladder (day, week, session extremes, untaken swings, open FVGs, pivots, round
+numbers) with touch odds, the scenario plan (levels-v2) and the T1-T8 self-score. It is **verified against the Python**:
+`python3 parity_check.py` builds the plan in both languages for 20 past closes and requires identical analog days,
+levels, odds and scenarios (worst numeric difference 1e-16); the self-score matches check.py on Tuesday 10 Nov exactly.
+
+What the bot now does by itself, every session:
+- at the close (and straight away after a restart) it builds the next day's plan and prints it in the Journal:
+  `PLAN`, `RANGE`, `BULL`, `BEAR`, `LEVELS`, `EVENTS`, `BOT first orders`
+- when run locally it draws the triggers, targets, prior close and projected high/low on the chart (cloud instances have no chart)
+- at the next close it scores yesterday's plan (`SCORE`, `SCORE tests`) and keeps a running `RECORD`
+- it trades the same breakout rules as before, now fed by the engine's anchor/ATR/profile (identical to the research)
+
+What it does not do: read news (cloud blocks internet - CPI dates through Dec 2027 are built in, add others in
+"Other event dates"), re-tune itself (deliberately - adapting to its own results is how bots overfit), or find a new
+edge (that stays research, tested the pre-registered way). Its H1 history starts at 2024-10-10 like the research, so
+its plan matches the workbook; if the broker has less history it says so in the log.
 
 ## What the research showed
 
@@ -79,7 +100,7 @@ Change them only by editing the code, never as instance settings.
    open 0.01 lot. Top it up or open a new demo with about R20,000 (close to the $1,000 the
    gate used).
 1. **Install.** On any cTrader app (Mobile too): Algo > cBots > Upload, pick
-   `dist/GoldBandBreakoutBot.algo`. v1.3 runs in the cloud (AccessRights.None; cloud refuses
+   `dist/GoldBandBreakoutBot.algo`. v2.0 runs in the cloud (AccessRights.None; cloud refuses
    Full access). Add an instance on XAUUSD, 1h; the defaults are the tested settings.
    Cloud limits on demo accounts: **1 running cloud instance per demo account** and a
    **7-day maximum** before it stops and must be restarted. Run it on its own demo account if

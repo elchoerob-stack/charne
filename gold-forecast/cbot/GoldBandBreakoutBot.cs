@@ -1,25 +1,19 @@
-// GoldBandBreakoutBot v1.3  -  XAUUSD, hourly volatility bands, breakout rules.
-// v1.3: a set-up is skipped when its stop would risk more than 10% of the account's equity, so a tiny account
-//       (e.g. R200) can never be wiped by one stop. Leverage only lowers margin; it does not shrink the loss.
-// v1.2: loss caps are in USD (gold's quote currency) so they mean the same on a ZAR, EUR or USD account;
-//       a restart keeps an open position and rebuilds this session's trade count and loss from history.
-// v1.1: runs in cTrader cloud (AccessRights.None, trade log printed instead of written to a file,
-//       calibrates on 60+ sessions if the cloud supplies less history). Trading rules unchanged.
+// GoldBandBreakoutBot v2.0  -  XAUUSD planning engine + breakout rules.  DEMO ONLY.
 //
-// Mirrors gold-forecast/bandfade_backtest.py with mode="breakout", centre="prior_close",
-// z=1.2816 (80% band), US-data hour skipped. On 5-minute bars (Jan-Nov 2026) that variant
-// passed cbot-gate: OOS PF 1.44 on 111 trades, P(PF<1) 4.4%, 16 variants tested.
-// Its in-sample PF was only 1.04, so: DEMO ONLY until it also passes a cTrader tick-data
-// backtest on a period this research never saw (e.g. 2023-01-01 -> 2026-01-12).
+// v2.0: the bot builds its own daily plan with PlanEngine (engine/PlanEngine.cs) - the gold-forecast model ported to
+//       C# and verified number-for-number against the Python on 20 past closes (parity_check.py). At every session
+//       close it prints the plan (bands, projected range, key levels with touch odds, bull/bear scenarios) and scores
+//       the previous day's plan (tests T1-T8, par 5/8), keeping a running record. It never re-tunes itself.
+//       Trading uses the engine's anchor/ATR/profile, i.e. exactly the backtested rules.
+// v1.3: skips set-ups whose stop would risk more than 10% of equity (a tiny account cannot be wiped by one stop).
+// v1.2: USD loss caps; a restart keeps open trades.   v1.1: runs in cTrader cloud (AccessRights.None).
 //
-// Each session (daily break >= 2h apart):
-//   anchor = previous session close; ATR = Wilder 14 over sessions;
-//   sigma[k] = RMS move from the prior close at hourly bar k over the last 120 sessions (ATR units)
-// Each hour k (not the first, not the last, not the US-data bar), while flat:
-//   d = BandZ * sigma[k] * ATR
-//   BUY STOP at anchor + d, SELL STOP at anchor - d, each with TP = d and SL = d (1:1);
-//   if price is already beyond a level, enter at market; the first fill cancels the other;
-//   unfilled orders expire at the end of the hour. Everything is flat before the session close.
+// Status: the breakout rules FAILED the unseen-period test (May 2025 - Jan 2026, 223 trades, PF 0.99). The plan is a
+// map of ranges and levels, not a direction signal (direction hit rate ~50%). Use on demo as a forward test.
+//
+// Trading rule, each hour k (not the first, not the last, not the US-data bar), while flat:
+//   d = BandZ * sigma[k] * ATR;  BUY STOP at anchor + d, SELL STOP at anchor - d, SL = TP = d (1:1);
+//   already beyond a level -> market; first fill cancels the other; orders expire at the end of the hour; flat at close.
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +21,8 @@ using System.Globalization;
 using System.Linq;
 using cAlgo.API;
 using cAlgo.API.Internals;
+using GoldEngine;
+using EBar = GoldEngine.Bar;
 
 namespace cAlgo.Robots
 {
@@ -34,25 +30,28 @@ namespace cAlgo.Robots
     public class GoldBandBreakoutBot : Robot
     {
         // ---- Risk: fixed constants, never [Parameter]. Change them by editing code, on purpose. ----
-        private const double LotSize = 0.01;                  // 0.01 lot = 1 oz of gold
+        private const double LotSize = 0.01;                    // 0.01 lot = 1 oz of gold
         private const int MaxOpenPositions = 1;
         private const int MaxTradesPerSession = 4;
-        private const double MaxLossPerTradeUsd = 100.0;      // skip set-ups whose stop would risk more than this (USD)
-        private const double MaxDailyLossUsd = 150.0;         // no new entries this session after losing this much (USD)
-        private const double MinFreeMarginAccount = 100.0;    // no new orders below this free margin (account currency)
+        private const double MaxLossPerTradeUsd = 100.0;        // skip set-ups whose stop would risk more than this (USD)
+        private const double MaxDailyLossUsd = 150.0;           // no new entries this session after losing this much (USD)
+        private const double MinFreeMarginAccount = 100.0;      // no new orders below this free margin (account currency)
         private const double MaxStopRiskPercentOfEquity = 10.0; // skip set-ups whose stop risks more than this share of equity
-        private const double MaxSpreadPrice = 1.00;           // $ per oz
+        private const double MaxSpreadPrice = 1.00;             // $ per oz
         private const string BotLabel = "GBB1";
 
-        // ---- Fixed rules, exactly as backtested ----
-        private const int AtrPeriod = 14;
-        private const int MinSessionBars = 16;                // skip holiday stubs in the profile
-        private const int MinProfileSessions = 60;            // fewest sessions the bands may be built from
-        private const int BarsPerSession = 23;
-        private const int DataHourBar = 14;                   // US 08:30 ET bar (winter and summer)
+        // ---- Fixed rules ----
+        private const int BarsPerSession = PlanEngine.BarsPerSession;
+        private const int DataHourBar = 14;                     // US 08:30 ET bar (winter and summer)
         private const double SessionGapHours = 2.0;
-        private const int EntryCutoffMinutes = 65;            // no entries in the session's last hour
+        private const int EntryCutoffMinutes = 65;              // no entries in the session's last hour
         private const int FlatBeforeCloseMinutes = 5;
+        private static readonly DateTime HistoryStartUtc = new DateTime(2024, 10, 10, 23, 0, 0, DateTimeKind.Utc); // same pool as the research
+        private static readonly TimeSpan Sast = TimeSpan.FromHours(2);
+        // US CPI release dates (BLS schedule), 08:30 ET = 15:30 SAST
+        private static readonly string[] CpiDates =
+            { "2026-11-10", "2026-12-10", "2027-01-13", "2027-02-11", "2027-03-10", "2027-04-13", "2027-05-12",
+              "2027-06-10", "2027-07-14", "2027-08-11", "2027-09-14", "2027-10-14", "2027-11-10", "2027-12-10" };
 
         // ---- Strategy parameters (shape the signal, not the risk) ----
         [Parameter("Band z (1.2816 = 80% band)", DefaultValue = 1.2816, MinValue = 0.6, MaxValue = 2.0, Step = 0.1, Group = "Strategy")]
@@ -61,29 +60,30 @@ namespace cAlgo.Robots
         [Parameter("Skip US-data hour", DefaultValue = true, Group = "Strategy")]
         public bool SkipDataHour { get; set; }
 
-        [Parameter("Profile sessions", DefaultValue = 120, MinValue = 60, MaxValue = 250, Step = 20, Group = "Strategy")]
-        public int ProfileSessions { get; set; }
+        [Parameter("Other event dates (yyyy-MM-dd, comma-separated)", DefaultValue = "", Group = "Plan")]
+        public string ExtraEventDates { get; set; }
 
-        private Bars _h1;
+        [Parameter("Draw plan on chart", DefaultValue = true, Group = "Plan")]
+        public bool DrawPlan { get; set; }
+
+        private Bars _h1, _h4;
         private double _volume;
         private int _sessionStart = -1;
-        private bool _ready;
-        private double _anchor, _atr;
-        private double[] _sigma = new double[BarsPerSession];
+        private DailyPlan _plan, _prevPlan;
+        private int _prevSessionStart = -1;
         private int _tradesThisSession;
         private double _pnlUsdThisSession;
-
-        private class Session
-        {
-            public int Start, End, Bars;
-            public double High, Low, Close, Atr;
-        }
+        private readonly List<DayScore> _record = new List<DayScore>();
 
         protected override void OnStart()
         {
             _h1 = MarketData.GetBars(TimeFrame.Hour);
-            int need = (ProfileSessions + AtrPeriod + 40) * (BarsPerSession + 1);
-            while (_h1.Count < need && _h1.LoadMoreHistory() > 0) { }
+            _h4 = MarketData.GetBars(TimeFrame.Hour4);
+            while (_h1.OpenTimes[0] > HistoryStartUtc && _h1.LoadMoreHistory() > 0) { }
+            while (_h4.Count < PlanEngine.H4Rows + 50 && _h4.LoadMoreHistory() > 0) { }
+            if (_h1.OpenTimes[0] > HistoryStartUtc)
+                Print("Note: H1 history starts {0:yyyy-MM-dd}; the research pool starts 2024-10-10, so plans can differ slightly from the workbook",
+                      _h1.OpenTimes[0]);
             _volume = Symbol.NormalizeVolumeInUnits(Symbol.QuantityToVolumeInUnits(LotSize));
 
             _h1.BarOpened += OnHourOpened;
@@ -95,9 +95,9 @@ namespace cAlgo.Robots
                 if (p.StopLoss == null)
                     ClosePosition(p);
 
-            // Rebuild the current session so a restart keeps open trades and cannot reset the limits.
+            // Plan the current session straight away and rebuild its counters, so a restart keeps going.
             _sessionStart = SessionStartOf(_h1.Count - 1);
-            _ready = Calibrate(_sessionStart);
+            _plan = TryBuildPlan(_h1.OpenTimes[_sessionStart]);
             DateTime sessionOpen = _h1.OpenTimes[_sessionStart];
             foreach (var t in History.Where(t => t.Label == BotLabel && t.SymbolName == SymbolName && t.EntryTime >= sessionOpen))
             {
@@ -105,33 +105,140 @@ namespace cAlgo.Robots
                 _pnlUsdThisSession += t.Pips * Symbol.PipSize * t.VolumeInUnits;
             }
             _tradesThisSession += Positions.FindAll(BotLabel, SymbolName).Length;
-
-            Print("GoldBandBreakoutBot v1.3: {0} H1 bars loaded, {1} units per trade, {2} trades / ${3:F2} so far this session",
-                  _h1.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
+            Print("GoldBandBreakoutBot v2.0: {0} H1 / {1} H4 bars, {2} units per trade, {3} trades / ${4:F2} so far this session",
+                  _h1.Count, _h4.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
         }
 
+        // ------------------------------------------------------------------ planning
+        private DailyPlan TryBuildPlan(DateTime cutoffUtc)
+        {
+            try
+            {
+                var h1 = new List<EBar>(_h1.Count);
+                for (int i = 0; i < _h1.Count; i++)
+                    if (_h1.OpenTimes[i] >= HistoryStartUtc)
+                        h1.Add(new EBar(_h1.OpenTimes[i], _h1.OpenPrices[i], _h1.HighPrices[i], _h1.LowPrices[i], _h1.ClosePrices[i]));
+                var h4 = new List<EBar>(_h4.Count);
+                for (int i = 0; i < _h4.Count; i++)
+                    h4.Add(new EBar(_h4.OpenTimes[i], _h4.OpenPrices[i], _h4.HighPrices[i], _h4.LowPrices[i], _h4.ClosePrices[i]));
+                var plan = PlanEngine.Build(h1, h4, cutoffUtc);
+                PrintPlan(plan);
+                if (DrawPlan)
+                    DrawOnChart(plan);
+                return plan;
+            }
+            catch (Exception e)
+            {
+                Print("PLAN not built: {0}", e.Message);
+                return null;
+            }
+        }
+
+        private void PrintPlan(DailyPlan p)
+        {
+            var inv = CultureInfo.InvariantCulture;
+            DateTime day = (p.CutoffUtc + Sast).AddHours(1).Date;
+            if (day.DayOfWeek == DayOfWeek.Saturday) day = day.AddDays(2);
+            Print("PLAN {0} | anchor {1:F2} | daily ATR {2:F2} | analogs up {3:P0} | projected close {4:F2}, high {5:F2}, low {6:F2}",
+                  day.ToString("ddd dd MMM yyyy", inv), p.Anchor, p.Atr, p.PUp, p.ProjClose, p.ProjHigh, p.ProjLow);
+            Print("RANGE typical ${0:F0}; 80% of days ${1:F0} - ${2:F0}. 80% band: hour 2 +-{3:F0}, hour 12 +-{4:F0}, close +-{5:F0}",
+                  p.RangeQ[2], p.RangeQ[0], p.RangeQ[4], p.Band(1, PlanEngine.Z80), p.Band(11, PlanEngine.Z80), p.Band(22, PlanEngine.Z80));
+            foreach (var s in new[] { p.Bull, p.Bear })
+                Print("{0}: {1} {2:F2} -> {3}; invalid on 1h close back {4} {5:F2}", s.Key.ToUpperInvariant(), s.TriggerRule, s.Trigger,
+                      string.Join(", ", s.Targets.Select(t => string.Format(inv, "{0} {1:F2} ({2:P0})", t.Name.Split(' ')[0], t.Price, t.PTouch))),
+                      s.Key == "bull" ? "below" : "above", s.Invalidation);
+            var near = p.Levels.OrderBy(l => Math.Abs(l.Price - p.Anchor)).Take(6).OrderByDescending(l => l.Price);
+            Print("LEVELS {0}", string.Join(" | ", near.Select(l => string.Format(inv, "{0:F2} {1} ({2:P0})", l.Price, PlanEngine.Short(l.Label), l.PTouch))));
+            string ev = EventFor(day);
+            Print("EVENTS {0}", ev ?? "none on the built-in calendar (add dates in the Plan parameters)");
+            double d1 = BandZ * p.Sigma[1] * p.Atr;
+            Print("BOT first orders (hour 2): buy stop {0:F2} / sell stop {1:F2}, stop and target {2:F2} each. Direction is a coin flip for this model.",
+                  p.Anchor + d1, p.Anchor - d1, d1);
+        }
+
+        private string EventFor(DateTime daySast)
+        {
+            string key = daySast.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            if (CpiDates.Contains(key))
+                return "US CPI 15:30 SAST (high impact; the bot skips that hour)";
+            var extra = (ExtraEventDates ?? "").Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            return extra.Contains(key) ? "event date from parameters" : null;
+        }
+
+        private void DrawOnChart(DailyPlan p)
+        {
+            try
+            {
+                foreach (var name in Chart.Objects.Where(o => o.Name.StartsWith("GBBplan")).Select(o => o.Name).ToList())
+                    Chart.RemoveObject(name);
+                Line("GBBplan_anchor", p.Anchor, Color.Gray, LineStyle.Dots, "prior close");
+                Line("GBBplan_bull", p.Bull.Trigger, Color.SeaGreen, LineStyle.Solid, "bull trigger");
+                Line("GBBplan_bear", p.Bear.Trigger, Color.IndianRed, LineStyle.Solid, "bear trigger");
+                for (int i = 0; i < 3; i++)
+                {
+                    Line($"GBBplan_bullT{i + 1}", p.Bull.Targets[i].Price, Color.SeaGreen, LineStyle.DotsRare, p.Bull.Targets[i].Name);
+                    Line($"GBBplan_bearT{i + 1}", p.Bear.Targets[i].Price, Color.IndianRed, LineStyle.DotsRare, p.Bear.Targets[i].Name);
+                }
+                Line("GBBplan_ph", p.ProjHigh, Color.DodgerBlue, LineStyle.Lines, "projected high");
+                Line("GBBplan_pl", p.ProjLow, Color.DodgerBlue, LineStyle.Lines, "projected low");
+            }
+            catch (Exception)
+            {
+                // charts are not drawn for cloud instances
+            }
+        }
+
+        private void Line(string name, double y, Color color, LineStyle style, string comment)
+        {
+            var l = Chart.DrawHorizontalLine(name, y, color, 1, style);
+            l.Comment = comment;
+        }
+
+        private void ScorePreviousDay()
+        {
+            if (_prevPlan == null || _prevSessionStart < 0)
+                return;
+            var bars = new List<EBar>();
+            for (int i = _prevSessionStart; i < _sessionStart; i++)
+                bars.Add(new EBar(_h1.OpenTimes[i], _h1.OpenPrices[i], _h1.HighPrices[i], _h1.LowPrices[i], _h1.ClosePrices[i]));
+            if (bars.Count < 16)
+                return;
+            var s = PlanEngine.Score(_prevPlan, bars);
+            _record.Add(s);
+            Print("SCORE {0}: {1}/8 (par 5) | error vs no-change {2:F2} | in 50% band {3:P0} | in 80% band {4:P0} | close {5:F2} vs {6:F2} | " +
+                  "high {7:F2} low {8:F2} range ${9:F0} | level Brier {10:F3}",
+                  (_prevPlan.CutoffUtc + Sast).AddHours(1).ToString("ddd dd MMM", CultureInfo.InvariantCulture), s.Passed, s.ErrorRatio,
+                  s.In50, s.In80, s.LastClose, _prevPlan.Anchor, s.High, s.Low, s.Range, s.Brier);
+            Print("SCORE tests: {0}", string.Join(", ", DayScore.Names.Select((n, i) => (s.Tests[i] ? "PASS " : "fail ") + n)));
+            Print("RECORD since start: {0} day(s), average {1:F1}/8, {2} at or above par", _record.Count,
+                  _record.Average(r => r.Passed), _record.Count(r => r.Passed >= 5));
+        }
+
+        // ------------------------------------------------------------------ trading
         private void OnHourOpened(BarOpenedEventArgs args)
         {
             CancelOwnOrders();
-            int now = _h1.Count - 1;                          // the bar that just opened
+            int now = _h1.Count - 1;                            // the bar that just opened
             int start = SessionStartOf(now);
             if (start != _sessionStart)
             {
-                // New session: nothing carries over (backup for brokers whose market hours
-                // do not mark the daily break), counters reset, bands recalibrated.
+                // New session: nothing carries over, yesterday's plan is scored, today's plan is built.
                 foreach (var p in Positions.FindAll(BotLabel, SymbolName))
                     ClosePosition(p);
+                _prevPlan = _plan;
+                _prevSessionStart = _sessionStart;
                 _sessionStart = start;
                 _tradesThisSession = 0;
                 _pnlUsdThisSession = 0;
-                _ready = Calibrate(start);
+                ScorePreviousDay();
+                _plan = TryBuildPlan(_h1.OpenTimes[start]);
             }
-            if (!_ready)
+            if (_plan == null)
                 return;
 
             int k = now - start;
             if (k == 0 || k >= BarsPerSession - 1)
-                return;                                       // rollover hour / last hour
+                return;                                         // rollover hour / last hour
             if (SkipDataHour && k == DataHourBar)
                 return;
             if (Symbol.MarketHours.TimeTillClose() < TimeSpan.FromMinutes(EntryCutoffMinutes))
@@ -143,8 +250,8 @@ namespace cAlgo.Robots
             if (Symbol.Spread > MaxSpreadPrice || Account.FreeMargin < MinFreeMarginAccount)
                 return;
 
-            double d = BandZ * _sigma[k] * _atr;
-            double riskUsd = d * _volume;                     // 1 unit = 1 oz, so price distance x units = USD
+            double d = BandZ * _plan.Sigma[k] * _plan.Atr;
+            double riskUsd = d * _volume;                       // 1 unit = 1 oz, so price distance x units = USD
             if (d <= 0 || riskUsd > MaxLossPerTradeUsd)
             {
                 Print("Bar {0}: skipped, stop would risk ${1:F0} (cap ${2:F0})", k, riskUsd, MaxLossPerTradeUsd);
@@ -158,8 +265,8 @@ namespace cAlgo.Robots
                 return;
             }
             double pips = Math.Round(d / Symbol.PipSize, 1);
-            double up = Math.Round(_anchor + d, Symbol.Digits);
-            double down = Math.Round(_anchor - d, Symbol.Digits);
+            double up = Math.Round(_plan.Anchor + d, Symbol.Digits);
+            double down = Math.Round(_plan.Anchor - d, Symbol.Digits);
             DateTime expiry = _h1.OpenTimes[now].AddHours(1);
 
             if (Symbol.Ask >= up)
@@ -187,7 +294,7 @@ namespace cAlgo.Robots
             if (args.Position.Label != BotLabel || args.Position.SymbolName != SymbolName)
                 return;
             _tradesThisSession++;
-            CancelOwnOrders();                                // one-cancels-other
+            CancelOwnOrders();                                  // one-cancels-other
         }
 
         private void OnPositionClosed(PositionClosedEventArgs args)
@@ -197,7 +304,6 @@ namespace cAlgo.Robots
             var p = args.Position;
             _pnlUsdThisSession += p.Pips * Symbol.PipSize * p.VolumeInUnits;   // price move x oz = USD
             var inv = CultureInfo.InvariantCulture;
-            // One CSV line per closed trade in the log (cloud instances cannot write files).
             Print("TRADE,{0},{1},{2},{3},{4},{5}", Server.Time.ToString("yyyy-MM-dd HH:mm:ss", inv), p.TradeType,
                   p.EntryPrice.ToString(inv), p.EntryTime.ToString("yyyy-MM-dd HH:mm:ss", inv),
                   p.NetProfit.ToString(inv), args.Reason);
@@ -216,80 +322,14 @@ namespace cAlgo.Robots
             return i;
         }
 
-        private List<Session> CompletedSessions(int beforeIndex)
-        {
-            var list = new List<Session>();
-            Session cur = null;
-            for (int i = 0; i < beforeIndex; i++)
-            {
-                bool fresh = cur == null || (_h1.OpenTimes[i] - _h1.OpenTimes[i - 1]).TotalHours >= SessionGapHours;
-                if (fresh)
-                {
-                    cur = new Session { Start = i, High = _h1.HighPrices[i], Low = _h1.LowPrices[i] };
-                    list.Add(cur);
-                }
-                cur.End = i;
-                cur.Bars = i - cur.Start + 1;
-                cur.High = Math.Max(cur.High, _h1.HighPrices[i]);
-                cur.Low = Math.Min(cur.Low, _h1.LowPrices[i]);
-                cur.Close = _h1.ClosePrices[i];
-            }
-            double atr = 0;
-            for (int j = 0; j < list.Count; j++)
-            {
-                var s = list[j];
-                double tr = j == 0
-                    ? s.High - s.Low
-                    : Math.Max(s.High - s.Low, Math.Max(Math.Abs(s.High - list[j - 1].Close), Math.Abs(s.Low - list[j - 1].Close)));
-                atr = j == 0 ? tr : atr + (tr - atr) / AtrPeriod;
-                s.Atr = atr;
-            }
-            return list;
-        }
-
-        private bool Calibrate(int sessionStart)
-        {
-            var s = CompletedSessions(sessionStart);
-            int use = Math.Min(ProfileSessions, s.Count - AtrPeriod - 2);
-            if (use < MinProfileSessions)
-            {
-                Print("Not enough history to calibrate ({0} sessions)", s.Count);
-                return false;
-            }
-            if (use < ProfileSessions)
-                Print("Only {0} sessions of history: bands built from {1} instead of {2}", s.Count, use, ProfileSessions);
-            var last = s[s.Count - 1];
-            _anchor = last.Close;
-            _atr = last.Atr;
-            var sum = new double[BarsPerSession];
-            var n = new int[BarsPerSession];
-            for (int d = s.Count - 1 - use; d < s.Count - 1; d++)
-            {
-                Session a = s[d], b = s[d + 1];
-                if (a.Bars < MinSessionBars || b.Bars < MinSessionBars || a.Atr <= 0)
-                    continue;
-                for (int k = 0; k < BarsPerSession; k++)
-                {
-                    int i = Math.Min(b.Start + k, b.End);     // short sessions hold their last close
-                    double x = (_h1.ClosePrices[i] - a.Close) / a.Atr;
-                    sum[k] += x * x;
-                    n[k]++;
-                }
-            }
-            for (int k = 0; k < BarsPerSession; k++)
-                _sigma[k] = n[k] > 0 ? Math.Sqrt(sum[k] / n[k]) : 0;
-            Print("Session {0:yyyy-MM-dd HH:mm}: anchor {1:F2}, ATR {2:F2}, band bar 1 +-{3:F2}, bar 21 +-{4:F2}",
-                  _h1.OpenTimes[sessionStart], _anchor, _atr, BandZ * _sigma[1] * _atr, BandZ * _sigma[21] * _atr);
-            return _sigma[1] > 0;
-        }
-
         protected override void OnStop()
         {
             var mine = History.Where(t => t.Label == BotLabel).ToList();
             double won = mine.Where(t => t.NetProfit > 0).Sum(t => t.NetProfit);
             double lost = -mine.Where(t => t.NetProfit < 0).Sum(t => t.NetProfit);
-            Print("Stopped: {0} trades, net {1:F2}, profit factor {2}", mine.Count, won - lost,
-                  lost > 0 ? (won / lost).ToString("F2", CultureInfo.InvariantCulture) : "n/a");
+            Print("Stopped: {0} trades, net {1:F2}, profit factor {2}; plan record {3} day(s), average {4:F1}/8",
+                  mine.Count, won - lost, lost > 0 ? (won / lost).ToString("F2", CultureInfo.InvariantCulture) : "n/a",
+                  _record.Count, _record.Count > 0 ? _record.Average(r => r.Passed) : 0.0);
         }
     }
 }

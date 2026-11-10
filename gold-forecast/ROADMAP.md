@@ -1,5 +1,7 @@
 # Roadmap - from a one-day study to platform grade
 
+_Updated 10 Nov 2026: see RESEARCH_LOG.md. The breakout bot failed the unseen-period test; the biggest model flaw is band width on trend days (36% coverage)._
+
 Ordered by what moves accuracy and trust the most. Nothing here changes a
 forecast after it is frozen; every new model is tested *alongside* v1.
 

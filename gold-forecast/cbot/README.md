@@ -1,8 +1,12 @@
-# GoldBandBreakoutBot v1 - guide
+# GoldBandBreakoutBot v1.2 - guide
 
-An XAUUSD cBot for cTrader built from the gold-forecast bands. **Demo only.**
-It has passed a backtest gate on 5-minute bars but has not yet passed on
-years this research never saw, nor on tick data.
+An XAUUSD cBot for cTrader built from the gold-forecast bands.
+
+**Status (10 Nov 2026): FAILED the unseen-period test. Demo forward-test only; do not go live.**
+On 5-minute bars from May 2025 to Jan 2026 (never used to design the rules) the locked rules made
+223 trades with Profit Factor **0.99** (net -$26.87). The earlier PASS on 2026 data does not hold up.
+Pooled over both periods (458 trades) the Profit Factor is 1.09 with a 23% chance the edge is luck.
+Running it on demo is still useful as a live forward test, but expect roughly break-even.
 
 ## What the research showed
 
@@ -27,7 +31,7 @@ cbot-gate results (notional $1,000, +$0.50 cost stress):
 | Breakout, pattern centre, all hours (formal in-sample pick) | 123 | 1.20 | 18.3% | **FAIL** (PF < 1.30, outlier-dependent) |
 | Breakout, prior-close centre, skip US-data hour (**this bot**) | 111 | 1.44 | 4.4% | **PASS** on paper |
 
-Why the PASS is not yet trusted:
+Why the 2026 PASS was not trusted (and the unseen test then confirmed it):
 - In-sample it barely broke even (PF 1.04, 53% drawdown on $1,000). Most of the
   edge appeared after July 2026: it may be a regime, not a lasting edge.
 - It was chosen with 16 variants on the table.
@@ -38,7 +42,9 @@ Validation log rows:
 ```
 | 2026-11-09 | GoldBandFade (8 variants) | v1 | FAIL | OOS PF 0.62-0.86 | ~110-310 trades each | - | variants tested: 16 |
 | 2026-11-09 | GoldBandBreakout analog/80%/all hours | v1 | FAIL | OOS PF 1.20 | 123 trades | WFE 0.66 | variants tested: 16 |
-| 2026-11-09 | GoldBandBreakout prior-close/80%/skip US | v1 | PASS (5m bars) | OOS PF 1.44 | 111 trades | WFE 6.2 | variants tested: 16 |
+| 2026-11-09 | GoldBandBreakout prior-close/80%/skip US | v1 | PASS (5m bars, 2026) | OOS PF 1.44 | 111 trades | WFE 6.2 | variants tested: 16 |
+| 2026-11-10 | GoldBandBreakout prior-close/80%/skip US, unseen May 2025-Jan 2026 | v1 | **FAIL** | OOS PF 0.99 | 223 trades | WFE -0.05 | variants tested: 16 + 2 looks |
+| 2026-11-10 | GoldBandFade same settings, unseen | v1 | FAIL | PF 0.92 | 213 trades | - | looks: 2 |
 ```
 
 ## Rules (identical in the backtest and the cBot)

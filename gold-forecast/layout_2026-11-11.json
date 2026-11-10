@@ -1,0 +1,56 @@
+{
+ "workbook": "XAUUSD_MTF_Forecast_2026-11-11.xlsx",
+ "timeline": {
+  "first": 15,
+  "last": 37,
+  "chart_y": [
+   3875,
+   4175
+  ]
+ },
+ "log_first_row": 28,
+ "dashboard_chart": "A33",
+ "targets": {
+  "tests": {
+   "T1": 7,
+   "T2": 8,
+   "T3": 9,
+   "T4": 10,
+   "T5": 11,
+   "T6": 12,
+   "T7": 13,
+   "T8": 14
+  },
+  "scenarios": {
+   "bull": {
+    "name": 20,
+    "trigger": 22,
+    "targets": [
+     23,
+     24,
+     25
+    ],
+    "inval": 26,
+    "outcome": 27
+   },
+   "bear": {
+    "name": 29,
+    "trigger": 31,
+    "targets": [
+     32,
+     33,
+     34
+    ],
+    "inval": 35,
+    "outcome": 36
+   }
+  },
+  "levels": [
+   44,
+   72
+  ],
+  "brier": "I73",
+  "overall": "B15",
+  "verdict": "C15"
+ }
+}

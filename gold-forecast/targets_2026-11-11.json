@@ -1,0 +1,460 @@
+{
+ "model_version": "analog-v1.0",
+ "scenario_version": "levels-v2",
+ "created_utc": "2026-11-10 22:19:22+00:00",
+ "cutoff_utc": "2026-11-10 22:00:00+00:00",
+ "anchor": 4032.13,
+ "atr": 88.36872508887242,
+ "trail_sessions": 250,
+ "levels": [
+  {
+   "price": 4155.57,
+   "label": "4h swing high (untaken) 20 Oct 15:00 / 1h swing high (untaken) 20 Oct 16:00",
+   "dist": 123.44,
+   "dist_atr": 1.397,
+   "side": "above",
+   "p_touch": 0.048
+  },
+  {
+   "price": 4150.0,
+   "label": "Round number 4,150",
+   "dist": 117.87,
+   "dist_atr": 1.334,
+   "side": "above",
+   "p_touch": 0.056
+  },
+  {
+   "price": 4148.54,
+   "label": "4h swing high (untaken) 09 Nov 20:00 / 1h swing high (untaken) 09 Nov 22:00",
+   "dist": 116.41,
+   "dist_atr": 1.317,
+   "side": "above",
+   "p_touch": 0.056
+  },
+  {
+   "price": 4146.56,
+   "label": "PDH - previous day high (Mon) / Asia session high (Mon) / PWH - previous week high",
+   "dist": 114.43,
+   "dist_atr": 1.295,
+   "side": "above",
+   "p_touch": 0.06
+  },
+  {
+   "price": 4137.49,
+   "label": "Mon open",
+   "dist": 105.36,
+   "dist_atr": 1.192,
+   "side": "above",
+   "p_touch": 0.072
+  },
+  {
+   "price": 4127.99,
+   "label": "1h swing high (untaken) 10 Nov 07:00",
+   "dist": 95.86,
+   "dist_atr": 1.085,
+   "side": "above",
+   "p_touch": 0.092
+  },
+  {
+   "price": 4126.49,
+   "label": "London session high (Mon)",
+   "dist": 94.36,
+   "dist_atr": 1.068,
+   "side": "above",
+   "p_touch": 0.092
+  },
+  {
+   "price": 4114.57,
+   "label": "Daily pivot R1",
+   "dist": 82.44,
+   "dist_atr": 0.933,
+   "side": "above",
+   "p_touch": 0.132
+  },
+  {
+   "price": 4108.13,
+   "label": "Asia session low (Mon)",
+   "dist": 76.0,
+   "dist_atr": 0.86,
+   "side": "above",
+   "p_touch": 0.168
+  },
+  {
+   "price": 4100.0,
+   "label": "Round number 4,100 / 1h bearish FVG 4088.57-4112.39 (open) 10 Nov 11:00",
+   "dist": 67.87,
+   "dist_atr": 0.768,
+   "side": "above",
+   "p_touch": 0.2
+  },
+  {
+   "price": 4098.35,
+   "label": "4h bearish FVG 4088.57-4108.13 (open) 10 Nov 08:00",
+   "dist": 66.22,
+   "dist_atr": 0.749,
+   "side": "above",
+   "p_touch": 0.212
+  },
+  {
+   "price": 4087.97,
+   "label": "4h dealing-range 50% (equilibrium)",
+   "dist": 55.84,
+   "dist_atr": 0.632,
+   "side": "above",
+   "p_touch": 0.284
+  },
+  {
+   "price": 4079.83,
+   "label": "New York session high (Mon)",
+   "dist": 47.7,
+   "dist_atr": 0.54,
+   "side": "above",
+   "p_touch": 0.388
+  },
+  {
+   "price": 4078.9,
+   "label": "1h bearish FVG 4076.63-4081.17 (partly mitigated) 10 Nov 12:00",
+   "dist": 46.77,
+   "dist_atr": 0.529,
+   "side": "above",
+   "p_touch": 0.396
+  },
+  {
+   "price": 4070.82,
+   "label": "1h dealing-range 50% (equilibrium) / 4h bearish FVG 4061.41-4081.17 (open) 10 Nov 12:00 / PWC - previous week close",
+   "dist": 38.69,
+   "dist_atr": 0.438,
+   "side": "above",
+   "p_touch": 0.476
+  },
+  {
+   "price": 4068.7,
+   "label": "London session low (Mon)",
+   "dist": 36.57,
+   "dist_atr": 0.414,
+   "side": "above",
+   "p_touch": 0.5
+  },
+  {
+   "price": 4067.32,
+   "label": "1h bearish FVG 4061.41-4073.23 (open) 10 Nov 15:00",
+   "dist": 35.19,
+   "dist_atr": 0.398,
+   "side": "above",
+   "p_touch": 0.504
+  },
+  {
+   "price": 4064.12,
+   "label": "Daily pivot P",
+   "dist": 31.99,
+   "dist_atr": 0.362,
+   "side": "above",
+   "p_touch": 0.544
+  },
+  {
+   "price": 4050.0,
+   "label": "Round number 4,050",
+   "dist": 17.87,
+   "dist_atr": 0.202,
+   "side": "above",
+   "p_touch": 0.736
+  },
+  {
+   "price": 4019.98,
+   "label": "4h bullish FVG 4009.49-4030.47 (partly mitigated) 04 Nov 08:00",
+   "dist": -12.15,
+   "dist_atr": -0.137,
+   "side": "below",
+   "p_touch": 0.724
+  },
+  {
+   "price": 4013.66,
+   "label": "PDL - previous day low (Mon) / New York session low (Mon) / 1h swing low (untaken) 10 Nov 18:00",
+   "dist": -18.47,
+   "dist_atr": -0.209,
+   "side": "below",
+   "p_touch": 0.648
+  },
+  {
+   "price": 4012.06,
+   "label": "1h bullish FVG 4009.49-4014.64 (partly mitigated) 04 Nov 08:00",
+   "dist": -20.07,
+   "dist_atr": -0.227,
+   "side": "below",
+   "p_touch": 0.636
+  },
+  {
+   "price": 4000.0,
+   "label": "Round number 4,000",
+   "dist": -32.13,
+   "dist_atr": -0.364,
+   "side": "below",
+   "p_touch": 0.476
+  },
+  {
+   "price": 3981.67,
+   "label": "Daily pivot S1",
+   "dist": -50.46,
+   "dist_atr": -0.571,
+   "side": "below",
+   "p_touch": 0.304
+  },
+  {
+   "price": 3980.57,
+   "label": "4h bullish FVG 3964.81-3996.34 (open) 04 Nov 04:00",
+   "dist": -51.56,
+   "dist_atr": -0.583,
+   "side": "below",
+   "p_touch": 0.292
+  },
+  {
+   "price": 3950.0,
+   "label": "Round number 3,950",
+   "dist": -82.13,
+   "dist_atr": -0.929,
+   "side": "below",
+   "p_touch": 0.14
+  },
+  {
+   "price": 3931.22,
+   "label": "Daily pivot S2",
+   "dist": -100.91,
+   "dist_atr": -1.142,
+   "side": "below",
+   "p_touch": 0.076
+  },
+  {
+   "price": 3917.53,
+   "label": "1h swing low (untaken) 03 Nov 22:00",
+   "dist": -114.6,
+   "dist_atr": -1.297,
+   "side": "below",
+   "p_touch": 0.064
+  },
+  {
+   "price": 3900.0,
+   "label": "Round number 3,900",
+   "dist": -132.13,
+   "dist_atr": -1.495,
+   "side": "below",
+   "p_touch": 0.052
+  }
+ ],
+ "range_quantiles": {
+  "q10": 47.77551705822211,
+  "q25": 58.94994777079943,
+  "q50": 78.44765444249146,
+  "q75": 99.30167381561651,
+  "q90": 133.61525278739174
+ },
+ "scenarios": [
+  {
+   "key": "bull",
+   "name": "Bull - reclaim and hold above Round number 4,050",
+   "why": "A 1h close above 4050.00 (Round number 4,050) puts price back above the nearest resistance. Intraday trend score -3.6 (1m-4h), daily EMA stack down.",
+   "trigger": {
+    "rule": "1h candle CLOSES above",
+    "price": 4050.0
+   },
+   "targets": [
+    {
+     "name": "T1 Daily pivot P",
+     "price": 4064.12,
+     "p_touch": 0.544
+    },
+    {
+     "name": "T2 1h bearish FVG (part-filled) 10 Nov",
+     "price": 4078.9,
+     "p_touch": 0.396
+    },
+    {
+     "name": "T3 4h bearish FVG (open) 10 Nov",
+     "price": 4098.35,
+     "p_touch": 0.212
+    }
+   ],
+   "invalidation": {
+    "rule": "after trigger, 1h close back below the prior close",
+    "price": 4032.13
+   }
+  },
+  {
+   "key": "bear",
+   "name": "Bear - break and hold below PDL Mon low  +2",
+   "why": "A 1h close below 4013.66 (PDL Mon low  +2) extends the move through the nearest support. Intraday trend score -3.6 (1m-4h), daily EMA stack down.",
+   "trigger": {
+    "rule": "1h candle CLOSES below",
+    "price": 4013.66
+   },
+   "targets": [
+    {
+     "name": "T1 Round number 4,000",
+     "price": 4000.0,
+     "p_touch": 0.476
+    },
+    {
+     "name": "T2 Daily pivot S1",
+     "price": 3981.67,
+     "p_touch": 0.304
+    },
+    {
+     "name": "T3 Round number 3,950",
+     "price": 3950.0,
+     "p_touch": 0.14
+    }
+   ],
+   "invalidation": {
+    "rule": "after trigger, 1h close back above the prior close",
+    "price": 4032.13
+   }
+  }
+ ],
+ "neutral": {
+  "name": "Neutral - no trigger by the London close (17:00 SAST)",
+  "rule": "Price rotates between 4013.66 and 4050.00; the 15:30 US data window is the usual catalyst."
+ },
+ "tests": [
+  {
+   "id": "T1",
+   "name": "Path beats a random walk",
+   "rule": "mean |error| / random-walk |error| < 1.00",
+   "lo": null,
+   "hi": 1.0,
+   "hist_pass": 0.45
+  },
+  {
+   "id": "T2",
+   "name": "50% band is calibrated",
+   "rule": "25% to 75% of hourly closes inside the 50% band",
+   "lo": 0.25,
+   "hi": 0.75,
+   "hist_pass": 0.45
+  },
+  {
+   "id": "T3",
+   "name": "80% band holds",
+   "rule": "at least 60% of hourly closes inside the 80% band",
+   "lo": 0.6,
+   "hi": null,
+   "hist_pass": 0.87
+  },
+  {
+   "id": "T4",
+   "name": "Day direction",
+   "rule": "session closes above the anchor 4,032.13",
+   "lo": 4032.13,
+   "hi": null,
+   "hist_pass": 0.515
+  },
+  {
+   "id": "T5",
+   "name": "Projected high",
+   "rule": "session high within +-0.25 ATR ($22.09) of 4,064.61",
+   "lo": 4042.52,
+   "hi": 4086.7,
+   "hist_pass": 0.515
+  },
+  {
+   "id": "T6",
+   "name": "Projected low",
+   "rule": "session low within +-0.25 ATR ($22.09) of 4,003.62",
+   "lo": 3981.53,
+   "hi": 4025.71,
+   "hist_pass": 0.5
+  },
+  {
+   "id": "T7",
+   "name": "Level touch probabilities beat a coin flip",
+   "rule": "Brier score of the level table < 0.25",
+   "lo": null,
+   "hi": 0.25,
+   "hist_pass": 0.885
+  },
+  {
+   "id": "T8",
+   "name": "Day range inside the 80% range band",
+   "rule": "session high - low between $48 and $134",
+   "lo": 47.78,
+   "hi": 133.62,
+   "hist_pass": 0.81
+  }
+ ],
+ "overall_rule": "Par is 5 of 8 (the 200-day average). 6+ = better than a typical day, 5 = par, 4 or fewer = below par",
+ "hist_overall": 0.665,
+ "hist_mean_passes": 5.0,
+ "hist_pass_counts": {
+  "0": 0.02,
+  "1": 0.03,
+  "2": 0.05,
+  "3": 0.08,
+  "4": 0.155,
+  "5": 0.225,
+  "6": 0.24,
+  "7": 0.16,
+  "8": 0.04
+ },
+ "calibration": [
+  {
+   "bin": 0,
+   "n": 775,
+   "pred": 0.064,
+   "actual": 0.048
+  },
+  {
+   "bin": 1,
+   "n": 441,
+   "pred": 0.125,
+   "actual": 0.088
+  },
+  {
+   "bin": 2,
+   "n": 353,
+   "pred": 0.232,
+   "actual": 0.212
+  },
+  {
+   "bin": 3,
+   "n": 231,
+   "pred": 0.33,
+   "actual": 0.346
+  },
+  {
+   "bin": 4,
+   "n": 182,
+   "pred": 0.465,
+   "actual": 0.379
+  },
+  {
+   "bin": 5,
+   "n": 218,
+   "pred": 0.54,
+   "actual": 0.55
+  },
+  {
+   "bin": 6,
+   "n": 350,
+   "pred": 0.655,
+   "actual": 0.646
+  },
+  {
+   "bin": 7,
+   "n": 289,
+   "pred": 0.77,
+   "actual": 0.716
+  },
+  {
+   "bin": 8,
+   "n": 294,
+   "pred": 0.838,
+   "actual": 0.806
+  },
+  {
+   "bin": 9,
+   "n": 67,
+   "pred": 0.905,
+   "actual": 0.791
+  }
+ ],
+ "calibration_brier": 0.1494,
+ "forecast_sha256": "49efa076c77d7108cfc9ba001eafdac6845acf97589cc3d44b905ce1727a018c"
+}

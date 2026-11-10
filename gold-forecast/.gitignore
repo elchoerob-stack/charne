@@ -1,3 +1,4 @@
 __pycache__/
 _recalc/
 data/*_hist.csv
+data/XAUUSD_M_5_unseen.csv

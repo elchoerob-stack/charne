@@ -1,0 +1,196 @@
+{
+  "name": "GoldBandBreakout v1 - unseen May 2025-Jan 2026 (2026 = in-sample)",
+  "verdict": "FAIL",
+  "reason": "OOS Profit Factor (break-even) 0.989 (needs > 1.00); Walk-forward efficiency (per day) -0.051 (needs \u2265 0.50); OOS max drawdown % of peak 29.6% (needs \u2264 20%); Bootstrap P(PF < 1) 52.3% (needs \u2264 10%); Monte Carlo 95th pct drawdown 49.9% (needs \u2264 30%); PF without best 12 trades 0.733 (needs \u2265 1.00); PF after extra cost per trade 0.944 (needs \u2265 1.10)",
+  "deployment": "Not eligible. A FAIL is a result, not a setback: log it and move on.",
+  "checks": [
+    {
+      "key": "oos_trades",
+      "label": "Out-of-sample trades",
+      "value": 223,
+      "shown": "223",
+      "threshold": "\u2265 100",
+      "result": "PASS"
+    },
+    {
+      "key": "oos_pf_above_1",
+      "label": "OOS Profit Factor (break-even)",
+      "value": 0.9888194932779648,
+      "shown": "0.989",
+      "threshold": "> 1.00",
+      "result": "FAIL"
+    },
+    {
+      "key": "oos_pf",
+      "label": "OOS Profit Factor (target)",
+      "value": 0.9888194932779648,
+      "shown": "0.989",
+      "threshold": "\u2265 1.30",
+      "result": "FAIL"
+    },
+    {
+      "key": "pf_retention",
+      "label": "PF retention (OOS \u00f7 IS)",
+      "value": 0.8658072858514028,
+      "shown": "0.866",
+      "threshold": "\u2265 0.70",
+      "result": "PASS"
+    },
+    {
+      "key": "wfe",
+      "label": "Walk-forward efficiency (per day)",
+      "value": -0.05088453676382272,
+      "shown": "-0.051",
+      "threshold": "\u2265 0.50",
+      "result": "FAIL"
+    },
+    {
+      "key": "oos_max_dd",
+      "label": "OOS max drawdown % of peak",
+      "value": 29.555855816588988,
+      "shown": "29.6%",
+      "threshold": "\u2264 20%",
+      "result": "FAIL"
+    },
+    {
+      "key": "mc_edge",
+      "label": "Bootstrap P(PF < 1)",
+      "value": 52.26666666666666,
+      "shown": "52.3%",
+      "threshold": "\u2264 10%",
+      "result": "FAIL"
+    },
+    {
+      "key": "mc_dd95",
+      "label": "Monte Carlo 95th pct drawdown",
+      "value": 49.91199999999996,
+      "shown": "49.9%",
+      "threshold": "\u2264 30%",
+      "result": "FAIL"
+    },
+    {
+      "key": "fragility",
+      "label": "PF without best 12 trades",
+      "value": 0.7329286103632937,
+      "shown": "0.733",
+      "threshold": "\u2265 1.00",
+      "result": "FAIL"
+    },
+    {
+      "key": "stress",
+      "label": "PF after extra cost per trade",
+      "value": 0.943724352222028,
+      "shown": "0.944",
+      "threshold": "\u2265 1.10",
+      "result": "FAIL"
+    }
+  ],
+  "rules_changed": [],
+  "in_sample": {
+    "trades": 235,
+    "net": 648.95,
+    "pf": 1.1420780460464668,
+    "win_rate": 52.34042553191489,
+    "avg_win": 42.41065040650407,
+    "avg_loss": -40.78178571428571,
+    "payoff": 1.039940985017921,
+    "expectancy": 2.761489361702128,
+    "t_stat": 0.8321214709934275,
+    "max_dd": 585.2,
+    "max_dd_pct": 53.23339185489079,
+    "recovery": 1.1089371155160628,
+    "max_losing_streak": 7,
+    "pf_ex_top": 0.8603411887309634,
+    "top_removed": 12,
+    "net_per_day": 2.1776845637583895
+  },
+  "out_of_sample": {
+    "trades": 223,
+    "net": -26.87,
+    "pf": 0.9888194932779648,
+    "win_rate": 50.224215246636774,
+    "avg_win": 21.218035714285715,
+    "avg_loss": -21.65126126126126,
+    "payoff": 0.9799907478022687,
+    "expectancy": -0.1204932735426009,
+    "t_stat": -0.07225637592481887,
+    "max_dd": 339.05000000000064,
+    "max_dd_pct": 29.555855816588988,
+    "recovery": -0.07925084795752824,
+    "max_losing_streak": 10,
+    "pf_ex_top": 0.7329286103632937,
+    "top_removed": 12,
+    "net_per_day": -0.11081047024457301,
+    "first": "2025-05-15",
+    "last": "2026-01-12",
+    "trades_per_month": 27.99385073601008
+  },
+  "folds": [
+    {
+      "is": {
+        "trades": 235,
+        "net": 648.95,
+        "pf": 1.1420780460464668,
+        "win_rate": 52.34042553191489,
+        "avg_win": 42.41065040650407,
+        "avg_loss": -40.78178571428571,
+        "payoff": 1.039940985017921,
+        "expectancy": 2.761489361702128,
+        "t_stat": 0.8321214709934275,
+        "max_dd": 585.2,
+        "max_dd_pct": 53.23339185489079,
+        "recovery": 1.1089371155160628,
+        "max_losing_streak": 7,
+        "pf_ex_top": 0.8603411887309634,
+        "top_removed": 12,
+        "first": "2026-01-15",
+        "last": "2026-11-09",
+        "days": 298.0,
+        "net_per_day": 2.1776845637583895,
+        "trades_per_month": 24.004697986577185
+      },
+      "oos": {
+        "trades": 223,
+        "net": -26.87,
+        "pf": 0.9888194932779648,
+        "win_rate": 50.224215246636774,
+        "avg_win": 21.218035714285715,
+        "avg_loss": -21.65126126126126,
+        "payoff": 0.9799907478022687,
+        "expectancy": -0.1204932735426009,
+        "t_stat": -0.07225637592481887,
+        "max_dd": 339.05000000000064,
+        "max_dd_pct": 29.555855816588988,
+        "recovery": -0.07925084795752824,
+        "max_losing_streak": 10,
+        "pf_ex_top": 0.7329286103632937,
+        "top_removed": 12,
+        "first": "2025-05-15",
+        "last": "2026-01-12",
+        "days": 242.48611111111111,
+        "net_per_day": -0.11081047024457301,
+        "trades_per_month": 27.99385073601008
+      }
+    }
+  ],
+  "monte_carlo": {
+    "runs": 3000,
+    "seed": 42,
+    "dd95": 602.1599999999995,
+    "dd99": 691.6799999999996,
+    "dd95_pct": 49.91199999999996,
+    "dd99_pct": 57.548320637588446,
+    "p_pf_below_1": 0.5226666666666666,
+    "pf_p05": 0.7714923012652185,
+    "pf_p50": 0.991679517378116,
+    "net_p05": -621.36
+  },
+  "audit": null,
+  "notes": [
+    "unseen_breakout_trades.csv: profit from 'Net Profit'",
+    "unseen_breakout_trades.csv: time from 'Closing Time', format %Y-%m-%d %H:%M:%S (day-first where ambiguous)",
+    "breakout_prior_z128_skipUS_trades.csv: profit from 'Net Profit'",
+    "breakout_prior_z128_skipUS_trades.csv: time from 'Closing Time', format %Y-%m-%d %H:%M:%S (day-first where ambiguous)"
+  ],
+  "balance": 1000.0
+}

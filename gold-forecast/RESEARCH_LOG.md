@@ -29,3 +29,9 @@ Total strategy looks: 16 + 2 + 3 = 21. Do not add more on this data without sayi
 2. Hourly-updating bands: re-centre on the current price and widen when the morning has trended.
 3. Keep scoring the locked daily forecast (v1) and run any new model as a challenger alongside it.
 4. A different strategy class (not intraday band breakouts) if a trading edge is the goal; test it the same pre-registered way.
+
+## Pressure test: small account (10 Nov 2026)
+R200 ($12.08 at USDZAR 16.56) at 1:10,000, 1:1,000, 1:500: stopped out on today's FIRST trade (sell 4,123.57; stop-out near 4,135-4,136,
+17-20 minutes before the bot's own stop). In history 96-98% of 60-trade windows wiped it, median at the first trade. 1:200 cannot open a
+position (margin R343 > R200). R10,000+ survived every window. Caveat: adverse move uses 5-minute highs/lows, so it is conservative for
+larger accounts; the R200 conclusion does not depend on it (the smallest stop, $17, already exceeds the account).

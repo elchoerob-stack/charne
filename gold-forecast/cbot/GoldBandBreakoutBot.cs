@@ -1,4 +1,6 @@
-// GoldBandBreakoutBot v1.2  -  XAUUSD, hourly volatility bands, breakout rules.
+// GoldBandBreakoutBot v1.3  -  XAUUSD, hourly volatility bands, breakout rules.
+// v1.3: a set-up is skipped when its stop would risk more than 10% of the account's equity, so a tiny account
+//       (e.g. R200) can never be wiped by one stop. Leverage only lowers margin; it does not shrink the loss.
 // v1.2: loss caps are in USD (gold's quote currency) so they mean the same on a ZAR, EUR or USD account;
 //       a restart keeps an open position and rebuilds this session's trade count and loss from history.
 // v1.1: runs in cTrader cloud (AccessRights.None, trade log printed instead of written to a file,
@@ -38,6 +40,7 @@ namespace cAlgo.Robots
         private const double MaxLossPerTradeUsd = 100.0;      // skip set-ups whose stop would risk more than this (USD)
         private const double MaxDailyLossUsd = 150.0;         // no new entries this session after losing this much (USD)
         private const double MinFreeMarginAccount = 100.0;    // no new orders below this free margin (account currency)
+        private const double MaxStopRiskPercentOfEquity = 10.0; // skip set-ups whose stop risks more than this share of equity
         private const double MaxSpreadPrice = 1.00;           // $ per oz
         private const string BotLabel = "GBB1";
 
@@ -103,7 +106,7 @@ namespace cAlgo.Robots
             }
             _tradesThisSession += Positions.FindAll(BotLabel, SymbolName).Length;
 
-            Print("GoldBandBreakoutBot v1.2: {0} H1 bars loaded, {1} units per trade, {2} trades / ${3:F2} so far this session",
+            Print("GoldBandBreakoutBot v1.3: {0} H1 bars loaded, {1} units per trade, {2} trades / ${3:F2} so far this session",
                   _h1.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
         }
 
@@ -145,6 +148,13 @@ namespace cAlgo.Robots
             if (d <= 0 || riskUsd > MaxLossPerTradeUsd)
             {
                 Print("Bar {0}: skipped, stop would risk ${1:F0} (cap ${2:F0})", k, riskUsd, MaxLossPerTradeUsd);
+                return;
+            }
+            double riskAccount = d / Symbol.PipSize * Symbol.PipValue * _volume;   // same loss, in account currency
+            if (riskAccount > Account.Equity * MaxStopRiskPercentOfEquity / 100.0)
+            {
+                Print("Bar {0}: skipped, stop would risk {1:F2} = {2:F1}% of equity (cap {3:F0}%)",
+                      k, riskAccount, 100.0 * riskAccount / Math.Max(Account.Equity, 0.01), MaxStopRiskPercentOfEquity);
                 return;
             }
             double pips = Math.Round(d / Symbol.PipSize, 1);

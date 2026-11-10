@@ -1,4 +1,4 @@
-# GoldBandBreakoutBot v1.2 - guide
+# GoldBandBreakoutBot v1.3 - guide
 
 An XAUUSD cBot for cTrader built from the gold-forecast bands.
 
@@ -67,6 +67,7 @@ Validation log rows:
 | `MaxLossPerTradeUsd` | 100 (USD) | skips set-ups whose stop would risk more (very high volatility) |
 | `MaxDailyLossUsd` | 150 (USD) | no new entries that session after this realised loss |
 | `MinFreeMarginAccount` | 100 (account currency) | no orders on an empty account |
+| `MaxStopRiskPercentOfEquity` | 10 (%) | v1.3: skips set-ups whose stop risks more than this share of equity; a tiny account cannot be wiped by one stop |
 
 Loss caps are in USD (gold's quote currency), so they mean the same on a ZAR, EUR or USD account
 (v1.2; v1.1 had them in account currency and the EUR demo made them ~18x looser than intended).
@@ -78,7 +79,7 @@ Change them only by editing the code, never as instance settings.
    open 0.01 lot. Top it up or open a new demo with about R20,000 (close to the $1,000 the
    gate used).
 1. **Install.** On any cTrader app (Mobile too): Algo > cBots > Upload, pick
-   `dist/GoldBandBreakoutBot.algo`. v1.2 runs in the cloud (AccessRights.None; cloud refuses
+   `dist/GoldBandBreakoutBot.algo`. v1.3 runs in the cloud (AccessRights.None; cloud refuses
    Full access). Add an instance on XAUUSD, 1h; the defaults are the tested settings.
    Cloud limits on demo accounts: **1 running cloud instance per demo account** and a
    **7-day maximum** before it stops and must be restarted. Run it on its own demo account if
@@ -97,3 +98,19 @@ Change them only by editing the code, never as instance settings.
 
 If you optimise `Band z` or `Profile sessions`, do it walk-forward on in-sample windows only and
 count every combination as a variant.
+
+## Account size (pressure test, 10 Nov 2026 - `pressure_test.py`)
+
+Leverage sets the margin a position ties up; it does not change what a position can lose. 0.01 lot = 1 oz, so $1 = $1,
+and the bot's stops are $17-$75. Tested on today's trades and all 458 historical trades (worst move inside each trade,
+stop-out at 50% margin level):
+
+| Account | Today | History: wiped within 60 trades |
+|---|---|---|
+| R200 ($12) at 1:10,000 / 1:1,000 / 1:500 | stopped out on the first trade (03:07 SAST), ends R0-R47 | 96-98% (median: the first trade) |
+| R1,000 | survives (low R422), ends R1,971 | 83% |
+| R5,000 | survives | 23% |
+| R10,000 and up | survives | 0% |
+
+v1.3 refuses set-ups whose stop is more than 10% of equity, so R200 and R1,000 accounts do not trade at all.
+Guidance: about R10,000 (about $600) is the smallest account where 0.01 lot of gold never failed in the history.

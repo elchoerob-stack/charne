@@ -10,8 +10,10 @@ Every look at the data is counted, because the more ideas tried on the same pric
 | 3 | Fade counterpart, same settings (declared in advance) | same | PF 0.92 (-$198) |
 | 4 | 3 regime filters (pre-registered, `filters_test.py`) | both periods | all rejected; F2 (trend-aligned) best: PF 1.15 / 1.06, pooled P(PF<1) 26% |
 | 5 | Diagnostics (`diagnose.py`), descriptive, nothing selected | H1 sessions | see below |
+| 6 | Tighter boxes z 1.0 / 0.674 (pre-registered, `opportunity_test.py`) | both periods | both rejected (unseen PF 0.94 / 0.90) |
+| 7 | Trade the scenario plan, target T1 / T2 (pre-registered, `scenario_test.py`) | both periods | both rejected (unseen PF 0.66 / 0.85) |
 
-Total strategy looks: 16 + 2 + 3 = 21. Do not add more on this data without saying so.
+Total strategy looks: 16 + 2 + 3 + 2 + 2 = 25. Do not add more on this data without saying so.
 
 ## What we know
 - The daily trend (EMA stack) does **not** predict the next day: 54.8% hit rate on 259 sessions, 95% band +-6.2%.
@@ -69,3 +71,18 @@ B. Tighter boxes trade more and earn less:
 | z 1.0 | 352 / 1.14 / +3.83 | 365 / 0.94 / -1.10 | 25% | reject |
 | z 0.674 | 695 / 1.04 / +1.75 | 689 / 0.90 / -2.78 | 54% | reject |
 The moves inside the box are mostly noise; trading them adds cost, not edge (fading them lost too: PF 0.62-0.92).
+
+## Trade the scenario plan? (11 Nov 2026, `scenario_test.py`, pre-registered in commit e0c04f7 before running, looks 23 -> 25)
+Question (from a review of the bot's screen recording): the bot prints a bull/bear scenario plan but does not trade it - should it?
+Rules: at each 1h close from hour 2 to 22, while flat, close beyond the bull (bear) trigger -> buy (sell) at the next 5m open;
+stop = prior close (the plan's invalidation), target = T1 (A) or T2 (B); each scenario once a day; flat at the close; $0.50 cost.
+| Variant | 2026 (212 days) trades / win / PF / $ per day | Unseen 2025 (225 days) trades / win / PF / $ per day | Pooled PF, P(PF<1) | Verdict |
+|---|---|---|---|---|
+| A: target T1 | 191 / 66% / 0.92 / -0.72 | 218 / 59% / 0.66 / -2.52 | 0.80, 96% | **reject** |
+| B: target T2 | 216 / 56% / 1.28 / +3.79 | 242 / 47% / 0.85 / -1.64 | 1.08, 25% | **reject** |
+A wins often but small (avg +$14 / -$30 in 2026): the stop at the prior close is further away than T1. B paid in 2026 and lost in the
+unseen year - the same "worked in 2026 only" pattern as the band breakout. Neither side alone survives the unseen year (sell PF 0.74 / 0.89),
+so a sell-only version is not a rescue (and would be a new look). The scenario plan stays a map for a human, not an entry rule.
+Bot v2.2 (no rule change): stops cancelling orders that are already expiring (journal 'EntityNotFound/TechnicalError' race), prints each
+order's prices and stop/target in dollars (the order log shows pips: 3094 pips = $30.94), warns when Band z is not the tested 1.2816,
+and closes an extra position if two orders ever fill together.

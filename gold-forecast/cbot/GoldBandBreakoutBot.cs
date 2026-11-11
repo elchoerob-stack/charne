@@ -1,5 +1,11 @@
-// GoldBandBreakoutBot v2.1  -  XAUUSD planning engine + breakout rules.
+// GoldBandBreakoutBot v2.2  -  XAUUSD planning engine + breakout rules.
 //
+// v2.2: housekeeping, same trading rules. (1) Orders that are expiring on their own are no longer cancelled at the
+//       hour change (that race caused the harmless 'cancel FAILED: EntityNotFound / TechnicalError' journal lines).
+//       (2) Each order placement prints prices and the stop/target in dollars; the platform's order log shows SL/TP
+//       in PIPS (XAUUSD pip = $0.01, so '3094' = $30.94). (3) A Band z other than the tested 1.2816 prints a warning.
+//       (4) If two orders ever fill at once, the extra position is closed (hard 1-position rule).
+//       Trading the scenario plan directly was tested 11 Nov 2026 (scenario_test.py) and rejected: not added.
 // v2.1: live-ready. Lot size stays a code constant (exactly 0.01): the volume is never rounded up and the bot stops
 //       itself if the broker cannot trade exactly 0.01 lot. The 10%-of-equity guard is OFF on live accounts (decision
 //       10 Nov 2026, against the pressure test: R200-R1,000 accounts were wiped in 83-98% of 60-trade runs) and stays on
@@ -51,6 +57,8 @@ namespace cAlgo.Robots
         private const double SessionGapHours = 2.0;
         private const int EntryCutoffMinutes = 65;              // no entries in the session's last hour
         private const int FlatBeforeCloseMinutes = 5;
+        private const int ExpiryGraceSeconds = 5;              // v2.2: leave orders expiring this soon to the server
+        private const double TestedBandZ = 1.2816;             // the validated band (80%)
         private static readonly DateTime HistoryStartUtc = new DateTime(2024, 10, 10, 23, 0, 0, DateTimeKind.Utc); // same pool as the research
         private static readonly TimeSpan Sast = TimeSpan.FromHours(2);
         // US CPI release dates (BLS schedule), 08:30 ET = 15:30 SAST
@@ -106,6 +114,9 @@ namespace cAlgo.Robots
             if (live)
                 Print("LIVE NOTE: these rules failed the unseen-period test (May 2025 - Jan 2026, 223 trades, PF 0.99) - expect roughly " +
                       "break-even before costs. One stop is about $17-$75 per 0.01 lot; caps: $100 per trade, $150 per session, 4 trades per session.");
+            if (Math.Abs(BandZ - TestedBandZ) > 1e-9)
+                Print("WARNING: Band z = {0} is UNTESTED (tested setting: {1}; z 1.0 and 0.674 were tested 11 Nov 2026 and rejected). " +
+                      "Set it back to {1} unless you are deliberately running an experiment.", BandZ, TestedBandZ);
 
             _h1.BarOpened += OnHourOpened;
             Positions.Opened += OnPositionOpened;
@@ -126,7 +137,7 @@ namespace cAlgo.Robots
                 _pnlUsdThisSession += t.Pips * Symbol.PipSize * t.VolumeInUnits;
             }
             _tradesThisSession += Positions.FindAll(BotLabel, SymbolName).Length;
-            Print("GoldBandBreakoutBot v2.1: {0} H1 / {1} H4 bars, {2} units per trade, {3} trades / ${4:F2} so far this session",
+            Print("GoldBandBreakoutBot v2.2: {0} H1 / {1} H4 bars, {2} units per trade, {3} trades / ${4:F2} so far this session",
                   _h1.Count, _h4.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
         }
 
@@ -299,6 +310,8 @@ namespace cAlgo.Robots
                 PlaceStopOrder(TradeType.Buy, SymbolName, _volume, up, BotLabel, pips, pips, ProtectionType.Relative, expiry);
                 PlaceStopOrder(TradeType.Sell, SymbolName, _volume, down, BotLabel, pips, pips, ProtectionType.Relative, expiry);
             }
+            Print("Bar {0} ({1:HH:mm} SAST): BUY STOP {2} | SELL STOP {3} | stop & target ${4:F2} each (order log shows {5} pips) | until {6:HH:mm} SAST",
+                  k, _h1.OpenTimes[now] + Sast, up, down, d, pips, expiry + Sast);
         }
 
         protected override void OnTick()
@@ -316,6 +329,12 @@ namespace cAlgo.Robots
                 return;
             _tradesThisSession++;
             CancelOwnOrders();                                  // one-cancels-other
+            var mine = Positions.FindAll(BotLabel, SymbolName);
+            if (mine.Length > MaxOpenPositions)                 // two orders filled at once: keep the first, close the extra
+            {
+                Print("Extra position {0} closed: max {1} open position(s)", args.Position.Id, MaxOpenPositions);
+                ClosePosition(args.Position);
+            }
         }
 
         private void OnPositionClosed(PositionClosedEventArgs args)
@@ -332,8 +351,12 @@ namespace cAlgo.Robots
 
         private void CancelOwnOrders()
         {
+            // Orders expiring within a few seconds are left to expire by themselves: cancelling them races the server's
+            // own expiry and prints a harmless 'FAILED: EntityNotFound / TechnicalError' line.
+            DateTime soon = Server.Time.AddSeconds(ExpiryGraceSeconds);
             foreach (var o in PendingOrders.Where(o => o.Label == BotLabel && o.SymbolName == SymbolName).ToList())
-                CancelPendingOrder(o);
+                if (o.ExpirationTime == null || o.ExpirationTime.Value > soon)
+                    CancelPendingOrder(o);
         }
 
         private int SessionStartOf(int i)

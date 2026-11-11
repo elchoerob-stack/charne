@@ -1,4 +1,4 @@
-# GoldBandBreakoutBot v2.1 - guide
+# GoldBandBreakoutBot v2.2 - guide
 
 An XAUUSD cBot for cTrader built from the gold-forecast bands.
 
@@ -6,6 +6,17 @@ An XAUUSD cBot for cTrader built from the gold-forecast bands.
 On 5-minute bars from May 2025 to Jan 2026 (never used to design the rules) the locked rules made
 223 trades with Profit Factor **0.99** (net -$26.87). Pooled over both periods (458 trades) the Profit Factor is 1.09
 with a 23% chance the edge is luck. Expect roughly break-even before costs.
+
+### Reading the Journal (v2.2)
+- The platform's order lines show stop loss / take profit in **pips**. For XAUUSD 1 pip = $0.01, so `SL 3094 / TP 3094` means
+  $30.94 each side - not a price of 3,094. v2.2 also prints every placement in dollars:
+  `Bar 7 (09:00 SAST): BUY STOP 4063.76 | SELL STOP 4001.88 | stop & target $30.94 each (order log shows 3094 pips)`.
+- Leave **Band z at 1.2816**. Anything else prints `WARNING: Band z ... is UNTESTED`. z 1.0 and 0.674 were tested on 11 Nov 2026
+  and rejected (more trades, less money; both lost in the unseen year).
+- Orders expire at the end of their hour by themselves; v2.2 no longer tries to cancel them at that moment, so the
+  `cancel ... FAILED (EntityNotFound / TechnicalError)` lines stop. They were harmless.
+- Hours with no orders: the first hour after the daily break, hour 14 (US 08:30 ET data, 15:00 SAST in winter), the last hour,
+  and any hour while a position is open.
 
 ### Live settings (v2.1)
 | Setting | Live | Demo |
@@ -76,6 +87,9 @@ Validation log rows:
 | 2026-11-10 | GoldBandBreakout prior-close/80%/skip US, unseen May 2025-Jan 2026 | v1 | **FAIL** | OOS PF 0.99 | 223 trades | WFE -0.05 | variants tested: 16 + 2 looks |
 | 2026-11-10 | GoldBandFade same settings, unseen | v1 | FAIL | PF 0.92 | 213 trades | - | looks: 2 |
 | 2026-11-10 | GoldBandBreakout v2.1 | v2.1 | LIVE by owner's decision despite FAIL | - | - | - | guard off on live; lot fixed 0.01 |
+| 2026-11-11 | Breakout z 1.0 / z 0.674 (tighter box) | v2.1 | FAIL | unseen PF 0.94 / 0.90 | 365 / 689 trades | - | looks: 23 |
+| 2026-11-11 | Scenario plan entries, target T1 / T2 | - | FAIL | unseen PF 0.66 / 0.85 (2026: 0.92 / 1.28) | 218 / 242 trades | - | looks: 25 |
+| 2026-11-11 | GoldBandBreakout v2.2 | v2.2 | housekeeping only, same rules | - | - | - | cancel race fixed, $ in log, z warning |
 ```
 
 ## Rules (identical in the backtest and the cBot)

@@ -1,5 +1,14 @@
-// GoldBandBreakoutBot v3.0  -  XAUUSD planning engine + breakout rules, sized for small accounts.
+// GoldBandBreakoutBot v3.1  -  XAUUSD planning engine + breakout rules, sized for small accounts, reading 15m / 5m / 1m.
 //
+// v3.1 (11 Nov 2026): reads the lower timeframes. (1) Every hour it prints the market structure of the 15m, 5m and 1m
+//       charts (direction of the last swing break and when it happened). (2) 'Early exit' switch: close a trade when
+//       the chosen timeframe CLOSES through its last swing against the trade (a buy: below the last swing low).
+//       Tested before it was built in (mtf_exit_test.py, pre-registered; 2016-2024 and 2025-26): it does what it says -
+//       the average loss falls from $18 to $14 (15m), $8 (5m), $4 (1m) per oz at today's volatility and full stop-outs
+//       from 35% of trades to 16%, 4%, 0.4% - but the winners are cut the same way (wins 49% -> 42%, 33%, 27%) and the
+//       bot trades more often, so the result is WORSE: profit factor 0.87 -> 0.83 (15m), 0.73 (5m), 0.58 (1m). It ships OFF.
+//       (3) At each session close it prints its own trade record next to what the tests say to expect.
+//       The structure rule is engine/PlanEngine.cs StructureWalk, identical to the research code (parity_check.py).
 // v3.0 (11 Nov 2026): NO new trading rule - none earned it. What changed is how a trade is sized and guarded:
 //       (1) Trades GOLD IN GRAMS (XAUUSDgr, 1 unit = 1 g) at the broker's minimum (5 g = 0.16 oz, so a $1 move = $0.16)
 //           whenever the broker lists it; signals and the plan still come from XAUUSD. Without a gram contract it
@@ -49,6 +58,63 @@ using EBar = GoldEngine.Bar;
 
 namespace cAlgo.Robots
 {
+    public enum EarlyExitMode { Off, M15, M5, M1 }
+
+    // One timeframe's market structure, fed from cTrader bars. The rule itself lives in engine/PlanEngine.cs
+    // (StructureWalk) so it can be checked against the research code outside cTrader (parity_check.py).
+    public sealed class StructureTracker
+    {
+        private const int Warmup = 600;                       // closed bars replayed at start
+        private readonly Bars _b;
+        private readonly StructureWalk _w = new StructureWalk();
+        private int _next;                                    // next closed bar to process
+
+        public readonly string Name;
+        public DateTime LastTime;                             // close time of the bar that made the last break
+        public bool BrokeUp, BrokeDown;                       // did the bar that just closed break structure?
+
+        public StructureTracker(Bars bars, string name)
+        {
+            _b = bars;
+            Name = name;
+            _next = Math.Max(0, bars.Count - 1 - Warmup);
+            Update();
+            BrokeUp = BrokeDown = false;
+        }
+
+        public int Trend { get { return _w.Trend; } }
+        public double BrokeUpLevel { get { return _w.BrokeUpLevel; } }
+        public double BrokeDownLevel { get { return _w.BrokeDownLevel; } }
+        public DateTime LastClosedBarCloseTime { get { return _b.OpenTimes[_b.Count - 1]; } }
+
+        public void Update()
+        {
+            BrokeUp = BrokeDown = false;
+            int lastClosed = _b.Count - 2;
+            for (int j = _next; j <= lastClosed; j++)
+            {
+                _w.Step(j, i => _b.HighPrices[i], i => _b.LowPrices[i], i => _b.ClosePrices[i]);
+                if (_w.BrokeUp || _w.BrokeDown)
+                    LastTime = _b.OpenTimes[j + 1];
+                if (j == lastClosed)
+                {
+                    BrokeUp = _w.BrokeUp;
+                    BrokeDown = _w.BrokeDown;
+                }
+            }
+            if (lastClosed + 1 > _next)
+                _next = lastClosed + 1;
+        }
+
+        public string Describe(TimeSpan offset)
+        {
+            if (_w.Trend == 0)
+                return Name + " no break yet";
+            return string.Format(CultureInfo.InvariantCulture, "{0} {1} since {2:HH:mm} (closed {3} {4:F2})", Name, _w.Trend > 0 ? "UP" : "DOWN",
+                                 LastTime + offset, _w.Trend > 0 ? "above" : "below", _w.LastLevel);
+        }
+    }
+
     [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
     public class GoldBandBreakoutBot : Robot
     {
@@ -89,13 +155,17 @@ namespace cAlgo.Robots
         [Parameter("Skip US-data hour", DefaultValue = true, Group = "Strategy")]
         public bool SkipDataHour { get; set; }
 
+        [Parameter("Early exit on a lower-timeframe shift (tested: Off is best)", DefaultValue = EarlyExitMode.Off, Group = "Strategy")]
+        public EarlyExitMode EarlyExit { get; set; }
+
         [Parameter("Other event dates (yyyy-MM-dd, comma-separated)", DefaultValue = "", Group = "Plan")]
         public string ExtraEventDates { get; set; }
 
         [Parameter("Draw plan on chart", DefaultValue = true, Group = "Plan")]
         public bool DrawPlan { get; set; }
 
-        private Bars _h1, _h4;
+        private Bars _h1, _h4, _m1, _m5, _m15;
+        private StructureTracker _s1, _s5, _s15;
         private Symbol _trade;                                  // the contract orders go to: gram gold, or this chart's XAUUSD
         private double _f = 1.0;                                // price of the traded contract / XAUUSD price (1/31.1035 for grams)
         private double _volume;
@@ -164,6 +234,19 @@ namespace cAlgo.Robots
             if (live && !TradeLive)
                 Print("LIVE account: PLANNING ONLY, no orders. To let it trade real money, tick 'Trade on a LIVE account' in the settings.");
 
+            // Lower timeframes of this chart's symbol: market structure on 15m / 5m / 1m, for the hourly MTF line and the
+            // optional early exit.
+            _m15 = MarketData.GetBars(TimeFrame.Minute15);
+            _m5 = MarketData.GetBars(TimeFrame.Minute5);
+            _m1 = MarketData.GetBars(TimeFrame.Minute);
+            _s15 = new StructureTracker(_m15, "15m");
+            _s5 = new StructureTracker(_m5, "5m");
+            _s1 = new StructureTracker(_m1, "1m");
+            _m15.BarOpened += a => OnLowerBar(_s15, EarlyExitMode.M15);
+            _m5.BarOpened += a => OnLowerBar(_s5, EarlyExitMode.M5);
+            _m1.BarOpened += a => OnLowerBar(_s1, EarlyExitMode.M1);
+            Print("MTF now: {0} | {1} | {2}. Early exit: {3}", _s15.Describe(Sast), _s5.Describe(Sast), _s1.Describe(Sast), EarlyExitNote());
+
             _h1.BarOpened += OnHourOpened;
             Positions.Opened += OnPositionOpened;
             Positions.Closed += OnPositionClosed;
@@ -183,7 +266,7 @@ namespace cAlgo.Robots
                 _pnlUsdThisSession += t.Pips * PipSizeOf(t.SymbolName) * t.VolumeInUnits;
             }
             _tradesThisSession += MyPositions().Length;
-            Print("GoldBandBreakoutBot v3.0: {0} H1 / {1} H4 bars, {2} trades / ${3:F2} so far this session",
+            Print("GoldBandBreakoutBot v3.1: {0} H1 / {1} H4 bars, {2} trades / ${3:F2} so far this session",
                   _h1.Count, _h4.Count, _tradesThisSession, _pnlUsdThisSession);
         }
 
@@ -359,12 +442,15 @@ namespace cAlgo.Robots
                 _tradesThisSession = 0;
                 _pnlUsdThisSession = 0;
                 ScorePreviousDay();
+                PrintTradeRecord();
                 _plan = TryBuildPlan(_h1.OpenTimes[start]);
             }
             if (_plan == null)
                 return;
 
             int k = now - start;
+            Print("MTF bar {0} ({1:HH:mm} SAST): gold {2:F2}, {3:+0.00;-0.00} from the prior close | {4} | {5} | {6}", k, _h1.OpenTimes[now] + Sast,
+                  Symbol.Bid, Symbol.Bid - _plan.Anchor, _s15.Describe(Sast), _s5.Describe(Sast), _s1.Describe(Sast));
             if (k == 0 || k >= BarsPerSession - 1)
                 return;                                         // rollover hour / last hour
             if (SkipDataHour && k == DataHourBar)
@@ -452,6 +538,47 @@ namespace cAlgo.Robots
             Print("Bar {0} ({1} SAST): {2} | stop & target ${3:F2} per oz = {4:F2} {5} on {6} {7} ({8:F0}% of equity) | {9} order prices {10} / {11}, {12} pips | until {13:HH:mm} SAST",
                   k, hh, what, d, riskAccount, Account.Asset.Name, _volume, _f == 1.0 ? "oz" : "g",
                   100.0 * riskAccount / Math.Max(Account.Equity, 0.01), _trade.Name, up, down, pips, expiry + Sast);
+        }
+
+        // A lower-timeframe bar has just closed: update its structure; if the early exit is switched to this timeframe and
+        // the bar broke structure AGAINST an open trade that was already open before the bar closed, close the trade.
+        private void OnLowerBar(StructureTracker s, EarlyExitMode mode)
+        {
+            s.Update();
+            if (EarlyExit != mode || (!s.BrokeUp && !s.BrokeDown))
+                return;
+            DateTime closedAt = s.LastClosedBarCloseTime;
+            foreach (var p in MyPositions())
+            {
+                bool buy = p.TradeType == TradeType.Buy;
+                if (!(buy ? s.BrokeDown : s.BrokeUp) || p.EntryTime >= closedAt)
+                    continue;
+                Print("EARLY EXIT: the {0} chart closed {1} its last swing {2} {3:F2} -> closing the {4} (open result {5:F2} {6})",
+                      s.Name, buy ? "below" : "above", buy ? "low" : "high", buy ? s.BrokeDownLevel : s.BrokeUpLevel,
+                      buy ? "BUY" : "SELL", p.NetProfit, Account.Asset.Name);
+                ClosePosition(p);
+            }
+        }
+
+        private string EarlyExitNote()
+        {
+            return EarlyExit == EarlyExitMode.Off
+                ? "OFF (tested: closing early made results worse)"
+                : "ON, " + EarlyExit + " - tested 2016-2024: smaller losses but smaller wins and more trades; profit factor 0.83 (15m), " +
+                  "0.73 (5m), 0.58 (1m) against 0.87 with it off";
+        }
+
+        // The bot's own trades so far, next to what the tests say to expect.
+        private void PrintTradeRecord()
+        {
+            var mine = History.Where(t => t.Label == BotLabel && IsMine(t.SymbolName)).ToList();
+            if (mine.Count == 0)
+                return;
+            double won = mine.Where(t => t.NetProfit > 0).Sum(t => t.NetProfit);
+            double lost = -mine.Where(t => t.NetProfit < 0).Sum(t => t.NetProfit);
+            Print("TRADES so far: {0}, {1} won, net {2:F2} {3}, profit factor {4}. The tests say to expect about 0.9-1.0; fewer than 100 trades prove nothing either way.",
+                  mine.Count, mine.Count(t => t.NetProfit > 0), won - lost, Account.Asset.Name,
+                  lost > 0 ? (won / lost).ToString("F2", CultureInfo.InvariantCulture) : "n/a");
         }
 
         protected override void OnTick()

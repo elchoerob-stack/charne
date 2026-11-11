@@ -24,6 +24,22 @@ static class Program
 
     static int Main(string[] args)
     {
+        if (args.Length >= 2 && args[0] == "structure")
+        {
+            // structure mode: walk a bar CSV from index <start> and print the bars whose close broke structure
+            var bars = Load(args[1]);
+            int start = args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 0;
+            var w = new StructureWalk();
+            var up = new List<int>(); var dn = new List<int>();
+            for (int j = start; j < bars.Count; j++)
+            {
+                w.Step(j, i => bars[i].H, i => bars[i].L, i => bars[i].C);
+                if (w.BrokeUp) up.Add(j);
+                if (w.BrokeDown) dn.Add(j);
+            }
+            Console.WriteLine(JsonSerializer.Serialize(new { up, dn, trend = w.Trend, last = w.LastLevel }));
+            return 0;
+        }
         var h1 = Load(Path.Combine(args[0], "XAUUSD_H_1.csv"));
         var h4 = Load(Path.Combine(args[0], "XAUUSD_H_4.csv"));
         if (args.Length > 2 && args[1] == "score")

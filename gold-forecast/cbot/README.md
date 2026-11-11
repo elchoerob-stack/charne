@@ -1,4 +1,4 @@
-# GoldBandBreakoutBot v3.0 - guide
+# GoldBandBreakoutBot v3.1 - guide
 
 An XAUUSD cBot for cTrader: a daily planning engine plus the band-breakout trading rules.
 
@@ -6,7 +6,26 @@ An XAUUSD cBot for cTrader: a daily planning engine plus the band-breakout tradi
 On nine years the rules had never seen (2016 - Sep 2024, 3,075 trades) they lost in 9 of 9 years, profit factor **0.87**.
 Before costs they are a coin flip (50.4% wins). The 2026 profit (PF 1.14-1.17) was a trending year. At today's volatility
 and costs the long-run estimate is PF 0.97-0.99: about R0.70 lost per trade at the smallest size, roughly R20 a month, plus noise.
-Running it on a live account is the owner's decision; v3.0 makes that decision explicit (see the tick box below).
+Running it on a live account is the owner's decision; v3.x makes that decision explicit (see the tick box below).
+
+### v3.1: it reads the 15-minute, 5-minute and 1-minute charts
+- **Every hour** it prints the market structure of all three: `MTF bar 9 (11:00 SAST): gold 4012.30, -19.83 from the prior close |
+  15m DOWN since 10:15 (closed below 4018.40) | 5m UP since 10:50 (closed above 4010.10) | 1m UP since 10:58 (...)`.
+  UP / DOWN is the direction of the last time that chart closed through its most recent swing high or low.
+- **Early exit switch** (`Early exit on a lower-timeframe shift`: Off / M15 / M5 / M1). When on, a trade is closed as soon as
+  the chosen chart closes through its last swing against the trade; the journal says `EARLY EXIT: the 15m chart closed below
+  its last swing low ... -> closing the BUY`. The hard stop and target stay in place.
+- **It ships Off, because it was tested first** (pre-registered, 2016-2024 and 2025-26) and made the result worse:
+| Early exit | Trades a day | Wins | Average loss | Full stop-outs | Profit factor |
+|---|---|---|---|---|---|
+| Off | 1.36 | 49% | $18 | 35% of trades | 0.87 |
+| 15-minute | 1.47 | 42% | $14 | 16% | 0.83 |
+| 5-minute | 1.80 | 33% | $8 | 4% | 0.73 |
+| 1-minute | 2.35 | 27% | $4 | 0.4% | 0.58 |
+  (2016 - Sep 2024, dollars per oz at today's volatility; the 1-minute row is Jan 2023 - Sep 2024, where Off scored 0.84).
+  Losses do shrink, as intended; wins shrink just as much and the bot trades more, so costs rise. In 2025-26 the picture is
+  the same: Off 1.07, 15-minute 1.06, 5-minute 0.89, 1-minute 0.91. If you want it on anyway, 15-minute costs the least.
+- At each session close it prints its own record: `TRADES so far: 12, 5 won, net -41.20 ZAR, profit factor 0.71 ...`.
 
 ### What v3.0 changed (no new trading rule: none passed)
 | | v2.2 | v3.0 |
@@ -109,6 +128,8 @@ Validation log rows:
 | 2026-11-11 | GoldBandBreakout rules, FRESH 2016 - Sep 2024 (max 4 trades a session) | v2.2 rules | **FAIL** | PF 0.87, 0 of 9 years profitable | 3,075 trades | - | gross: 50.4% wins, PF 1.04 |
 | 2026-11-11 | Continuation only z 1.6 / 1.28 / 2.0 / half stop, FRESH 2016 - Sep 2024 | - | FAIL | PF 0.88 / 0.90 / 0.86 / 0.82 (used period 1.76 / 1.21 / 1.58 / 1.76) | 1,107 / 1,886 / 571 / 1,208 trades | - | looks: 29 |
 | 2026-11-11 | GoldBandBreakout v3.0 | v3.0 | same rules; sizing and guards only | - | - | - | gram gold 5 g, 33% cap, live opt-in, z constant |
+| 2026-11-11 | Early exit on a 15m / 5m / 1m structure shift | - | FAIL (worse than no early exit) | PF 0.83 / 0.73 / 0.58 against 0.87 | 3,313 / 4,062 / 1,057 trades | - | looks: 32 |
+| 2026-11-11 | GoldBandBreakout v3.1 | v3.1 | same rules; MTF structure line, early-exit switch (Off), trade record | - | - | - | C# structure rule = research code (parity) |
 ```
 
 ## Rules (identical in the backtest and the cBot)

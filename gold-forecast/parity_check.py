@@ -43,7 +43,31 @@ def reference(cut):
                 bull=bull, bear=bear)
 
 
+def structure_parity():
+    """The C# StructureWalk (lower-timeframe structure for the MTF line and the early exit) against contsim.structure_events
+    on real 5-minute bars: identical breaks from a full walk, and from a late start after a 600-bar warm-up (the bot starts
+    its walk 600 bars back, not at the beginning of history)."""
+    import contsim as C
+    path = "data/XAUUSD_M_5_hist.csv"
+    m5 = pd.read_csv(path)
+    up, dn = C.structure_events(m5.high.values, m5.low.values, m5.close.values, 3)
+    ref_up, ref_dn = set(np.flatnonzero(up).tolist()), set(np.flatnonzero(dn).tolist())
+    ok = True
+    for start in (0, 20000, 41234):
+        out = subprocess.run([ENGINE, "structure", path, str(start)], capture_output=True, text=True)
+        if out.returncode != 0:
+            sys.exit(out.stderr)
+        c = json.loads(out.stdout)
+        frm = start + (600 if start else 0)
+        same = {i for i in c["up"] if i >= frm} == {i for i in ref_up if i >= frm} and {i for i in c["dn"] if i >= frm} == {i for i in ref_dn if i >= frm}
+        ok &= same
+        print(f"structure walk from bar {start}: {len(c['up'])} up / {len(c['dn'])} down breaks; identical to Python from bar {frm} on: {'PASS' if same else 'FAIL'}")
+    return ok
+
+
 if __name__ == "__main__":
+    if not structure_parity():
+        sys.exit("STRUCTURE PARITY FAIL")
     cuts = session_closes(list(range(-1, -241, -12)))     # 20 closes, last close back to ~11 months ago
     out = subprocess.run([ENGINE, "data"] + cuts, capture_output=True, text=True)
     if out.returncode != 0:

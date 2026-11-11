@@ -1,0 +1,8 @@
+{
+ "verdict": {
+  "X15": "not the default",
+  "X5": "not the default",
+  "X1": "not the default"
+ },
+ "default": "none (the exit ships switched OFF)"
+}

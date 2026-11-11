@@ -15,9 +15,10 @@ Every look at the data is counted, because the more ideas tried on the same pric
 | 8 | Small-account sizing (pre-registered, `small_account_test.py`): same rules, 1 oz vs 5 g, equity cap | both periods | gram gold + 33% cap adopted for small accounts; strategy looks +0 |
 | 9 | Exploratory slicing of the bot's trades, about 30 slices (rank in the day, entry type, previous trade, hour, z, exits) | both periods | "continuation beats first touch" in both - a hypothesis only |
 | 10 | Continuation-only F1 / F2 / F3 / S1, and the bot's own rules (pre-registered, `continuation_test.py`) | **fresh: 2016 - Sep 2024** | all rejected (PF 0.82 - 0.90); the bot's rules PF 0.87, 0 of 9 years profitable |
+| 11 | Early exit on a 15m / 5m / 1m structure shift against the trade (pre-registered, `mtf_exit_test.py`) | 2016 - Sep 2024, 2025-26; 1m bars 2023-26 | none adopted: all three make the result worse (PF 0.83 / 0.73 / 0.58 against 0.87) |
 
-Total strategy looks: 16 + 2 + 3 + 2 + 2 + 4 = 29, plus about 30 exploratory slices of the 2025-26 data.
-The 2016 - Sep 2024 history has now been used once (5 rule sets). Oct 2024 - Feb 2025 5-minute bars exist and no trading
+Total strategy looks: 16 + 2 + 3 + 2 + 2 + 4 + 3 = 32, plus about 30 exploratory slices of the 2025-26 data.
+The 2016 - Sep 2024 history has now been used twice (5 entry rule sets, 3 exit overlays). Oct 2024 - Feb 2025 5-minute bars exist and no trading
 test has used them: keep them as a reserve.
 
 ## Bottom line (11 Nov 2026)
@@ -26,6 +27,7 @@ test has used them: keep them as a reserve.
 Before costs they are a coin flip: 50.4% wins, PF 1.04. The 2026 profit (PF 1.14) was a trending year, not a rule that works.
 Rescaled to today's volatility and costs the same nine years give PF 0.99 (1 oz) / 0.97 (gram gold): break-even minus costs.
 This closes the band-breakout family on gold: tighter boxes, filters, scenario entries, fades and continuation-only all failed.
+Getting out early when the 15m / 5m / 1m chart turns does not rescue it either: it shrinks losses and wins alike and adds trades.
 
 ## What we know
 - The daily trend (EMA stack) does **not** predict the next day: 54.8% hit rate on 259 sessions, 95% band +-6.2%.
@@ -146,3 +148,25 @@ The 2016-2024 sessions rescaled to today's volatility, today's costs, the bot's 
 | R2,000 | 5 g | 0% / 0% / R1,921 | 11% / 0% / R1,751 |
 R300 is three stops from the R100 floor, so most runs end parked near R100. A larger account does not grow either: it loses
 about R0.70 a trade on average at 5 g (R1.90 of costs against a coin flip), roughly R20 a month, plus noise. No account size turns these rules into growth.
+
+## Jump out early when a lower timeframe turns? (11 Nov 2026, `mtf_exit_test.py`, pre-registered in bb93ea9)
+The owner's idea: watch the 1, 5 and 15-minute charts and close a trade when one of them shifts against it. Definition: that
+timeframe closes through its most recent confirmed swing (3-bar fractals, the project's own structure rule); the hard stop and
+target stay. Entries are the bot's unchanged rules. P&L per oz normalised to a $60 ATR, $0.50 a trade.
+| 2016 - Sep 2024, 2,258 sessions | Trades / day | Wins | Avg win | Avg loss | Full stops | Closed by the shift | PF | Net / day | vs no early exit |
+|---|---|---|---|---|---|---|---|---|---|
+| B0 no early exit | 1.36 | 49% | 16.2 | -18.3 | 35% | - | 0.87 | -1.70 | - |
+| X15 15-minute shift | 1.47 | 42% | 16.0 | -13.7 | 16% | 39% | 0.83 | -1.98 | -0.28 (P no gain 90%) |
+| X5 5-minute shift | 1.80 | 33% | 12.5 | -8.5 | 4% | 76% | 0.73 | -2.80 | -1.10 (P no gain 99.9%) |
+| X1 1-minute shift (1m bars, Jan 2023 - Sep 2024) | 2.35 | 27% | 6.6 | -4.1 | 0.4% | 95% | 0.58 | -2.93 | -0.68 |
+May 2025 - Nov 2026: B0 PF 1.07 (+0.69 a day), X15 1.06 (+0.59), X5 0.89 (-0.96), X1 0.91 (-0.45, 1m bars). The 1-minute-bar
+re-run of B0 / X15 / X5 agrees with the 5-minute results. Verdict: none is adopted as the default.
+What it shows: the early exit does exactly what it promises - smaller losses, far fewer full stop-outs - and it cuts the winners
+by the same amount, because on entries that are a coin flip the lower timeframes turn against winners and losers alike. Each
+early exit also frees the bot to trade again the next hour, so costs rise. The faster the timeframe, the worse the result.
+For a R300 account at 5 g the 15-minute exit's smaller losses help a little in some periods and not in others (share of
+3-month runs ending below half: 68% -> 61% over 2016-24, 52% -> 41% in 2025-26, 82% -> 89% in 2023-24), so it is not a
+dependable survival tool either.
+Bot v3.1 builds it in as a switch that ships OFF (the owner asked for it; it cannot make one trade's loss larger than its stop),
+prints each timeframe's structure every hour, and the C# rule is checked against this code in `parity_check.py`.
+1-minute bars are not in the repository (about 20 MB): `python3 fetch_m1.py 2023` ... `2026` recreates them.

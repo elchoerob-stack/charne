@@ -460,4 +460,46 @@ namespace GoldEngine
             return sc;
         }
     }
+
+    /// <summary>
+    /// Market structure on one timeframe, advanced one closed bar at a time. The same walk as the research
+    /// (analysis.structure / contsim.structure_events): a swing high is a bar whose high is above the N bars before it and
+    /// not below the N bars after it (mirror for lows); it becomes known N bars later; a bar that CLOSES beyond the most
+    /// recent known swing breaks structure in that direction, and each swing level counts once.
+    /// </summary>
+    public sealed class StructureWalk
+    {
+        public const int N = 3;
+        private double _lh, _ll;
+        private bool _lhOpen, _llOpen;
+
+        public int Trend;                       // +1 / -1 = direction of the last break, 0 = none yet
+        public double LastLevel;                // the swing level of the last break
+        public int LastIndex = -1;              // the bar whose close made the last break
+        public bool BrokeUp, BrokeDown;         // did the bar given to the last Step() break structure?
+        public double BrokeUpLevel, BrokeDownLevel;
+
+        /// <summary>Process closed bar j (bars 0..j must be readable through the three accessors).</summary>
+        public void Step(int j, Func<int, double> high, Func<int, double> low, Func<int, double> close)
+        {
+            BrokeUp = BrokeDown = false;
+            int i = j - N;
+            if (i >= N)
+            {
+                if (IsSwing(i, high, true)) { _lh = high(i); _lhOpen = true; }
+                if (IsSwing(i, low, false)) { _ll = low(i); _llOpen = true; }
+            }
+            double c = close(j);
+            if (_lhOpen && c > _lh) { BrokeUp = true; BrokeUpLevel = _lh; _lhOpen = false; Trend = 1; LastLevel = _lh; LastIndex = j; }
+            if (_llOpen && c < _ll) { BrokeDown = true; BrokeDownLevel = _ll; _llOpen = false; Trend = -1; LastLevel = _ll; LastIndex = j; }
+        }
+
+        private static bool IsSwing(int i, Func<int, double> v, bool high)
+        {
+            double x = v(i);
+            for (int k = i - N; k < i; k++) if (high ? !(x > v(k)) : !(x < v(k))) return false;
+            for (int k = i + 1; k <= i + N; k++) if (high ? !(x >= v(k)) : !(x <= v(k))) return false;
+            return true;
+        }
+    }
 }

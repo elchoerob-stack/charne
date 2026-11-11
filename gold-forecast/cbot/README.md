@@ -1,33 +1,49 @@
-# GoldBandBreakoutBot v2.2 - guide
+# GoldBandBreakoutBot v3.0 - guide
 
-An XAUUSD cBot for cTrader built from the gold-forecast bands.
+An XAUUSD cBot for cTrader: a daily planning engine plus the band-breakout trading rules.
 
-**Status (10 Nov 2026): FAILED the unseen-period test; running on a LIVE cTrader account is the owner's decision.**
-On 5-minute bars from May 2025 to Jan 2026 (never used to design the rules) the locked rules made
-223 trades with Profit Factor **0.99** (net -$26.87). Pooled over both periods (458 trades) the Profit Factor is 1.09
-with a 23% chance the edge is luck. Expect roughly break-even before costs.
+**Status (11 Nov 2026): the trading rules have no edge. Use the plan as a map; do not expect the trades to make money.**
+On nine years the rules had never seen (2016 - Sep 2024, 3,075 trades) they lost in 9 of 9 years, profit factor **0.87**.
+Before costs they are a coin flip (50.4% wins). The 2026 profit (PF 1.14-1.17) was a trending year. At today's volatility
+and costs the long-run estimate is PF 0.97-0.99: about R0.70 lost per trade at the smallest size, roughly R20 a month, plus noise.
+Running it on a live account is the owner's decision; v3.0 makes that decision explicit (see the tick box below).
 
-### Reading the Journal (v2.2)
-- The platform's order lines show stop loss / take profit in **pips**. For XAUUSD 1 pip = $0.01, so `SL 3094 / TP 3094` means
-  $30.94 each side - not a price of 3,094. v2.2 also prints every placement in dollars:
-  `Bar 7 (09:00 SAST): BUY STOP 4063.76 | SELL STOP 4001.88 | stop & target $30.94 each (order log shows 3094 pips)`.
-- Leave **Band z at 1.2816**. Anything else prints `WARNING: Band z ... is UNTESTED`. z 1.0 and 0.674 were tested on 11 Nov 2026
-  and rejected (more trades, less money; both lost in the unseen year).
-- Orders expire at the end of their hour by themselves; v2.2 no longer tries to cancel them at that moment, so the
-  `cancel ... FAILED (EntityNotFound / TechnicalError)` lines stop. They were harmless.
-- Hours with no orders: the first hour after the daily break, hour 14 (US 08:30 ET data, 15:00 SAST in winter), the last hour,
-  and any hour while a position is open.
-
-### Live settings (v2.1)
-| Setting | Live | Demo |
+### What v3.0 changed (no new trading rule: none passed)
+| | v2.2 | v3.0 |
 |---|---|---|
-| Lot size | exactly 0.01 (code constant; never rounded up; the bot stops itself if the broker cannot trade 0.01) | same |
-| 10% equity guard | **off** (owner's decision) | on |
-| $100 per-trade cap, $150 per session, 4 trades per session, 1 position, $1 spread cap | on | on |
-| Cloud | up to 10 instances, runs 24/7 | 1 instance, stops after 7 days |
+| Contract | XAUUSD, 0.01 lot = 1 oz ($1 per $1 move) | **gold in grams, XAUUSDgr, the broker's minimum: 5 g = 0.16 oz ($0.16 per $1 move)**; XAUUSD 0.01 lot only if the broker has no gram contract |
+| One stop today | $20-$76 = R330-R1,260 | **R53-R203** |
+| Equity guard | 10% on demo, off on live | **33% of equity, demo and live**: an hour whose stop would cost more is skipped and logged |
+| Floor | free margin 100 (account currency) | equity below $6 (about R100): no new orders |
+| Live account | trades | **plans only until `Trade on a LIVE account` is ticked** |
+| Band z | a setting (it was changed to 1.1 once) | a constant, 1.2816 |
+| Cost per trade | about $0.44 (R7.30) | about $0.11 (R1.90) - the gram spread is wider per ounce, the trade is 6x smaller |
 
-With the guard off, a small live account is exposed to the pressure-test result: R200-R1,000 accounts were wiped out in
-83-98% of 60-trade runs; about R10,000 is the smallest account that never failed in the history.
+Attach it to the **XAUUSD 1h chart** exactly as before. It reads XAUUSD for the plan and signals and sends its orders to
+XAUUSDgr itself (order prices near 128, not 4,000: that is dollars per gram).
+
+### Reading the Journal (v3.0)
+- Start-up: `DEMO account ... | trades XAUUSDgr: 5 g per trade = 0.161 oz ... | one stop may risk at most 33% of equity`.
+- `FIT 5 g XAUUSDgr: one stop today costs 53.10 to 203.40 ZAR = 18% to 68% of equity 300.00. Cap 33%: 5 of 20 hours tradable.
+  Every hour is tradable from about 616 ZAR of equity.` - what today's stops mean for this account.
+- Each hour: `Bar 7 (09:00 SAST): BUY STOP 4063.76 | SELL STOP 4001.88 | stop & target $30.94 per oz = 82.60 ZAR on 5 g (28% of equity)
+  | XAUUSDgr order prices 130.653 / 128.663, 995 pips`. The levels are shown in XAUUSD terms, then as the gram order prices.
+- `skipped, a $52.84-per-oz stop on 5 g would cost 141.10 ZAR = 47% of equity (cap 33%)` - the account is too small for that hour.
+- `LIVE account: planning only` - the tick box is off.
+- Hours with no orders: the first hour after the daily break, hour 15 (US 08:30 ET data, 15:00 SAST in winter), the last hour,
+  any hour while a position is open, and hours skipped by the cap.
+
+### Small accounts (pre-registered study, 11 Nov 2026)
+60-session (3-month) runs from 326 start dates, same rules, on the 2025-26 data (which flatters the rules):
+| Start | Size | Wiped | Ends below a quarter | Median end |
+|---|---|---|---|---|
+| R300 | 1 oz (v2.2 live) | 80% | 89% | R0 |
+| R300 | 5 g, no cap | 19% | 43% | R78 |
+| R300 | **5 g, 33% cap (v3.0)** | **0%** | **4%** | R195 |
+| R2,000 | 5 g | 0% | 0% | R2,089 |
+On the nine-year history at today's volatility a R300 account at 5 g ends a year below half its start 89% of the time
+(median R90, parked near the R100 floor), doubles 8% of the time and never reached 10x. R2,000 does not get wiped and does not
+grow: median R1,751 after a year. Leverage of 1:10,000 changes none of this - it only sets the margin (about R1 for 5 g).
 
 ## v2.0: the planning engine inside the bot
 
@@ -90,6 +106,9 @@ Validation log rows:
 | 2026-11-11 | Breakout z 1.0 / z 0.674 (tighter box) | v2.1 | FAIL | unseen PF 0.94 / 0.90 | 365 / 689 trades | - | looks: 23 |
 | 2026-11-11 | Scenario plan entries, target T1 / T2 | - | FAIL | unseen PF 0.66 / 0.85 (2026: 0.92 / 1.28) | 218 / 242 trades | - | looks: 25 |
 | 2026-11-11 | GoldBandBreakout v2.2 | v2.2 | housekeeping only, same rules | - | - | - | cancel race fixed, $ in log, z warning |
+| 2026-11-11 | GoldBandBreakout rules, FRESH 2016 - Sep 2024 (max 4 trades a session) | v2.2 rules | **FAIL** | PF 0.87, 0 of 9 years profitable | 3,075 trades | - | gross: 50.4% wins, PF 1.04 |
+| 2026-11-11 | Continuation only z 1.6 / 1.28 / 2.0 / half stop, FRESH 2016 - Sep 2024 | - | FAIL | PF 0.88 / 0.90 / 0.86 / 0.82 (used period 1.76 / 1.21 / 1.58 / 1.76) | 1,107 / 1,886 / 571 / 1,208 trades | - | looks: 29 |
+| 2026-11-11 | GoldBandBreakout v3.0 | v3.0 | same rules; sizing and guards only | - | - | - | gram gold 5 g, 33% cap, live opt-in, z constant |
 ```
 
 ## Rules (identical in the backtest and the cBot)
@@ -106,13 +125,16 @@ Validation log rows:
 
 | Constant | Value | Why |
 |---|---|---|
-| `LotSize` | 0.01 | 1 oz: $1 per $1 move |
+| `MaxGramsPerTrade` | 5 | gram contract: the broker's minimum is traded, and only if it is 5 g or less (5 g = $0.16 per $1 move) |
+| `LotSize` | 0.01 | ounce contract, used only when the broker has no gram contract: 1 oz = $1 per $1 move |
+| `BandZ` | 1.2816 | the 80% band; a constant since v3.0 because it sets the stop distance |
 | `MaxOpenPositions` | 1 | as backtested |
 | `MaxTradesPerSession` | 4 | the backtest averaged 1.1 per day |
 | `MaxLossPerTradeUsd` | 100 (USD) | skips set-ups whose stop would risk more (very high volatility) |
 | `MaxDailyLossUsd` | 150 (USD) | no new entries that session after this realised loss |
-| `MinFreeMarginAccount` | 100 (account currency) | no orders on an empty account |
-| `MaxStopRiskPercentOfEquity` | 10 (%) | v1.3: skips set-ups whose stop risks more than this share of equity; a tiny account cannot be wiped by one stop |
+| `MinEquityUsd` | 6 (USD, about R100) | no orders on an empty account |
+| `MaxStopRiskPercentOfEquity` | 33 (%) | v3.0, demo and live: skips an hour whose stop would cost more than this share of equity (chosen by the pre-registered small-account study) |
+| `MaxContractDriftPercent` | 0.25 (%) | the gram price x 31.1035 must match the XAUUSD price, or the hour is skipped |
 
 Loss caps are in USD (gold's quote currency), so they mean the same on a ZAR, EUR or USD account
 (v1.2; v1.1 had them in account currency and the EUR demo made them ~18x looser than intended).
@@ -124,8 +146,9 @@ Change them only by editing the code, never as instance settings.
    open 0.01 lot. Top it up or open a new demo with about R20,000 (close to the $1,000 the
    gate used).
 1. **Install.** On any cTrader app (Mobile too): Algo > cBots > Upload, pick
-   `dist/GoldBandBreakoutBot.algo`. v2.1 runs in the cloud (AccessRights.None; cloud refuses
-   Full access). Add an instance on XAUUSD, 1h; the defaults are the tested settings.
+   `dist/GoldBandBreakoutBot.algo` (stop and remove the v2.2 instance first). It runs in the cloud
+   (AccessRights.None). Add an instance on **XAUUSD, 1h** - not on XAUUSDgr. Leave the settings as they are;
+   on a live account it places no orders until `Trade on a LIVE account` is ticked.
    Cloud limits on demo accounts: **1 running cloud instance per demo account** and a
    **7-day maximum** before it stops and must be restarted. Run it on its own demo account if
    another bot already uses the cloud slot. Closed trades print as `TRADE,...` lines in the log.
@@ -138,11 +161,8 @@ Change them only by editing the code, never as instance settings.
    result (PF ~1.0 in-sample, ~1.4 out-of-sample). A big gap means the cBot and the research differ.
 4. **Demo forward test.** Run it on demo with the same constants for at least 3 months (~60+
    trades at ~1 a day), then gate the demo log. Each day's paper result also appears in `check.py`.
-5. **Live** only after steps 2-4 pass, at 0.01 lot, same constants. Scale only after another
-   gated period.
-
-If you optimise `Band z` or `Profile sessions`, do it walk-forward on in-sample windows only and
-count every combination as a variant.
+5. **Live** only after steps 2-4 pass, at the minimum size, same constants. Scale only after another
+   gated period. (11 Nov 2026: step 2's question has been answered by the nine-year test - the rules fail.)
 
 ## Account size (pressure test, 10 Nov 2026 - `pressure_test.py`)
 

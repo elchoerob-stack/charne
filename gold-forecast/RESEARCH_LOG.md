@@ -12,8 +12,20 @@ Every look at the data is counted, because the more ideas tried on the same pric
 | 5 | Diagnostics (`diagnose.py`), descriptive, nothing selected | H1 sessions | see below |
 | 6 | Tighter boxes z 1.0 / 0.674 (pre-registered, `opportunity_test.py`) | both periods | both rejected (unseen PF 0.94 / 0.90) |
 | 7 | Trade the scenario plan, target T1 / T2 (pre-registered, `scenario_test.py`) | both periods | both rejected (unseen PF 0.66 / 0.85) |
+| 8 | Small-account sizing (pre-registered, `small_account_test.py`): same rules, 1 oz vs 5 g, equity cap | both periods | gram gold + 33% cap adopted for small accounts; strategy looks +0 |
+| 9 | Exploratory slicing of the bot's trades, about 30 slices (rank in the day, entry type, previous trade, hour, z, exits) | both periods | "continuation beats first touch" in both - a hypothesis only |
+| 10 | Continuation-only F1 / F2 / F3 / S1, and the bot's own rules (pre-registered, `continuation_test.py`) | **fresh: 2016 - Sep 2024** | all rejected (PF 0.82 - 0.90); the bot's rules PF 0.87, 0 of 9 years profitable |
 
-Total strategy looks: 16 + 2 + 3 + 2 + 2 = 25. Do not add more on this data without saying so.
+Total strategy looks: 16 + 2 + 3 + 2 + 2 + 4 = 29, plus about 30 exploratory slices of the 2025-26 data.
+The 2016 - Sep 2024 history has now been used once (5 rule sets). Oct 2024 - Feb 2025 5-minute bars exist and no trading
+test has used them: keep them as a reserve.
+
+## Bottom line (11 Nov 2026)
+**The band-breakout rules have no edge.** On nine years of data that no test had used (2016 - Sep 2024, 2,258 sessions,
+3,075 trades) the bot's exact rules lost in every calendar year: profit factor 0.87, net -$1,218 per oz after $0.50 a trade.
+Before costs they are a coin flip: 50.4% wins, PF 1.04. The 2026 profit (PF 1.14) was a trending year, not a rule that works.
+Rescaled to today's volatility and costs the same nine years give PF 0.99 (1 oz) / 0.97 (gram gold): break-even minus costs.
+This closes the band-breakout family on gold: tighter boxes, filters, scenario entries, fades and continuation-only all failed.
 
 ## What we know
 - The daily trend (EMA stack) does **not** predict the next day: 54.8% hit rate on 259 sessions, 95% band +-6.2%.
@@ -25,7 +37,10 @@ Total strategy looks: 16 + 2 + 3 + 2 + 2 = 25. Do not add more on this data with
 - Tuesday 10 Nov 2026 was a trend day (-1.4 ATR): the projection scored 0 of 8, the pre-registered bear scenario hit all 3 targets,
   the breakout paper test made +$57.70 closed, buy-the-low would have lost about $60.
 
-## Next, in order
+## Next, in order (revised 11 Nov 2026)
+0. No more variants of band breakouts on gold. A trading edge needs a different strategy class, and it must be designed
+   on 2016-2021, checked on 2022 - Sep 2024, then confirmed once on 2025-26 and the Oct 2024 - Feb 2025 reserve.
+   `contsim.py` + the 5-minute history judge an idea over nine years in about a minute.
 1. Regime-aware band width: can the pre-open state (previous range/ATR, ATR percentile, scheduled event) predict trend days?
    Needs a historical event calendar (CPI, payrolls, FOMC) - BLS publishes only upcoming dates on its schedule pages; use the archive.
 2. Hourly-updating bands: re-centre on the current price and widen when the morning has trended.
@@ -86,3 +101,48 @@ so a sell-only version is not a rescue (and would be a new look). The scenario p
 Bot v2.2 (no rule change): stops cancelling orders that are already expiring (journal 'EntityNotFound/TechnicalError' race), prints each
 order's prices and stop/target in dollars (the order log shows pips: 3094 pips = $30.94), warns when Band z is not the tested 1.2816,
 and closes an extra position if two orders ever fill together.
+
+## Can R300 carry the bot? Ounce vs gram contract (11 Nov 2026, `small_account_test.py`, pre-registered in 4208525)
+Measured, read-only: the broker lists gold in grams (XAUUSDgr, 1 lot = 1 g, minimum 5 g, step 1 g); its price is the ounce
+price / 31.1035 (20 days of hourly closes: ratio 31.104 - 31.111). 5 g = 0.16 oz, so a $1 move = $0.16. Cost per oz-equivalent:
+XAUUSD $0.12-0.16 spread + $35 per $1m per side (the account's own deals: R2.29 a side on 1 oz) = about $0.44; gram gold
+$0.37-0.40 spread + the same commission = about $0.67. Leverage (1:10,000) only sets the margin (about R1 for 5 g); it does
+not change what a move costs.
+Stop size today: $20 (hour 2) to $76 (hour 22) per oz = 111% to 421% of a R300 account at 1 oz, 18% to 68% at 5 g.
+326 start dates x 60 sessions, same rules, used periods (which flatter the rules: PF 1.08):
+| Start | Size | Wiped | Ends below 25% | Ends above 150% | Median end | Trades |
+|---|---|---|---|---|---|---|
+| R300 | 1 oz, no cap | 80% | 89% | 8% | R0 | 8 |
+| R300 | 5 g, no cap | 19% | 43% | 17% | R78 | 27 |
+| R300 | 5 g, cap 50% / 33% / 25% | 0% | 10% / 4% / 0% | 21% / 17% / 7% | R134 / R195 / R225 | 27 / 21 / 14 |
+| R1,000 | 5 g, cap 33% | 0% | 4% | 19% | R1,005 | 64 |
+| R2,000 | 5 g (cap never binds) | 0% | 0% | 1% | R2,089 | 68 |
+Rule 1: 89% -> 43%, gram gold adopted for small accounts. Rule 2: the loosest cap within 10 points of the best is 33%.
+Bot v3.0 implements both. Correction to the published trade counts: the bot allows 4 trades a session, the earlier backtests had
+no daily maximum; with the maximum the used-period results are 213 trades PF 0.94 (unseen) and 216 trades PF 1.17 (2026).
+
+## Continuation, and the nine-year verdict (11 Nov 2026, `continuation_test.py`, pre-registered in d7f1d08)
+Exploration of the used data (hypothesis only): first-touch entries (stop order filled inside the hour) PF 0.70 / 0.89;
+continuation entries (already beyond the band at the top of the hour) PF 1.47 / 1.40; continuation-only improved with the band:
+z 1.28 PF 1.18, z 1.6 PF 1.67, z 2.0 PF 1.45 (pooled). It looked like the first real lead. It was not.
+Fresh data, 2016 - Sep 2024, $0.50 a trade, P&L normalised to a $60 ATR so every year weighs the same:
+| Rule | Trades | Win | PF | Years in profit | P(net <= 0) | Used-period PF | Verdict |
+|---|---|---|---|---|---|---|---|
+| B0 the bot (v2.2 rules) | 3,075 | 49% | 0.87 | 0 of 9 | 100% | 1.07 | fails |
+| F1 continuation z 1.6 | 1,107 | 48% | 0.88 | 2 of 9 | 96% | 1.76 | **rejected** |
+| F2 continuation z 1.28 | 1,886 | 49% | 0.90 | 3 of 9 | 98% | 1.21 | **rejected** |
+| F3 continuation z 2.0 | 571 | 47% | 0.86 | 2 of 9 | 93% | 1.58 | **rejected** |
+| S1 F1 with half the stop | 1,208 | 37% | 0.82 | 1 of 9 | 100% | 1.76 | **rejected** |
+The lesson is the one the gate exists for: a pattern found by slicing data that had been looked at 25 times went from PF 1.76
+to 0.88 on data it had not seen. No rule was added to the bot.
+
+## Long-run odds for small accounts (`small_account_longrun.py`, descriptive)
+The 2016-2024 sessions rescaled to today's volatility, today's costs, the bot's rules:
+| Start | Size | After 3 months: below half / doubled / median | After 1 year: below half / doubled / median |
+|---|---|---|---|
+| R300 | 1 oz, no cap | 94% / 5% / R0 (73% wiped) | 97% / 3% / R0 |
+| R300 | 5 g, cap 33% | 68% / 10% / R98 | 89% / 8% / R90 |
+| R1,000 | 5 g, cap 33% | 10% / 1% / R921 | 37% / 0% / R749 |
+| R2,000 | 5 g | 0% / 0% / R1,921 | 11% / 0% / R1,751 |
+R300 is three stops from the R100 floor, so most runs end parked near R100. A larger account does not grow either: it loses
+about R0.70 a trade on average at 5 g (R1.90 of costs against a coin flip), roughly R20 a month, plus noise. No account size turns these rules into growth.

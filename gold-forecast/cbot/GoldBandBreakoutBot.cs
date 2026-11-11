@@ -1,5 +1,17 @@
-// GoldBandBreakoutBot v2.2  -  XAUUSD planning engine + breakout rules.
+// GoldBandBreakoutBot v3.0  -  XAUUSD planning engine + breakout rules, sized for small accounts.
 //
+// v3.0 (11 Nov 2026): NO new trading rule - none earned it. What changed is how a trade is sized and guarded:
+//       (1) Trades GOLD IN GRAMS (XAUUSDgr, 1 unit = 1 g) at the broker's minimum (5 g = 0.16 oz, so a $1 move = $0.16)
+//           whenever the broker lists it; signals and the plan still come from XAUUSD. Without a gram contract it
+//           trades exactly 0.01 lot of XAUUSD as before.
+//       (2) One stop may never risk more than 33% of equity, live and demo (small_account_test.py, pre-registered:
+//           a R300 account at 1 oz was wiped in 80% of 3-month runs, at 5 g with this cap in none).
+//       (3) On a LIVE account it only plans until 'Trade on a LIVE account' is ticked, because of (5).
+//       (4) Band z is a constant (1.2816) again, not a setting.
+//       (5) Evidence: on 2016-2024 data that no test had used (continuation_test.py, 2,258 sessions, 3,075 trades) these
+//           rules lost in 9 of 9 years, profit factor 0.87; before costs they are a coin flip (50.4% wins). The 2026
+//           profit came from a trending year. 'Continuation only' entries looked good on 2025-26 and failed the same
+//           nine years (PF 0.86-0.90), so they were not added.
 // v2.2: housekeeping, same trading rules. (1) Orders that are expiring on their own are no longer cancelled at the
 //       hour change (that race caused the harmless 'cancel FAILED: EntityNotFound / TechnicalError' journal lines).
 //       (2) Each order placement prints prices and the stop/target in dollars; the platform's order log shows SL/TP
@@ -18,8 +30,9 @@
 // v1.3: skips set-ups whose stop would risk more than 10% of equity (a tiny account cannot be wiped by one stop).
 // v1.2: USD loss caps; a restart keeps open trades.   v1.1: runs in cTrader cloud (AccessRights.None).
 //
-// Status: the breakout rules FAILED the unseen-period test (May 2025 - Jan 2026, 223 trades, PF 0.99). The plan is a
-// map of ranges and levels, not a direction signal (direction hit rate ~50%). Running it live was the owner's decision.
+// Status: the breakout rules FAILED every test on data they were not designed on (2016-2024: PF 0.87, 0 of 9 years
+// profitable; May 2025 - Jan 2026: PF 0.99). The plan is a map of ranges and levels, not a direction signal (direction
+// hit rate ~50%). Expect to lose about the spread and commission on every trade. Live trading is the owner's decision.
 //
 // Trading rule, each hour k (not the first, not the last, not the US-data bar), while flat:
 //   d = BandZ * sigma[k] * ATR;  BUY STOP at anchor + d, SELL STOP at anchor - d, SL = TP = d (1:1);
@@ -40,15 +53,19 @@ namespace cAlgo.Robots
     public class GoldBandBreakoutBot : Robot
     {
         // ---- Risk: fixed constants, never [Parameter]. Change them by editing code, on purpose. ----
-        private const double LotSize = 0.01;                    // 0.01 lot = 1 oz of gold
+        private const string GramSymbolName = "XAUUSDgr";       // gold priced per gram: 1 unit = 1 g = 1/31.1035 oz
+        private const double GramsPerOunce = 31.1034768;
+        private const double MaxGramsPerTrade = 5.0;            // gram contract: trade the broker's minimum, only if it is <= this
+        private const double MaxContractDriftPercent = 0.25;    // gram price x 31.1035 must match the ounce price this closely
+        private const double LotSize = 0.01;                    // ounce contract (no gram contract): exactly 0.01 lot = 1 oz
         private const int MaxOpenPositions = 1;
         private const int MaxTradesPerSession = 4;
         private const double MaxLossPerTradeUsd = 100.0;        // skip set-ups whose stop would risk more than this (USD)
         private const double MaxDailyLossUsd = 150.0;           // no new entries this session after losing this much (USD)
-        private const double MinFreeMarginAccount = 100.0;      // no new orders below this free margin (account currency)
-        private const double MaxStopRiskPercentOfEquity = 10.0; // skip set-ups whose stop risks more than this share of equity
-        private const bool EquityGuardOnLive = false;           // owner's decision 10 Nov 2026: live always trades 0.01 lot if margin allows
-        private const double MaxSpreadPrice = 1.00;             // $ per oz
+        private const double MinEquityUsd = 6.0;                // no new orders below this equity (about R100)
+        private const double MaxStopRiskPercentOfEquity = 33.0; // live AND demo: skip set-ups whose stop risks more of equity than this
+        private const double MaxSpreadPrice = 1.00;             // $ per oz (a gram spread is converted to $ per oz)
+        private const double BandZ = 1.2816;                    // the 80% band. A constant: it sets the stop distance.
         private const string BotLabel = "GBB1";
 
         // ---- Fixed rules ----
@@ -58,7 +75,6 @@ namespace cAlgo.Robots
         private const int EntryCutoffMinutes = 65;              // no entries in the session's last hour
         private const int FlatBeforeCloseMinutes = 5;
         private const int ExpiryGraceSeconds = 5;              // v2.2: leave orders expiring this soon to the server
-        private const double TestedBandZ = 1.2816;             // the validated band (80%)
         private static readonly DateTime HistoryStartUtc = new DateTime(2024, 10, 10, 23, 0, 0, DateTimeKind.Utc); // same pool as the research
         private static readonly TimeSpan Sast = TimeSpan.FromHours(2);
         // US CPI release dates (BLS schedule), 08:30 ET = 15:30 SAST
@@ -67,8 +83,8 @@ namespace cAlgo.Robots
               "2027-06-10", "2027-07-14", "2027-08-11", "2027-09-14", "2027-10-14", "2027-11-10", "2027-12-10" };
 
         // ---- Strategy parameters (shape the signal, not the risk) ----
-        [Parameter("Band z (1.2816 = 80% band)", DefaultValue = 1.2816, MinValue = 0.6, MaxValue = 2.0, Step = 0.1, Group = "Strategy")]
-        public double BandZ { get; set; }
+        [Parameter("Trade on a LIVE account (rules lost in 9 of 9 test years)", DefaultValue = false, Group = "Live")]
+        public bool TradeLive { get; set; }
 
         [Parameter("Skip US-data hour", DefaultValue = true, Group = "Strategy")]
         public bool SkipDataHour { get; set; }
@@ -80,7 +96,11 @@ namespace cAlgo.Robots
         public bool DrawPlan { get; set; }
 
         private Bars _h1, _h4;
+        private Symbol _trade;                                  // the contract orders go to: gram gold, or this chart's XAUUSD
+        private double _f = 1.0;                                // price of the traded contract / XAUUSD price (1/31.1035 for grams)
         private double _volume;
+        private bool _tradingAllowed;
+        private int _liveNoteSession = -1;
         private int _sessionStart = -1;
         private DailyPlan _plan, _prevPlan;
         private int _prevSessionStart = -1;
@@ -97,33 +117,59 @@ namespace cAlgo.Robots
             if (_h1.OpenTimes[0] > HistoryStartUtc)
                 Print("Note: H1 history starts {0:yyyy-MM-dd}; the research pool starts 2024-10-10, so plans can differ slightly from the workbook",
                       _h1.OpenTimes[0]);
-            // Exactly 0.01 lot or nothing: never round the volume up to a broker minimum.
-            double wanted = Symbol.QuantityToVolumeInUnits(LotSize);
-            _volume = Symbol.NormalizeVolumeInUnits(wanted, RoundingMode.Down);
-            if (_volume < Symbol.VolumeInUnitsMin || Math.Abs(_volume - wanted) > 1e-9)
+            if (SymbolName == GramSymbolName)
             {
-                Print("STOPPED: this broker cannot trade exactly {0} lot of {1} (wanted {2} units; min {3}, step {4}). Refusing to trade a different size.",
-                      LotSize, SymbolName, wanted, Symbol.VolumeInUnitsMin, Symbol.VolumeInUnitsStep);
+                Print("STOPPED: attach this bot to the XAUUSD chart (1h). It reads XAUUSD for the plan and places its orders on {0} itself.", GramSymbolName);
                 Stop();
                 return;
             }
+            // Size: the smallest trade there is. Gram gold at the broker's minimum when it exists (and is <= 5 g);
+            // otherwise exactly 0.01 lot of this chart's symbol. The volume is never rounded up.
+            _trade = Symbol;
+            _f = 1.0;
+            _volume = 0;
+            if (Symbols.Exists(GramSymbolName))
+            {
+                Symbol g = Symbols.GetSymbol(GramSymbolName);
+                if (g != null && g.VolumeInUnitsMin > 0 && g.VolumeInUnitsMin <= MaxGramsPerTrade + 1e-9)
+                {
+                    _trade = g;
+                    _f = 1.0 / GramsPerOunce;
+                    _volume = g.VolumeInUnitsMin;
+                }
+                else
+                    Print("Note: {0} exists but its minimum trade is {1} g (limit {2} g) - using {3} instead",
+                          GramSymbolName, g == null ? double.NaN : g.VolumeInUnitsMin, MaxGramsPerTrade, SymbolName);
+            }
+            if (_f == 1.0)
+            {
+                double wanted = Symbol.QuantityToVolumeInUnits(LotSize);
+                _volume = Symbol.NormalizeVolumeInUnits(wanted, RoundingMode.Down);
+                if (_volume < Symbol.VolumeInUnitsMin || Math.Abs(_volume - wanted) > 1e-9)
+                {
+                    Print("STOPPED: this broker cannot trade exactly {0} lot of {1} (wanted {2} units; min {3}, step {4}). Refusing to trade a different size.",
+                          LotSize, SymbolName, wanted, Symbol.VolumeInUnitsMin, Symbol.VolumeInUnitsStep);
+                    Stop();
+                    return;
+                }
+            }
             bool live = Account.IsLive;
-            Print("{0} account {1} | balance {2:F2} {3} | fixed {4} lot = {5} units (1 lot = {6} oz) | 10% equity guard {7}",
-                  live ? "LIVE" : "DEMO", Account.Number, Account.Balance, Account.Asset.Name, LotSize, _volume, Symbol.LotSize,
-                  live && !EquityGuardOnLive ? "OFF (live)" : "ON");
-            if (live)
-                Print("LIVE NOTE: these rules failed the unseen-period test (May 2025 - Jan 2026, 223 trades, PF 0.99) - expect roughly " +
-                      "break-even before costs. One stop is about $17-$75 per 0.01 lot; caps: $100 per trade, $150 per session, 4 trades per session.");
-            if (Math.Abs(BandZ - TestedBandZ) > 1e-9)
-                Print("WARNING: Band z = {0} is UNTESTED (tested setting: {1}; z 1.0 and 0.674 were tested 11 Nov 2026 and rejected). " +
-                      "Set it back to {1} unless you are deliberately running an experiment.", BandZ, TestedBandZ);
+            _tradingAllowed = !live || TradeLive;
+            Print("{0} account {1} | balance {2:F2} {3} | trades {4}: {5} {6} per trade = {7:F3} oz, so a $1 move in gold = ${7:F2} | " +
+                  "one stop may risk at most {8:F0}% of equity",
+                  live ? "LIVE" : "DEMO", Account.Number, Account.Balance, Account.Asset.Name, _trade.Name, _volume,
+                  _f == 1.0 ? "oz" : "g", _volume * _f, MaxStopRiskPercentOfEquity);
+            Print("EVIDENCE: on 2016-2024 data these rules lost in 9 of 9 years (3,075 trades, profit factor 0.87); before costs they are a " +
+                  "coin flip (50.4% wins). Expect to lose about the spread and commission per trade. The plan is a map, not a signal.");
+            if (live && !TradeLive)
+                Print("LIVE account: PLANNING ONLY, no orders. To let it trade real money, tick 'Trade on a LIVE account' in the settings.");
 
             _h1.BarOpened += OnHourOpened;
             Positions.Opened += OnPositionOpened;
             Positions.Closed += OnPositionClosed;
 
             // A restart between a fill and its protection must never leave a naked position.
-            foreach (var p in Positions.FindAll(BotLabel, SymbolName))
+            foreach (var p in MyPositions())
                 if (p.StopLoss == null)
                     ClosePosition(p);
 
@@ -131,14 +177,14 @@ namespace cAlgo.Robots
             _sessionStart = SessionStartOf(_h1.Count - 1);
             _plan = TryBuildPlan(_h1.OpenTimes[_sessionStart]);
             DateTime sessionOpen = _h1.OpenTimes[_sessionStart];
-            foreach (var t in History.Where(t => t.Label == BotLabel && t.SymbolName == SymbolName && t.EntryTime >= sessionOpen))
+            foreach (var t in History.Where(t => t.Label == BotLabel && IsMine(t.SymbolName) && t.EntryTime >= sessionOpen))
             {
                 _tradesThisSession++;
-                _pnlUsdThisSession += t.Pips * Symbol.PipSize * t.VolumeInUnits;
+                _pnlUsdThisSession += t.Pips * PipSizeOf(t.SymbolName) * t.VolumeInUnits;
             }
-            _tradesThisSession += Positions.FindAll(BotLabel, SymbolName).Length;
-            Print("GoldBandBreakoutBot v2.2: {0} H1 / {1} H4 bars, {2} units per trade, {3} trades / ${4:F2} so far this session",
-                  _h1.Count, _h4.Count, _volume, _tradesThisSession, _pnlUsdThisSession);
+            _tradesThisSession += MyPositions().Length;
+            Print("GoldBandBreakoutBot v3.0: {0} H1 / {1} H4 bars, {2} trades / ${3:F2} so far this session",
+                  _h1.Count, _h4.Count, _tradesThisSession, _pnlUsdThisSession);
         }
 
         // ------------------------------------------------------------------ planning
@@ -184,8 +230,58 @@ namespace cAlgo.Robots
             string ev = EventFor(day);
             Print("EVENTS {0}", ev ?? "none on the built-in calendar (add dates in the Plan parameters)");
             double d1 = BandZ * p.Sigma[1] * p.Atr;
-            Print("BOT first orders (hour 2): buy stop {0:F2} / sell stop {1:F2}, stop and target {2:F2} each. Direction is a coin flip for this model.",
+            Print("BOT first orders (hour 2): buy stop {0:F2} / sell stop {1:F2}, stop and target ${2:F2} per oz each. Direction is a coin flip for this model.",
                   p.Anchor + d1, p.Anchor - d1, d1);
+            PrintFit(p);
+        }
+
+        // What today's stops mean for THIS account at the traded size.
+        private void PrintFit(DailyPlan p)
+        {
+            if (_trade == null || _volume <= 0)
+                return;
+            double perUsd = AccountPerUsd();
+            double equity = Account.Equity;
+            if (perUsd <= 0 || equity <= 0)
+                return;
+            double lo = double.MaxValue, hi = 0;
+            int hours = 0, ok = 0;
+            for (int k = 1; k < BarsPerSession - 1; k++)
+            {
+                if (SkipDataHour && k == DataHourBar)
+                    continue;
+                double risk = BandZ * p.Sigma[k] * p.Atr * _f * _volume * perUsd;     // account currency
+                lo = Math.Min(lo, risk);
+                hi = Math.Max(hi, risk);
+                hours++;
+                if (risk <= equity * MaxStopRiskPercentOfEquity / 100.0)
+                    ok++;
+            }
+            Print("FIT {0} {1} {2}: one stop today costs {3:F2} to {4:F2} {5} = {6:P0} to {7:P0} of equity {8:F2}. Cap {9:F0}%: {10} of {11} hours " +
+                  "tradable. Every hour is tradable from about {12:F0} {5} of equity.",
+                  _volume, _f == 1.0 ? "oz" : "g", _trade.Name, lo, hi, Account.Asset.Name, lo / equity, hi / equity, equity,
+                  MaxStopRiskPercentOfEquity, ok, hours, hi * 100.0 / MaxStopRiskPercentOfEquity);
+        }
+
+        // Account currency per 1 USD, read from the traded contract (its quote currency is USD).
+        private double AccountPerUsd()
+        {
+            return _trade.PipSize > 0 ? _trade.PipValue / _trade.PipSize : 0;
+        }
+
+        private bool IsMine(string symbolName)
+        {
+            return symbolName == _trade.Name || symbolName == SymbolName;
+        }
+
+        private double PipSizeOf(string symbolName)
+        {
+            return symbolName == _trade.Name ? _trade.PipSize : Symbol.PipSize;
+        }
+
+        private Position[] MyPositions()
+        {
+            return Positions.Where(p => p.Label == BotLabel && IsMine(p.SymbolName)).ToArray();
         }
 
         private string EventFor(DateTime daySast)
@@ -255,7 +351,7 @@ namespace cAlgo.Robots
             if (start != _sessionStart)
             {
                 // New session: nothing carries over, yesterday's plan is scored, today's plan is built.
-                foreach (var p in Positions.FindAll(BotLabel, SymbolName))
+                foreach (var p in MyPositions())
                     ClosePosition(p);
                 _prevPlan = _plan;
                 _prevSessionStart = _sessionStart;
@@ -273,63 +369,107 @@ namespace cAlgo.Robots
                 return;                                         // rollover hour / last hour
             if (SkipDataHour && k == DataHourBar)
                 return;
-            if (Symbol.MarketHours.TimeTillClose() < TimeSpan.FromMinutes(EntryCutoffMinutes))
+            if (!_tradingAllowed)
+            {
+                if (_liveNoteSession != _sessionStart)
+                    Print("LIVE account: planning only, no orders (tick 'Trade on a LIVE account' to trade real money)");
+                _liveNoteSession = _sessionStart;
                 return;
-            if (Positions.FindAll(BotLabel, SymbolName).Length >= MaxOpenPositions)
+            }
+            if (_trade.MarketHours.TimeTillClose() < TimeSpan.FromMinutes(EntryCutoffMinutes))
+                return;
+            if (MyPositions().Length >= MaxOpenPositions)
                 return;
             if (_tradesThisSession >= MaxTradesPerSession || _pnlUsdThisSession <= -MaxDailyLossUsd)
                 return;
-            if (Symbol.Spread > MaxSpreadPrice || Account.FreeMargin < MinFreeMarginAccount)
-                return;
 
-            double d = BandZ * _plan.Sigma[k] * _plan.Atr;
-            double riskUsd = d * _volume;                       // 1 unit = 1 oz, so price distance x units = USD
+            string hh = (_h1.OpenTimes[now] + Sast).ToString("HH:mm", CultureInfo.InvariantCulture);
+            double perUsd = AccountPerUsd();
+            if (!(_trade.Bid > 0) || !(_trade.Ask > 0) || perUsd <= 0)
+            {
+                Print("Bar {0} ({1} SAST): skipped, no price yet for {2}", k, hh, _trade.Name);
+                return;
+            }
+            if (_f != 1.0)
+            {
+                // The gram contract must be the same market as this chart: gram price x 31.1035 = ounce price.
+                double drift = 100.0 * Math.Abs((_trade.Bid + _trade.Ask) / _f / (Symbol.Bid + Symbol.Ask) - 1.0);
+                if (!(drift <= MaxContractDriftPercent))
+                {
+                    Print("Bar {0} ({1} SAST): skipped, {2} is {3:F2}% away from {4} (limit {5}%)", k, hh, _trade.Name, drift, SymbolName, MaxContractDriftPercent);
+                    return;
+                }
+            }
+            if (_trade.Spread / _f > MaxSpreadPrice)
+            {
+                Print("Bar {0} ({1} SAST): skipped, spread ${2:F2} per oz is above ${3:F2}", k, hh, _trade.Spread / _f, MaxSpreadPrice);
+                return;
+            }
+            if (Account.Equity < MinEquityUsd * perUsd || Account.FreeMargin <= 0)
+            {
+                Print("Bar {0} ({1} SAST): skipped, equity {2:F2} {3} is below the floor of ${4:F0}", k, hh, Account.Equity, Account.Asset.Name, MinEquityUsd);
+                return;
+            }
+
+            double d = BandZ * _plan.Sigma[k] * _plan.Atr;      // band width in $ per oz (the research unit)
+            double dT = d * _f;                                 // the same distance in the traded contract's price
+            double riskUsd = dT * _volume;                      // quote currency is USD: price distance x units = USD
             if (d <= 0 || riskUsd > MaxLossPerTradeUsd)
             {
-                Print("Bar {0}: skipped, stop would risk ${1:F0} (cap ${2:F0})", k, riskUsd, MaxLossPerTradeUsd);
+                Print("Bar {0} ({1} SAST): skipped, stop would risk ${2:F0} (cap ${3:F0})", k, hh, riskUsd, MaxLossPerTradeUsd);
                 return;
             }
-            double riskAccount = d / Symbol.PipSize * Symbol.PipValue * _volume;   // same loss, in account currency
-            if ((!Account.IsLive || EquityGuardOnLive) && riskAccount > Account.Equity * MaxStopRiskPercentOfEquity / 100.0)
+            double riskAccount = riskUsd * perUsd;              // the same loss in account currency
+            if (riskAccount > Account.Equity * MaxStopRiskPercentOfEquity / 100.0)
             {
-                Print("Bar {0}: skipped, stop would risk {1:F2} = {2:F1}% of equity (cap {3:F0}%)",
-                      k, riskAccount, 100.0 * riskAccount / Math.Max(Account.Equity, 0.01), MaxStopRiskPercentOfEquity);
+                Print("Bar {0} ({1} SAST): skipped, a ${2:F2}-per-oz stop on {3} {4} would cost {5:F2} {6} = {7:F0}% of equity (cap {8:F0}%)",
+                      k, hh, d, _volume, _f == 1.0 ? "oz" : "g", riskAccount, Account.Asset.Name,
+                      100.0 * riskAccount / Math.Max(Account.Equity, 0.01), MaxStopRiskPercentOfEquity);
                 return;
             }
-            double pips = Math.Round(d / Symbol.PipSize, 1);
-            double up = Math.Round(_plan.Anchor + d, Symbol.Digits);
-            double down = Math.Round(_plan.Anchor - d, Symbol.Digits);
+            double pips = Math.Round(dT / _trade.TickSize) * _trade.TickSize / _trade.PipSize;   // a whole number of ticks
+            double up = Math.Round((_plan.Anchor + d) * _f, _trade.Digits);
+            double down = Math.Round((_plan.Anchor - d) * _f, _trade.Digits);
             DateTime expiry = _h1.OpenTimes[now].AddHours(1);
 
-            if (Symbol.Ask >= up)
-                ExecuteMarketOrder(TradeType.Buy, SymbolName, _volume, BotLabel, pips, pips);
-            else if (Symbol.Bid <= down)
-                ExecuteMarketOrder(TradeType.Sell, SymbolName, _volume, BotLabel, pips, pips);
+            string what;
+            if (_trade.Ask >= up)
+            {
+                ExecuteMarketOrder(TradeType.Buy, _trade.Name, _volume, BotLabel, pips, pips);
+                what = "already above the band -> BUY at market";
+            }
+            else if (_trade.Bid <= down)
+            {
+                ExecuteMarketOrder(TradeType.Sell, _trade.Name, _volume, BotLabel, pips, pips);
+                what = "already below the band -> SELL at market";
+            }
             else
             {
-                PlaceStopOrder(TradeType.Buy, SymbolName, _volume, up, BotLabel, pips, pips, ProtectionType.Relative, expiry);
-                PlaceStopOrder(TradeType.Sell, SymbolName, _volume, down, BotLabel, pips, pips, ProtectionType.Relative, expiry);
+                PlaceStopOrder(TradeType.Buy, _trade.Name, _volume, up, BotLabel, pips, pips, ProtectionType.Relative, expiry);
+                PlaceStopOrder(TradeType.Sell, _trade.Name, _volume, down, BotLabel, pips, pips, ProtectionType.Relative, expiry);
+                what = string.Format(CultureInfo.InvariantCulture, "BUY STOP {0:F2} | SELL STOP {1:F2}", _plan.Anchor + d, _plan.Anchor - d);
             }
-            Print("Bar {0} ({1:HH:mm} SAST): BUY STOP {2} | SELL STOP {3} | stop & target ${4:F2} each (order log shows {5} pips) | until {6:HH:mm} SAST",
-                  k, _h1.OpenTimes[now] + Sast, up, down, d, pips, expiry + Sast);
+            Print("Bar {0} ({1} SAST): {2} | stop & target ${3:F2} per oz = {4:F2} {5} on {6} {7} ({8:F0}% of equity) | {9} order prices {10} / {11}, {12} pips | until {13:HH:mm} SAST",
+                  k, hh, what, d, riskAccount, Account.Asset.Name, _volume, _f == 1.0 ? "oz" : "g",
+                  100.0 * riskAccount / Math.Max(Account.Equity, 0.01), _trade.Name, up, down, pips, expiry + Sast);
         }
 
         protected override void OnTick()
         {
-            if (Symbol.MarketHours.TimeTillClose() > TimeSpan.FromMinutes(FlatBeforeCloseMinutes))
+            if (_trade == null || _trade.MarketHours.TimeTillClose() > TimeSpan.FromMinutes(FlatBeforeCloseMinutes))
                 return;
             CancelOwnOrders();
-            foreach (var p in Positions.FindAll(BotLabel, SymbolName))
+            foreach (var p in MyPositions())
                 ClosePosition(p);
         }
 
         private void OnPositionOpened(PositionOpenedEventArgs args)
         {
-            if (args.Position.Label != BotLabel || args.Position.SymbolName != SymbolName)
+            if (args.Position.Label != BotLabel || !IsMine(args.Position.SymbolName))
                 return;
             _tradesThisSession++;
             CancelOwnOrders();                                  // one-cancels-other
-            var mine = Positions.FindAll(BotLabel, SymbolName);
+            var mine = MyPositions();
             if (mine.Length > MaxOpenPositions)                 // two orders filled at once: keep the first, close the extra
             {
                 Print("Extra position {0} closed: max {1} open position(s)", args.Position.Id, MaxOpenPositions);
@@ -339,10 +479,10 @@ namespace cAlgo.Robots
 
         private void OnPositionClosed(PositionClosedEventArgs args)
         {
-            if (args.Position.Label != BotLabel || args.Position.SymbolName != SymbolName)
+            if (args.Position.Label != BotLabel || !IsMine(args.Position.SymbolName))
                 return;
             var p = args.Position;
-            _pnlUsdThisSession += p.Pips * Symbol.PipSize * p.VolumeInUnits;   // price move x oz = USD
+            _pnlUsdThisSession += p.Pips * PipSizeOf(p.SymbolName) * p.VolumeInUnits;   // price move x units = USD
             var inv = CultureInfo.InvariantCulture;
             Print("TRADE,{0},{1},{2},{3},{4},{5}", Server.Time.ToString("yyyy-MM-dd HH:mm:ss", inv), p.TradeType,
                   p.EntryPrice.ToString(inv), p.EntryTime.ToString("yyyy-MM-dd HH:mm:ss", inv),
@@ -354,7 +494,7 @@ namespace cAlgo.Robots
             // Orders expiring within a few seconds are left to expire by themselves: cancelling them races the server's
             // own expiry and prints a harmless 'FAILED: EntityNotFound / TechnicalError' line.
             DateTime soon = Server.Time.AddSeconds(ExpiryGraceSeconds);
-            foreach (var o in PendingOrders.Where(o => o.Label == BotLabel && o.SymbolName == SymbolName).ToList())
+            foreach (var o in PendingOrders.Where(o => o.Label == BotLabel && IsMine(o.SymbolName)).ToList())
                 if (o.ExpirationTime == null || o.ExpirationTime.Value > soon)
                     CancelPendingOrder(o);
         }

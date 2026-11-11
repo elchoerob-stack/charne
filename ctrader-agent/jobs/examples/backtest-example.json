@@ -1,0 +1,20 @@
+{
+  "id": "backtest-example-01",
+  "type": "Backtest",
+  "instanceName": "EurusdWaveCapture",
+  "symbol": "EURUSD",
+  "timeframe": "h1",
+  "fromDate": "2024-06-09",
+  "toDate": "2026-04-30",
+  "startingCapital": 10000,
+  "commission": 30,
+  "applyCommissionAutomatically": true,
+  "dataMode": "Tick data from server (accurate)",
+  "parameters": {
+    "EMA Fast": 21,
+    "EMA Slow": 42,
+    "EMA Trend": 388,
+    "ADX Period": 47
+  },
+  "reportName": "eurusdwavecapture-h1-baseline"
+}

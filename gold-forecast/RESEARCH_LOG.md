@@ -58,3 +58,14 @@ not predictable from the day before. Looks: +1 (model).
 `cbot/engine/PlanEngine.cs` ports analysis.py + targets.py. Parity: 20 closes (Dec 2025 - Nov 2026) identical, worst numeric
 difference 1.1e-16; one rounding subtlety fixed (Python rounds the exact binary value, e.g. 3976.915 -> 3976.91). Self-score
 identical to check.py on Tue 10 Nov. Bot v2.0 uses it for planning and trading inputs; no new trading rules (looks: +0).
+
+## Missed opportunities? (11 Nov 2026, `opportunity_test.py`, pre-registered, looks 21 -> 23)
+A. Days the z 1.2816 bot sat out were small days: range ~0.70 ATR and close-to-close ~0.25-0.30 ATR, against ~1.2 ATR and ~0.65 ATR
+   on days it traded (both periods).
+B. Tighter boxes trade more and earn less:
+| Box | 2026 trades / PF / $ per day | Unseen trades / PF / $ per day | Pooled P(PF<1) | Verdict |
+|---|---|---|---|---|
+| z 1.2816 (current) | 235 / 1.14 / +3.06 | 223 / 0.99 / -0.16 | 23% | - |
+| z 1.0 | 352 / 1.14 / +3.83 | 365 / 0.94 / -1.10 | 25% | reject |
+| z 0.674 | 695 / 1.04 / +1.75 | 689 / 0.90 / -2.78 | 54% | reject |
+The moves inside the box are mostly noise; trading them adds cost, not edge (fading them lost too: PF 0.62-0.92).

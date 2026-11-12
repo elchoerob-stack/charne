@@ -1,0 +1,235 @@
+market,rule,side,d_n,d_per_year,d_pf,d_p,design_pass,family
+XAUUSD,W-ASIA,as written,1285,257.0,0.965,0.6825,False,W
+XAUUSD,W-LONDON,as written,1290,258.0,0.991,0.5525,False,W
+XAUUSD,W-NYAM,as written,1290,258.0,0.964,0.6765,False,W
+XAUUSD,W-NYPM,reversed,1248,249.6,1.02,0.4085,False,W
+XAUUSD,T-20d-longshort,fixed,1290,258.0,0.963,0.6915,False,T
+XAUUSD,T-20d-longonly,fixed,740,148.0,1.113,0.1265,False,T
+XAUUSD,T-60d-longshort,fixed,1290,258.0,0.994,0.523,False,T
+XAUUSD,T-60d-longonly,fixed,788,157.6,1.133,0.104,False,T
+XAUUSD,S-1.5x-hold1h,as written,1320,264.0,0.876,0.949,False,S
+XAUUSD,S-1.5x-hold4h,as written,1149,229.8,1.025,0.405,False,S
+XAUUSD,S-2.5x-hold1h,as written,316,63.2,1.144,0.2535,False,S
+XAUUSD,S-2.5x-hold4h,as written,273,54.6,1.113,0.2945,False,S
+XAUUSD,A-breakout,fixed,912,182.4,1.072,0.2245,False,A
+XAUUSD,A-fade,fixed,912,182.4,0.875,0.9405,False,A
+XAUUSD,P-sweep,fixed,871,174.2,1.082,0.171,False,P
+XAUUSD,P-hold,fixed,920,184.0,1.007,0.474,False,P
+XAUUSD,B-2.0sd,fixed,1525,305.0,0.854,0.9955,False,B
+XAUUSD,B-2.5sd,fixed,820,164.0,0.835,0.9825,False,B
+EURUSD,W-ASIA,as written,1291,258.2,0.84,0.9865,False,W
+EURUSD,W-LONDON,reversed,1297,259.4,1.02,0.3855,False,W
+EURUSD,W-NYAM,as written,1297,259.4,0.932,0.818,False,W
+EURUSD,W-NYPM,as written,1291,258.2,0.837,0.9895,False,W
+EURUSD,T-20d-longshort,fixed,1297,259.4,0.833,0.993,False,T
+EURUSD,T-60d-longshort,fixed,1297,259.4,0.813,0.999,False,T
+EURUSD,S-1.5x-hold1h,as written,1389,277.8,0.814,0.987,False,S
+EURUSD,S-1.5x-hold4h,as written,1253,250.6,0.929,0.813,False,S
+EURUSD,S-2.5x-hold1h,as written,306,61.2,0.859,0.7715,False,S
+EURUSD,S-2.5x-hold4h,as written,269,53.8,0.949,0.646,False,S
+EURUSD,A-breakout,fixed,1108,221.6,0.878,0.963,False,A
+EURUSD,A-fade,fixed,1108,221.6,0.899,0.9185,False,A
+EURUSD,P-sweep,fixed,918,183.6,0.835,0.988,False,P
+EURUSD,P-hold,fixed,975,195.0,0.812,0.9945,False,P
+EURUSD,B-2.0sd,fixed,1625,325.0,0.887,0.972,False,B
+EURUSD,B-2.5sd,fixed,928,185.6,0.871,0.961,False,B
+GBPUSD,W-ASIA,reversed,1291,258.2,0.987,0.561,False,W
+GBPUSD,W-LONDON,reversed,1297,259.4,0.931,0.84,False,W
+GBPUSD,W-NYAM,as written,1297,259.4,0.951,0.758,False,W
+GBPUSD,W-NYPM,reversed,1291,258.2,0.826,0.992,False,W
+GBPUSD,T-20d-longshort,fixed,1297,259.4,0.866,0.966,False,T
+GBPUSD,T-60d-longshort,fixed,1297,259.4,0.87,0.97,False,T
+GBPUSD,S-1.5x-hold1h,as written,1521,304.2,0.915,0.85,False,S
+GBPUSD,S-1.5x-hold4h,as written,1418,283.6,1.019,0.4515,False,S
+GBPUSD,S-2.5x-hold1h,as written,308,61.6,1.019,0.531,False,S
+GBPUSD,S-2.5x-hold4h,as written,280,56.0,1.266,0.3,False,S
+GBPUSD,A-breakout,fixed,1157,231.4,0.932,0.8245,False,A
+GBPUSD,A-fade,fixed,1157,231.4,0.915,0.878,False,A
+GBPUSD,P-sweep,fixed,880,176.0,0.859,0.9725,False,P
+GBPUSD,P-hold,fixed,964,192.8,0.982,0.594,False,P
+GBPUSD,B-2.0sd,fixed,1691,338.2,0.844,0.9985,False,B
+GBPUSD,B-2.5sd,fixed,940,188.0,0.863,0.976,False,B
+USDJPY,W-ASIA,reversed,1291,258.2,0.996,0.5105,False,W
+USDJPY,W-LONDON,as written,1297,259.4,0.885,0.945,False,W
+USDJPY,W-NYAM,reversed,1297,259.4,0.957,0.721,False,W
+USDJPY,W-NYPM,as written,1291,258.2,0.939,0.778,False,W
+USDJPY,W-TOKYO-A,reversed,1291,258.2,0.885,0.9455,False,W
+USDJPY,W-TOKYO-B,reversed,1291,258.2,1.094,0.1695,False,W
+USDJPY,T-20d-longshort,fixed,1297,259.4,0.9,0.9255,False,T
+USDJPY,T-60d-longshort,fixed,1297,259.4,0.92,0.859,False,T
+USDJPY,S-1.5x-hold1h,as written,1302,260.4,0.973,0.6495,False,S
+USDJPY,S-1.5x-hold4h,as written,1155,231.0,1.03,0.379,False,S
+USDJPY,S-2.5x-hold1h,as written,279,55.8,1.141,0.2775,False,S
+USDJPY,S-2.5x-hold4h,as written,246,49.2,1.189,0.166,False,S
+USDJPY,A-breakout,fixed,793,158.6,1.179,0.0445,False,A
+USDJPY,A-fade,fixed,793,158.6,0.822,0.9805,False,A
+USDJPY,P-sweep,fixed,843,168.6,0.868,0.9585,False,P
+USDJPY,P-hold,fixed,932,186.4,0.945,0.7525,False,P
+USDJPY,B-2.0sd,fixed,1563,312.6,0.853,0.998,False,B
+USDJPY,B-2.5sd,fixed,807,161.4,0.748,0.9995,False,B
+AUDUSD,W-ASIA,as written,1291,258.2,0.892,0.942,False,W
+AUDUSD,W-LONDON,as written,1297,259.4,0.843,0.9905,False,W
+AUDUSD,W-NYAM,reversed,1297,259.4,0.903,0.927,False,W
+AUDUSD,W-NYPM,reversed,1291,258.2,0.793,0.9985,False,W
+AUDUSD,T-20d-longshort,fixed,1297,259.4,0.946,0.7755,False,T
+AUDUSD,T-60d-longshort,fixed,1297,259.4,0.965,0.691,False,T
+AUDUSD,S-1.5x-hold1h,reversed,1215,243.0,0.765,0.9995,False,S
+AUDUSD,S-1.5x-hold4h,reversed,1125,225.0,0.845,0.98,False,S
+AUDUSD,S-2.5x-hold1h,reversed,228,45.6,0.959,0.5855,False,S
+AUDUSD,S-2.5x-hold4h,reversed,200,40.0,0.958,0.541,False,S
+AUDUSD,A-breakout,fixed,873,174.6,0.842,0.981,False,A
+AUDUSD,A-fade,fixed,873,174.6,0.888,0.918,False,A
+AUDUSD,P-sweep,fixed,901,180.2,0.9,0.91,False,P
+AUDUSD,P-hold,fixed,982,196.4,0.79,0.9975,False,P
+AUDUSD,B-2.0sd,fixed,1525,305.0,0.924,0.9215,False,B
+AUDUSD,B-2.5sd,fixed,763,152.6,0.943,0.7605,False,B
+NZDUSD,W-ASIA,as written,1291,258.2,0.778,0.9995,False,W
+NZDUSD,W-LONDON,as written,1297,259.4,0.739,1.0,False,W
+NZDUSD,W-NYAM,as written,1297,259.4,0.804,0.9995,False,W
+NZDUSD,W-NYPM,reversed,1291,258.2,0.8,0.997,False,W
+NZDUSD,T-20d-longshort,fixed,1297,259.4,0.92,0.8755,False,T
+NZDUSD,T-60d-longshort,fixed,1297,259.4,0.891,0.9495,False,T
+NZDUSD,S-1.5x-hold1h,reversed,1087,217.4,0.671,1.0,False,S
+NZDUSD,S-1.5x-hold4h,reversed,985,197.0,0.797,0.9975,False,S
+NZDUSD,S-2.5x-hold1h,reversed,208,41.6,0.985,0.5355,False,S
+NZDUSD,S-2.5x-hold4h,reversed,179,35.8,1.26,0.0955,False,S
+NZDUSD,A-breakout,fixed,865,173.0,0.866,0.959,False,A
+NZDUSD,A-fade,fixed,865,173.0,0.759,1.0,False,A
+NZDUSD,P-sweep,fixed,917,183.4,0.841,0.989,False,P
+NZDUSD,P-hold,fixed,992,198.4,0.712,1.0,False,P
+NZDUSD,B-2.0sd,fixed,1538,307.6,0.847,0.9965,False,B
+NZDUSD,B-2.5sd,fixed,750,150.0,0.843,0.982,False,B
+USDCAD,W-ASIA,as written,1291,258.2,0.792,0.9995,False,W
+USDCAD,W-LONDON,as written,1297,259.4,0.864,0.973,False,W
+USDCAD,W-NYAM,as written,1297,259.4,0.896,0.9365,False,W
+USDCAD,W-NYPM,reversed,1291,258.2,1.027,0.374,False,W
+USDCAD,T-20d-longshort,fixed,1297,259.4,0.867,0.9765,False,T
+USDCAD,T-60d-longshort,fixed,1297,259.4,0.869,0.975,False,T
+USDCAD,S-1.5x-hold1h,reversed,1408,281.6,0.809,0.997,False,S
+USDCAD,S-1.5x-hold4h,reversed,1238,247.6,0.895,0.938,False,S
+USDCAD,S-2.5x-hold1h,reversed,300,60.0,0.798,0.9065,False,S
+USDCAD,S-2.5x-hold4h,reversed,263,52.6,0.957,0.604,False,S
+USDCAD,A-breakout,fixed,1075,215.0,0.748,1.0,False,A
+USDCAD,A-fade,fixed,1075,215.0,0.997,0.5185,False,A
+USDCAD,P-sweep,fixed,907,181.4,0.815,0.9955,False,P
+USDCAD,P-hold,fixed,963,192.6,0.832,0.99,False,P
+USDCAD,B-2.0sd,fixed,1602,320.4,0.876,0.9925,False,B
+USDCAD,B-2.5sd,fixed,848,169.6,0.781,0.998,False,B
+USDCHF,W-ASIA,as written,1291,258.2,0.894,0.9225,False,W
+USDCHF,W-LONDON,as written,1297,259.4,0.891,0.941,False,W
+USDCHF,W-NYAM,reversed,1297,259.4,0.998,0.508,False,W
+USDCHF,W-NYPM,reversed,1291,258.2,0.902,0.8975,False,W
+USDCHF,T-20d-longshort,fixed,1297,259.4,0.856,0.9835,False,T
+USDCHF,T-60d-longshort,fixed,1297,259.4,0.793,1.0,False,T
+USDCHF,S-1.5x-hold1h,reversed,1418,283.6,0.792,0.998,False,S
+USDCHF,S-1.5x-hold4h,reversed,1279,255.8,0.882,0.964,False,S
+USDCHF,S-2.5x-hold1h,reversed,291,58.2,0.854,0.8605,False,S
+USDCHF,S-2.5x-hold4h,reversed,252,50.4,1.124,0.223,False,S
+USDCHF,A-breakout,fixed,1127,225.4,0.929,0.8465,False,A
+USDCHF,A-fade,fixed,1127,225.4,0.842,0.991,False,A
+USDCHF,P-sweep,fixed,939,187.8,0.777,0.999,False,P
+USDCHF,P-hold,fixed,975,195.0,0.811,0.9935,False,P
+USDCHF,B-2.0sd,fixed,1664,332.8,0.903,0.964,False,B
+USDCHF,B-2.5sd,fixed,908,181.6,0.995,0.542,False,B
+EURJPY,W-ASIA,reversed,1291,258.2,0.946,0.752,False,W
+EURJPY,W-LONDON,reversed,1297,259.4,1.008,0.4515,False,W
+EURJPY,W-NYAM,reversed,1297,259.4,0.892,0.9465,False,W
+EURJPY,W-NYPM,as written,1291,258.2,0.924,0.8615,False,W
+EURJPY,W-TOKYO-A,reversed,1291,258.2,0.808,0.9985,False,W
+EURJPY,W-TOKYO-B,reversed,1291,258.2,0.844,0.958,False,W
+EURJPY,T-20d-longshort,fixed,1297,259.4,0.829,0.9945,False,T
+EURJPY,T-60d-longshort,fixed,1297,259.4,0.952,0.7295,False,T
+EURJPY,S-1.5x-hold1h,as written,1269,253.8,0.879,0.9155,False,S
+EURJPY,S-1.5x-hold4h,as written,1183,236.6,0.92,0.807,False,S
+EURJPY,S-2.5x-hold1h,as written,233,46.6,1.002,0.4975,False,S
+EURJPY,S-2.5x-hold4h,reversed,222,44.4,0.944,0.554,False,S
+EURJPY,A-breakout,fixed,944,188.8,0.94,0.7915,False,A
+EURJPY,A-fade,fixed,944,188.8,0.992,0.5425,False,A
+EURJPY,P-sweep,fixed,920,184.0,0.815,0.996,False,P
+EURJPY,P-hold,fixed,969,193.8,0.907,0.8725,False,P
+EURJPY,B-2.0sd,fixed,1562,312.4,0.888,0.9825,False,B
+EURJPY,B-2.5sd,fixed,802,160.4,0.797,0.997,False,B
+GBPJPY,W-ASIA,reversed,1291,258.2,1.032,0.37,False,W
+GBPJPY,W-LONDON,reversed,1297,259.4,0.92,0.8885,False,W
+GBPJPY,W-NYAM,as written,1297,259.4,0.886,0.947,False,W
+GBPJPY,W-NYPM,as written,1291,258.2,0.861,0.9795,False,W
+GBPJPY,W-TOKYO-A,as written,1291,258.2,0.764,0.9995,False,W
+GBPJPY,W-TOKYO-B,reversed,1291,258.2,0.911,0.793,False,W
+GBPJPY,T-20d-longshort,fixed,1297,259.4,0.96,0.6945,False,T
+GBPJPY,T-60d-longshort,fixed,1297,259.4,0.949,0.745,False,T
+GBPJPY,S-1.5x-hold1h,as written,1349,269.8,0.899,0.8395,False,S
+GBPJPY,S-1.5x-hold4h,as written,1262,252.4,0.986,0.594,False,S
+GBPJPY,S-2.5x-hold1h,as written,268,53.6,1.368,0.1645,False,S
+GBPJPY,S-2.5x-hold4h,as written,250,50.0,1.508,0.1245,False,S
+GBPJPY,A-breakout,fixed,1034,206.8,1.019,0.391,False,A
+GBPJPY,A-fade,fixed,1034,206.8,0.844,0.9865,False,A
+GBPJPY,P-sweep,fixed,892,178.4,0.932,0.812,False,P
+GBPJPY,P-hold,fixed,974,194.8,0.937,0.779,False,P
+GBPJPY,B-2.0sd,fixed,1625,325.0,0.855,0.9935,False,B
+GBPJPY,B-2.5sd,fixed,826,165.2,0.806,0.9955,False,B
+EURGBP,W-ASIA,as written,1291,258.2,1.018,0.4305,False,W
+EURGBP,W-LONDON,reversed,1297,259.4,0.936,0.8145,False,W
+EURGBP,W-NYAM,as written,1297,259.4,0.859,0.982,False,W
+EURGBP,W-NYPM,reversed,1291,258.2,0.953,0.7325,False,W
+EURGBP,T-20d-longshort,fixed,1297,259.4,0.881,0.9645,False,T
+EURGBP,T-60d-longshort,fixed,1297,259.4,0.833,0.996,False,T
+EURGBP,S-1.5x-hold1h,as written,1474,294.8,0.78,0.999,False,S
+EURGBP,S-1.5x-hold4h,as written,1408,281.6,0.952,0.725,False,S
+EURGBP,S-2.5x-hold1h,as written,304,60.8,0.808,0.888,False,S
+EURGBP,S-2.5x-hold4h,as written,288,57.6,1.004,0.4825,False,S
+EURGBP,A-breakout,fixed,1164,232.8,0.882,0.953,False,A
+EURGBP,A-fade,fixed,1164,232.8,0.823,0.995,False,A
+EURGBP,P-sweep,fixed,913,182.6,0.875,0.951,False,P
+EURGBP,P-hold,fixed,974,194.8,0.88,0.929,False,P
+EURGBP,B-2.0sd,fixed,1697,339.4,0.833,0.9995,False,B
+EURGBP,B-2.5sd,fixed,958,191.6,0.827,0.9915,False,B
+AUDNZD,W-ASIA,as written,1291,258.2,0.867,0.968,False,W
+AUDNZD,W-LONDON,as written,1297,259.4,0.726,1.0,False,W
+AUDNZD,W-NYAM,reversed,1297,259.4,0.883,0.946,False,W
+AUDNZD,W-NYPM,reversed,1291,258.2,1.05,0.28,False,W
+AUDNZD,T-20d-longshort,fixed,1297,259.4,0.971,0.6635,False,T
+AUDNZD,T-60d-longshort,fixed,1297,259.4,0.874,0.9725,False,T
+AUDNZD,S-1.5x-hold1h,reversed,821,164.2,0.748,0.996,False,S
+AUDNZD,S-1.5x-hold4h,reversed,783,156.6,0.76,0.9945,False,S
+AUDNZD,S-2.5x-hold1h,as written,165,33.0,0.705,0.943,False,S
+AUDNZD,S-2.5x-hold4h,as written,156,31.2,1.085,0.38,False,S
+AUDNZD,A-breakout,fixed,730,146.0,0.695,1.0,False,A
+AUDNZD,A-fade,fixed,730,146.0,0.666,1.0,False,A
+AUDNZD,P-sweep,fixed,890,178.0,0.679,1.0,False,P
+AUDNZD,P-hold,fixed,946,189.2,0.67,1.0,False,P
+AUDNZD,B-2.0sd,fixed,1481,296.2,0.949,0.807,False,B
+AUDNZD,B-2.5sd,fixed,682,136.4,0.945,0.7435,False,B
+EURCHF,W-ASIA,as written,1291,258.2,0.779,0.9995,False,W
+EURCHF,W-LONDON,reversed,1297,259.4,0.802,1.0,False,W
+EURCHF,W-NYAM,reversed,1297,259.4,0.819,0.9955,False,W
+EURCHF,W-NYPM,reversed,1291,258.2,0.689,1.0,False,W
+EURCHF,T-20d-longshort,fixed,1297,259.4,0.814,0.997,False,T
+EURCHF,T-60d-longshort,fixed,1297,259.4,0.872,0.9695,False,T
+EURCHF,S-1.5x-hold1h,reversed,1286,257.2,0.589,1.0,False,S
+EURCHF,S-1.5x-hold4h,reversed,1219,243.8,0.798,0.9995,False,S
+EURCHF,S-2.5x-hold1h,reversed,234,46.8,0.73,0.9635,False,S
+EURCHF,S-2.5x-hold4h,reversed,224,44.8,0.776,0.881,False,S
+EURCHF,A-breakout,fixed,1117,223.4,0.679,1.0,False,A
+EURCHF,A-fade,fixed,1117,223.4,0.724,1.0,False,A
+EURCHF,P-sweep,fixed,957,191.4,0.87,0.961,False,P
+EURCHF,P-hold,fixed,910,182.0,0.662,1.0,False,P
+EURCHF,B-2.0sd,fixed,1616,323.2,0.928,0.911,False,B
+EURCHF,B-2.5sd,fixed,866,173.2,1.031,0.367,False,B
+AUDJPY,W-ASIA,reversed,1291,258.2,0.905,0.8925,False,W
+AUDJPY,W-LONDON,as written,1297,259.4,0.868,0.972,False,W
+AUDJPY,W-NYAM,reversed,1297,259.4,0.967,0.6695,False,W
+AUDJPY,W-NYPM,as written,1291,258.2,0.803,0.996,False,W
+AUDJPY,W-TOKYO-A,as written,1291,258.2,0.838,0.992,False,W
+AUDJPY,W-TOKYO-B,reversed,1291,258.2,0.852,0.964,False,W
+AUDJPY,T-20d-longshort,fixed,1297,259.4,0.993,0.5145,False,T
+AUDJPY,T-60d-longshort,fixed,1297,259.4,0.973,0.64,False,T
+AUDJPY,S-1.5x-hold1h,as written,1229,245.8,0.791,0.9905,False,S
+AUDJPY,S-1.5x-hold4h,reversed,1134,226.8,0.993,0.508,False,S
+AUDJPY,S-2.5x-hold1h,as written,239,47.8,0.972,0.603,False,S
+AUDJPY,S-2.5x-hold4h,reversed,223,44.6,0.955,0.5435,False,S
+AUDJPY,A-breakout,fixed,764,152.8,0.955,0.6955,False,A
+AUDJPY,A-fade,fixed,764,152.8,0.787,0.9955,False,A
+AUDJPY,P-sweep,fixed,915,183.0,0.894,0.9205,False,P
+AUDJPY,P-hold,fixed,951,190.2,0.865,0.9605,False,P
+AUDJPY,B-2.0sd,fixed,1478,295.6,0.95,0.816,False,B
+AUDJPY,B-2.5sd,fixed,695,139.0,0.878,0.9325,False,B

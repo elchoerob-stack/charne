@@ -170,3 +170,16 @@ dependable survival tool either.
 Bot v3.1 builds it in as a switch that ships OFF (the owner asked for it; it cannot make one trade's loss larger than its stop),
 prints each timeframe's structure every hour, and the C# rule is checked against this code in `parity_check.py`.
 1-minute bars are not in the repository (about 20 MB): `python3 fetch_m1.py 2023` ... `2026` recreates them.
+
+## Edge search: PF > 1.3 with many trades, gold or currencies? (12 Nov 2026, `edge_search.py`, pre-registered in db8b602)
+Owner's request: find a bot with profit factor above 1.3 and a high trade count on gold or a currency pair.
+234 rule x market combinations: XAUUSD + 13 pairs, 1h bars Jun 2015 - Nov 2026, six families (session windows incl. the Tokyo
+fix, daily trend, hourly shocks, Asian range at London, previous day's high/low sweep or hold, Bollinger fade). Costs per pair
+from spreads sampled on the day x 1.5 plus commission (0.99 - 3.13 bp a round trip). Three stages with fixed pass marks.
+**Design stage (2016-2020): 0 of 234 passed** (needed PF >= 1.25, 100+ trades a year, P(PF < 1) <= 2.5%). Validation
+(2021 - Sep 2024) and confirmation (Oct 2024 - Nov 2026) were therefore not computed and remain unused for these rules.
+Closest: USDJPY Asian-range breakout PF 1.18 (159 trades a year, P 4.5%), gold long-only daily trend 60d / 20d PF 1.13 / 1.11
+(P 10-13%), USDJPY after-Tokyo-fix window reversed 1.09, gold previous-day sweep 1.08. Median PF by family 0.86 - 0.94: with one
+to three basis points of cost on moves this size, a rule with no signal lands at about 0.9, which is where almost all of them are.
+Looks: +234 on the design period only. PF 1.3 at 250 trades a year is an annual Sharpe ratio near 1.6 on one market after
+costs; none of the standard, published rule families gets near it on 1h bars at retail costs.

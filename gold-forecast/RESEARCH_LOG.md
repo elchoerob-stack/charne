@@ -183,3 +183,11 @@ Closest: USDJPY Asian-range breakout PF 1.18 (159 trades a year, P 4.5%), gold l
 to three basis points of cost on moves this size, a rule with no signal lands at about 0.9, which is where almost all of them are.
 Looks: +234 on the design period only. PF 1.3 at 250 trades a year is an annual Sharpe ratio near 1.6 on one market after
 costs; none of the standard, published rule families gets near it on 1h bars at retail costs.
+
+## USDJPY Asian-range breakout, fine-tuned (12 Nov 2026, `usdjpy_london_test.py`, pre-registered in the commit before this one)
+Design years (2016-2020): the base rule (PF 1.18) loses when the Asian range is under 0.3 ATR (PF 0.55) and in the first London
+hour (PF 0.96). Grid of 32 mechanical settings; chosen: range >= 0.3 ATR, signals from 04:00 New York, stop at the far side of
+the range, exit at the 14:00 New York close, no target -> design PF 1.33, 130 trades a year, P(PF < 1) 0.45%.
+**Validation (2021 - Sep 2024), same setting: 542 trades, PF 0.89, win 49%, P(PF < 1) 86% -> FAIL.** Confirmation not run.
+The design result was the best of 32 on five years; it did not carry to the next four. No bot was built from it.
+Looks: +32 on the design years, +1 on USDJPY's validation years (now used for this rule).

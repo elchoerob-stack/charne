@@ -1,0 +1,24 @@
+{
+ "design_ok": 10,
+ "chosen": {
+  "min_rng": 0.3,
+  "stop": "far",
+  "s0": 11,
+  "exit_h": 20,
+  "target": null
+ },
+ "design": {
+  "pf": 1.332,
+  "per_year": 129.8,
+  "p": 0.0045
+ },
+ "validation": {
+  "n": 542,
+  "per_year": 144.7,
+  "pf": 0.888,
+  "p": 0.864,
+  "avg": -0.0187,
+  "win": 0.487
+ },
+ "validation_pass": false
+}
